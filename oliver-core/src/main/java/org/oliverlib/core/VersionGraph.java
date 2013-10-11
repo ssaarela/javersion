@@ -59,9 +59,9 @@ public class VersionGraph<K, V, M> extends VersionGraphBase<K, V, M> {
         }
         
         void add(Version<K, V, M> version) {
-            checkRevision(tip, version);
+            Preconditions.checkNotNull(version, "version");
             
-            tip = new VersionNode<>(version, revisionsToNodes(version.parentRevisions));
+            tip = new VersionNode<>(tip, version, revisionsToNodes(version.parentRevisions));
             versionNodes.put(version.revision, tip);
         }
 
@@ -69,13 +69,6 @@ public class VersionGraph<K, V, M> extends VersionGraphBase<K, V, M> {
             return new VersionGraph<K, V, M>(parentGraph, versionNodes, tip);
         }
 
-        
-        private static void checkRevision(VersionNode<?, ?, ?> tip, Version<?, ?, ?> version) {
-            Preconditions.checkNotNull(version, "version");
-            if (tip != null && version.revision <= tip.getRevision()) {
-                throw new IllegalVersionOrderException(tip.getRevision(), version.revision);
-            }
-        }
     }
     
 }

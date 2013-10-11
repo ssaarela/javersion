@@ -11,18 +11,25 @@ import com.google.common.collect.Maps;
 
 public class VersionNode<K, V, M> {
 
-    private final Version<K, V, M> version;
+    public final Version<K, V, M> version;
     
-    private final Set<VersionNode<K, V, M>> parents;
+    public final Set<VersionNode<K, V, M>> parents;
+    
+    public final VersionNode<K, V, M> previous;
     
     private volatile SoftReference<Map<K, VersionProperty<V>>> softProperties;
     
     private volatile SoftReference<Set<Long>> softRevisions;
 
-    public VersionNode(Version<K, V, M> version, Set<VersionNode<K, V, M>> parents) {
+    public VersionNode(VersionNode<K, V, M> previous, Version<K, V, M> version, Set<VersionNode<K, V, M>> parents) {
         Preconditions.checkNotNull(version, "version");
         Preconditions.checkNotNull(parents, "parents");
-        
+
+        if (previous != null && version.revision <= previous.getRevision()) {
+            throw new IllegalVersionOrderException(previous.getRevision(), version.revision);
+        }
+
+        this.previous = previous;
         this.version = version;
         this.parents = ImmutableSet.copyOf(parents);
         this.softProperties = softReference(null);
