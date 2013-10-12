@@ -16,7 +16,10 @@ import org.junit.Test;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 
 public class SimpleVersionGraphTest {
     
@@ -36,9 +39,9 @@ public class SimpleVersionGraphTest {
                     .properties(mapOf(
                                 "status", "Single")))
                     .expectProperties(mapOf(
-                                "firstName", "John",
-                                "lastName", "Doe",
-                                "status", "Single")),
+                                "firstName", "John", // 1
+                                "lastName", "Doe", // 1
+                                "status", "Single")), // 2
 
 
             when(version(3l)
@@ -47,12 +50,66 @@ public class SimpleVersionGraphTest {
                                 "mood", "Lonely")))
                     .mergeRevisions(setOf(3l, 2l))
                     .expectProperties(mapOf(
-                                "firstName", "John",
-                                "lastName", "Doe",
-                                "status", "Single",
-                                "mood", "Lonely"))
+                                "firstName", "John", // 1
+                                "lastName", "Doe", // 1
+                                "status", "Single", // 2
+                                "mood", "Lonely")), // 3
 
-    );
+
+            when(version(4l)
+                    .parents(setOf(3l))
+                    .properties(mapOf(
+                                "lastName", "Foe",
+                                "status", "Just married",
+                                "mood", "Ecstatic",
+                                "married", "2013-10-12")))
+                    .mergeRevisions(setOf(4l))
+                    .expectProperties(mapOf(
+                                "firstName", "John", // 1
+                                "lastName", "Foe", // 4
+                                "status", "Just married", // 4
+                                "mood", "Ecstatic", // 4
+                                "married", "2013-10-12")), // 4
+
+            then("Merge with ancestor")
+                    .mergeRevisions(setOf(3l, 4l))
+                    .expectRevisions(setOf(4l))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Doe", // 1
+                            "status", "Just married", // 4 - "Single" from version 2 is not merged here!
+                            "mood", "Lonely", // 3
+                            "married", "2013-10-12")) // 4
+                    .expectConflicts(multimapOf(
+                            "lastName", "Foe", // 4
+                            "mood", "Ecstatic" // 4
+                            )),
+
+
+            when(version(5l)
+                    .parents(setOf(2l))
+                    .properties(mapOf(
+                                "status", "Just married")))
+                    .mergeRevisions(setOf(4l, 5l))
+                    .expectProperties(mapOf(
+                                "firstName", "John",
+                                "lastName", "Foe",
+                                "status", "Just married", // 4 and 5 - not conflicting!
+                                "mood", "Ecstatic", // 4
+                                "married", "2013-10-12")), // 4
+
+            then("Conflicting merge")
+                    .mergeRevisions(setOf(5l, 4l))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Doe", // 1
+                            "status", "Just married", // 4 and 5 - not conflicting!
+                            "mood", "Ecstatic", // 4
+                            "married", "2013-10-12")) // 4.
+                    .expectConflicts(multimapOf(
+                            "lastName", "Foe" // 4
+                            ))
+            );
     
     @Test
     public void Sequential_Updates() {
@@ -69,6 +126,14 @@ public class SimpleVersionGraphTest {
         }
     }
 
+    private static Multimap<String, String> multimapOf(String... entries) {
+        ImmutableMultimap.Builder<String, String> map = ImmutableMultimap.builder();
+        for (int i=0; i+1 < entries.length; i+=2) {
+            map.put(entries[i], entries[i+1]);
+        }
+        return map.build();
+    }
+
     @Test
     public void Bulk_Load() {
         SimpleVersionGraph versionGraph = 
@@ -81,12 +146,21 @@ public class SimpleVersionGraphTest {
     
     private void assertExpectations(SimpleVersionGraph versionGraph, VersionExpectation expectation) {
         Merge<String, String> merge = versionGraph.merge(expectation.mergeRevisions);
-        assertThat(title("revisions", expectation), merge.revisions, equalTo(expectation.expectedRevisions));
-        assertThat(title("properties", expectation), merge.getProperties(), equalTo(expectation.expectedProperties));
+        assertThat(title("revisions", versionGraph, expectation), 
+                merge.revisions, 
+                equalTo(expectation.expectedRevisions));
+        
+        assertThat(title("properties", versionGraph, expectation), 
+                merge.getProperties(), 
+                equalTo(expectation.expectedProperties));
+        
+        assertThat(title("conflicts", versionGraph, expectation), 
+                Multimaps.transformValues(merge.conflicts, merge.getVersionPropertyValue), 
+                equalTo(expectation.expectedConflicts));
     }
     
-    private static String title(String assertLabel, VersionExpectation expectation) {
-        return assertLabel + " of #" + expectation.version.revision;
+    private static String title(String assertLabel, SimpleVersionGraph graph, VersionExpectation expectation) {
+        return assertLabel + " of #" + graph.tip.getRevision() + (expectation.title != null ? ": " + expectation.title : "");
     }
 
     public static Function<VersionExpectation, SimpleVersion> getVersion = new Function<VersionExpectation, SimpleVersion>() {
@@ -97,16 +171,23 @@ public class SimpleVersionGraphTest {
     };
     
     public static class VersionExpectation {
+        public final String title;
         public final SimpleVersion version;
-        public Set<Long> mergeRevisions;
+        public Set<Long> mergeRevisions = ImmutableSet.of();
         public Map<String, String> expectedProperties;
+        public Multimap<String, String> expectedConflicts = ImmutableMultimap.of();
         public Set<Long> expectedRevisions;
+        public VersionExpectation(String title) {
+            this(null, title);
+        }
         public VersionExpectation(SimpleVersion version) {
+            this(version, null);
+        }
+        public VersionExpectation(SimpleVersion version, String title) {
             this.version = version;
+            this.title = title;
             if (version != null) {
                 this.mergeRevisions = ImmutableSet.of(version.revision);
-            } else {
-                this.mergeRevisions = ImmutableSet.of();
             }
             this.expectedRevisions = mergeRevisions;
         }
@@ -123,6 +204,10 @@ public class SimpleVersionGraphTest {
             this.expectedRevisions = expectedRevisions;
             return this;
         }
+        public VersionExpectation expectConflicts(Multimap<String, String> expectedConflicts) {
+            this.expectedConflicts = expectedConflicts;
+            return this;
+        }
     }
     
     public static SimpleVersion.Builder version(long rev) {
@@ -132,8 +217,8 @@ public class SimpleVersionGraphTest {
     public static VersionExpectation when(SimpleVersion.Builder builder) {
         return new VersionExpectation(builder.build());
     }
-    public static VersionExpectation then() {
-        return new VersionExpectation(null);
+    public static VersionExpectation then(String title) {
+        return new VersionExpectation(title);
     }
     @SafeVarargs
     public static <T> Set<T> setOf(T... revs) {

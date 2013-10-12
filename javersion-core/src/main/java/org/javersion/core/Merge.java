@@ -27,7 +27,7 @@ public class Merge<K, V> {
 
     public final Set<Long> revisions;
     
-    private final Function<VersionProperty<V>, V> getVersionPropertyValue = new Function<VersionProperty<V>, V>() {
+    public final Function<VersionProperty<V>, V> getVersionPropertyValue = new Function<VersionProperty<V>, V>() {
 
         @Override
         public V apply(VersionProperty<V> input) {
