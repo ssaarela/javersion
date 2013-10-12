@@ -28,7 +28,7 @@ public class PropertyTreeTest {
     
     private void assertPropertyTree(PropertyTree tree, int expectedChildren) {
         assertThat(tree, notNullValue());
-        assertThat(tree.getChildren().size(), equalTo(expectedChildren));
+        assertThat(tree.getChildrenMap().size(), equalTo(expectedChildren));
     }
     
     @Test

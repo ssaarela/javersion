@@ -1,5 +1,6 @@
 package org.javersion.object;
 
+import static java.util.Collections.unmodifiableCollection;
 import static java.util.Collections.unmodifiableMap;
 
 import java.util.Arrays;
@@ -24,7 +25,7 @@ public class PropertyTree {
                     nodes.put(subpath, childTree);
                 }
                 if (parentTree != null) {
-                    parentTree.children.put(subpath.node(), childTree);
+                    parentTree.children.put(subpath.getName(), childTree);
                 } 
                 parentTree = childTree;
             }
@@ -40,7 +41,15 @@ public class PropertyTree {
         this.path = path;
     }
     
-    public Map<String, PropertyTree> getChildren() {
+    public String getName() {
+        return path.getName();
+    }
+    
+    public Collection<PropertyTree> getChildren() {
+        return unmodifiableCollection(children.values());
+    }
+    
+    public Map<String, PropertyTree> getChildrenMap() {
         return unmodifiableMap(children);
     }
     

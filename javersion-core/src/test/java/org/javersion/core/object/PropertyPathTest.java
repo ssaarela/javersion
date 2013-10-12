@@ -47,6 +47,12 @@ public class PropertyPathTest {
                 equalTo("property containing \\\\[\\\\\\]\\."));
     }
     
+    @Test
+    public void Schema_Path() {
+        assertThat(children_0_name().toSchemaPath().toString(), equalTo("children[].name"));
+        assertThat(_0.toSchemaPath(), equalTo(_1.toSchemaPath()));
+    }
+    
     public static PropertyPath _0 = ROOT.index("0");
     
     public static PropertyPath _1 = ROOT.index("1");

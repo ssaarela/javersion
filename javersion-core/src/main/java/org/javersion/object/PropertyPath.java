@@ -1,5 +1,6 @@
 package org.javersion.object;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Iterator;
@@ -8,6 +9,8 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 
 public abstract class PropertyPath implements Iterable<PropertyPath> {
+
+    private static final String EMPTY_STRING = "";
     
     public static final Root ROOT = Root.ROOT;
     
@@ -43,6 +46,14 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         int otherSize = otherPath.size();
         return thisPath.size() >= otherSize && thisPath.get(otherSize - 1).equals(otherPath.get(otherSize - 1));
     }
+    
+    public PropertyPath toSchemaPath() {
+        PropertyPath schemaPath = null;
+        for (PropertyPath path : this) {
+            schemaPath = path.normalize(schemaPath);
+        }
+        return schemaPath;
+    }
 
     public abstract String toString();
     
@@ -50,17 +61,17 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
     
     public abstract int hashCode();
     
-    public abstract String node();
+    public abstract String getName();
     
+
+    abstract List<PropertyPath> getFullPath();
     
+    abstract PropertyPath normalize(PropertyPath newParent);
+
     
     private volatile List<PropertyPath> fullPath;
-    
-    abstract List<PropertyPath> getFullPath();
 
     public static final class Root extends PropertyPath {
-        
-        private static final String STR = "";
 
         private static final Root ROOT = new Root();
         
@@ -79,7 +90,7 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         
         @Override
         public String toString() {
-            return STR;
+            return EMPTY_STRING;
         }
 
         @Override
@@ -92,8 +103,14 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         }
 
         @Override
-        public String node() {
-            return STR;
+        public String getName() {
+            return EMPTY_STRING;
+        }
+
+        @Override
+        public Root normalize(PropertyPath newParent) {
+            checkArgument(newParent == null, (Object) "newParent should be null");
+            return ROOT;
         }
 
     }
@@ -152,8 +169,13 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         }
 
         @Override
-        public String node() {
+        public String getName() {
             return name;
+        }
+
+        @Override
+        public Property normalize(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new Property(newParent, name);
         }
 
     }
@@ -190,8 +212,13 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         }
 
         @Override
-        public String node() {
+        public String getName() {
             return index;
+        }
+        
+        @Override
+        public Index normalize(PropertyPath newParent) {
+            return newParent.equals(parent) && EMPTY_STRING.equals(index) ? this : new Index(newParent, EMPTY_STRING);
         }
         
     }
