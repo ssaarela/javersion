@@ -1,4 +1,4 @@
-oliver
+javersion
 ======
 
-Object Versioning
+Data Versioning Library for Java
