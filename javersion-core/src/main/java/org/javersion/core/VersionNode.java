@@ -1,13 +1,14 @@
-package org.oliverlib.core;
+package org.javersion.core;
+
+import static com.google.common.collect.Maps.newLinkedHashMap;
+import static java.util.Collections.unmodifiableMap;
 
 import java.lang.ref.SoftReference;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 
 public class VersionNode<K, V, M> {
 
@@ -68,7 +69,7 @@ public class VersionNode<K, V, M> {
     }
         
     public Map<K, VersionProperty<V>> mergeProperties() {
-        Map<K, VersionProperty<V>> properties = Maps.newLinkedHashMap();
+        Map<K, VersionProperty<V>> properties = newLinkedHashMap();
         
         for (VersionNode<K, V, M> parent : parents) {
             for (Map.Entry<K, VersionProperty<V>> entry : parent.getProperties().entrySet()) {
@@ -86,7 +87,7 @@ public class VersionNode<K, V, M> {
         
         properties.putAll(version.getVersionProperties());
         
-        return Collections.unmodifiableMap(properties);
+        return unmodifiableMap(properties);
     }
 
     public long getRevision() {

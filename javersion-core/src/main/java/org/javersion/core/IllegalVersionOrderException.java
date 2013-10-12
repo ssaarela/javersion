@@ -1,4 +1,4 @@
-package org.oliverlib.core;
+package org.javersion.core;
 
 public class IllegalVersionOrderException extends IllegalArgumentException {
 

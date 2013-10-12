@@ -1,4 +1,4 @@
-package org.oliverlib.core;
+package org.javersion.core;
 
 import java.util.Map;
 import java.util.Set;
@@ -8,7 +8,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
-public abstract class VersionGraphBase<K, V, M> {
+public abstract class VersionGraphBase<K, V, M> implements Function<Long, VersionNode<K, V, M>>{
 
     public final VersionGraph<K, V, M> parentGraph;
     
@@ -45,6 +45,11 @@ public abstract class VersionGraphBase<K, V, M> {
             throw new VersionNotFoundException(revision);
         }
         return node;
+    }
+
+    @Override
+    public VersionNode<K, V, M> apply(Long input) {
+        return input != null ? getVersionNode(input) : null;
     }
 
 }

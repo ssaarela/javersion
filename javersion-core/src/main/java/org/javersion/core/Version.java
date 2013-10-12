@@ -1,4 +1,4 @@
-package org.oliverlib.core;
+package org.javersion.core;
 
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static java.util.Collections.unmodifiableMap;
@@ -12,6 +12,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 public class Version<K, V, M> {
+    
+    public static final String DEFAULT_BRANCH = "default";
     
     private class ToVersionProperties implements Function<V, VersionProperty<V>> {
 
@@ -54,7 +56,7 @@ public class Version<K, V, M> {
         
         public final long revision;
         
-        public String branch;
+        public String branch = DEFAULT_BRANCH;
         
         public Set<Long> parentRevisions = EMPTY_PARENTS;
 
@@ -71,7 +73,7 @@ public class Version<K, V, M> {
             return this;
         }
 
-        public Builder<K, V, M> parentRevisions(Set<Long> parentRevisions) {
+        public Builder<K, V, M> parents(Set<Long> parentRevisions) {
             this.parentRevisions = parentRevisions;
             return this;
         }
@@ -85,6 +87,11 @@ public class Version<K, V, M> {
             this.metadata = metadata;
             return this;
         }
+        
+        public Version<K, V, M> build() {
+            return new Version<>(this);
+        }
+        
     }
     
 }

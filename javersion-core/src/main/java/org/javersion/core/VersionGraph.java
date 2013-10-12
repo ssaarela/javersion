@@ -1,9 +1,11 @@
-package org.oliverlib.core;
+package org.javersion.core;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 public class VersionGraph<K, V, M> extends VersionGraphBase<K, V, M> {
@@ -44,7 +46,9 @@ public class VersionGraph<K, V, M> extends VersionGraphBase<K, V, M> {
         return builder.build();
     }
     
-    
+    public Merge<K, V> merge(Set<Long> revisions) {
+        return new Merge<K, V>(Iterables.transform(revisions, this));
+    }
     
     private static class Builder<K, V, M> extends VersionGraphBase<K, V, M> {
         
@@ -55,7 +59,9 @@ public class VersionGraph<K, V, M> extends VersionGraphBase<K, V, M> {
         }
         Builder(VersionGraph<K, V, M> parentGraph) {
             super(parentGraph, Maps.<Long, VersionNode<K, V, M>>newLinkedHashMap());
-            this.tip = parentGraph.tip;
+            if (parentGraph != null) {
+                this.tip = parentGraph.tip;
+            }
         }
         
         void add(Version<K, V, M> version) {
