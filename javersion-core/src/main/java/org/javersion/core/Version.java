@@ -34,7 +34,7 @@ public class Version<K, V, M> {
 
     public final M metadata;
     
-    Version(Builder<K, V, M> builder) {
+    protected Version(Builder<K, V, M> builder) {
         this.revision = builder.revision;
         this.branch = builder.branch;
         this.parentRevisions = ImmutableSet.copyOf(builder.parentRevisions);
