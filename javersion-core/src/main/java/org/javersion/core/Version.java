@@ -15,14 +15,14 @@ public class Version<K, V, M> {
     
     public static final String DEFAULT_BRANCH = "default";
     
-    private class ToVersionProperties implements Function<V, VersionProperty<V>> {
+    private Function<V, VersionProperty<V>> toVersionProperties = new Function<V, VersionProperty<V>>() {
 
         @Override
         public VersionProperty<V> apply(V input) {
             return new VersionProperty<V>(revision, input);
         }
         
-    }
+    };
 
     public final long revision;
     
@@ -43,11 +43,7 @@ public class Version<K, V, M> {
     }
     
     public Map<K, VersionProperty<V>> getVersionProperties() {
-        return Maps.transformValues(properties, toVersionProperties());
-    }
-
-    private Function<? super V, VersionProperty<V>> toVersionProperties() {
-        return new ToVersionProperties();
+        return Maps.transformValues(properties, toVersionProperties);
     }
 
     public static class Builder<K, V, M> {

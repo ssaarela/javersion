@@ -2,6 +2,7 @@ package org.javersion.core;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Maps.filterValues;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSet;
@@ -11,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -100,7 +100,7 @@ public class Merge<K, V> {
     }
 
     public Map<K, V> getProperties() {
-        return filterValues(Maps.transformValues(mergedProperties, getVersionPropertyValue), Predicates.notNull());
+        return filterValues(Maps.transformValues(mergedProperties, getVersionPropertyValue), notNull());
     }
     
     private <M, T extends Version<K, V, M>> VersionNode<K, V, M, T> next(Iterator<VersionNode<K, V, M, T>> iter) {

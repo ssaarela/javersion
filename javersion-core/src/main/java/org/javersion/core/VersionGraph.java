@@ -33,6 +33,16 @@ public abstract class VersionGraph<K, V, M,
                       M, 
                       T extends Version<K, V, M>, 
                       G extends VersionGraph<K, V, M, T, G>> 
+              G build(Builder<K, V, M, T, G> builder) {
+        return builder.build();
+    }
+    
+
+    protected static <K, 
+                      V, 
+                      M, 
+                      T extends Version<K, V, M>, 
+                      G extends VersionGraph<K, V, M, T, G>> 
               G build(Builder<K, V, M, T, G> builder, T version) {
         builder.add(version);
         return builder.build();

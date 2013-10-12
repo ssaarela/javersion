@@ -4,6 +4,10 @@ import org.javersion.core.VersionGraph;
 
 public final class SimpleVersionGraph extends VersionGraph<String, String, String, SimpleVersion, SimpleVersionGraph> {
     
+    public static SimpleVersionGraph init() {
+        return build(new Builder());
+    }
+    
     public static SimpleVersionGraph init(SimpleVersion version) {
         return build(new Builder(), version);
     }
@@ -11,10 +15,7 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Strin
     public static SimpleVersionGraph init(Iterable<SimpleVersion> versions) {
         return build(new Builder(), versions);
     }
-
-    SimpleVersionGraph(Builder builder) {
-        super(builder);
-    }
+    
 
     @Override
     public SimpleVersionGraph commit(SimpleVersion version) {
@@ -26,6 +27,10 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Strin
         return build(new Builder(this), versions);
     }
 
+
+    SimpleVersionGraph(Builder builder) {
+        super(builder);
+    }
     
     
     public static class Builder extends VersionGraph.Builder<String, String, String, SimpleVersion, SimpleVersionGraph> {

@@ -3,6 +3,7 @@ package org.javersion.core.simple;
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
+import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 
@@ -15,9 +16,10 @@ import org.javersion.core.Merge;
 import org.junit.Test;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
@@ -108,30 +110,31 @@ public class SimpleVersionGraphTest {
                             "married", "2013-10-12")) // 4.
                     .expectConflicts(multimapOf(
                             "lastName", "Foe" // 4
-                            ))
+                            )),
+
+
+            when(version(6l)
+                    .parents(setOf(5l, 4l))
+                    .properties(mapOf(
+                                "status", "Married",
+                                "mood", null,
+                                "married", null)))
+                    .expectProperties(mapOf(
+                                "firstName", "John",
+                                "lastName", "Foe",
+                                "status", "Married")) // 4 and 5 - not conflicting!
             );
+    
     
     @Test
     public void Sequential_Updates() {
-        SimpleVersionGraph versionGraph = null;
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init();
         for (VersionExpectation expectation : EXPECTATIONS) {
             if (expectation.version != null) {
-                if (versionGraph == null) {
-                    versionGraph = SimpleVersionGraph.init(expectation.version);
-                } else {
-                    versionGraph = versionGraph.commit(expectation.version);
-                }
+                versionGraph = versionGraph.commit(expectation.version);
             }
             assertExpectations(versionGraph, expectation);
         }
-    }
-
-    private static Multimap<String, String> multimapOf(String... entries) {
-        ImmutableMultimap.Builder<String, String> map = ImmutableMultimap.builder();
-        for (int i=0; i+1 < entries.length; i+=2) {
-            map.put(entries[i], entries[i+1]);
-        }
-        return map.build();
     }
 
     @Test
@@ -220,17 +223,26 @@ public class SimpleVersionGraphTest {
     public static VersionExpectation then(String title) {
         return new VersionExpectation(title);
     }
+
     @SafeVarargs
     public static <T> Set<T> setOf(T... revs) {
         return ImmutableSet.copyOf(revs);
     }
     
     public static Map<String, String> mapOf(String... entries) {
-        ImmutableMap.Builder<String, String> map = ImmutableMap.builder();
+        Map<String, String> map = Maps.newHashMap();
         for (int i=0; i+1 < entries.length; i+=2) {
             map.put(entries[i], entries[i+1]);
         }
-        return map.build();
+        return unmodifiableMap(map);
+    }
+
+    public static Multimap<String, String> multimapOf(String... entries) {
+        Multimap<String, String> map = ArrayListMultimap.create();
+        for (int i=0; i+1 < entries.length; i+=2) {
+            map.put(entries[i], entries[i+1]);
+        }
+        return map;
     }
     
 }

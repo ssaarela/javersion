@@ -60,6 +60,11 @@ public class VersionNode<K, V, M, T extends Version<K, V, M>> {
         }
         return revisions;
     }
+
+    public long getRevision() {
+        return version.revision;
+    }
+
     
     private void collectRevisions(ImmutableSet.Builder<Long> revisions) {
         revisions.add(getRevision());
@@ -68,7 +73,7 @@ public class VersionNode<K, V, M, T extends Version<K, V, M>> {
         }
     }
         
-    public Map<K, VersionProperty<V>> mergeProperties() {
+    private Map<K, VersionProperty<V>> mergeProperties() {
         Map<K, VersionProperty<V>> properties = newLinkedHashMap();
         
         for (VersionNode<K, V, M, T> parent : parents) {
@@ -88,10 +93,6 @@ public class VersionNode<K, V, M, T extends Version<K, V, M>> {
         properties.putAll(version.getVersionProperties());
         
         return unmodifiableMap(properties);
-    }
-
-    public long getRevision() {
-        return version.revision;
     }
     
 }
