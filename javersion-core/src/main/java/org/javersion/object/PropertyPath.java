@@ -2,6 +2,7 @@ package org.javersion.object;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.Iterator;
 import java.util.List;
@@ -108,8 +109,7 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         }
 
         @Override
-        public Root normalize(PropertyPath newParent) {
-            checkArgument(newParent == null, (Object) "newParent should be null");
+        Root normalize(PropertyPath newParent) {
             return ROOT;
         }
 
@@ -139,7 +139,8 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         
         private Property(PropertyPath parent, String name) {
             super(parent);
-            this.name = checkNotNull(name, "name");
+            checkArgument(!isNullOrEmpty(name), (Object) "name should not be null or empty");
+            this.name = name;
         }
 
         @Override
@@ -174,8 +175,8 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         }
 
         @Override
-        public Property normalize(PropertyPath newParent) {
-            return newParent.equals(parent) ? this : new Property(newParent, name);
+        Property normalize(PropertyPath newParent) {
+            return parent.equals(newParent) ? this : new Property(newParent, name);
         }
 
     }
@@ -217,8 +218,8 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         }
         
         @Override
-        public Index normalize(PropertyPath newParent) {
-            return newParent.equals(parent) && EMPTY_STRING.equals(index) ? this : new Index(newParent, EMPTY_STRING);
+        Index normalize(PropertyPath newParent) {
+            return parent.equals(newParent) && EMPTY_STRING.equals(index) ? this : new Index(newParent, EMPTY_STRING);
         }
         
     }

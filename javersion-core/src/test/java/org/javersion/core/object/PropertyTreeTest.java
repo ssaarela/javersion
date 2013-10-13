@@ -44,7 +44,7 @@ public class PropertyTreeTest {
                 children_0_name(),
                 children_0(),
                 ROOT.property("name"), 
-                children().index(123));
+                children.index(123));
         
         assertPropertyTree(root, 2);
         

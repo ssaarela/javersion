@@ -42,6 +42,22 @@
           <target>1.7</target>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>0.31</version>
+        <configuration>
+          <jvmArgs>
+            <value>-XX:-UseSplitVerifier</value>
+          </jvmArgs>
+          <targetClasses>
+            <param>org.javersion.*</param>
+          </targetClasses>
+          <targetTests>
+            <param>org.javersion.*</param>
+          </targetTests>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
