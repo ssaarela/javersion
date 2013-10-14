@@ -36,9 +36,9 @@ public class Merge<K, V> {
         
     };
 
-    public <M, T extends Version<K, V, M>> Merge(Iterable<VersionNode<K, V, M, T>> versions) {
+    public <T extends Version<K, V>> Merge(Iterable<VersionNode<K, V, T>> versions) {
         checkNotNull(versions, "versions");
-        Iterator<VersionNode<K, V, M, T>> iter = versions.iterator();
+        Iterator<VersionNode<K, V, T>> iter = versions.iterator();
 
         // No versions
         if (!iter.hasNext()) {
@@ -46,7 +46,7 @@ public class Merge<K, V> {
             revisions = ImmutableSet.of();
             conflicts = ImmutableMultimap.of();
         } else {
-            VersionNode<K, V, M, T> versionNode = next(iter);
+            VersionNode<K, V, T> versionNode = next(iter);
 
             // One version
             if (!iter.hasNext()) {
@@ -103,8 +103,8 @@ public class Merge<K, V> {
         return filterValues(Maps.transformValues(mergedProperties, getVersionPropertyValue), notNull());
     }
     
-    private <M, T extends Version<K, V, M>> VersionNode<K, V, M, T> next(Iterator<VersionNode<K, V, M, T>> iter) {
-        VersionNode<K, V, M, T> versionNode = iter.next();
+    private <T extends Version<K, V>> VersionNode<K, V, T> next(Iterator<VersionNode<K, V, T>> iter) {
+        VersionNode<K, V, T> versionNode = iter.next();
         checkNotNull(versionNode, "versions should not contain nulls");
         return versionNode;
     }

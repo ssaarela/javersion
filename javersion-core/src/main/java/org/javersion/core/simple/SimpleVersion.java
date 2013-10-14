@@ -5,18 +5,14 @@ import java.util.Set;
 
 import org.javersion.core.Version;
 
-public class SimpleVersion extends Version<String, String, String> {
+public class SimpleVersion extends Version<String, String> {
 
     
     public SimpleVersion(Builder builder) {
         super(builder);
     }
-    
-    public String getComment() {
-        return metadata;
-    }
 
-    public static class Builder extends Version.Builder<String, String, String> {
+    public static class Builder extends Version.Builder<String, String> {
 
         public Builder(long revision) {
             super(revision);
@@ -37,17 +33,6 @@ public class SimpleVersion extends Version<String, String, String> {
         @Override
         public Builder properties(Map<String, String> properties) {
             super.properties(properties);
-            return this;
-        }
-
-        @Override
-        public Builder metadata(String metadata) {
-            super.metadata(metadata);
-            return this;
-        }
-
-        public Builder comment(String comment) {
-            super.metadata(comment);
             return this;
         }
 

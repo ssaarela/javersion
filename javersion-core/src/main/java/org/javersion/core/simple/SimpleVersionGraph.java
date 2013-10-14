@@ -2,7 +2,7 @@ package org.javersion.core.simple;
 
 import org.javersion.core.VersionGraph;
 
-public final class SimpleVersionGraph extends VersionGraph<String, String, String, SimpleVersion, SimpleVersionGraph> {
+public final class SimpleVersionGraph extends VersionGraph<String, String, SimpleVersion, SimpleVersionGraph> {
     
     public static SimpleVersionGraph init() {
         return build(new Builder());
@@ -33,7 +33,7 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Strin
     }
     
     
-    public static class Builder extends VersionGraph.Builder<String, String, String, SimpleVersion, SimpleVersionGraph> {
+    public static class Builder extends VersionGraph.Builder<String, String, SimpleVersion, SimpleVersionGraph> {
 
         protected Builder() {
             super(null);

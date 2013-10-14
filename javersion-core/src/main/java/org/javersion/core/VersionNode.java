@@ -10,19 +10,19 @@ import java.util.Set;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 
-public class VersionNode<K, V, M, T extends Version<K, V, M>> {
+public class VersionNode<K, V, T extends Version<K, V>> {
 
     public final T version;
     
-    public final Set<VersionNode<K, V, M, T>> parents;
+    public final Set<VersionNode<K, V, T>> parents;
     
-    public final VersionNode<K, V, M, T> previous;
+    public final VersionNode<K, V, T> previous;
     
     private volatile SoftReference<Map<K, VersionProperty<V>>> softProperties;
     
     private volatile SoftReference<Set<Long>> softRevisions;
 
-    public VersionNode(VersionNode<K, V, M, T> previous, T version, Set<VersionNode<K, V, M, T>> parents) {
+    public VersionNode(VersionNode<K, V, T> previous, T version, Set<VersionNode<K, V, T>> parents) {
         Preconditions.checkNotNull(version, "version");
         Preconditions.checkNotNull(parents, "parents");
 
@@ -68,7 +68,7 @@ public class VersionNode<K, V, M, T extends Version<K, V, M>> {
     
     private void collectRevisions(ImmutableSet.Builder<Long> revisions) {
         revisions.add(getRevision());
-        for (VersionNode<K, V, M, T> parent : parents) {
+        for (VersionNode<K, V, T> parent : parents) {
             revisions.addAll(parent.getRevisions());
         }
     }
@@ -76,7 +76,7 @@ public class VersionNode<K, V, M, T extends Version<K, V, M>> {
     private Map<K, VersionProperty<V>> mergeProperties() {
         Map<K, VersionProperty<V>> properties = newLinkedHashMap();
         
-        for (VersionNode<K, V, M, T> parent : parents) {
+        for (VersionNode<K, V, T> parent : parents) {
             for (Map.Entry<K, VersionProperty<V>> entry : parent.getProperties().entrySet()) {
                 K key = entry.getKey();
                 VersionProperty<V> nextValue = entry.getValue();

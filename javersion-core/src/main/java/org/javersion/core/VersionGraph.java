@@ -7,14 +7,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
-public abstract class VersionGraph<K, V, M, 
-                          T extends Version<K, V, M>,
-                          G extends VersionGraph<K, V, M, T, G>> 
-       extends VersionGraphBase<K, V, M, T, G> {
+public abstract class VersionGraph<K, V, 
+                          T extends Version<K, V>,
+                          G extends VersionGraph<K, V, T, G>> 
+       extends VersionGraphBase<K, V, T, G> {
 
-    public final VersionNode<K, V, M, T> tip;
+    public final VersionNode<K, V, T> tip;
     
-    protected VersionGraph(Builder<K, V, M, T, G> builder) {
+    protected VersionGraph(Builder<K, V, T, G> builder) {
         super(builder.parentGraph, Collections.unmodifiableMap(builder.versionNodes));
         this.tip = builder.tip;
     }
@@ -30,30 +30,30 @@ public abstract class VersionGraph<K, V, M,
 
     protected static <K, 
                       V, 
-                      M, 
-                      T extends Version<K, V, M>, 
-                      G extends VersionGraph<K, V, M, T, G>> 
-              G build(Builder<K, V, M, T, G> builder) {
+                      
+                      T extends Version<K, V>, 
+                      G extends VersionGraph<K, V, T, G>> 
+              G build(Builder<K, V, T, G> builder) {
         return builder.build();
     }
     
 
     protected static <K, 
                       V, 
-                      M, 
-                      T extends Version<K, V, M>, 
-                      G extends VersionGraph<K, V, M, T, G>> 
-              G build(Builder<K, V, M, T, G> builder, T version) {
+                      
+                      T extends Version<K, V>, 
+                      G extends VersionGraph<K, V, T, G>> 
+              G build(Builder<K, V, T, G> builder, T version) {
         builder.add(version);
         return builder.build();
     }
 
     protected static <K, 
                       V, 
-                      M, 
-                      T extends Version<K, V, M>, 
-                      G extends VersionGraph<K, V, M, T, G>>
-            G build(Builder<K, V, M, T, G> builder, Iterable<T> versions) {
+                      
+                      T extends Version<K, V>, 
+                      G extends VersionGraph<K, V, T, G>>
+            G build(Builder<K, V, T, G> builder, Iterable<T> versions) {
         for (T version : versions) {
             builder.add(version);
         }
@@ -62,18 +62,18 @@ public abstract class VersionGraph<K, V, M,
     
     public static abstract class Builder<K, 
                                    V, 
-                                   M, 
-                                   T extends Version<K, V, M>, 
-                                   G extends VersionGraph<K, V, M, T, G>>
-              extends VersionGraphBase<K, V, M, T, G> {
+                                   
+                                   T extends Version<K, V>, 
+                                   G extends VersionGraph<K, V, T, G>>
+              extends VersionGraphBase<K, V, T, G> {
         
-        private VersionNode<K, V, M, T> tip;
+        private VersionNode<K, V, T> tip;
         
         protected Builder() {
             this(null);
         }
         protected Builder(G parentGraph) {
-            super(parentGraph, Maps.<Long, VersionNode<K, V, M, T>>newLinkedHashMap());
+            super(parentGraph, Maps.<Long, VersionNode<K, V, T>>newLinkedHashMap());
             if (parentGraph != null) {
                 this.tip = parentGraph.tip;
             }
@@ -82,7 +82,7 @@ public abstract class VersionGraph<K, V, M,
         void add(T version) {
             Preconditions.checkNotNull(version, "version");
             
-            tip = new VersionNode<K, V, M, T>(tip, version, revisionsToNodes(version.parentRevisions));
+            tip = new VersionNode<K, V, T>(tip, version, revisionsToNodes(version.parentRevisions));
             versionNodes.put(version.revision, tip);
         }
 
