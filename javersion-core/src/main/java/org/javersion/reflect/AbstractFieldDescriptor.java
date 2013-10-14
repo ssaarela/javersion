@@ -17,12 +17,20 @@ public abstract class AbstractFieldDescriptor<F extends AbstractFieldDescriptor<
         field.setAccessible(true);
     }
     
+    public Object getStatic() {
+        return get(null);
+    }
+    
     public Object get(Object obj) {
         try {
             return field.get(obj);
         } catch (IllegalArgumentException | IllegalAccessException e) {
             throw new ReflectionException(e);
         }
+    }
+    
+    public void setStatic(Object value) {
+        set(null, value);
     }
     
     public void set(Object obj, Object value) {
@@ -33,7 +41,7 @@ public abstract class AbstractFieldDescriptor<F extends AbstractFieldDescriptor<
         }
     }
 
-    public AbstractTypeDescriptor<F, T> getType() {
+    public T getType() {
         return typeDescriptors.get(field.getGenericType());
     }
     
