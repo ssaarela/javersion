@@ -90,11 +90,12 @@ public class VersionNode<K, V, T extends Version<K, V>> implements Comparable<Ve
     private VersionDetails buildDetails() {
         Map<K, VersionProperty<V>> properties = new LinkedHashMap<>();
         Set<Long> allRevisions = Sets.newHashSet();
+        properties.putAll(version.getVersionProperties());
+        allRevisions.add(version.revision);
+        
         if (!parents.isEmpty()) {
             mergeParents(properties, allRevisions);
         }
-        properties.putAll(version.getVersionProperties());
-        allRevisions.add(version.revision);
         
         return new VersionDetails(properties, allRevisions);
     }
@@ -102,27 +103,16 @@ public class VersionNode<K, V, T extends Version<K, V>> implements Comparable<Ve
     private void mergeParents(Map<K, VersionProperty<V>> properties, Set<Long> allRevisions) {
         TreeSet<VersionNode<K, V, T>> parentStack = new TreeSet<>();
         parentStack.addAll(parents);
-        boolean firstParent = true;
         VersionNode<K, V, T> parent;
         while ((parent = parentStack.pollLast()) != null) {
-            if (firstParent) {
-                properties.putAll(parent.getProperties());
-                allRevisions.addAll(parent.getAllRevisions());
-                firstParent = false;
-            } else if (allRevisions.add(parent.getRevision())) {
-                for (Map.Entry<K, VersionProperty<V>> entry : parent.getVersionProperties().entrySet()) {
-                    K key = entry.getKey();
-                    VersionProperty<V> nextValue = entry.getValue();
-                    VersionProperty<V> prevValue = properties.get(key);
-                    
-                    if (prevValue == null) {
-                        properties.put(key, nextValue);
-                    } else if (prevValue.revision < nextValue.revision) {
-                        properties.put(key, nextValue);
-                    }
-                    parentStack.addAll(parent.parents);
+            for (Map.Entry<K, VersionProperty<V>> entry : parent.getVersionProperties().entrySet()) {
+                K key = entry.getKey();
+                if (!properties.containsKey(key)) {
+                    properties.put(key, entry.getValue());
                 }
             }
+            allRevisions.add(parent.getRevision());
+            parentStack.addAll(parent.parents);
         }
     }
     
