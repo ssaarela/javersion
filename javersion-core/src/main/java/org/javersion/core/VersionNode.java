@@ -90,11 +90,19 @@ public class VersionNode<K, V, T extends Version<K, V>> implements Comparable<Ve
     private VersionDetails buildDetails() {
         Map<K, VersionProperty<V>> properties = new LinkedHashMap<>();
         Set<Long> allRevisions = Sets.newHashSet();
-        properties.putAll(version.getVersionProperties());
         allRevisions.add(version.revision);
         
-        if (!parents.isEmpty()) {
-            mergeParents(properties, allRevisions);
+        if (parents.size() == 1) {
+            VersionNode<K, V, T> parent = parents.iterator().next();
+            properties.putAll(parent.getProperties());
+            allRevisions.addAll(parent.getAllRevisions());
+            
+            properties.putAll(version.getVersionProperties());
+        } else {
+            properties.putAll(version.getVersionProperties());
+            if (!parents.isEmpty()) {
+                mergeParents(properties, allRevisions);
+            }
         }
         
         return new VersionDetails(properties, allRevisions);
