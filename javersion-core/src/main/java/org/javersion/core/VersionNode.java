@@ -15,17 +15,30 @@
  */
 package org.javersion.core;
 
-import static com.google.common.collect.Maps.newLinkedHashMap;
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableSet;
 
 import java.lang.ref.SoftReference;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
-public class VersionNode<K, V, T extends Version<K, V>> {
+public class VersionNode<K, V, T extends Version<K, V>> implements Comparable<VersionNode<K, V, T>> {
+
+    private class VersionDetails {
+        final Set<Long> allRevisions;
+        final Map<K, VersionProperty<V>> properties;
+        public VersionDetails(Map<K, VersionProperty<V>> properties, Set<Long> allRevisions) {
+            this.properties = unmodifiableMap(properties);
+            this.allRevisions = unmodifiableSet(allRevisions);
+        }
+        
+    }
 
     public final T version;
     
@@ -33,9 +46,7 @@ public class VersionNode<K, V, T extends Version<K, V>> {
     
     public final VersionNode<K, V, T> previous;
     
-    private volatile SoftReference<Map<K, VersionProperty<V>>> softProperties;
-    
-    private volatile SoftReference<Set<Long>> softRevisions;
+    private volatile SoftReference<VersionDetails> softDetails;
 
     public VersionNode(VersionNode<K, V, T> previous, T version, Set<VersionNode<K, V, T>> parents) {
         Preconditions.checkNotNull(version, "version");
@@ -48,8 +59,7 @@ public class VersionNode<K, V, T extends Version<K, V>> {
         this.previous = previous;
         this.version = version;
         this.parents = ImmutableSet.copyOf(parents);
-        this.softProperties = softReference(null);
-        this.softRevisions = softReference(null);
+        this.softDetails = softReference(null);
     }
     
     private static <T> SoftReference<T> softReference(T value) {
@@ -57,57 +67,76 @@ public class VersionNode<K, V, T extends Version<K, V>> {
     }
     
     public Map<K, VersionProperty<V>> getProperties() {
-        Map<K, VersionProperty<V>> properties = softProperties.get();
-        if (properties == null) {
-            properties = mergeProperties();
-            softProperties = softReference(properties);
-        }
-        return properties;
+        return getDetails().properties;
     }
     
     public Set<Long> getAllRevisions() {
-        Set<Long> revisions = softRevisions.get();
-        if (revisions == null) {
-            ImmutableSet.Builder<Long> builder = ImmutableSet.builder();
-            collectRevisions(builder);
-            revisions = builder.build();
-            softRevisions = softReference(revisions);
-        }
-        return revisions;
+        return getDetails().allRevisions;
     }
 
+    private VersionDetails getDetails() {
+        VersionDetails details = softDetails.get();
+        if (details == null) {
+            details = buildDetails();
+            softDetails = softReference(details);
+        }
+        return details;
+    }
+    
     public long getRevision() {
         return version.revision;
     }
 
-    
-    private void collectRevisions(ImmutableSet.Builder<Long> revisions) {
-        revisions.add(getRevision());
-        for (VersionNode<K, V, T> parent : parents) {
-            revisions.addAll(parent.getAllRevisions());
+    private VersionDetails buildDetails() {
+        Map<K, VersionProperty<V>> properties = new LinkedHashMap<>();
+        Set<Long> allRevisions = Sets.newHashSet();
+        if (!parents.isEmpty()) {
+            mergeParents(properties, allRevisions);
         }
+        properties.putAll(version.getVersionProperties());
+        allRevisions.add(version.revision);
+        
+        return new VersionDetails(properties, allRevisions);
     }
-        
-    private Map<K, VersionProperty<V>> mergeProperties() {
-        Map<K, VersionProperty<V>> properties = newLinkedHashMap();
-        
-        for (VersionNode<K, V, T> parent : parents) {
-            for (Map.Entry<K, VersionProperty<V>> entry : parent.getProperties().entrySet()) {
-                K key = entry.getKey();
-                VersionProperty<V> nextValue = entry.getValue();
-                VersionProperty<V> prevValue = properties.get(key);
-                
-                if (prevValue == null) {
-                    properties.put(key, nextValue);
-                } else if (prevValue.revision < nextValue.revision) {
-                    properties.put(key, nextValue);
+
+    private void mergeParents(Map<K, VersionProperty<V>> properties, Set<Long> allRevisions) {
+        TreeSet<VersionNode<K, V, T>> parentStack = new TreeSet<>();
+        parentStack.addAll(parents);
+        boolean firstParent = true;
+        VersionNode<K, V, T> parent;
+        while ((parent = parentStack.pollLast()) != null) {
+            if (firstParent) {
+                properties.putAll(parent.getProperties());
+                allRevisions.addAll(parent.getAllRevisions());
+                firstParent = false;
+            } else if (allRevisions.add(parent.getRevision())) {
+                for (Map.Entry<K, VersionProperty<V>> entry : parent.getVersionProperties().entrySet()) {
+                    K key = entry.getKey();
+                    VersionProperty<V> nextValue = entry.getValue();
+                    VersionProperty<V> prevValue = properties.get(key);
+                    
+                    if (prevValue == null) {
+                        properties.put(key, nextValue);
+                    } else if (prevValue.revision < nextValue.revision) {
+                        properties.put(key, nextValue);
+                    }
+                    parentStack.addAll(parent.parents);
                 }
             }
         }
-        
-        properties.putAll(version.getVersionProperties());
-        
-        return unmodifiableMap(properties);
     }
     
+    public Map<K, VersionProperty<V>> getVersionProperties() {
+        return version.getVersionProperties();
+    }
+
+    @Override
+    public int compareTo(VersionNode<K, V, T> o) {
+        return Long.compare(getRevision(), o.getRevision());
+    }
+    
+    @Override
+    public String toString() {
+        return version.toString();
+    }
 }
