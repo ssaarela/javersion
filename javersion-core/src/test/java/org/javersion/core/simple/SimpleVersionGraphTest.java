@@ -40,6 +40,9 @@ import com.google.common.collect.Multimaps;
 
 public class SimpleVersionGraphTest {
     
+    private static Set<Long> EMPTY_REVISIONS = setOf();
+    
+    private static Map<String, String> EMPTY_PROPERTIES = mapOf();
     
     /**
      * <pre>
@@ -65,6 +68,10 @@ public class SimpleVersionGraphTest {
                             "firstName", "John",
                             "lastName", "Doe")),
 
+            then("Empty merge")
+                .mergeRevisions(EMPTY_REVISIONS)
+                .expectProperties(EMPTY_PROPERTIES),
+                
 
             when(version(2l)
                     .parents(setOf(1l))
@@ -159,11 +166,13 @@ public class SimpleVersionGraphTest {
     @Test
     public void Sequential_Updates() {
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init();
+        long revision = -1;
         for (VersionExpectation expectation : EXPECTATIONS) {
             if (expectation.version != null) {
+                revision = expectation.version.revision;
                 versionGraph = versionGraph.commit(expectation.version);
             }
-            assertExpectations(versionGraph, expectation);
+            assertExpectations(versionGraph, revision, expectation);
         }
     }
 
@@ -171,29 +180,32 @@ public class SimpleVersionGraphTest {
     public void Bulk_Load() {
         SimpleVersionGraph versionGraph = 
                 SimpleVersionGraph.init(filter(transform(EXPECTATIONS, getVersion), notNull()));
-        
+        long revision = -1;
         for (VersionExpectation expectation : EXPECTATIONS) {
-            assertExpectations(versionGraph, expectation);
+            if (expectation.version != null) {
+                revision = expectation.version.revision;
+            }
+            assertExpectations(versionGraph, revision, expectation);
         }
     }
     
-    private void assertExpectations(SimpleVersionGraph versionGraph, VersionExpectation expectation) {
+    private void assertExpectations(SimpleVersionGraph versionGraph, long revision, VersionExpectation expectation) {
         Merge<String, String> merge = versionGraph.merge(expectation.mergeRevisions);
-        assertThat(title("revisions", versionGraph, expectation), 
+        assertThat(title("revisions", revision, expectation), 
                 merge.revisions, 
                 equalTo(expectation.expectedRevisions));
         
-        assertThat(title("properties", versionGraph, expectation), 
+        assertThat(title("properties", revision, expectation), 
                 merge.getProperties(), 
                 equalTo(expectation.expectedProperties));
         
-        assertThat(title("conflicts", versionGraph, expectation), 
+        assertThat(title("conflicts", revision, expectation), 
                 Multimaps.transformValues(merge.conflicts, merge.getVersionPropertyValue), 
                 equalTo(expectation.expectedConflicts));
     }
     
-    private static String title(String assertLabel, SimpleVersionGraph graph, VersionExpectation expectation) {
-        return assertLabel + " of #" + graph.tip.getRevision() + (expectation.title != null ? ": " + expectation.title : "");
+    private static String title(String assertLabel, long revision, VersionExpectation expectation) {
+        return assertLabel + " of #" + revision + (expectation.title != null ? ": " + expectation.title : "");
     }
 
     public static Function<VersionExpectation, SimpleVersion> getVersion = new Function<VersionExpectation, SimpleVersion>() {
