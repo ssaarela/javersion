@@ -11,4 +11,7 @@ public class VersionProperty<V> {
         this.value = value;
     }
     
+    public String toString() {
+        return String.valueOf(value) + "#" + revision;
+    }
 }

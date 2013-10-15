@@ -79,10 +79,10 @@ public abstract class VersionGraph<K, V,
             }
         }
         
-        void add(T version) {
+        final void add(T version) {
             Preconditions.checkNotNull(version, "version");
-            
-            tip = new VersionNode<K, V, T>(tip, version, revisionsToNodes(version.parentRevisions));
+            Set<VersionNode<K, V, T>> parentsDescending = revisionsToNodes(version.parentRevisions);
+            tip = new VersionNode<K, V, T>(tip, version, parentsDescending);
             versionNodes.put(version.revision, tip);
         }
 

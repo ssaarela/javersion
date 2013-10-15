@@ -60,7 +60,7 @@ public class Merge<K, V> {
                 Set<Long> heads = Sets.newHashSet(versionNode.getRevision());
                 ImmutableMultimap.Builder<K, VersionProperty<V>> conflicts = ImmutableMultimap.builder();
 
-                Set<Long> mergedRevisions = Sets.newHashSet(versionNode.getRevisions());
+                Set<Long> mergedRevisions = Sets.newHashSet(versionNode.getAllRevisions());
                 do {
                     versionNode = next(iter);
 
@@ -84,9 +84,9 @@ public class Merge<K, V> {
                                 }
                             }
                         }
-                        mergedRevisions.addAll(versionNode.getRevisions());
+                        mergedRevisions.addAll(versionNode.getAllRevisions());
 
-                        heads.removeAll(versionNode.getRevisions());
+                        heads.removeAll(versionNode.getAllRevisions());
                         heads.add(versionNode.getRevision());
                     }
                 } while (iter.hasNext());

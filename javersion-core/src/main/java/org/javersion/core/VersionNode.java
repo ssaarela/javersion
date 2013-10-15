@@ -50,7 +50,7 @@ public class VersionNode<K, V, T extends Version<K, V>> {
         return properties;
     }
     
-    public Set<Long> getRevisions() {
+    public Set<Long> getAllRevisions() {
         Set<Long> revisions = softRevisions.get();
         if (revisions == null) {
             ImmutableSet.Builder<Long> builder = ImmutableSet.builder();
@@ -69,7 +69,7 @@ public class VersionNode<K, V, T extends Version<K, V>> {
     private void collectRevisions(ImmutableSet.Builder<Long> revisions) {
         revisions.add(getRevision());
         for (VersionNode<K, V, T> parent : parents) {
-            revisions.addAll(parent.getRevisions());
+            revisions.addAll(parent.getAllRevisions());
         }
     }
         

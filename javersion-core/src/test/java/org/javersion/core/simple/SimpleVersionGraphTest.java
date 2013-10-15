@@ -26,6 +26,21 @@ import com.google.common.collect.Multimaps;
 public class SimpleVersionGraphTest {
     
     
+    /**
+     * <pre>
+     * 1    firstName: "John", lastName: "Doe"
+     * | \   
+     * 2  |  status: "Single"
+     * |  |
+     * |  3  mood: "Lonely"
+     * |  |
+     * |  4  lastName: "Foe", status: "Just married", mood: "Ecstatic", married: "2013-10-12" 
+     * |  |
+     * 5 /   status: "Just married"
+     * |/
+     * 6    status: "Married", mood: null, married: null
+     * </pre>
+     */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
             when(version(1l)
                 .properties(mapOf(

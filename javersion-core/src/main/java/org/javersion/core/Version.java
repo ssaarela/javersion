@@ -42,6 +42,10 @@ public class Version<K, V> {
     public Map<K, VersionProperty<V>> getVersionProperties() {
         return Maps.transformValues(properties, toVersionProperties);
     }
+    
+    public String toString() {
+        return "#" + revision;
+    }
 
     public static class Builder<K, V> {
 
