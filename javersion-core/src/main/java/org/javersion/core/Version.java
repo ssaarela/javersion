@@ -21,6 +21,8 @@ import static java.util.Collections.unmodifiableMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.reflect.Check;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -49,7 +51,7 @@ public class Version<K, V> {
     
     protected Version(Builder<K, V> builder) {
         this.revision = builder.revision;
-        this.branch = builder.branch;
+        this.branch = Check.notNull(builder.branch, "branch");
         this.parentRevisions = ImmutableSet.copyOf(builder.parentRevisions);
         this.properties = unmodifiableMap(newLinkedHashMap(builder.properties));
     }

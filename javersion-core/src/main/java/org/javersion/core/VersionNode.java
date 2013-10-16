@@ -24,11 +24,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.google.common.base.Preconditions;
+import org.javersion.reflect.Check;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-public class VersionNode<K, V, T extends Version<K, V>> implements Comparable<VersionNode<K, V, T>> {
+public final class VersionNode<K, V, T extends Version<K, V>> implements Comparable<VersionNode<K, V, T>> {
 
     private class VersionDetails {
         final Set<Long> allRevisions;
@@ -49,8 +50,8 @@ public class VersionNode<K, V, T extends Version<K, V>> implements Comparable<Ve
     private volatile SoftReference<VersionDetails> softDetails;
 
     public VersionNode(VersionNode<K, V, T> previous, T version, Set<VersionNode<K, V, T>> parents) {
-        Preconditions.checkNotNull(version, "version");
-        Preconditions.checkNotNull(parents, "parents");
+        Check.notNull(version, "version");
+        Check.notNull(parents, "parents");
 
         if (previous != null && version.revision <= previous.getRevision()) {
             throw new IllegalVersionOrderException(previous.getRevision(), version.revision);

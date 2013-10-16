@@ -15,12 +15,12 @@
  */
 package org.javersion.object;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.Iterator;
 import java.util.List;
+
+import org.javersion.reflect.Check;
 
 import com.google.common.collect.ImmutableList;
 
@@ -154,7 +154,7 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         
         private Property(PropertyPath parent, String name) {
             super(parent);
-            checkArgument(!isNullOrEmpty(name), (Object) "name should not be null or empty");
+            Check.notNullOrEmpty(name, "name");
             this.name = name;
         }
 
@@ -202,7 +202,7 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         
         private Index(PropertyPath parent, String index) {
             super(parent);
-            this.index = checkNotNull(index, "index");
+            this.index = Check.notNull(index, "index");
         }
 
         @Override

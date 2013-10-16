@@ -15,8 +15,6 @@
  */
 package org.javersion.reflect;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.lang.reflect.Field;
 
 public abstract class AbstractFieldDescriptor<F extends AbstractFieldDescriptor<F, T>, T extends AbstractTypeDescriptor<F, T>> 
@@ -27,8 +25,8 @@ public abstract class AbstractFieldDescriptor<F extends AbstractFieldDescriptor<
     private final Field field;
 
     public AbstractFieldDescriptor(AbstractTypeDescriptors<F, T> typeDescriptors, Field field) {
-        this.typeDescriptors = checkNotNull(typeDescriptors, "typeDescriptors");
-        this.field = checkNotNull(field, "field");
+        this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
+        this.field = Check.notNull(field, "field");
         field.setAccessible(true);
     }
     
@@ -63,6 +61,22 @@ public abstract class AbstractFieldDescriptor<F extends AbstractFieldDescriptor<
     @Override
     public Field getElement() {
         return field;
+    }
+    
+    public final boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof AbstractFieldDescriptor) {
+            AbstractFieldDescriptor<?, ?> other = (AbstractFieldDescriptor<?, ?>) obj;
+            return this.typeDescriptors.equals(other.typeDescriptors)
+                    && this.field.equals(other.field);
+        } else {
+            return false;
+        }
+    }
+    
+    public final int hashCode() {
+        return 31 * typeDescriptors.hashCode() + field.hashCode();
     }
     
 }

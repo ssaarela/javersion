@@ -26,15 +26,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import org.javersion.reflect.Check;
 
-public class Merge<K, V> {
+import com.google.common.base.Function;
+import com.google.common.collect.*;
+
+public final class Merge<K, V> {
 
     public final Map<K, VersionProperty<V>> mergedProperties;
 
@@ -52,7 +49,7 @@ public class Merge<K, V> {
     };
 
     public <T extends Version<K, V>> Merge(Iterable<VersionNode<K, V, T>> versions) {
-        checkNotNull(versions, "versions");
+        Check.notNull(versions, "versions");
         Iterator<VersionNode<K, V, T>> iter = versions.iterator();
 
         // No versions

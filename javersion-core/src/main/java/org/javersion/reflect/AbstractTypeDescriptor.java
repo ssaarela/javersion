@@ -53,8 +53,8 @@ public abstract class AbstractTypeDescriptor<F extends AbstractFieldDescriptor<F
     private volatile Set<Class<?>> classes;
 
     public AbstractTypeDescriptor(AbstractTypeDescriptors<F, T> typeDescriptors, TypeToken<?> typeToken) {
-        this.typeDescriptors = typeDescriptors;
-        this.typeToken = checkNotNull(typeToken);
+        this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
+        this.typeToken = Check.notNull(typeToken, "typeToken");
     }
 
     public Map<String, F> getFields() {
@@ -145,6 +145,22 @@ public abstract class AbstractTypeDescriptor<F extends AbstractFieldDescriptor<F
     
     private static LinkedHashSet<Class<?>> newLinkedHashSet() {
         return Sets.<Class<?>>newLinkedHashSet();
+    }
+    
+    public final boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof AbstractTypeDescriptor) {
+            AbstractTypeDescriptor<?, ?> other = (AbstractTypeDescriptor<?, ?>) obj;
+            return this.typeDescriptors.equals(other.typeDescriptors)
+                    && this.typeToken.equals(other.typeToken);
+        } else {
+            return false;
+        }
+    }
+    
+    public final int hashCode() {
+        return 31 * typeDescriptors.hashCode() + typeToken.hashCode();
     }
 
 }

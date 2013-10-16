@@ -18,8 +18,9 @@ package org.javersion.core;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.reflect.Check;
+
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
@@ -46,7 +47,7 @@ public abstract class VersionGraphBase<K, V,
     
     VersionGraphBase(G parentGraph, Map<Long, VersionNode<K, V, T>> versionNodes) {
         this.parentGraph = parentGraph;
-        this.versionNodes = Preconditions.checkNotNull(versionNodes, "versionNodes");
+        this.versionNodes = Check.notNull(versionNodes, "versionNodes");
     }
     
     Set<VersionNode<K, V, T>> revisionsToNodes(Iterable<Long> revisions) {

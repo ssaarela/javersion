@@ -15,8 +15,6 @@
  */
 package org.javersion.reflect;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -47,7 +45,7 @@ public abstract class AbstractTypeDescriptors<F extends AbstractFieldDescriptor<
     }
     
     public AbstractTypeDescriptors(Predicate<? super Field> fieldFilter) {
-        this.fieldFilter = checkNotNull(fieldFilter);
+        this.fieldFilter = Check.notNull(fieldFilter, "fieldFilter");
     }
     
     

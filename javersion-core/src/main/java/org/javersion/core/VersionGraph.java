@@ -18,7 +18,8 @@ package org.javersion.core;
 import java.util.Collections;
 import java.util.Set;
 
-import com.google.common.base.Preconditions;
+import org.javersion.reflect.Check;
+
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
@@ -95,7 +96,7 @@ public abstract class VersionGraph<K, V,
         }
         
         final void add(T version) {
-            Preconditions.checkNotNull(version, "version");
+            Check.notNull(version, "version");
             Set<VersionNode<K, V, T>> parentsDescending = revisionsToNodes(version.parentRevisions);
             tip = new VersionNode<K, V, T>(tip, version, parentsDescending);
             versionNodes.put(version.revision, tip);

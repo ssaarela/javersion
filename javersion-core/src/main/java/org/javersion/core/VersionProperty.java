@@ -15,7 +15,7 @@
  */
 package org.javersion.core;
 
-public class VersionProperty<V> {
+public final class VersionProperty<V> {
 
     public final long revision;
     
