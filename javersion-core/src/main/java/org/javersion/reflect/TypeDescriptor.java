@@ -17,10 +17,19 @@ package org.javersion.reflect;
 
 import com.google.common.reflect.TypeToken;
 
-public class TypeDescriptor extends AbstractTypeDescriptor<FieldDescriptor, TypeDescriptor>{
+public class TypeDescriptor extends AbstractTypeDescriptor<
+            FieldDescriptor, 
+            TypeDescriptor, 
+            TypeDescriptors>{
 
-    public TypeDescriptor(AbstractTypeDescriptors<FieldDescriptor, TypeDescriptor> typeDescriptors, TypeToken<?> typeToken) {
+    public TypeDescriptor(TypeDescriptors typeDescriptors, TypeToken<?> typeToken) {
         super(typeDescriptors, typeToken);
+    }
+
+    public boolean isPrimitiveOrWrapper() {
+        Class<?> clazz = getRawType();
+        // TODO: Wrappers!
+        return clazz.isPrimitive(); 
     }
     
 }

@@ -19,11 +19,19 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.util.List;
 
+import org.javersion.util.Check;
+
 import com.google.common.collect.ImmutableList;
 
-public abstract class AbstractElement {
+public abstract class ElementDescriptor<
+        F extends AbstractFieldDescriptor<F, T, Ts>, 
+        T extends AbstractTypeDescriptor<F, T, Ts>,
+        Ts extends AbstractTypeDescriptors<F, T, Ts>> {
 
-    public AbstractElement() {
+    protected final Ts typeDescriptors;
+
+    public ElementDescriptor(Ts typeDescriptors) {
+        this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
     }
 
     public List<Annotation> getAnnotations() {
@@ -38,6 +46,14 @@ public abstract class AbstractElement {
         return getElement().isAnnotationPresent(annotationClass);
     }
 
+    public Ts getTypeDescriptors() {
+        return typeDescriptors;
+    }
+    
     public abstract AnnotatedElement getElement();
+
+    public abstract boolean equals(Object obj);
+    
+    public abstract int hashCode();
 
 }

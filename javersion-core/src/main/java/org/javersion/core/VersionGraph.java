@@ -18,7 +18,7 @@ package org.javersion.core;
 import java.util.Collections;
 import java.util.Set;
 
-import org.javersion.reflect.Check;
+import org.javersion.util.Check;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;

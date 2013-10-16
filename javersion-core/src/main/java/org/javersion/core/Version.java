@@ -21,7 +21,7 @@ import static java.util.Collections.unmodifiableMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.javersion.reflect.Check;
+import org.javersion.util.Check;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;

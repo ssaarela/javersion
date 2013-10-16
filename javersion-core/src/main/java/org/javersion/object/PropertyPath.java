@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.Iterator;
 import java.util.List;
 
-import org.javersion.reflect.Check;
+import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
 

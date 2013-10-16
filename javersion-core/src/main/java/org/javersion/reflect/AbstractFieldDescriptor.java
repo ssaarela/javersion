@@ -17,15 +17,18 @@ package org.javersion.reflect;
 
 import java.lang.reflect.Field;
 
-public abstract class AbstractFieldDescriptor<F extends AbstractFieldDescriptor<F, T>, T extends AbstractTypeDescriptor<F, T>> 
-        extends AbstractElement {
-    
-    private final AbstractTypeDescriptors<F, T> typeDescriptors;
+import org.javersion.util.Check;
+
+public abstract class AbstractFieldDescriptor<
+            F extends AbstractFieldDescriptor<F, T, Ts>, 
+            T extends AbstractTypeDescriptor<F, T, Ts>,
+            Ts extends AbstractTypeDescriptors<F, T, Ts>> 
+        extends ElementDescriptor<F, T, Ts> {
     
     private final Field field;
 
-    public AbstractFieldDescriptor(AbstractTypeDescriptors<F, T> typeDescriptors, Field field) {
-        this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
+    public AbstractFieldDescriptor(Ts typeDescriptors, Field field) {
+        super(typeDescriptors);
         this.field = Check.notNull(field, "field");
         field.setAccessible(true);
     }
@@ -67,12 +70,21 @@ public abstract class AbstractFieldDescriptor<F extends AbstractFieldDescriptor<
         if (obj == this) {
             return true;
         } else if (obj instanceof AbstractFieldDescriptor) {
-            AbstractFieldDescriptor<?, ?> other = (AbstractFieldDescriptor<?, ?>) obj;
+            @SuppressWarnings("unchecked")
+            F other = (F) obj;
             return this.typeDescriptors.equals(other.typeDescriptors)
-                    && this.field.equals(other.field);
+                    && getField().equals(other.getField());
         } else {
             return false;
         }
+    }
+    
+    public Field getField() {
+        return field;
+    }
+    
+    public String getName() {
+        return field.getName();
     }
     
     public final int hashCode() {

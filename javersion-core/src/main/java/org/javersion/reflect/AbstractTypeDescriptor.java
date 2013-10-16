@@ -15,7 +15,6 @@
  */
 package org.javersion.reflect;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.not;
 import static java.util.Collections.unmodifiableSet;
 
@@ -25,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.util.Check;
+
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -32,8 +33,11 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 
-public abstract class AbstractTypeDescriptor<F extends AbstractFieldDescriptor<F, T>, T extends AbstractTypeDescriptor<F, T>> 
-        extends AbstractElement {
+public abstract class AbstractTypeDescriptor<
+            F extends AbstractFieldDescriptor<F, T, Ts>, 
+            T extends AbstractTypeDescriptor<F, T, Ts>,
+            Ts extends AbstractTypeDescriptors<F, T, Ts>> 
+        extends ElementDescriptor<F, T, Ts> {
     
     private static final Predicate<Class<?>> isInterface = new Predicate<Class<?>>() {
 
@@ -43,8 +47,6 @@ public abstract class AbstractTypeDescriptor<F extends AbstractFieldDescriptor<F
         }
 
     };
-
-    protected final AbstractTypeDescriptors<F, T> typeDescriptors;
     
     protected final TypeToken<?> typeToken;
     
@@ -52,8 +54,8 @@ public abstract class AbstractTypeDescriptor<F extends AbstractFieldDescriptor<F
 
     private volatile Set<Class<?>> classes;
 
-    public AbstractTypeDescriptor(AbstractTypeDescriptors<F, T> typeDescriptors, TypeToken<?> typeToken) {
-        this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
+    public AbstractTypeDescriptor(Ts typeDescriptors, TypeToken<?> typeToken) {
+        super(typeDescriptors);
         this.typeToken = Check.notNull(typeToken, "typeToken");
     }
 
@@ -151,8 +153,9 @@ public abstract class AbstractTypeDescriptor<F extends AbstractFieldDescriptor<F
         if (obj == this) {
             return true;
         } else if (obj instanceof AbstractTypeDescriptor) {
-            AbstractTypeDescriptor<?, ?> other = (AbstractTypeDescriptor<?, ?>) obj;
-            return this.typeDescriptors.equals(other.typeDescriptors)
+            @SuppressWarnings("unchecked")
+            T other = (T) obj;
+            return getTypeDescriptors().equals(other.getTypeDescriptors())
                     && this.typeToken.equals(other.typeToken);
         } else {
             return false;
@@ -163,4 +166,7 @@ public abstract class AbstractTypeDescriptor<F extends AbstractFieldDescriptor<F
         return 31 * typeDescriptors.hashCode() + typeToken.hashCode();
     }
 
+    public String toString() {
+        return typeToken.toString();
+    }
 }

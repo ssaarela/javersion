@@ -20,7 +20,7 @@ import java.lang.reflect.Field;
 import com.google.common.base.Predicate;
 import com.google.common.reflect.TypeToken;
 
-public class TypeDescriptors extends AbstractTypeDescriptors<FieldDescriptor, TypeDescriptor> {
+public class TypeDescriptors extends AbstractTypeDescriptors<FieldDescriptor, TypeDescriptor, TypeDescriptors> {
 
     public TypeDescriptors() {
         super();

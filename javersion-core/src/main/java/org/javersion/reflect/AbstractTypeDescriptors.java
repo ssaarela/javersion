@@ -21,10 +21,15 @@ import java.lang.reflect.Type;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.javersion.util.Check;
+
 import com.google.common.base.Predicate;
 import com.google.common.reflect.TypeToken;
 
-public abstract class AbstractTypeDescriptors<F extends AbstractFieldDescriptor<F, T>, T extends AbstractTypeDescriptor<F, T>> {
+public abstract class AbstractTypeDescriptors<
+            F extends AbstractFieldDescriptor<F, T, Ts>, 
+            T extends AbstractTypeDescriptor<F, T, Ts>,
+            Ts extends AbstractTypeDescriptors<F, T, Ts>> {
 
     public static final Predicate<Field> NON_STATIC_OR_SYNTETHIC_FIELD = new Predicate<Field>() {
         @Override
