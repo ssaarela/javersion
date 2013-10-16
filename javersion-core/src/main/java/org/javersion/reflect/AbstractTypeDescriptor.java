@@ -27,10 +27,7 @@ import java.util.Set;
 import org.javersion.util.Check;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import com.google.common.reflect.TypeToken;
 
 public abstract class AbstractTypeDescriptor<
@@ -38,6 +35,22 @@ public abstract class AbstractTypeDescriptor<
             T extends AbstractTypeDescriptor<F, T, Ts>,
             Ts extends AbstractTypeDescriptors<F, T, Ts>> 
         extends ElementDescriptor<F, T, Ts> {
+    
+    public static final BiMap<Class<?>, Class<?>> WRAPPER_TO_PRIMITIVE;
+    
+    static {
+        ImmutableBiMap.Builder<Class<?>, Class<?>> primitives = ImmutableBiMap.builder();
+        primitives.put(Byte.class, Byte.TYPE);
+        primitives.put(Short.class, Short.TYPE);
+        primitives.put(Integer.class, Integer.TYPE);
+        primitives.put(Long.class, Long.TYPE);
+        primitives.put(Float.class, Float.TYPE);
+        primitives.put(Double.class, Double.TYPE);
+        primitives.put(Boolean.class, Boolean.TYPE);
+        primitives.put(Character.class, Character.TYPE);
+        primitives.put(void.class, Void.TYPE);
+        WRAPPER_TO_PRIMITIVE = primitives.build();
+    }
     
     private static final Predicate<Class<?>> isInterface = new Predicate<Class<?>>() {
 
@@ -143,6 +156,11 @@ public abstract class AbstractTypeDescriptor<
         }
         
         return classes;
+    }
+
+    public boolean isPrimitiveOrWrapper() {
+        Class<?> clazz = getRawType();
+        return WRAPPER_TO_PRIMITIVE.containsKey(clazz) || WRAPPER_TO_PRIMITIVE.containsValue(clazz);
     }
     
     private static LinkedHashSet<Class<?>> newLinkedHashSet() {

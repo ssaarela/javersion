@@ -21,15 +21,9 @@ public class TypeDescriptor extends AbstractTypeDescriptor<
             FieldDescriptor, 
             TypeDescriptor, 
             TypeDescriptors>{
-
+    
     public TypeDescriptor(TypeDescriptors typeDescriptors, TypeToken<?> typeToken) {
         super(typeDescriptors, typeToken);
-    }
-
-    public boolean isPrimitiveOrWrapper() {
-        Class<?> clazz = getRawType();
-        // TODO: Wrappers!
-        return clazz.isPrimitive(); 
     }
     
 }

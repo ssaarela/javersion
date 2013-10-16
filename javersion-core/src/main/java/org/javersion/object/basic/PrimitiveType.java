@@ -11,12 +11,13 @@ import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
 
+import com.google.common.collect.ImmutableMap;
+
 public class PrimitiveType implements ValueType<Object> {
 
     @Override
     public void serialize(SerializationContext<Object> context) {
-        // TODO Auto-generated method stub
-        
+        context.serialize(context.getCurrentObject());
     }
 
     @Override
@@ -24,8 +25,7 @@ public class PrimitiveType implements ValueType<Object> {
             ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent,
             TypeDescriptor typeDescriptor,
             ObjectDescriptors<Object> objectDescriptors) {
-        // TODO Auto-generated method stub
-        return null;
+        return ImmutableMap.of();
     }
 
     @Override
