@@ -18,12 +18,12 @@ package org.javersion.reflect;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 
 import org.javersion.util.Check;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 public abstract class AbstractTypeDescriptors<
@@ -39,8 +39,7 @@ public abstract class AbstractTypeDescriptors<
         }
     };
     
-    
-    private final ConcurrentMap<TypeToken<?>, T> cache = new ConcurrentHashMap<>();
+    private final Map<TypeToken<?>, T> cache = Maps.newHashMap();
 
     protected final Predicate<? super Field> fieldFilter;
     
@@ -63,12 +62,14 @@ public abstract class AbstractTypeDescriptors<
     }
     
     public T get(TypeToken<?> typeToken) {
-        T descriptor = cache.get(typeToken);
-        if (descriptor == null) {
-            descriptor = newTypeDescriptor(typeToken);
-            cache.putIfAbsent(typeToken, descriptor);
+        synchronized (cache) {
+            T descriptor = cache.get(typeToken);
+            if (descriptor == null) {
+                descriptor = newTypeDescriptor(typeToken);
+                cache.put(typeToken, descriptor);
+            }
+            return descriptor;
         }
-        return descriptor;
     }
 
     protected abstract F newFieldDescriptor(Field field);

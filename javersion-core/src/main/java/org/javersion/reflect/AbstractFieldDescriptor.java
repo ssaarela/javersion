@@ -66,6 +66,10 @@ public abstract class AbstractFieldDescriptor<
         return field;
     }
     
+    public final int hashCode() {
+        return 31 * typeDescriptors.hashCode() + field.hashCode();
+    }
+    
     public final boolean equals(Object obj) {
         if (obj == this) {
             return true;
@@ -87,8 +91,8 @@ public abstract class AbstractFieldDescriptor<
         return field.getName();
     }
     
-    public final int hashCode() {
-        return 31 * typeDescriptors.hashCode() + field.hashCode();
+    public String toString() {
+        return field.toGenericString();
     }
     
 }

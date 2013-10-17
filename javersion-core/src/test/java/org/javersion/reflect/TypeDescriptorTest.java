@@ -23,12 +23,7 @@ import static org.junit.Assert.assertThat;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -45,6 +40,9 @@ public class TypeDescriptorTest {
         }
     });
 
+    public static class Cycle {
+        Cycle cycle;
+    }
     
     private final Class<?>[] expectedSuperClasses = {
             LinkedHashMap.class,
@@ -79,6 +77,21 @@ public class TypeDescriptorTest {
         assertThat(type.getFields().keySet(), equalTo((Set<String>) newHashSet(
                 "elementData", "size",
                 "modCount")));
+    }
+    
+    @Test
+    public void Recursive_Identity() {
+        TypeDescriptor type = TYPES.get(Cycle.class);
+        FieldDescriptor field = type.getField("cycle");
+        
+        TypeDescriptor fieldType = field.getType();
+        FieldDescriptor fieldTypeField = fieldType.getField("cycle");
+        
+        assertThat(type.hashCode(), equalTo(fieldType.hashCode()));
+        assertThat(field.hashCode(), equalTo(fieldTypeField.hashCode()));
+        
+        assertThat(type, equalTo(fieldType));
+        assertThat(field, equalTo(fieldTypeField));
     }
     
     @Test(expected=RuntimeException.class)

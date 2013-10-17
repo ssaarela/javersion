@@ -26,7 +26,10 @@ public class PrimitivesType implements ValueType<Object> {
 
     @Override
     public void serialize(SerializationContext<Object> context) {
-        context.serialize(context.getCurrentObject());
+        context.put(context.getCurrentObject());
     }
 
+    public String toString() {
+        return getClass().getSimpleName();
+    }
 }

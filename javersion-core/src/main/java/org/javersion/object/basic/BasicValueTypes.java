@@ -20,9 +20,15 @@ public class BasicValueTypes extends ValueTypes<Object> {
                 protected Object toValue(Object object) {
                     return object.getClass();
                 }
-            }
+            },
+            new PrimitivesType()
     );
 
+    @SafeVarargs
+    public BasicValueTypes(ValueType<Object>... types) {
+        this(ImmutableList.copyOf(types));
+    }
+    
     public BasicValueTypes(Iterable<ValueType<Object>> types) {
         super(Iterables.concat(types, DEFAULTS));
     }

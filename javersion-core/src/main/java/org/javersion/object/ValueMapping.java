@@ -11,11 +11,10 @@ public final class ValueMapping<V> {
     
     public final ValueType<V> valueType;
     
-    public final Map<String, ValueMapping<V>> children;
+    public Map<String, ValueMapping<V>> children;
 
-    public ValueMapping(ValueType<V> valueType, Map<String, ValueMapping<V>> children) {
+    public ValueMapping(ValueType<V> valueType) {
         this.valueType = Check.notNull(valueType, "valueType");
-        this.children = ImmutableMap.copyOf(children);
     }
 
     public ValueMapping<V> getChild(String name) {
@@ -30,8 +29,25 @@ public final class ValueMapping<V> {
         while (iter.hasNext()) {
             parent = iter.next();
             result = result.getChild(parent.getName());
+            if (result == null) {
+                throw new IllegalArgumentException("Path not found: " + parent);
+            }
         }
         return result;
+    }
+    
+    public Map<String, ValueMapping<V>> getChildren() {
+        if (children == null) {
+            throw new IllegalStateException("ValueMapping build in proggress");
+        }
+        return children;
+    }
+    
+    void lock(Map<String, ValueMapping<V>> children) {
+        if (this.children != null) {
+            throw new IllegalStateException("ValueMapping locked already");
+        }
+        this.children = ImmutableMap.copyOf(children);
     }
     
 }

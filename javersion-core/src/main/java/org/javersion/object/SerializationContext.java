@@ -1,5 +1,7 @@
 package org.javersion.object;
 
+import static java.util.Collections.unmodifiableMap;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
@@ -17,6 +19,7 @@ public abstract class SerializationContext<V> {
         }
         
     }
+    
     private final ValueMapping<V> rootDescriptor;
     
     private final Map<PropertyPath, V> properties = Maps.newHashMap();
@@ -38,8 +41,23 @@ public abstract class SerializationContext<V> {
     }
     
     public void serialize(Object object) {
-        serialize(PropertyPath.ROOT, object);
-        run();
+        if (currentItem == null) {
+            serialize(PropertyPath.ROOT, object);
+            run();
+        } else {
+            throw new IllegalStateException("Serialization already in proggress");
+        }
+    }
+    
+    public void serialize(PropertyPath path, Object object) {
+        queue.add(new QueueItem(path, object));
+    }
+    
+    public void run() {
+        while ((currentItem = queue.pollFirst()) != null) {
+            ValueMapping<V> descriptor = rootDescriptor.get(currentItem.path);
+            descriptor.valueType.serialize(this);
+        }
     }
     
     public void put(V value) {
@@ -53,15 +71,8 @@ public abstract class SerializationContext<V> {
         properties.put(path, value);
     }
     
-    public void run() {
-        while ((currentItem = queue.pollFirst()) != null) {
-            ValueMapping<V> descriptor = rootDescriptor.get(currentItem.path);
-            descriptor.valueType.serialize(this);
-        }
-    }
-    
-    public void serialize(PropertyPath path, Object object) {
-        queue.add(new QueueItem(path, object));
+    public Map<PropertyPath, V> getProperties() {
+        return unmodifiableMap(properties);
     }
     
 }

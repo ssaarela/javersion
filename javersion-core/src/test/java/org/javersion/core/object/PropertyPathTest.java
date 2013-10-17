@@ -29,6 +29,8 @@ import java.util.HashSet;
 
 import org.javersion.object.PropertyPath;
 import org.javersion.object.PropertyPath.Index;
+import org.javersion.object.PropertyPath.SubPath;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class PropertyPathTest {
@@ -43,7 +45,7 @@ public class PropertyPathTest {
         assertThat(children_0(), not(equalTo(children_0_name())));
         assertThat(children_0_name(), not(equalTo(children_0())));
         assertThat(parents_0_name, not(equalTo(parents_1_name)));
-        assertThat(_0, not(equalTo(_1)));
+        assertThat(list_0, not(equalTo(list_1)));
         assertThat(children_0_name(), not(equalTo(parents_0_name)));
     }
     
@@ -68,37 +70,57 @@ public class PropertyPathTest {
 
     @Test
     public void To_String() {
-        assertThat(_0.toString(), equalTo("[0]"));
+        assertThat(list_0.toString(), equalTo("list[0]"));
         assertThat(children_0().toString(), equalTo("children[0]"));
         assertThat(children_0_name().toString(), equalTo("children[0].name"));
     }
     
     @Test
     public void Nested_Indexes() {
-        assertThat(_1_0.toString(), equalTo("[1][0]"));
+        assertThat(list_1_0.toString(), equalTo("list[1][0]"));
     }
     
     @Test
     public void Peculiar_Index() {
-        assertThat(ROOT.index("index containing \\[\\]..").toString(), 
-                equalTo("[index containing \\\\[\\\\\\]\\.\\.]"));
+        PropertyPath path = ROOT.property("list").index("index containing \\ [ ] .");
+        assertThat(path.toString(),  equalTo("list[index containing \\\\ \\[ \\] \\.]"));
+        
+        assertThat(PropertyPath.parse(path.toString()), equalTo(path));
     }
     
     @Test
     public void Peculiar_Property() {
-        assertThat(ROOT.property("property containing \\[\\].").toString(), 
-                equalTo("property containing \\\\[\\\\\\]\\."));
+        PropertyPath path = ROOT.property("property containing \\ [ ] .");
+        assertThat(path.toString(), equalTo("property containing \\\\ \\[ \\] \\."));
+        
+        assertThat(PropertyPath.parse(path.toString()), equalTo(path));
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void Parse_Illegal_Start_1() {
+        PropertyPath.parse("[index]");
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void Parse_Illegal_Start_2() {
+        PropertyPath.parse(".property");
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    @Ignore("Implement real parser!")
+    public void Parse_Illegal_Index_1() {
+        System.out.println(PropertyPath.parse("list[[index]]"));
     }
     
     @Test
     public void Starts_With() {
-        assertTrue(_1.startsWith(ROOT));
+        assertTrue(list_1.startsWith(ROOT));
         assertTrue(children_0_name().startsWith(children));
         assertTrue(children_0_name().startsWith(ROOT));
         assertTrue(children.startsWith(children));
         
         assertFalse(children.startsWith(children_0_name()));
-        assertFalse(ROOT.startsWith(_0));
+        assertFalse(ROOT.startsWith(list_0));
     }
     
     @Test(expected=IllegalArgumentException.class)
@@ -109,34 +131,34 @@ public class PropertyPathTest {
     @Test
     public void Schema_Path() {
         assertThat(children_0_name().toSchemaPath().toString(), equalTo("children[].name"));
-        assertThat(_0.toSchemaPath(), equalTo(_1.toSchemaPath()));
+        assertThat(list_0.toSchemaPath(), equalTo(list_1.toSchemaPath()));
         assertThat(children_0().toSchemaPath(), not(equalTo(parents_0.toSchemaPath())));
         
-        PropertyPath emptyIndex = ROOT.index("");
+        PropertyPath emptyIndex = ROOT.property("list").index("");
         assertThat(emptyIndex.toSchemaPath(), sameInstance(emptyIndex));
     }
     
-    public static PropertyPath _0 = ROOT.index("0");
+    public static SubPath list_0 = ROOT.property("list").index("0");
     
-    public static PropertyPath _1 = ROOT.index("1");
+    public static SubPath list_1 = ROOT.property("list").index("1");
     
-    public static PropertyPath _1_0 = _1.index("0");
+    public static SubPath list_1_0 = list_1.index("0");
 
-    public static PropertyPath children = ROOT.property("children");
+    public static SubPath children = ROOT.property("children");
 
-    public static PropertyPath parents = ROOT.property("parents");
+    public static SubPath parents = ROOT.property("parents");
 
     private static final Index parents_0 = parents.index(0);
     
-    public static PropertyPath parents_0_name = parents_0.property("name");
+    public static SubPath parents_0_name = parents_0.property("name");
     
-    public static PropertyPath parents_1_name = parents.index(1).property("name");
+    public static SubPath parents_1_name = parents.index(1).property("name");
     
-    public static PropertyPath children_0() {
+    public static SubPath children_0() {
         return children.index("0");
     }
 
-    public static PropertyPath children_0_name() {
+    public static SubPath children_0_name() {
         return children_0().property("name");
     }
 

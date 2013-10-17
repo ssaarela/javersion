@@ -19,29 +19,108 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 public abstract class PropertyPath implements Iterable<PropertyPath> {
 
     private static final String EMPTY_STRING = "";
     
+    private static final char ESC = '\\';
+    
+    private static final Set<Character> ESCAPED_CHARS = ImmutableSet.of('\\', '.', '[', ']');
+    
     public static final Root ROOT = Root.ROOT;
     
+    private static enum ParseType {
+        IN_PROPERTY() {
+            @Override
+            PropertyPath create(PropertyPath parent, String name) {
+                return parent.property(name);
+            }
+        },
+        IN_INDEX() {
+            @Override
+            PropertyPath create(PropertyPath parent, String name) {
+                return ((SubPath) parent).index(name);
+            }
+        };
+        abstract PropertyPath create(PropertyPath parent, String name); 
+    }
+    
+    // TODO: Real parser!
+    public static PropertyPath parse(String path) {
+        Check.notNull(path, "path");
+        
+        PropertyPath result = ROOT;
+        if (path.length() > 0) {
+            StringBuilder sb = new StringBuilder();
+            ParseType parseType = ParseType.IN_PROPERTY;
+            boolean escape = false;
+            char ch = 0;
+            try {
+                validate(path);
+                for (int i=0; i < path.length(); i++) {
+                    ch = path.charAt(i);
+                    if (escape) {
+                        if (!ESCAPED_CHARS.contains(ch)) {
+                            throw new IllegalArgumentException("Expected one of " + ESCAPED_CHARS + ". " + at(result, parseType, sb, ch));
+                        }
+                        sb.append(ch);
+                        escape = false;
+                    } else {
+                        switch (ch) {
+                        case ESC:
+                            escape = true;
+                            break;
+                        case '.':
+                            result = parseType.create(result, sb.toString());
+                            parseType = ParseType.IN_PROPERTY;
+                            sb.setLength(0);
+                            break;
+                        case '[':
+                            result = parseType.create(result, sb.toString());
+                            parseType = ParseType.IN_INDEX;
+                            sb.setLength(0);
+                            break;
+                        case ']':
+                            if (parseType != ParseType.IN_INDEX) {
+                                throw new IllegalArgumentException("Expected to be in index. " + at(result, parseType, sb, ch));
+                            }
+                            break;
+                        default:
+                            sb.append(ch);
+                            break;
+                        }
+                    }
+                }
+                if (escape) {
+                    throw new IllegalArgumentException("Expected one of " + ESCAPED_CHARS + ". Got EOF.");
+                }
+                result = parseType.create(result, sb.toString());
+            } catch (IllegalArgumentException e) {
+                if (escape) {
+                    throw e;
+                } else {
+                    throw new IllegalArgumentException(e.getMessage() + " " + at(result, parseType, sb, ch));
+                }
+            }
+        }
+        return result;
+    }
+    
+    private static String at(PropertyPath path, ParseType parseType, StringBuilder sb, char ch) {
+        return "@" + path + "->" + parseType + "(" + sb + (ch != 0 ? "" + ch : "");
+    }
+
     PropertyPath() {}
     
     public Property property(String name) {
         return new Property(this, name);
-    }
-    
-    public Index index(long index) {
-        return index(Long.toString(index));
-    }
-    
-    public Index index(String index) {
-        return new Index(this, index);
     }
     
     public Iterator<PropertyPath> iterator() {
@@ -145,7 +224,24 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
             pathBuilder.add(this);
             return pathBuilder.build();
         }
+        
+        public Index index(long index) {
+            return index(Long.toString(index));
+        }
+        
+        public Index index(String index) {
+            return new Index(this, index);
+        }
 
+    }
+    
+    private static void validate(String name) {
+        if (name.length() > 0) {
+            char firstChar = name.charAt(0);
+            if (ESCAPED_CHARS.contains(firstChar) && firstChar != ESC) {
+                throw new IllegalArgumentException("Illegal start of name: " + firstChar);
+            }
+        }
     }
     
     public static final class Property extends SubPath {
@@ -155,6 +251,7 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         private Property(PropertyPath parent, String name) {
             super(parent);
             Check.notNullOrEmpty(name, "name");
+            validate(name);
             this.name = name;
         }
 
@@ -203,6 +300,7 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         private Index(PropertyPath parent, String index) {
             super(parent);
             this.index = Check.notNull(index, "index");
+            validate(index);
         }
 
         @Override
@@ -240,7 +338,15 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
     }
     
     static String encode(String str) {
-        return str.replace("\\", "\\\\").replace(".", "\\.").replace("]", "\\]");
+        StringBuilder sb = new StringBuilder(str.length() + 4);
+        for (int i=0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            if (ESCAPED_CHARS.contains(ch)) {
+                sb.append(ESC);
+            }
+            sb.append(ch);
+        }
+        return sb.toString();
     }
 
 }

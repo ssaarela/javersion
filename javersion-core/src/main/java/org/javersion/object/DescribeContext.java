@@ -4,8 +4,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 
-import javax.annotation.Nullable;
-
 import org.javersion.reflect.ElementDescriptor;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
@@ -27,16 +25,25 @@ public class DescribeContext<V> {
         this.valueTypes = valueTypes;
     }
 
-    public ValueMapping<V> describe(
-            @Nullable ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent, 
-            TypeDescriptor typeDescriptor) {
+    public ValueMapping<V> describe(TypeDescriptor typeDescriptor) {
+        return describe(new ValueMappingKey(typeDescriptor));
+    }
+    
+    public ValueMapping<V> describe(ValueMappingKey mappingKey) {
         synchronized (lock) {
-            ValueMappingKey key = new ValueMappingKey(parent, typeDescriptor);
-            ValueMapping<V> objectDescriptor = mappings.get(key);
-            if (objectDescriptor == null) {
-                objectDescriptor = describe(key);
+            ValueMapping<V> valueMapping = mappings.get(mappingKey);
+            if (valueMapping == null) {
+                stack.addLast(mappingKey);
+                try {
+                    ValueType<V> valueType = valueTypes.get(mappingKey);
+                    valueMapping = new ValueMapping<>(valueType);
+                    mappings.put(mappingKey, valueMapping);
+                    valueMapping.lock(valueType.describe(this));
+                } finally {
+                    stack.removeLast();
+                }
             }
-            return objectDescriptor;
+            return valueMapping;
         }
     }
     
@@ -48,17 +55,4 @@ public class DescribeContext<V> {
         return stack.getLast().typeDescriptor;
     }
 
-    private ValueMapping<V> describe(ValueMappingKey mappingKey) {
-        stack.addLast(mappingKey);
-        try {
-            ValueType<V> valueType = valueTypes.get(mappingKey);
-            Map<String, ValueMapping<V>> children = valueType.describe(this);
-            ValueMapping<V> objectDescriptor = new ValueMapping<V>(valueType, children);
-            mappings.put(mappingKey, objectDescriptor);
-            return objectDescriptor;
-        } finally {
-            stack.removeLast();
-        }
-    }
-    
 }

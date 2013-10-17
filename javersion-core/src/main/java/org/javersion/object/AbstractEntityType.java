@@ -28,7 +28,8 @@ public abstract class AbstractEntityType<V> implements ValueType<V> {
         ImmutableMap.Builder<String, ValueMapping<V>> children = ImmutableMap.builder();
         for (TypeDescriptor subType : getSubTypes(context.getCurrentType())) {
             for (FieldDescriptor fieldDescriptor : subType.getFields().values()) {
-                ValueMapping<V> child = context.describe(fieldDescriptor, fieldDescriptor.getType());
+                ValueMappingKey mappingKey = new ValueMappingKey(fieldDescriptor, fieldDescriptor.getType());
+                ValueMapping<V> child = context.describe(mappingKey);
                 
                 children.put(fieldDescriptor.getName(), child);
             }
@@ -70,4 +71,7 @@ public abstract class AbstractEntityType<V> implements ValueType<V> {
         return subClasses;
     }
     
+    public String toString() {
+        return "EntityType";
+    }
 }

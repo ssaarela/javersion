@@ -48,6 +48,7 @@
         </configuration>
       </plugin>
       <plugin>
+        <!-- Usage: mvn compile org.pitest:pitest-maven:mutationCoverage -->
         <groupId>org.pitest</groupId>
         <artifactId>pitest-maven</artifactId>
         <version>0.31</version>

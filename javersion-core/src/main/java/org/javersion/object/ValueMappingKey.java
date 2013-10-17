@@ -17,6 +17,10 @@ public final class ValueMappingKey {
     
     public final TypeDescriptor typeDescriptor;
 
+    public ValueMappingKey(TypeDescriptor typeDescriptor) {
+        this(null, typeDescriptor);
+    }
+
     public ValueMappingKey(ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent, TypeDescriptor typeDescriptor) {
         this.parent = parent;
         this.typeDescriptor = Check.notNull(typeDescriptor, "typeDescriptor");
