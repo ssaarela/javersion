@@ -3,9 +3,6 @@ package org.javersion.object;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-
-import org.javersion.reflect.ElementDescriptor;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
