@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.core.object;
+package org.javersion.path;
 
-import org.javersion.object.PropertyTree;
+import org.javersion.path.PropertyTree;
 import org.junit.Test;
 
 import static org.hamcrest.Matchers.*;
-import static org.javersion.object.PropertyPath.ROOT;
+import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.path.PropertyPathTest.*;
 import static org.junit.Assert.assertThat;
-import static org.javersion.core.object.PropertyPathTest.*;
 
 public class PropertyTreeTest {
 

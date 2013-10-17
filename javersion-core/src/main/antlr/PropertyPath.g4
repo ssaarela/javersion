@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+grammar PropertyPath;
 
-import java.util.Map;
+root 
+    : (property | index)?
+    | (property | index) ( '.' property | index )+;
 
-public interface ValueType<V> {
+index 
+    : '[' NAME ']'
+    | '[' ']' // empty index
+    ;
 
-    boolean applies(ValueMappingKey mappingKey);
-    
-    Map<String, ValueMapping<V>> describe(DescribeContext<V> context);
-    
-    void serialize(SerializationContext<V> context);
+property : NAME;
 
-}
+NAME : (ESC | ~[\.\[\]])+;
+
+fragment ESC :   '\\' [\.\[\]\\] ;

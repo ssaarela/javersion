@@ -1,16 +1,16 @@
-package org.javersion.core.object.basic;
+package org.javersion.object.basic;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.javersion.object.PropertyPath.ROOT;
+import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
-import org.javersion.object.PropertyPath;
 import org.javersion.object.ValueMapping;
 import org.javersion.object.Versionable;
 import org.javersion.object.basic.BasicDescribeContext;
 import org.javersion.object.basic.BasicSerializationContext;
+import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptors;
 import org.junit.Test;

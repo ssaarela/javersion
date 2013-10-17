@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.path;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -21,12 +21,29 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.NotNull;
+import org.javersion.path.parser.PropertyPathBaseVisitor;
+import org.javersion.path.parser.PropertyPathLexer;
+import org.javersion.path.parser.PropertyPathParser;
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 public abstract class PropertyPath implements Iterable<PropertyPath> {
+    
+    private static final ANTLRErrorListener ERROR_LISTERNER = new BaseErrorListener() {
+        @Override
+        public void syntaxError(Recognizer<?, ?> recognizer,
+                                Object offendingSymbol,
+                                int line,
+                                int charPositionInLine,
+                                String msg,
+                                RecognitionException e) {
+            throw new IllegalArgumentException("line " + line + ":" + charPositionInLine + " " + msg);
+        }
+    };
 
     private static final String EMPTY_STRING = "";
     
@@ -36,91 +53,60 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
     
     public static final Root ROOT = Root.ROOT;
     
-    private static enum ParseType {
-        IN_PROPERTY() {
-            @Override
-            PropertyPath create(PropertyPath parent, String name) {
-                return parent.property(name);
-            }
-        },
-        IN_INDEX() {
-            @Override
-            PropertyPath create(PropertyPath parent, String name) {
-                return ((SubPath) parent).index(name);
-            }
-        };
-        abstract PropertyPath create(PropertyPath parent, String name); 
-    }
-    
-    // TODO: Real parser!
     public static PropertyPath parse(String path) {
-        Check.notNull(path, "path");
-        
-        PropertyPath result = ROOT;
-        if (path.length() > 0) {
-            StringBuilder sb = new StringBuilder();
-            ParseType parseType = ParseType.IN_PROPERTY;
-            boolean escape = false;
-            char ch = 0;
-            try {
-                validate(path);
-                for (int i=0; i < path.length(); i++) {
-                    ch = path.charAt(i);
-                    if (escape) {
-                        if (!ESCAPED_CHARS.contains(ch)) {
-                            throw new IllegalArgumentException("Expected one of " + ESCAPED_CHARS + ". " + at(result, parseType, sb, ch));
-                        }
-                        sb.append(ch);
-                        escape = false;
-                    } else {
-                        switch (ch) {
-                        case ESC:
-                            escape = true;
-                            break;
-                        case '.':
-                            result = parseType.create(result, sb.toString());
-                            parseType = ParseType.IN_PROPERTY;
-                            sb.setLength(0);
-                            break;
-                        case '[':
-                            result = parseType.create(result, sb.toString());
-                            parseType = ParseType.IN_INDEX;
-                            sb.setLength(0);
-                            break;
-                        case ']':
-                            if (parseType != ParseType.IN_INDEX) {
-                                throw new IllegalArgumentException("Expected to be in index. " + at(result, parseType, sb, ch));
-                            }
-                            break;
-                        default:
-                            sb.append(ch);
-                            break;
-                        }
-                    }
-                }
-                if (escape) {
-                    throw new IllegalArgumentException("Expected one of " + ESCAPED_CHARS + ". Got EOF.");
-                }
-                result = parseType.create(result, sb.toString());
-            } catch (IllegalArgumentException e) {
-                if (escape) {
-                    throw e;
-                } else {
-                    throw new IllegalArgumentException(e.getMessage() + " " + at(result, parseType, sb, ch));
-                }
+        PropertyPathParser parser = new PropertyPathParser(
+                new CommonTokenStream(
+                        new PropertyPathLexer(
+                                new ANTLRInputStream(path))));
+        parser.removeErrorListeners();
+        parser.addErrorListener(ERROR_LISTERNER);
+        return parser.root().accept(new PropertyPathBaseVisitor<PropertyPath>() {
+            
+            private PropertyPath parent;
+
+            @Override
+            public PropertyPath visitRoot(@NotNull PropertyPathParser.RootContext ctx) {
+                parent = ROOT;
+                return super.visitRoot(ctx);
             }
-        }
-        return result;
-    }
-    
-    private static String at(PropertyPath path, ParseType parseType, StringBuilder sb, char ch) {
-        return "@" + path + "->" + parseType + "(" + sb + (ch != 0 ? "" + ch : "");
+            
+            @Override
+            public PropertyPath visitIndex(@NotNull PropertyPathParser.IndexContext ctx) {
+                String name = ctx.getText();
+                if (name.length() > 2) {
+                    name = name.substring(1, name.length()-1);
+                }
+                parent = parent.index(unescape(name));
+                return super.visitIndex(ctx);
+            }
+
+            @Override
+            public PropertyPath visitProperty(@NotNull PropertyPathParser.PropertyContext ctx) {
+                String name = ctx.getText();
+                parent = parent.property(unescape(name));
+                return super.visitProperty(ctx);
+            }
+
+            @Override
+            protected PropertyPath defaultResult() {
+                return parent;
+            }
+
+        });
     }
 
     PropertyPath() {}
     
     public Property property(String name) {
         return new Property(this, name);
+    }
+    
+    public Index index(long index) {
+        return index(Long.toString(index));
+    }
+    
+    public Index index(String index) {
+        return new Index(this, index);
     }
     
     public Iterator<PropertyPath> iterator() {
@@ -224,14 +210,6 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
             pathBuilder.add(this);
             return pathBuilder.build();
         }
-        
-        public Index index(long index) {
-            return index(Long.toString(index));
-        }
-        
-        public Index index(String index) {
-            return new Index(this, index);
-        }
 
     }
     
@@ -278,7 +256,7 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
             if (!parent.isRoot()) {
                 sb.append('.');
             }
-            return sb.append(encode(name)).toString();
+            return sb.append(escape(name)).toString();
         }
 
         @Override
@@ -322,7 +300,7 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
 
         @Override
         public String toString() {
-            return new StringBuilder().append(parent.toString()).append('[').append(encode(index)).append(']').toString();
+            return new StringBuilder().append(parent.toString()).append('[').append(escape(index)).append(']').toString();
         }
 
         @Override
@@ -337,7 +315,22 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         
     }
     
-    static String encode(String str) {
+    static String unescape(String str) {
+        StringBuilder sb = new StringBuilder(str.length());
+        boolean escape = false;
+        for (int i=0; i < str.length(); i++) {
+            char ch = str.charAt(i);
+            if (!escape && ch == ESC) {
+                escape = true;
+            } else {
+                sb.append(ch);
+                escape = false;
+            }
+        }
+        return sb.toString();
+    }
+    
+    static String escape(String str) {
         StringBuilder sb = new StringBuilder(str.length() + 4);
         for (int i=0; i < str.length(); i++) {
             char ch = str.charAt(i);
