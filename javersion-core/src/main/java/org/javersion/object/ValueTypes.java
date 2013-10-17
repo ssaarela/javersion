@@ -1,11 +1,5 @@
 package org.javersion.object;
 
-import javax.annotation.Nullable;
-
-import org.javersion.reflect.ElementDescriptor;
-import org.javersion.reflect.FieldDescriptor;
-import org.javersion.reflect.TypeDescriptor;
-import org.javersion.reflect.TypeDescriptors;
 
 public class ValueTypes<V> {
 
@@ -15,15 +9,13 @@ public class ValueTypes<V> {
         this.types = types;
     }
 
-    public ValueType<V> get(
-            @Nullable ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent, 
-            TypeDescriptor typeDescriptor) {
+    public ValueType<V> get(ValueMappingKey mappingKey) {
         for (ValueType<V> valueType : types) {
-            if (valueType.applies(parent, typeDescriptor)) {
+            if (valueType.applies(mappingKey)) {
                 return valueType;
             }
         }
-        throw new IllegalArgumentException("ValueType not found for " + typeDescriptor);
+        throw new IllegalArgumentException("ValueType not found for " + mappingKey);
     }
     
 }

@@ -22,6 +22,24 @@ public abstract class AbstractEntityType<V> implements ValueType<V> {
     }
 
     @Override
+    public boolean applies(ValueMappingKey mappingKey) {
+        return mappingKey.typeDescriptor.hasAnnotation(Versionable.class);
+    }
+    
+    @Override
+    public Map<String, ValueMapping<V>> describe(DescribeContext<V> context) {
+        ImmutableMap.Builder<String, ValueMapping<V>> children = ImmutableMap.builder();
+        for (TypeDescriptor subType : getSubTypes(context.getCurrentType())) {
+            for (FieldDescriptor fieldDescriptor : subType.getFields().values()) {
+                ValueMapping<V> child = context.describe(fieldDescriptor, fieldDescriptor.getType());
+                
+                children.put(fieldDescriptor.getName(), child);
+            }
+        }
+        return children.build();
+    }
+
+    @Override
     public void serialize(SerializationContext<V> context) {
         Object object = context.getCurrentObject();
         PropertyPath path = context.getCurrentPath();
@@ -40,23 +58,6 @@ public abstract class AbstractEntityType<V> implements ValueType<V> {
 
     protected abstract V toValue(Object object);
     
-    @Override
-    public Map<String, ObjectDescriptor<V>> describe(
-            @Nullable ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent, 
-            TypeDescriptor typeDescriptor,
-            ObjectDescriptors<V> objectDescriptors) {
-        ImmutableMap.Builder<String, ObjectDescriptor<V>> children = ImmutableMap.builder();
-        for (TypeDescriptor subType : getSubTypes(typeDescriptor)) {
-            for (FieldDescriptor fieldDescriptor : subType.getFields().values()) {
-                ObjectDescriptor<V> child = objectDescriptors
-                        .describe(fieldDescriptor, fieldDescriptor.getType());
-                
-                children.put(fieldDescriptor.getName(), child);
-            }
-        }
-        return children.build();
-    }
-    
     protected Set<TypeDescriptor> getSubTypes(TypeDescriptor typeDescriptor) {
         return collectSubTypes(typeDescriptor, Sets.<TypeDescriptor>newHashSet());
     }
@@ -70,13 +71,6 @@ public abstract class AbstractEntityType<V> implements ValueType<V> {
             }
         }
         return subClasses;
-    }
-
-    @Override
-    public boolean applies(
-            @Nullable ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent, 
-            TypeDescriptor typeDescriptor) {
-        return typeDescriptor.hasAnnotation(Versionable.class);
     }
     
 }

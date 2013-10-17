@@ -162,6 +162,10 @@ public abstract class AbstractTypeDescriptor<
         Class<?> clazz = getRawType();
         return WRAPPER_TO_PRIMITIVE.containsKey(clazz) || WRAPPER_TO_PRIMITIVE.containsValue(clazz);
     }
+
+    public boolean isSuperTypeOf(Class<?> clazz) {
+        return getRawType().isAssignableFrom(clazz);
+    }
     
     private static LinkedHashSet<Class<?>> newLinkedHashSet() {
         return Sets.<Class<?>>newLinkedHashSet();

@@ -17,7 +17,7 @@ public abstract class SerializationContext<V> {
         }
         
     }
-    private final ObjectDescriptor<V> rootDescriptor;
+    private final ValueMapping<V> rootDescriptor;
     
     private final Map<PropertyPath, V> properties = Maps.newHashMap();
 
@@ -25,7 +25,7 @@ public abstract class SerializationContext<V> {
     
     private QueueItem currentItem;
     
-    public SerializationContext(ObjectDescriptor<V> rootDescriptor) {
+    public SerializationContext(ValueMapping<V> rootDescriptor) {
         this.rootDescriptor = rootDescriptor;
     }
     
@@ -55,7 +55,7 @@ public abstract class SerializationContext<V> {
     
     public void run() {
         while ((currentItem = queue.pollFirst()) != null) {
-            ObjectDescriptor<V> descriptor = rootDescriptor.get(currentItem.path);
+            ValueMapping<V> descriptor = rootDescriptor.get(currentItem.path);
             descriptor.valueType.serialize(this);
         }
     }
