@@ -8,7 +8,7 @@
   <packaging>jar</packaging>
 
   <name>Javersion Core</name>
-  <url>https://github.com/ssaarela/oliver</url>
+  <url>http://javersion.org</url>
 
   <dependencies>
     <dependency>
