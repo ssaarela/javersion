@@ -28,7 +28,7 @@ import com.google.common.collect.Sets;
 
 public abstract class AbstractEntityType<V> implements ValueType<V> {
     
-    private final TypeDescriptors typeDescriptors;
+    protected final TypeDescriptors typeDescriptors;
     
     public AbstractEntityType(TypeDescriptors typeDescriptors) {
         this.typeDescriptors = typeDescriptors;

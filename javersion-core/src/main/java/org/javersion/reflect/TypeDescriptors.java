@@ -22,7 +22,11 @@ import com.google.common.reflect.TypeToken;
 
 public class TypeDescriptors extends AbstractTypeDescriptors<FieldDescriptor, TypeDescriptor, TypeDescriptors> {
 
-    private static final TypeDescriptors TYPE_DESCRIPTORS = new TypeDescriptors();
+    public static final TypeDescriptors DEFAULT = new TypeDescriptors();
+    
+    public static TypeDescriptor getTypeDescriptor(Class<?> clazz) {
+        return DEFAULT.get(clazz);
+    }
     
     public TypeDescriptors() {
         super();
@@ -30,10 +34,6 @@ public class TypeDescriptors extends AbstractTypeDescriptors<FieldDescriptor, Ty
     
     public TypeDescriptors(Predicate<? super Field> fieldFilter) {
         super(fieldFilter);
-    }
-    
-    public static TypeDescriptor getTypeDescriptor(Class<?> clazz) {
-        return TYPE_DESCRIPTORS.get(clazz);
     }
 
     @Override
