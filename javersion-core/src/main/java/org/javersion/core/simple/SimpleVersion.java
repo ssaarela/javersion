@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.javersion.core.Version;
+import org.javersion.core.VersionType;
 
 public class SimpleVersion extends Version<String, String> {
 
@@ -54,6 +55,12 @@ public class SimpleVersion extends Version<String, String> {
         @Override
         public SimpleVersion build() {
             return new SimpleVersion(this);
+        }
+
+        @Override
+        public Builder type(VersionType versionType) {
+            super.type(versionType);
+            return this;
         }
 
     }

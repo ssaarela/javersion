@@ -16,8 +16,10 @@
 package org.javersion.core.simple;
 
 import org.javersion.core.VersionGraph;
+import org.javersion.core.VersionGraphBuilder;
+import org.javersion.core.simple.SimpleVersionGraph.Builder;
 
-public final class SimpleVersionGraph extends VersionGraph<String, String, SimpleVersion, SimpleVersionGraph> {
+public final class SimpleVersionGraph extends VersionGraph<String, String, SimpleVersion, SimpleVersionGraph, Builder> {
     
     public static SimpleVersionGraph init() {
         return build(new Builder());
@@ -48,18 +50,32 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Simpl
     }
     
     
-    public static class Builder extends VersionGraph.Builder<String, String, SimpleVersion, SimpleVersionGraph> {
+    static class Builder extends VersionGraphBuilder<String, String, SimpleVersion, SimpleVersionGraph, Builder> {
 
         protected Builder() {
-            super(null);
+            super();
         }
         protected Builder(SimpleVersionGraph parentGraph) {
             super(parentGraph);
+        }
+        
+        protected Builder(Lock lock) {
+            super(lock);
         }
 
         @Override
         protected SimpleVersionGraph build() {
             return new SimpleVersionGraph(this);
+        }
+        
+        @Override
+        protected Builder newBuilder(Lock lock) {
+            return new Builder(lock);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
         }
     }
 }

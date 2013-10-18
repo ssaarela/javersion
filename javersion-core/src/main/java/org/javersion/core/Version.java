@@ -49,9 +49,12 @@ public class Version<K, V> {
 
     public final Map<K, V> properties;
     
+    public final VersionType type;
+    
     protected Version(Builder<K, V> builder) {
         this.revision = builder.revision;
-        this.branch = Check.notNull(builder.branch, "branch");
+        this.branch = builder.branch;
+        this.type = builder.type;
         this.parentRevisions = ImmutableSet.copyOf(builder.parentRevisions);
         this.properties = unmodifiableMap(newLinkedHashMap(builder.properties));
     }
@@ -68,30 +71,37 @@ public class Version<K, V> {
 
         private static Set<Long> EMPTY_PARENTS = ImmutableSet.of();
         
-        public final long revision;
+        private final long revision;
         
-        public String branch = DEFAULT_BRANCH;
-        
-        public Set<Long> parentRevisions = EMPTY_PARENTS;
+        private VersionType type = VersionType.NORMAL;
 
-        public Map<K, V> properties = ImmutableMap.of();
+        private String branch = DEFAULT_BRANCH;
+        
+        private Set<Long> parentRevisions = EMPTY_PARENTS;
+
+        private Map<K, V> properties = ImmutableMap.of();
 
         public Builder(long revision) {
             this.revision = revision;
         }
 
+        public Builder<K, V> type(VersionType versionType) {
+            this.type = Check.notNull(versionType, "type");
+            return this;
+        }
+
         public Builder<K, V> branch(String branch) {
-            this.branch = branch;
+            this.branch = Check.notNull(branch, "branch");
             return this;
         }
 
         public Builder<K, V> parents(Set<Long> parentRevisions) {
-            this.parentRevisions = parentRevisions;
+            this.parentRevisions = Check.notNull(parentRevisions, "parentRevisions");
             return this;
         }
 
         public Builder<K, V> properties(Map<K, V> properties) {
-            this.properties = properties;
+            this.properties = Check.notNull(properties, "properties");
             return this;
         }
         

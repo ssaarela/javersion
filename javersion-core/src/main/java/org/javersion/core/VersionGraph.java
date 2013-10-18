@@ -18,20 +18,18 @@ package org.javersion.core;
 import java.util.Collections;
 import java.util.Set;
 
-import org.javersion.util.Check;
-
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 
 public abstract class VersionGraph<K, V, 
                           T extends Version<K, V>,
-                          G extends VersionGraph<K, V, T, G>> 
-       extends VersionGraphBase<K, V, T, G> {
+                          G extends VersionGraph<K, V, T, G, B>,
+                          B extends VersionGraphBuilder<K, V, T, G, B>> 
+       extends VersionGraphBase<K, V, T, G, B> {
 
     public final VersionNode<K, V, T> tip;
     
-    protected VersionGraph(Builder<K, V, T, G> builder) {
-        super(builder.parentGraph, Collections.unmodifiableMap(builder.versionNodes));
+    protected VersionGraph(VersionGraphBuilder<K, V, T, G, B> builder) {
+        super(builder.lock, builder.parentGraph, Collections.unmodifiableMap(builder.versionNodes));
         this.tip = builder.tip;
     }
     
@@ -46,10 +44,10 @@ public abstract class VersionGraph<K, V,
 
     protected static <K, 
                       V, 
-                      
                       T extends Version<K, V>, 
-                      G extends VersionGraph<K, V, T, G>> 
-              G build(Builder<K, V, T, G> builder) {
+                      G extends VersionGraph<K, V, T, G, B>,
+                      B extends VersionGraphBuilder<K, V, T, G, B>> 
+              G build(VersionGraphBuilder<K, V, T, G, B> builder) {
         return builder.build();
     }
     
@@ -58,9 +56,11 @@ public abstract class VersionGraph<K, V,
                       V, 
                       
                       T extends Version<K, V>, 
-                      G extends VersionGraph<K, V, T, G>> 
-              G build(Builder<K, V, T, G> builder, T version) {
-        builder.add(version);
+                      G extends VersionGraph<K, V, T, G, B>,
+                      B extends VersionGraphBuilder<K, V, T, G, B>> 
+              G build(VersionGraphBuilder<K, V, T, G, B> builder, 
+              T version) {
+        builder = builder.add(version);
         return builder.build();
     }
 
@@ -68,42 +68,14 @@ public abstract class VersionGraph<K, V,
                       V, 
                       
                       T extends Version<K, V>, 
-                      G extends VersionGraph<K, V, T, G>>
-            G build(Builder<K, V, T, G> builder, Iterable<T> versions) {
+                      G extends VersionGraph<K, V, T, G, B>,
+                      B extends VersionGraphBuilder<K, V, T, G, B>>
+            G build(VersionGraphBuilder<K, V, T, G, B> builder, 
+            Iterable<T> versions) {
         for (T version : versions) {
-            builder.add(version);
+            builder = builder.add(version);
         }
         return builder.build();
-    }
-    
-    public static abstract class Builder<K, 
-                                   V, 
-                                   
-                                   T extends Version<K, V>, 
-                                   G extends VersionGraph<K, V, T, G>>
-              extends VersionGraphBase<K, V, T, G> {
-        
-        private VersionNode<K, V, T> tip;
-        
-        protected Builder() {
-            this(null);
-        }
-        protected Builder(G parentGraph) {
-            super(parentGraph, Maps.<Long, VersionNode<K, V, T>>newLinkedHashMap());
-            if (parentGraph != null) {
-                this.tip = parentGraph.tip;
-            }
-        }
-        
-        final void add(T version) {
-            Check.notNull(version, "version");
-            Set<VersionNode<K, V, T>> parentsDescending = revisionsToNodes(version.parentRevisions);
-            tip = new VersionNode<K, V, T>(tip, version, parentsDescending);
-            versionNodes.put(version.revision, tip);
-        }
-
-        protected abstract G build();
-
     }
     
 }

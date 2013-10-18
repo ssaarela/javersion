@@ -20,7 +20,7 @@ import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,15 +28,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.javersion.core.Merge;
+import org.javersion.core.VersionType;
 import org.junit.Test;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.*;
 
 public class SimpleVersionGraphTest {
     
@@ -57,6 +53,8 @@ public class SimpleVersionGraphTest {
      * 5 /   status: "Just married"
      * |/
      * 6    status: "Married", mood: null, married: null
+     * :
+     * 7    type: ROOT, status: "New beginning"
      * </pre>
      */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
@@ -159,7 +157,14 @@ public class SimpleVersionGraphTest {
                     .expectProperties(mapOf(
                                 "firstName", "John",
                                 "lastName", "Foe",
-                                "status", "Married")) // 4 and 5 - not conflicting!
+                                "status", "Married")), // 4 and 5 - not conflicting!
+
+            when(version(7l)
+                    .properties(mapOf(
+                                "status", "New beginning"))
+                    .type(VersionType.ROOT))
+                    .expectProperties(mapOf(
+                                "status", "New beginning")) // 4 and 5 - not conflicting!
             );
     
     
@@ -175,33 +180,53 @@ public class SimpleVersionGraphTest {
             assertExpectations(versionGraph, revision, expectation);
         }
     }
+    
+    static List<List<VersionExpectation>> getBulkExpectations() {
+        List<List<VersionExpectation>> bulks = Lists.newArrayList();
+        List<VersionExpectation> bulk = Lists.newArrayList();
+        for (VersionExpectation expectation : EXPECTATIONS) {
+            if (expectation.version != null && expectation.version.type == VersionType.ROOT) {
+                bulks.add(bulk);
+                bulk = Lists.newArrayList();
+            }
+            bulk.add(expectation);
+        }
+        bulks.add(bulk);
+        return bulks;
+    }
 
     @Test
     public void Bulk_Load() {
-        SimpleVersionGraph versionGraph = 
-                SimpleVersionGraph.init(filter(transform(EXPECTATIONS, getVersion), notNull()));
         long revision = -1;
-        for (VersionExpectation expectation : EXPECTATIONS) {
-            if (expectation.version != null) {
-                revision = expectation.version.revision;
+        for (List<VersionExpectation> expectations : getBulkExpectations()) {
+            SimpleVersionGraph versionGraph = 
+                    SimpleVersionGraph.init(filter(transform(expectations, getVersion), notNull()));
+            for (VersionExpectation expectation : expectations) {
+                if (expectation.version != null) {
+                    revision = expectation.version.revision;
+                }
+                assertExpectations(versionGraph, revision, expectation);
             }
-            assertExpectations(versionGraph, revision, expectation);
         }
     }
     
     private void assertExpectations(SimpleVersionGraph versionGraph, long revision, VersionExpectation expectation) {
-        Merge<String, String> merge = versionGraph.merge(expectation.mergeRevisions);
-        assertThat(title("revisions", revision, expectation), 
-                merge.revisions, 
-                equalTo(expectation.expectedRevisions));
-        
-        assertThat(title("properties", revision, expectation), 
-                merge.getProperties(), 
-                equalTo(expectation.expectedProperties));
-        
-        assertThat(title("conflicts", revision, expectation), 
-                Multimaps.transformValues(merge.conflicts, merge.getVersionPropertyValue), 
-                equalTo(expectation.expectedConflicts));
+        try {
+            Merge<String, String> merge = versionGraph.merge(expectation.mergeRevisions);
+            assertThat(title("revisions", revision, expectation), 
+                    merge.revisions, 
+                    equalTo(expectation.expectedRevisions));
+            
+            assertThat(title("properties", revision, expectation), 
+                    merge.getProperties(), 
+                    equalTo(expectation.expectedProperties));
+            
+            assertThat(title("conflicts", revision, expectation), 
+                    Multimaps.transformValues(merge.conflicts, merge.getVersionPropertyValue), 
+                    equalTo(expectation.expectedConflicts));
+        } catch (RuntimeException e) {
+            throw new AssertionError(title("merge", revision, expectation), e);
+        }
     }
     
     private static String title(String assertLabel, long revision, VersionExpectation expectation) {
