@@ -15,6 +15,7 @@
  */
 package org.javersion.core.simple;
 
+import org.javersion.core.Lock;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionGraphBuilder;
 import org.javersion.core.simple.SimpleVersionGraph.Builder;

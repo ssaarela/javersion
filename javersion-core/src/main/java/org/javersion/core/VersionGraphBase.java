@@ -30,8 +30,6 @@ public abstract class VersionGraphBase<K, V,
                                        B extends VersionGraphBuilder<K, V, T, G, B>> 
                 implements Function<Long, VersionNode<K, V, T>>{
     
-    protected static final class Lock{}
-    
     public final Lock lock;
 
     public final G parentGraph;

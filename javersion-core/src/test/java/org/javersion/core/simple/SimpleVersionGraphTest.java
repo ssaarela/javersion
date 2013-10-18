@@ -20,13 +20,16 @@ import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.sameInstance;
+import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.core.Lock;
 import org.javersion.core.Merge;
 import org.javersion.core.VersionType;
 import org.junit.Test;
@@ -198,9 +201,18 @@ public class SimpleVersionGraphTest {
     @Test
     public void Bulk_Load() {
         long revision = -1;
+        Lock lock = null;
+        SimpleVersionGraph versionGraph = null;
         for (List<VersionExpectation> expectations : getBulkExpectations()) {
-            SimpleVersionGraph versionGraph = 
-                    SimpleVersionGraph.init(filter(transform(expectations, getVersion), notNull()));
+            if (versionGraph == null) {
+                versionGraph = SimpleVersionGraph
+                        .init(getVersions(expectations));
+                lock = versionGraph.lock;
+                assertThat(lock, notNullValue());
+            } else {
+                versionGraph = versionGraph.commit(getVersions(expectations));
+                assertThat(lock, sameInstance(versionGraph.lock));
+            }
             for (VersionExpectation expectation : expectations) {
                 if (expectation.version != null) {
                     revision = expectation.version.revision;
@@ -208,6 +220,11 @@ public class SimpleVersionGraphTest {
                 assertExpectations(versionGraph, revision, expectation);
             }
         }
+    }
+
+    private Iterable<SimpleVersion> getVersions(
+            List<VersionExpectation> expectations) {
+        return filter(transform(expectations, getVersion), notNull());
     }
     
     private void assertExpectations(SimpleVersionGraph versionGraph, long revision, VersionExpectation expectation) {
