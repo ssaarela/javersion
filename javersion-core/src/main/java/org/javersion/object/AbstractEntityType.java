@@ -45,8 +45,7 @@ public abstract class AbstractEntityType<V> implements ValueType<V> {
     }
 
     @Override
-    public void serialize(SerializationContext<V> context) {
-        Object object = context.getCurrentObject();
+    public void serialize(Object object, SerializationContext<V> context) {
         PropertyPath path = context.getCurrentPath();
         if (object == null) {
             context.put(path, null);

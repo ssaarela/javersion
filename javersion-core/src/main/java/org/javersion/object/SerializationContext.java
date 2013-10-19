@@ -43,9 +43,9 @@ public abstract class SerializationContext<V> {
         this.rootMapping = rootMapping;
     }
     
-    public Object getCurrentObject() {
-        return currentItem.value;
-    }
+//    public Object getCurrentObject() {
+//        return currentItem.value;
+//    }
     
     public PropertyPath getCurrentPath() {
         return currentItem.key;
@@ -64,21 +64,34 @@ public abstract class SerializationContext<V> {
         queue.add(new QueueItem<PropertyPath, Object>(path, object));
     }
     
+    public boolean isSerialized(Object object) {
+        return objects.containsKey(object);
+    }
+    
     public void run() {
         while ((currentItem = queue.pollFirst()) != null) {
-            ValueMapping<V> mapping = rootMapping.get(currentItem.key);
-            if (mapping.hasChildren() 
+            ValueMapping<V> mapping = getValueMapping(currentItem.key);
+            if (!mapping.isReferenceType() 
+                    && mapping.hasChildren() 
                     && currentItem.hasValue() 
                     && objects.put(currentItem.value, currentItem.key) != null) {
                 illegalReferenceException();
             } 
-            mapping.valueType.serialize(this);
+            mapping.valueType.serialize(currentItem.value, this);
         }
+    }
+    
+    public ValueMapping<V> getValueMapping(PropertyPath path) {
+        return rootMapping.get(path);
+    }
+    
+    public ValueType<V> getValueType(PropertyPath path) {
+        return getValueMapping(path).valueType;
     }
 
     private void illegalReferenceException() {
         throw new IllegalArgumentException(format(
-                "Multiple references to the same object: \"%s\"@%s", 
+                "Multiple references to the same object: \"%s\"@\"%s\"", 
                 currentItem.value, 
                 currentItem.key));
     }
@@ -96,6 +109,10 @@ public abstract class SerializationContext<V> {
     
     public Map<PropertyPath, V> getProperties() {
         return unmodifiableMap(properties);
+    }
+
+    public ValueMapping<V> getRootMapping() {
+        return rootMapping;
     }
     
 }

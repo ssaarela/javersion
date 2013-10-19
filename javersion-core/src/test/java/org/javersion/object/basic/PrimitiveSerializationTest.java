@@ -3,6 +3,7 @@ package org.javersion.object.basic;
 import static org.hamcrest.Matchers.equalTo;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
+import static org.javersion.object.basic.TestUtil.*;
 
 import java.util.Map;
 
@@ -15,7 +16,7 @@ import org.junit.Test;
 
 import com.google.common.collect.Maps;
 
-public class EntitySerializationTest {
+public class PrimitiveSerializationTest {
 
     @Versionable
     public static class Primitives {
@@ -46,26 +47,7 @@ public class EntitySerializationTest {
         public char charPrimitive;
     }
     
-    @Versionable
-    public static class Cycle {
-        public String name;
-        public Cycle cycle;
-        public Cycle(String name) {
-            this.name = name;
-        }
-    }
-    
-    @Versionable
-    public static class BiCycle {
-        public Cycle first;
-        public Cycle second;
-    }
-    
     private static final ValueMapping<Object> primitivesValueMapping = BasicDescribeContext.describe(Primitives.class);
-    
-    private static final ValueMapping<Object> cycleValueMapping = BasicDescribeContext.describe(Cycle.class);
-    
-    private static final ValueMapping<Object> biCycleValueMapping = BasicDescribeContext.describe(BiCycle.class);
     
     @Test
     public void Primitive_Values() {
@@ -122,52 +104,6 @@ public class EntitySerializationTest {
         assertThat(properties, equalTo(expectedProperties));
     }
     
-    @Test
-    public void Hierarchy() {
-        Cycle root;
-        root = new Cycle("root");
-        root.cycle = new Cycle("child");
-        root.cycle.cycle = new Cycle("grandchild");
-        
-        BasicSerializationContext serializationContext = new BasicSerializationContext(cycleValueMapping);
-        serializationContext.serialize(root);
-        
-        Map<PropertyPath, Object> properties = serializationContext.getProperties();
-        
-        Map<PropertyPath, Object> expectedProperties = properties(
-                ROOT, Cycle.class,
-                property("name"), "root",
-                property("cycle"), Cycle.class,
-        
-                property("cycle.name"), "child",
-                property("cycle.cycle"), Cycle.class,
-        
-                property("cycle.cycle.name"), "grandchild",
-                property("cycle.cycle.cycle"), null
-        );
-        
-        assertThat(properties, equalTo(expectedProperties));
-    }
-    
-    @Test(expected=IllegalArgumentException.class)
-    public void Illegal_Cycle() {
-        Cycle root;
-        root = new Cycle("root");
-        root.cycle = new Cycle("child");
-        root.cycle.cycle = root;
-
-        BasicSerializationContext serializationContext = new BasicSerializationContext(cycleValueMapping);
-        serializationContext.serialize(root);
-    }
-
-    @Test
-    public void Null_References_Are_Not_Same() {
-        BiCycle biCycle = new BiCycle();
-
-        BasicSerializationContext serializationContext = new BasicSerializationContext(biCycleValueMapping);
-        serializationContext.serialize(biCycle);
-    }
-    
     private static Map<PropertyPath, Object> getExpectedProperties(Object object) {
         Map<PropertyPath, Object> expectedProperties = Maps.newHashMap();
         expectedProperties.put(ROOT, object.getClass());
@@ -176,17 +112,5 @@ public class EntitySerializationTest {
             expectedProperties.put(property(field.getName()), field.get(object));
         }
         return expectedProperties;
-    }
-    
-    public static Map<PropertyPath, Object> properties(Object... keysAndValues) {
-        Map<PropertyPath, Object> map = Maps.newHashMap();
-        for (int i=0; i < keysAndValues.length-1; i+=2) {
-            map.put((PropertyPath) keysAndValues[i], keysAndValues[i+1]);
-        }
-        return map;
-    }
-    
-    private static PropertyPath property(String path) {
-        return PropertyPath.parse(path);
     }
 }

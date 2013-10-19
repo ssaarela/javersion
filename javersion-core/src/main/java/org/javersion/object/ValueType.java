@@ -18,6 +18,8 @@ package org.javersion.object;
 
 public interface ValueType<V> {
     
-    void serialize(SerializationContext<V> context);
+    String toString(ValueMapping<V> rootMapping, Object object);
+    
+    void serialize(Object object, SerializationContext<V> context);
 
 }

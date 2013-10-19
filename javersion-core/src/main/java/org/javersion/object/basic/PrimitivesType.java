@@ -15,11 +15,7 @@
  */
 package org.javersion.object.basic;
 
-import org.javersion.object.DescribeContext;
-import org.javersion.object.SerializationContext;
-import org.javersion.object.ValueMappingKey;
-import org.javersion.object.ValueType;
-import org.javersion.object.ValueTypeFactory;
+import org.javersion.object.*;
 import org.javersion.reflect.TypeDescriptor;
 
 public class PrimitivesType implements ValueType<Object> {
@@ -43,11 +39,20 @@ public class PrimitivesType implements ValueType<Object> {
 
 
     @Override
-    public void serialize(SerializationContext<Object> context) {
-        context.put(context.getCurrentObject());
+    public void serialize(Object object, SerializationContext<Object> context) {
+        context.put(object);
     }
 
     public String toString() {
         return getClass().getSimpleName();
+    }
+
+    @Override
+    public String toString(ValueMapping<Object> rootMapping, Object object) {
+        if (object != null) {
+            return object.toString();
+        } else {
+            return null;
+        }
     }
 }

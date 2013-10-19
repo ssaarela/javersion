@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object.basic;
+package org.javersion.object;
 
-import java.util.Set;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import org.javersion.object.AbstractEntityTypeFactory;
-import org.javersion.reflect.TypeDescriptor;
-import org.javersion.reflect.TypeDescriptors;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class BasicEntityTypeFactory extends AbstractEntityTypeFactory<Object> {
+/**
+ * {@literal @.<alias>[<id>]}
+ */
+@Target({ FIELD })
+@Retention(RUNTIME)
+@Documented
+public @interface Id {
     
-    public BasicEntityTypeFactory(TypeDescriptors typeDescriptors) {
-        super(typeDescriptors);
-    }
-
-    @Override
-    protected BasicEntityType newEntityType(Set<TypeDescriptor> types) {
-        return new BasicEntityType(types);
-    }
+    String alias();
     
 }

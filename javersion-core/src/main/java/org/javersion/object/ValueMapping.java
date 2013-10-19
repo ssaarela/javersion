@@ -95,5 +95,9 @@ public final class ValueMapping<V> {
     public Map<String, ValueMapping<V>> getChildren() {
         return children;
     }
+
+    public boolean isReferenceType() {
+        return valueType instanceof ReferenceType;
+    }
         
 }

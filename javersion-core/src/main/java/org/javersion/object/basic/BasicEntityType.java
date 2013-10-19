@@ -18,6 +18,7 @@ package org.javersion.object.basic;
 import java.util.Set;
 
 import org.javersion.object.AbstractEntityType;
+import org.javersion.object.ValueMapping;
 import org.javersion.reflect.TypeDescriptor;
 
 public class BasicEntityType extends AbstractEntityType<Object> {
@@ -27,8 +28,21 @@ public class BasicEntityType extends AbstractEntityType<Object> {
     }
 
     @Override
-    protected Object toValue(Object object) {
-        return object.getClass();
+    public Object toValue(Object object) {
+        if (object != null) {
+            return object.getClass();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String toString(ValueMapping<Object> rootMapping, Object object) {
+        if (object != null) {
+            return object.getClass().getName();
+        } else {
+            return null;
+        }
     }
     
 }

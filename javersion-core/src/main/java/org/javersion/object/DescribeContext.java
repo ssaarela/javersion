@@ -71,10 +71,7 @@ public class DescribeContext<V> {
     }
    
     public void describe(SubPath path, ValueMappingKey mappingKey) {
-        ValueMapping<V> valueMapping = mappings.get(mappingKey);
-        if (valueMapping == null) {
-            stack.add(new QueueItem<SubPath, ValueMappingKey>(path, mappingKey));
-        }
+        stack.add(new QueueItem<SubPath, ValueMappingKey>(path, mappingKey));
     }
     
     public ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> getCurrentParent() {

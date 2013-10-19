@@ -12,4 +12,7 @@ public class QueueItem<K, V> {
     public boolean hasValue() {
         return value != null;
     }
+    public String toString() {
+        return key.toString() + "=" + value;
+    }
 }
