@@ -52,6 +52,10 @@ public final class ValueMapping<V> {
         return result;
     }
     
+    public boolean hasChildren() {
+        return !children.isEmpty();
+    }
+    
     public Map<String, ValueMapping<V>> getChildren() {
         if (children == null) {
             throw new IllegalStateException("ValueMapping build in proggress");

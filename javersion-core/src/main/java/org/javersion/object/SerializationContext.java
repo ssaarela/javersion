@@ -15,10 +15,12 @@
  */
 package org.javersion.object;
 
+import static java.lang.String.format;
 import static java.util.Collections.unmodifiableMap;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.Map;
 
 import org.javersion.path.PropertyPath;
@@ -34,19 +36,23 @@ public abstract class SerializationContext<V> {
             this.path = path;
             this.object = object;
         }
-        
+        public boolean hasValue() {
+            return object != null;
+        }
     }
     
-    private final ValueMapping<V> rootDescriptor;
+    private final ValueMapping<V> rootMapping;
     
     private final Map<PropertyPath, V> properties = Maps.newHashMap();
 
     private final Deque<QueueItem> queue = new ArrayDeque<>();
     
+    private final IdentityHashMap<Object, PropertyPath> objects = Maps.newIdentityHashMap();
+    
     private QueueItem currentItem;
     
-    public SerializationContext(ValueMapping<V> rootDescriptor) {
-        this.rootDescriptor = rootDescriptor;
+    public SerializationContext(ValueMapping<V> rootMapping) {
+        this.rootMapping = rootMapping;
     }
     
     public Object getCurrentObject() {
@@ -57,9 +63,9 @@ public abstract class SerializationContext<V> {
         return currentItem.path;
     }
     
-    public void serialize(Object object) {
+    public void serialize(Object root) {
         if (currentItem == null) {
-            serialize(PropertyPath.ROOT, object);
+            serialize(PropertyPath.ROOT, root);
             run();
         } else {
             throw new IllegalStateException("Serialization already in proggress");
@@ -72,9 +78,21 @@ public abstract class SerializationContext<V> {
     
     public void run() {
         while ((currentItem = queue.pollFirst()) != null) {
-            ValueMapping<V> descriptor = rootDescriptor.get(currentItem.path);
-            descriptor.valueType.serialize(this);
+            ValueMapping<V> mapping = rootMapping.get(currentItem.path);
+            if (mapping.hasChildren() 
+                    && currentItem.hasValue() 
+                    && objects.put(currentItem.object, currentItem.path) != null) {
+                illegalReferenceException();
+            } 
+            mapping.valueType.serialize(this);
         }
+    }
+
+    private void illegalReferenceException() {
+        throw new IllegalArgumentException(format(
+                "Multiple references to the same object: \"%s\"@%s", 
+                currentItem.object, 
+                currentItem.path));
     }
     
     public void put(V value) {

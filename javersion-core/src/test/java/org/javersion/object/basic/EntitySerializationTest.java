@@ -8,8 +8,6 @@ import java.util.Map;
 
 import org.javersion.object.ValueMapping;
 import org.javersion.object.Versionable;
-import org.javersion.object.basic.BasicDescribeContext;
-import org.javersion.object.basic.BasicSerializationContext;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptors;
@@ -57,9 +55,17 @@ public class EntitySerializationTest {
         }
     }
     
+    @Versionable
+    public static class BiCycle {
+        public Cycle first;
+        public Cycle second;
+    }
+    
     private static final ValueMapping<Object> primitivesValueMapping = BasicDescribeContext.describe(Primitives.class);
     
     private static final ValueMapping<Object> cycleValueMapping = BasicDescribeContext.describe(Cycle.class);
+    
+    private static final ValueMapping<Object> biCycleValueMapping = BasicDescribeContext.describe(BiCycle.class);
     
     @Test
     public void Primitive_Values() {
@@ -118,13 +124,13 @@ public class EntitySerializationTest {
     
     @Test
     public void Hierarchy() {
-        Cycle cycle;
-        cycle = new Cycle("root");
-        cycle.cycle = new Cycle("child");
-        cycle.cycle.cycle = new Cycle("grandchild");
+        Cycle root;
+        root = new Cycle("root");
+        root.cycle = new Cycle("child");
+        root.cycle.cycle = new Cycle("grandchild");
         
         BasicSerializationContext serializationContext = new BasicSerializationContext(cycleValueMapping);
-        serializationContext.serialize(cycle);
+        serializationContext.serialize(root);
         
         Map<PropertyPath, Object> properties = serializationContext.getProperties();
         
@@ -142,7 +148,25 @@ public class EntitySerializationTest {
         
         assertThat(properties, equalTo(expectedProperties));
     }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void Illegal_Cycle() {
+        Cycle root;
+        root = new Cycle("root");
+        root.cycle = new Cycle("child");
+        root.cycle.cycle = root;
 
+        BasicSerializationContext serializationContext = new BasicSerializationContext(cycleValueMapping);
+        serializationContext.serialize(root);
+    }
+
+    @Test
+    public void Null_References_Are_Not_Same() {
+        BiCycle biCycle = new BiCycle();
+
+        BasicSerializationContext serializationContext = new BasicSerializationContext(biCycleValueMapping);
+        serializationContext.serialize(biCycle);
+    }
     
     private static Map<PropertyPath, Object> getExpectedProperties(Object object) {
         Map<PropertyPath, Object> expectedProperties = Maps.newHashMap();

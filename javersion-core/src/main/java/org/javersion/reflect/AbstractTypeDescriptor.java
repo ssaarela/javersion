@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 
 import org.javersion.util.Check;
 
@@ -63,7 +64,7 @@ public abstract class AbstractTypeDescriptor<
     
     protected final TypeToken<?> typeToken;
     
-    private volatile Map<String, F> fields;
+    private volatile SortedMap<String, F> fields;
 
     private volatile Set<Class<?>> classes;
 
@@ -80,7 +81,7 @@ public abstract class AbstractTypeDescriptor<
                 if (result == null) {
                     result = Maps.newHashMap();
                     collectFields(typeToken.getRawType(), result);
-                    result = fields = ImmutableMap.copyOf(result);
+                    result = fields = ImmutableSortedMap.copyOf(result);
                 }
             }
         }
