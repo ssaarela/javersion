@@ -17,7 +17,7 @@ package org.javersion.object.basic;
 
 import java.util.List;
 
-import org.javersion.object.ValueType;
+import org.javersion.object.ValueTypeFactory;
 import org.javersion.object.ValueTypes;
 import org.javersion.reflect.TypeDescriptors;
 
@@ -26,28 +26,28 @@ import com.google.common.collect.Iterables;
 
 public class BasicValueTypes extends ValueTypes<Object> {
     
-    private static List<ValueType<Object>> defaultTypes(TypeDescriptors typeDescriptors) {
-        return ImmutableList.<ValueType<Object>>of(
-            new BasicEntityType(typeDescriptors),
-            new PrimitivesType()
+    private static List<ValueTypeFactory<Object>> defaultTypes(TypeDescriptors typeDescriptors) {
+        return ImmutableList.<ValueTypeFactory<Object>>of(
+            new BasicEntityTypeFactory(typeDescriptors),
+            PrimitivesType.FACTORY
             );
     };
 
     @SafeVarargs
-    public BasicValueTypes(ValueType<Object>... types) {
+    public BasicValueTypes(ValueTypeFactory<Object>... types) {
         this(TypeDescriptors.DEFAULT, types);
     }
 
-    public BasicValueTypes(Iterable<ValueType<Object>> types) {
+    public BasicValueTypes(Iterable<ValueTypeFactory<Object>> types) {
         this(TypeDescriptors.DEFAULT, types);
     }
 
     @SafeVarargs
-    public BasicValueTypes(TypeDescriptors typeDescriptors, ValueType<Object>... types) {
+    public BasicValueTypes(TypeDescriptors typeDescriptors, ValueTypeFactory<Object>... types) {
         this(typeDescriptors, ImmutableList.copyOf(types));
     }
     
-    public BasicValueTypes(TypeDescriptors typeDescriptors, Iterable<ValueType<Object>> types) {
+    public BasicValueTypes(TypeDescriptors typeDescriptors, Iterable<ValueTypeFactory<Object>> types) {
         super(Iterables.concat(types, defaultTypes(typeDescriptors)));
     }
 

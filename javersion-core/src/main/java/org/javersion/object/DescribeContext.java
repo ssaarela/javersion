@@ -19,6 +19,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 
+import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.ElementDescriptor;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
@@ -28,46 +30,62 @@ import com.google.common.collect.Maps;
 
 public class DescribeContext<V> {
     
-    private final Object lock = new Object();
-    
     private final Map<ValueMappingKey, ValueMapping<V>> mappings = Maps.newHashMap();
 
     private final ValueTypes<V> valueTypes;
     
-    private Deque<ValueMappingKey> stack = new ArrayDeque<>();
+    private final Deque<QueueItem<SubPath, ValueMappingKey>> stack = new ArrayDeque<>();
+
+    private ValueMapping<V> rootMapping; 
+    
+    private QueueItem<? extends PropertyPath, ValueMappingKey> currentItem;
     
     public DescribeContext(ValueTypes<V> valueTypes) {
         this.valueTypes = valueTypes;
     }
 
-    public ValueMapping<V> describe(TypeDescriptor typeDescriptor) {
-        return describe(new ValueMappingKey(typeDescriptor));
+    public ValueMapping<V> describe(TypeDescriptor rootType) {
+        ValueMappingKey mappingKey = new ValueMappingKey(rootType);
+        currentItem = new QueueItem<PropertyPath, ValueMappingKey>(PropertyPath.ROOT, mappingKey);
+        rootMapping = new ValueMapping<>(createValueType(mappingKey));
+        processSubMappings();
+        return rootMapping;
     }
     
-    public ValueMapping<V> describe(ValueMappingKey mappingKey) {
-        synchronized (lock) {
+    private void processSubMappings() {
+        while ((currentItem = stack.poll()) != null) {
+            ValueMappingKey mappingKey = currentItem.value;
             ValueMapping<V> valueMapping = mappings.get(mappingKey);
-            if (valueMapping == null) {
-                stack.addLast(mappingKey);
-                try {
-                    ValueType<V> valueType = valueTypes.get(mappingKey);
-                    valueMapping = new ValueMapping<>(valueType);
-                    mappings.put(mappingKey, valueMapping);
-                    valueMapping.lock(valueType.describe(this));
-                } finally {
-                    stack.removeLast();
-                }
+            if (valueMapping != null) {
+                rootMapping.set((SubPath) currentItem.key, valueMapping);
+            } else {
+                valueMapping = rootMapping.append(currentItem.key, createValueType(mappingKey));
+                mappings.put(mappingKey, valueMapping);
             }
-            return valueMapping;
+        }
+    }
+    
+    private ValueType<V> createValueType(ValueMappingKey mappingKey) {
+        ValueTypeFactory<V> valueTypeFactory = valueTypes.getFactory(mappingKey);
+        return valueTypeFactory.describe(this);
+    }
+   
+    public void describe(SubPath path, ValueMappingKey mappingKey) {
+        ValueMapping<V> valueMapping = mappings.get(mappingKey);
+        if (valueMapping == null) {
+            stack.add(new QueueItem<SubPath, ValueMappingKey>(path, mappingKey));
         }
     }
     
     public ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> getCurrentParent() {
-        return stack.getLast().parent;
+        return currentItem.value.parent;
     }
     
     public TypeDescriptor getCurrentType() {
-        return stack.getLast().typeDescriptor;
+        return currentItem.value.typeDescriptor;
     }
 
+    public PropertyPath getCurrentPath() {
+        return currentItem.key;
+    }
 }

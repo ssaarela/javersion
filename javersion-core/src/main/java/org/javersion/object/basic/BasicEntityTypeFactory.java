@@ -13,11 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.basic;
 
+import java.util.Set;
 
-public interface ValueType<V> {
+import org.javersion.object.AbstractEntityTypeFactory;
+import org.javersion.reflect.TypeDescriptor;
+import org.javersion.reflect.TypeDescriptors;
+
+public class BasicEntityTypeFactory extends AbstractEntityTypeFactory<Object, BasicEntityType> {
     
-    void serialize(SerializationContext<V> context);
+    public BasicEntityTypeFactory(TypeDescriptors typeDescriptors) {
+        super(typeDescriptors);
+    }
 
+    @Override
+    protected BasicEntityType newEntityDescriptor(Set<TypeDescriptor> types) {
+        return new BasicEntityType(types);
+    }
+    
 }

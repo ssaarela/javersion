@@ -15,13 +15,15 @@
  */
 package org.javersion.object.basic;
 
+import java.util.Set;
+
 import org.javersion.object.AbstractEntityType;
-import org.javersion.reflect.TypeDescriptors;
+import org.javersion.reflect.TypeDescriptor;
 
 public class BasicEntityType extends AbstractEntityType<Object> {
     
-    public BasicEntityType(TypeDescriptors typeDescriptors) {
-        super(typeDescriptors);
+    public BasicEntityType(Set<TypeDescriptor> types) {
+        super(types);
     }
 
     @Override

@@ -45,7 +45,7 @@ public class Check {
     }
     
     public static <T extends Collection<?>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
-        checkArgument(!(reference == null || reference.size() > 0), messageFormat, args);
+        checkArgument(!(reference == null || reference.isEmpty()), messageFormat, args);
         return reference;
     }
     
@@ -54,7 +54,7 @@ public class Check {
     }
     
     public static <K, V, T extends Map<K, V>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
-        checkArgument(!(reference == null || reference.size() > 0), messageFormat, args);
+        checkArgument(!(reference == null || reference.isEmpty()), messageFormat, args);
         return reference;
     }
     

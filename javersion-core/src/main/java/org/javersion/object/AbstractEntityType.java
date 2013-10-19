@@ -15,42 +15,33 @@
  */
 package org.javersion.object;
 
+import static com.google.common.collect.Maps.uniqueIndex;
+
 import java.util.Map;
 import java.util.Set;
 
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
-import org.javersion.reflect.TypeDescriptors;
+import org.javersion.util.Check;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import com.google.common.base.Function;
 
 public abstract class AbstractEntityType<V> implements ValueType<V> {
-    
-    protected final TypeDescriptors typeDescriptors;
-    
-    public AbstractEntityType(TypeDescriptors typeDescriptors) {
-        this.typeDescriptors = typeDescriptors;
-    }
 
-    @Override
-    public boolean applies(ValueMappingKey mappingKey) {
-        return mappingKey.typeDescriptor.hasAnnotation(Versionable.class);
-    }
-    
-    @Override
-    public Map<String, ValueMapping<V>> describe(DescribeContext<V> context) {
-        ImmutableMap.Builder<String, ValueMapping<V>> children = ImmutableMap.builder();
-        for (TypeDescriptor subType : getSubTypes(context.getCurrentType())) {
-            for (FieldDescriptor fieldDescriptor : subType.getFields().values()) {
-                ValueMappingKey mappingKey = new ValueMappingKey(fieldDescriptor, fieldDescriptor.getType());
-                ValueMapping<V> child = context.describe(mappingKey);
-                
-                children.put(fieldDescriptor.getName(), child);
-            }
+    private static final Function<TypeDescriptor, Class<?>> getRawType = new Function<TypeDescriptor, Class<?>>() {
+        @Override
+        public Class<?> apply(TypeDescriptor input) {
+            Check.notNull(input, "input");
+            return input.getRawType();
         }
-        return children.build();
+    };
+    
+    private final Map<Class<?>, TypeDescriptor> types;
+    
+    public AbstractEntityType(Set<TypeDescriptor> types) {
+        Check.notNullOrEmpty(types, "types");
+        this.types = uniqueIndex(types, getRawType);
     }
 
     @Override
@@ -61,7 +52,7 @@ public abstract class AbstractEntityType<V> implements ValueType<V> {
             context.put(path, null);
         } else {
             context.put(path, toValue(object));
-            TypeDescriptor typeDescriptor = typeDescriptors.get(object.getClass());
+            TypeDescriptor typeDescriptor = types.get(object.getClass());
             for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {
                 Object value = fieldDescriptor.get(object);
                 PropertyPath subPath = path.property(fieldDescriptor.getName());
@@ -72,22 +63,8 @@ public abstract class AbstractEntityType<V> implements ValueType<V> {
 
     protected abstract V toValue(Object object);
     
-    protected Set<TypeDescriptor> getSubTypes(TypeDescriptor typeDescriptor) {
-        return collectSubTypes(typeDescriptor, Sets.<TypeDescriptor>newHashSet());
-    }
-    
-    private Set<TypeDescriptor> collectSubTypes(TypeDescriptor typeDescriptor, Set<TypeDescriptor> subClasses) {
-        subClasses.add(typeDescriptor);
-        Versionable versionable = typeDescriptor.getAnnotation(Versionable.class);
-        if (versionable != null) {
-            for (Class<?> subClass : versionable.subClasses()) {
-                collectSubTypes(typeDescriptors.get(subClass), subClasses);
-            }
-        }
-        return subClasses;
-    }
-    
     public String toString() {
-        return "EntityType";
+        return "EntityType of " + types.values();
     }
+
 }
