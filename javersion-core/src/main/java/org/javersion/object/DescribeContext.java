@@ -36,7 +36,7 @@ public class DescribeContext<V> {
     
     private final Deque<QueueItem<SubPath, ValueMappingKey>> stack = new ArrayDeque<>();
 
-    private ValueMapping<V> rootMapping; 
+    private RootMapping<V> rootMapping; 
     
     private QueueItem<? extends PropertyPath, ValueMappingKey> currentItem;
     
@@ -47,7 +47,7 @@ public class DescribeContext<V> {
     public ValueMapping<V> describe(TypeDescriptor rootType) {
         ValueMappingKey mappingKey = new ValueMappingKey(rootType);
         currentItem = new QueueItem<PropertyPath, ValueMappingKey>(PropertyPath.ROOT, mappingKey);
-        rootMapping = new ValueMapping<>(createValueType(mappingKey));
+        rootMapping = new RootMapping<>(createValueType(mappingKey));
         processSubMappings();
         return rootMapping;
     }
