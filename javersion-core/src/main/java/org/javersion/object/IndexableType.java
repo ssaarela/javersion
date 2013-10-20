@@ -17,6 +17,6 @@ package org.javersion.object;
 
 public interface IndexableType<V> extends ValueType<V> {
     
-    String toString(Object object, ValueMapping<V> rootMapping);
+    String toString(Object object, RootMapping<V> rootMapping);
 
 }

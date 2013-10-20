@@ -9,7 +9,7 @@ import static org.junit.Assert.assertThat;
 import java.util.Map;
 
 import org.javersion.object.Id;
-import org.javersion.object.ValueMapping;
+import org.javersion.object.RootMapping;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -29,7 +29,7 @@ public class ReferencesSerializationTest {
         }
     }
     
-    private static final ValueMapping<Object> nodeValueMapping = BasicDescribeContext.describe(Node.class);
+    private static final RootMapping<Object> nodeValueMapping = BasicDescribeContext.describe(Node.class);
     
     @Test
     public void Cycle() {

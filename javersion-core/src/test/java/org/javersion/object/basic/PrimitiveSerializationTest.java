@@ -1,13 +1,13 @@
 package org.javersion.object.basic;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.javersion.object.basic.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
-import static org.javersion.object.basic.TestUtil.*;
 
 import java.util.Map;
 
-import org.javersion.object.ValueMapping;
+import org.javersion.object.RootMapping;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
@@ -47,7 +47,7 @@ public class PrimitiveSerializationTest {
         public char charPrimitive;
     }
     
-    private static final ValueMapping<Object> primitivesValueMapping = BasicDescribeContext.describe(Primitives.class);
+    private static final RootMapping<Object> primitivesValueMapping = BasicDescribeContext.describe(Primitives.class);
     
     @Test
     public void Primitive_Values() {

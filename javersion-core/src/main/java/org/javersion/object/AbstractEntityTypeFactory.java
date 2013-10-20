@@ -53,7 +53,7 @@ public abstract class AbstractEntityTypeFactory<V>
             Set<TypeDescriptor> types = getSubTypes(typeDescriptor);
             for (TypeDescriptor type : types) {
                 for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
-                    ValueMappingKey mappingKey = new ValueMappingKey(fieldDescriptor, fieldDescriptor.getType());
+                    ValueMappingKey mappingKey = new ValueMappingKey(fieldDescriptor);
                     context.describe(path.property(fieldDescriptor.getName()), mappingKey);
                 }
             }
@@ -61,10 +61,15 @@ public abstract class AbstractEntityTypeFactory<V>
         }
     }
     
-    private SubPath getTargetPath(FieldDescriptor idField) {
+    private static SubPath getTargetPath(FieldDescriptor idField) {
+        SubPath targetRoot = getTargetRoot(idField);
+        return targetRoot != null ? targetRoot.index("") : null;
+    }
+    
+    public static SubPath getTargetRoot(FieldDescriptor idField) {
         if (idField != null) {
             Id id = idField.getAnnotation(Id.class);
-            return PropertyPath.ROOT.property("@").property(id.alias()).index("");
+            return PropertyPath.ROOT.property("@").property(id.alias());
         } else {
             return null;
         }

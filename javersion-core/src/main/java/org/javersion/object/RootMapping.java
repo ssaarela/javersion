@@ -16,39 +16,46 @@
 package org.javersion.object;
 
 import java.util.List;
+import java.util.Map;
 
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.util.Check;
 
 public class RootMapping<V> extends ValueMapping<V> {
 
-    public RootMapping(ValueType<V> valueType) {
+    private final Map<ValueMappingKey, ValueMapping<V>> typeMappings;
+    
+    RootMapping(ValueType<V> valueType, Map<ValueMappingKey, ValueMapping<V>> typeMappings) {
         super(valueType);
+        this.typeMappings = typeMappings;
     }
     
-    public void set(SubPath path, ValueMapping<V> valueMapping) {
+    public ValueMapping<V> get(ValueMappingKey mappingKey) {
+        return typeMappings.get(mappingKey);
+    }
+    
+    public ValueMapping<V> get(PropertyPath path) {
         Check.notNull(path, "path");
-        Check.notNull(valueMapping, "valueMapping");
-        
-        ValueMapping<V> parent = append(path.parent);
-        parent.children.put(path.getName(), valueMapping);
-    }
-    
-    public ValueMapping<V> append(PropertyPath path, ValueType<V> valueType) {
-        Check.notNull(path, "path");
-        Check.notNull(valueType, "valueType");
-
-        ValueMapping<V> valueMapping = append(path);
-        valueMapping.valueType = valueType;
-        return valueMapping;
-    }
-    
-    private ValueMapping<V> append(PropertyPath path) {
         ValueMapping<V> currentMapping = this;
-        List<PropertyPath> pathElements = path.toSchemaPath().path();
+        List<PropertyPath> pathElements = path.toSchemaPath().asList();
         for (PropertyPath currentPath : pathElements.subList(1, pathElements.size())) {
-            currentMapping = currentMapping.getOrAppendChild(currentPath.getName());
+            currentMapping = currentMapping.getChild(currentPath.getName());
+            if (currentMapping == null) {
+                throw new IllegalArgumentException("Path not found: " + currentPath);
+            }
+        }
+        return currentMapping;
+    }
+
+    ValueMapping<V> addPath(PropertyPath path) {
+        ValueMapping<V> currentMapping = this;
+        List<PropertyPath> pathElements = path.toSchemaPath().asList();
+        for (PropertyPath currentPath : pathElements.subList(1, pathElements.size())) {
+            String childName = currentPath.getName();
+            if (!currentMapping.hasChild(childName)) {
+                currentMapping.addChild(childName, new ValueMapping<>(valueType));
+            }
+            currentMapping = currentMapping.getChild(childName);
         }
         return currentMapping;
     }

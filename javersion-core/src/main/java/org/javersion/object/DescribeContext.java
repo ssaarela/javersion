@@ -15,6 +15,8 @@
  */
 package org.javersion.object;
 
+import static java.util.Collections.unmodifiableMap;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
@@ -30,13 +32,16 @@ import com.google.common.collect.Maps;
 
 public class DescribeContext<V> {
     
-    private final Map<ValueMappingKey, ValueMapping<V>> mappings = Maps.newHashMap();
-
+    private final Map<ValueMappingKey, ValueMapping<V>> typeMappings = Maps.newHashMap();
+    
     private final ValueTypes<V> valueTypes;
     
     private final Deque<QueueItem<SubPath, ValueMappingKey>> stack = new ArrayDeque<>();
 
-    private RootMapping<V> rootMapping; 
+    
+    private Map<PropertyPath, ValueMappingKey> pathMappings;
+
+    private RootMapping<V> rootMapping;
     
     private QueueItem<? extends PropertyPath, ValueMappingKey> currentItem;
     
@@ -44,24 +49,54 @@ public class DescribeContext<V> {
         this.valueTypes = valueTypes;
     }
 
-    public ValueMapping<V> describe(TypeDescriptor rootType) {
+    public synchronized RootMapping<V> describe(TypeDescriptor rootType) {
+        pathMappings = Maps.newHashMap();
+        
         ValueMappingKey mappingKey = new ValueMappingKey(rootType);
         currentItem = new QueueItem<PropertyPath, ValueMappingKey>(PropertyPath.ROOT, mappingKey);
-        rootMapping = new RootMapping<>(createValueType(mappingKey));
+        
+        ValueType<V> valueType = createValueType(mappingKey);
+        rootMapping = new RootMapping<>(valueType, unmodifiableMap(typeMappings));
+        register(currentItem, rootMapping);
+
         processSubMappings();
-        return rootMapping;
+        
+        try {
+            return rootMapping;
+        } finally {
+            pathMappings = null;
+            rootMapping = null;
+        }
+    }
+    
+    private void register(QueueItem<? extends PropertyPath, ValueMappingKey> item, ValueMapping<V> mapping) {
+        typeMappings.put(item.value, mapping);
+        pathMappings.put(item.key, item.value);
+        // Add to parent
+        if (item.key instanceof SubPath) {
+            PropertyPath parentPath = ((SubPath) item.key).parent;
+            ValueMapping<V> parentMapping = getValueMapping(parentPath);
+            if (parentMapping == null) {
+                parentMapping = rootMapping.addPath(parentPath);
+            }
+            parentMapping.addChild(item.key.getName(), mapping);
+        }
+    }
+    
+    private ValueMapping<V> getValueMapping(PropertyPath path) {
+        return typeMappings.get(pathMappings.get(path));
     }
     
     private void processSubMappings() {
         while ((currentItem = stack.poll()) != null) {
             ValueMappingKey mappingKey = currentItem.value;
-            ValueMapping<V> valueMapping = mappings.get(mappingKey);
-            if (valueMapping != null) {
-                rootMapping.set((SubPath) currentItem.key, valueMapping);
-            } else {
-                valueMapping = rootMapping.append(currentItem.key, createValueType(mappingKey));
-                mappings.put(mappingKey, valueMapping);
+            ValueMapping<V> mapping= typeMappings.get(mappingKey);
+            PropertyPath path = currentItem.key;
+            if (mapping == null || (mapping.isReference() && !pathMappings.containsKey(path))) {
+                pathMappings.put(path, mappingKey);
+                mapping = new ValueMapping<V>(createValueType(mappingKey));
             }
+            register(currentItem, mapping);
         }
     }
     
@@ -70,19 +105,19 @@ public class DescribeContext<V> {
         return valueTypeFactory.describe(this);
     }
    
-    public void describe(SubPath path, ValueMappingKey mappingKey) {
+    public synchronized void describe(SubPath path, ValueMappingKey mappingKey) {
         stack.add(new QueueItem<SubPath, ValueMappingKey>(path, mappingKey));
     }
     
-    public ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> getCurrentParent() {
+    public synchronized ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> getCurrentParent() {
         return currentItem.value.parent;
     }
     
-    public TypeDescriptor getCurrentType() {
+    public synchronized TypeDescriptor getCurrentType() {
         return currentItem.value.typeDescriptor;
     }
 
-    public PropertyPath getCurrentPath() {
+    public synchronized PropertyPath getCurrentPath() {
         return currentItem.key;
     }
 }

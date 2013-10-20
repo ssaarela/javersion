@@ -29,7 +29,7 @@ import com.google.common.collect.Maps;
 
 public abstract class SerializationContext<V> {
 
-    private final ValueMapping<V> rootMapping;
+    private final RootMapping<V> rootMapping;
     
     private final Map<PropertyPath, V> properties = Maps.newHashMap();
 
@@ -39,13 +39,9 @@ public abstract class SerializationContext<V> {
     
     private QueueItem<PropertyPath, Object> currentItem;
     
-    public SerializationContext(ValueMapping<V> rootMapping) {
+    public SerializationContext(RootMapping<V> rootMapping) {
         this.rootMapping = rootMapping;
     }
-    
-//    public Object getCurrentObject() {
-//        return currentItem.value;
-//    }
     
     public PropertyPath getCurrentPath() {
         return currentItem.key;
@@ -61,22 +57,20 @@ public abstract class SerializationContext<V> {
     }
     
     public void serialize(PropertyPath path, Object object) {
-        queue.add(new QueueItem<PropertyPath, Object>(path, object));
-    }
-    
-    public boolean isSerialized(Object object) {
-        return objects.containsKey(object);
+        if (!properties.containsKey(path)) {
+            queue.add(new QueueItem<PropertyPath, Object>(path, object));
+        }
     }
     
     public void run() {
         while ((currentItem = queue.pollFirst()) != null) {
             ValueMapping<V> mapping = getValueMapping(currentItem.key);
-            if (!mapping.isReferenceType() 
-                    && mapping.hasChildren() 
-                    && currentItem.hasValue() 
-                    && objects.put(currentItem.value, currentItem.key) != null) {
+            if (currentItem.hasValue() // not null?
+                    && mapping.hasChildren()  // Scalar value?
+                    && !mapping.isReference() // Multiple References to the same object?
+                    && objects.put(currentItem.value, currentItem.key) != null) { // First time for this object?
                 illegalReferenceException();
-            } 
+            }
             mapping.valueType.serialize(currentItem.value, this);
         }
     }
@@ -100,6 +94,10 @@ public abstract class SerializationContext<V> {
         put(getCurrentPath(), value);
     }
     
+    public boolean containsKey(PropertyPath path) {
+        return properties.containsKey(path);
+    }
+    
     public void put(PropertyPath path, V value) {
         if (properties.containsKey(path)) {
             throw new IllegalArgumentException("Duplicate value for " + path);
@@ -111,7 +109,7 @@ public abstract class SerializationContext<V> {
         return unmodifiableMap(properties);
     }
 
-    public ValueMapping<V> getRootMapping() {
+    public RootMapping<V> getRootMapping() {
         return rootMapping;
     }
     

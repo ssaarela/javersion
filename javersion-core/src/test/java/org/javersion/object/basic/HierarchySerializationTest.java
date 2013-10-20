@@ -6,7 +6,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
-import org.javersion.object.ValueMapping;
+import org.javersion.object.RootMapping;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -30,9 +30,9 @@ public class HierarchySerializationTest {
         public Tree second;
     }
     
-    private static final ValueMapping<Object> treeValueMapping = BasicDescribeContext.describe(Tree.class);
+    private static final RootMapping<Object> treeValueMapping = BasicDescribeContext.describe(Tree.class);
     
-    private static final ValueMapping<Object> biTreeValueMapping = BasicDescribeContext.describe(BiTree.class);
+    private static final RootMapping<Object> biTreeValueMapping = BasicDescribeContext.describe(BiTree.class);
     
     @Test
     public void Hierarchy() {

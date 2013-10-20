@@ -48,7 +48,7 @@ public class PrimitivesType implements IndexableType<Object> {
     }
 
     @Override
-    public String toString(Object object, ValueMapping<Object> rootMapping) {
+    public String toString(Object object, RootMapping<Object> rootMapping) {
         if (object != null) {
             return object.toString();
         } else {

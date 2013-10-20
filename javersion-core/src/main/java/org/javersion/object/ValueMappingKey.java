@@ -35,6 +35,10 @@ public final class ValueMappingKey {
     public ValueMappingKey(TypeDescriptor typeDescriptor) {
         this(null, typeDescriptor);
     }
+    
+    public ValueMappingKey(FieldDescriptor fieldDescriptor) {
+        this(fieldDescriptor, fieldDescriptor.getType());
+    }
 
     public ValueMappingKey(ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent, TypeDescriptor typeDescriptor) {
         this.parent = parent;

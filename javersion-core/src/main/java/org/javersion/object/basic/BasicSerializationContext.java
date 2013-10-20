@@ -15,12 +15,12 @@
  */
 package org.javersion.object.basic;
 
-import org.javersion.object.ValueMapping;
+import org.javersion.object.RootMapping;
 import org.javersion.object.SerializationContext;
 
 public class BasicSerializationContext extends SerializationContext<Object> {
 
-    public BasicSerializationContext(ValueMapping<Object> rootDescriptor) {
+    public BasicSerializationContext(RootMapping<Object> rootDescriptor) {
         super(rootDescriptor);
     }
 

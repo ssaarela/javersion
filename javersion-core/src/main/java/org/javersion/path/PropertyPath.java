@@ -110,10 +110,10 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
     }
     
     public Iterator<PropertyPath> iterator() {
-        return path().iterator();
+        return asList().iterator();
     }
     
-    public List<PropertyPath> path() {
+    public List<PropertyPath> asList() {
         return fullPath != null ? fullPath : (fullPath = getFullPath());
     }
     
@@ -122,8 +122,8 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
     }
     
     public boolean startsWith(PropertyPath other) {
-        List<PropertyPath> thisPath = path();
-        List<PropertyPath> otherPath = other.path();
+        List<PropertyPath> thisPath = asList();
+        List<PropertyPath> otherPath = other.asList();
         int otherSize = otherPath.size();
         return thisPath.size() >= otherSize && thisPath.get(otherSize - 1).equals(otherPath.get(otherSize - 1));
     }

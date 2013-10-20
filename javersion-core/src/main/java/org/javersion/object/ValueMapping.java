@@ -15,62 +15,44 @@
  */
 package org.javersion.object;
 
-import java.util.List;
 import java.util.Map;
 
-import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 
 import com.google.common.collect.Maps;
 
 public class ValueMapping<V> {
     
-    protected ValueType<V> valueType;
+    public final ValueType<V> valueType;
     
-    protected Map<String, ValueMapping<V>> children = Maps.newHashMap();
+    private final Map<String, ValueMapping<V>> children = Maps.newHashMap();
     
-    public ValueMapping() {}
-            
-    public ValueMapping(ValueType<V> valueType) {
-        this.valueType = Check.notNull(valueType, "valueType");
+
+    ValueMapping() {
+        this.valueType = null;
     }
-    
-    protected ValueMapping<V> getOrAppendChild(String name) {
-        ValueMapping<V> child = children.get(name);
-        if (child == null) {
-            child = new ValueMapping<>();
-            children.put(name, child);
-        }
-        return child;
+    ValueMapping(ValueType<V> valueType) {
+        this.valueType = Check.notNull(valueType, "valueType");
     }
 
     public ValueMapping<V> getChild(String name) {
         return children.get(name);
     }
     
-    public ValueMapping<V> get(PropertyPath path) {
-        Check.notNull(path, "path");
-        ValueMapping<V> currentMapping = this;
-        List<PropertyPath> pathElements = path.toSchemaPath().path();
-        for (PropertyPath currentPath : pathElements.subList(1, pathElements.size())) {
-            currentMapping = currentMapping.getChild(currentPath.getName());
-            if (currentMapping == null) {
-                throw new IllegalArgumentException("Path not found: " + currentPath);
-            }
-        }
-        return currentMapping;
-    }
-    
     public boolean hasChildren() {
         return !children.isEmpty();
     }
     
-    public Map<String, ValueMapping<V>> getChildren() {
-        return children;
+    void addChild(String name, ValueMapping<V> chid) {
+        children.put(name, chid);
     }
 
-    public boolean isReferenceType() {
+    public boolean isReference() {
         return valueType instanceof ReferenceType;
     }
-        
+    
+    public boolean hasChild(String name) {
+        return children.containsKey(name);
+    }
+
 }
