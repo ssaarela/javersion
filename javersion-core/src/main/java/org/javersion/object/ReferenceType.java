@@ -5,7 +5,7 @@ import org.javersion.reflect.FieldDescriptor;
 import org.javersion.util.Check;
 
 
-public final class ReferenceType<V> implements ValueType<V> {
+public final class ReferenceType<V> implements IndexableType<V> {
 
     private final FieldDescriptor idField;
     
@@ -19,12 +19,12 @@ public final class ReferenceType<V> implements ValueType<V> {
         this.idFieldPath = referencePath.index("").property(idField.getName());
     }
     
-    public String toString(ValueMapping<V> rootMapping, Object object) {
-        return getIdType(rootMapping).toString(rootMapping, idField.get(object));
+    public String toString(Object object, ValueMapping<V> rootMapping) {
+        return getIdType(rootMapping).toString(idField.get(object), rootMapping);
     }
     
-    private ValueType<V> getIdType(ValueMapping<V> rootMapping) {
-        return rootMapping.get(idFieldPath).valueType;
+    private IndexableType<V> getIdType(ValueMapping<V> rootMapping) {
+        return (IndexableType<V>) rootMapping.get(idFieldPath).valueType;
     }
     
     @Override
@@ -34,10 +34,10 @@ public final class ReferenceType<V> implements ValueType<V> {
             context.put(path, null);
         } else {
             Object idValue = idField.get(object);
-            ValueType<V> idType = getIdType(context.getRootMapping());
+            IndexableType<V> idType = getIdType(context.getRootMapping());
             idType.serialize(idValue, context);
             if (!context.isSerialized(object)) {
-                String id = idType.toString(context.getRootMapping(), idValue);
+                String id = idType.toString(idValue, context.getRootMapping());
                 context.serialize(referencePath.index(id), object);
             }
         }

@@ -18,7 +18,7 @@ package org.javersion.object.basic;
 import org.javersion.object.*;
 import org.javersion.reflect.TypeDescriptor;
 
-public class PrimitivesType implements ValueType<Object> {
+public class PrimitivesType implements IndexableType<Object> {
     
     private static final PrimitivesType INSTANCE = new PrimitivesType();
     
@@ -48,7 +48,7 @@ public class PrimitivesType implements ValueType<Object> {
     }
 
     @Override
-    public String toString(ValueMapping<Object> rootMapping, Object object) {
+    public String toString(Object object, ValueMapping<Object> rootMapping) {
         if (object != null) {
             return object.toString();
         } else {

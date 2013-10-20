@@ -13,26 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object.basic;
+package org.javersion.object;
 
-import java.util.Set;
-
-import org.javersion.object.AbstractEntityType;
-import org.javersion.reflect.TypeDescriptor;
-
-public class BasicEntityType extends AbstractEntityType<Object> {
+public interface IndexableType<V> extends ValueType<V> {
     
-    public BasicEntityType(Set<TypeDescriptor> types) {
-        super(types);
-    }
-
-    @Override
-    public Object toValue(Object object) {
-        if (object != null) {
-            return object.getClass();
-        } else {
-            return null;
-        }
-    }
+    String toString(Object object, ValueMapping<V> rootMapping);
 
 }
