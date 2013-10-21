@@ -21,9 +21,11 @@ import java.util.Map;
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 
+import com.google.common.collect.ImmutableMap;
+
 public class RootMapping<V> extends ValueMapping<V> {
 
-    private final Map<ValueMappingKey, ValueMapping<V>> typeMappings;
+    private Map<ValueMappingKey, ValueMapping<V>> typeMappings;
     
     RootMapping(ValueType<V> valueType, Map<ValueMappingKey, ValueMapping<V>> typeMappings) {
         super(valueType);
@@ -58,6 +60,12 @@ public class RootMapping<V> extends ValueMapping<V> {
             currentMapping = currentMapping.getChild(childName);
         }
         return currentMapping;
+    }
+
+    @Override
+    void lock() {
+        super.lock();
+        typeMappings = ImmutableMap.copyOf(typeMappings);
     }
 
 }

@@ -66,6 +66,8 @@ public class DescribeContext<V> {
 
         processSubMappings();
         
+        lockMappings();
+        
         try {
             return rootMapping;
         } finally {
@@ -74,6 +76,14 @@ public class DescribeContext<V> {
         }
     }
     
+    private void lockMappings() {
+        for (ValueMapping<V> mapping : typeMappings.values()) {
+            if (!mapping.isLocked()) {
+                mapping.lock();
+            }
+        }
+    }
+
     private void register(QueueItem<? extends PropertyPath, ValueMappingKey> item, ValueMapping<V> mapping) {
         typeMappings.put(item.value, mapping);
         pathMappings.put(item.key, item.value);

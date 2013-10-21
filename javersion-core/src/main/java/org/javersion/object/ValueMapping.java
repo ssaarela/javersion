@@ -19,13 +19,14 @@ import java.util.Map;
 
 import org.javersion.util.Check;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 public class ValueMapping<V> {
     
     public final ValueType<V> valueType;
     
-    private final Map<String, ValueMapping<V>> children = Maps.newHashMap();
+    private Map<String, ValueMapping<V>> children = Maps.newHashMap();
     
 
     ValueMapping() {
@@ -45,6 +46,14 @@ public class ValueMapping<V> {
     
     void addChild(String name, ValueMapping<V> chid) {
         children.put(name, chid);
+    }
+    
+    void lock() {
+        children = ImmutableMap.copyOf(children);
+    }
+    
+    boolean isLocked() {
+        return children instanceof ImmutableMap;
     }
 
     public boolean isReference() {
