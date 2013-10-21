@@ -22,7 +22,7 @@ import org.javersion.object.RootMapping;
 
 public class BasicDescribeContext extends DescribeContext<Object> {
     
-    private static final BasicDescribeContext DEFAULT = new BasicDescribeContext();
+    public static final BasicDescribeContext DEFAULT = new BasicDescribeContext();
     
     public BasicDescribeContext() {
         this(new BasicValueTypes());

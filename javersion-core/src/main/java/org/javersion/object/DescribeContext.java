@@ -50,9 +50,14 @@ public class DescribeContext<V> {
     }
 
     public synchronized RootMapping<V> describe(TypeDescriptor rootType) {
+        ValueMappingKey mappingKey = new ValueMappingKey(rootType);
+
+        if (typeMappings.containsKey(mappingKey)) {
+            return (RootMapping<V>) typeMappings.get(mappingKey);
+        }
+            
         pathMappings = Maps.newHashMap();
         
-        ValueMappingKey mappingKey = new ValueMappingKey(rootType);
         currentItem = new QueueItem<PropertyPath, ValueMappingKey>(PropertyPath.ROOT, mappingKey);
         
         ValueType<V> valueType = createValueType(mappingKey);
