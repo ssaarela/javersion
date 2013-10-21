@@ -45,22 +45,25 @@ public abstract class AbstractEntityTypeFactory<V>
     public  ValueType<V> describe(DescribeContext<V> context) {
         PropertyPath path = context.getCurrentPath();
         TypeDescriptor typeDescriptor = context.getCurrentType();
+        
         FieldDescriptor idField = getIdField(typeDescriptor);
-        SubPath targetPath = getTargetPath(idField);
-        if (targetPath != null && !path.equals(targetPath)) {
-            context.describe(targetPath, new ValueMappingKey(typeDescriptor));
-            
-            return new ReferenceType<V>(idField);
-        } else {
-            Set<TypeDescriptor> types = getSubTypes(typeDescriptor);
-            for (TypeDescriptor type : types) {
-                for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
-                    ValueMappingKey mappingKey = new ValueMappingKey(fieldDescriptor);
-                    context.describe(path.property(fieldDescriptor.getName()), mappingKey);
-                }
-            }
-            return newEntityType(types);
+        if (idField != null) {
+            SubPath targetPath = getTargetPath(idField);
+            // Reference
+            if (!path.equals(targetPath)) {
+                context.describe(targetPath, new ValueMappingKey(typeDescriptor));
+                return new ReferenceType<V>(idField);
+            } 
         }
+
+        Set<TypeDescriptor> types = getSubTypes(typeDescriptor);
+        for (TypeDescriptor type : types) {
+            for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
+                ValueMappingKey mappingKey = new ValueMappingKey(fieldDescriptor);
+                context.describe(path.property(fieldDescriptor.getName()), mappingKey);
+            }
+        }
+        return newEntityType(types);
     }
     
     private static SubPath getTargetPath(FieldDescriptor idField) {
@@ -69,12 +72,8 @@ public abstract class AbstractEntityTypeFactory<V>
     }
     
     public static SubPath getTargetRoot(FieldDescriptor idField) {
-        if (idField != null) {
-            Id id = idField.getAnnotation(Id.class);
-            return PropertyPath.ROOT.property(REFERENCES).property(id.alias());
-        } else {
-            return null;
-        }
+        Id id = idField.getAnnotation(Id.class);
+        return PropertyPath.ROOT.property(REFERENCES).property(id.alias());
     }
 
     private static FieldDescriptor getIdField(TypeDescriptor typeDescriptor) {
