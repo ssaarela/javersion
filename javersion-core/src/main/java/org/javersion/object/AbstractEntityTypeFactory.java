@@ -28,6 +28,8 @@ import com.google.common.collect.Sets;
 public abstract class AbstractEntityTypeFactory<V> 
         implements ValueTypeFactory<V> {
     
+    private static final String REFERENCES = "@REF@";
+
     protected final TypeDescriptors typeDescriptors;
     
     public AbstractEntityTypeFactory(TypeDescriptors typeDescriptors) {
@@ -69,7 +71,7 @@ public abstract class AbstractEntityTypeFactory<V>
     public static SubPath getTargetRoot(FieldDescriptor idField) {
         if (idField != null) {
             Id id = idField.getAnnotation(Id.class);
-            return PropertyPath.ROOT.property("@").property(id.alias());
+            return PropertyPath.ROOT.property(REFERENCES).property(id.alias());
         } else {
             return null;
         }

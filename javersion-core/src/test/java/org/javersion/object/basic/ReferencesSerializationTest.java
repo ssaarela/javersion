@@ -45,13 +45,13 @@ public class ReferencesSerializationTest {
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, 1l,
 
-                property("@.nodes[1]"), Node.class,
-                property("@.nodes[1].id"), 1l,
-                property("@.nodes[1].node"), 2l,
+                property("@REF@.nodes[1]"), Node.class,
+                property("@REF@.nodes[1].id"), 1l,
+                property("@REF@.nodes[1].node"), 2l,
         
-                property("@.nodes[2]"), Node.class,
-                property("@.nodes[2].id"), 2l,
-                property("@.nodes[2].node"), 1l
+                property("@REF@.nodes[2]"), Node.class,
+                property("@REF@.nodes[2].id"), 2l,
+                property("@REF@.nodes[2].node"), 1l
         );
         
         assertThat(properties, equalTo(expectedProperties));
