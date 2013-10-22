@@ -15,21 +15,8 @@
  */
 package org.javersion.object;
 
-public class ValueTypes<V> {
+public interface ValueTypes<V> {
 
-    private final Iterable<ValueTypeFactory<V>> types;
-    
-    public ValueTypes(Iterable<ValueTypeFactory<V>> types) {
-        this.types = types;
-    }
+    ValueTypeFactory<V> getFactory(ValueMappingKey mappingKey);
 
-    public ValueTypeFactory<V> getFactory(ValueMappingKey mappingKey) {
-        for (ValueTypeFactory<V> valueType : types) {
-            if (valueType.applies(mappingKey)) {
-                return valueType;
-            }
-        }
-        throw new IllegalArgumentException("ValueType not found for " + mappingKey);
-    }
-    
 }

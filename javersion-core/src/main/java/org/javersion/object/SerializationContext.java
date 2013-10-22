@@ -75,12 +75,8 @@ public abstract class SerializationContext<V> {
         }
     }
     
-    public ValueMapping<V> getValueMapping(PropertyPath path) {
+    private ValueMapping<V> getValueMapping(PropertyPath path) {
         return rootMapping.get(path);
-    }
-    
-    public ValueType<V> getValueType(PropertyPath path) {
-        return getValueMapping(path).valueType;
     }
 
     private void illegalReferenceException() {

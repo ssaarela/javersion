@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.basic;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.util.Set;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import org.javersion.object.AbstractVersionableTypeFactory;
+import org.javersion.reflect.TypeDescriptor;
 
-@Target({ TYPE })
-@Retention(RUNTIME)
-@Documented
-public @interface Versionable {
+public class VersionableTypeFactory extends AbstractVersionableTypeFactory<Object> {
+    
+    @Override
+    protected ObjectType newEntityType(Set<TypeDescriptor> types) {
+        return new ObjectType(types);
+    }
+    
 }

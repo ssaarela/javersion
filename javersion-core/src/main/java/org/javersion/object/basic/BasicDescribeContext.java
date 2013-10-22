@@ -19,6 +19,7 @@ import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.RootMapping;
+import org.javersion.object.ValueTypes;
 
 public class BasicDescribeContext extends DescribeContext<Object> {
     
@@ -27,12 +28,13 @@ public class BasicDescribeContext extends DescribeContext<Object> {
     public BasicDescribeContext() {
         this(new BasicValueTypes());
     }
-    public BasicDescribeContext(BasicValueTypes valueTypes) {
+    
+    public BasicDescribeContext(ValueTypes<Object> valueTypes) {
         super(valueTypes);
     }
     
-    public static RootMapping<Object> describe(Class<?> clazz) {
-        return DEFAULT.describe(getTypeDescriptor(clazz));
+    public RootMapping<Object> describe(Class<?> clazz) {
+        return describe(getTypeDescriptor(clazz));
     }
 
 }

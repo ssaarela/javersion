@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object.basic;
+package org.javersion.object;
 
-import java.util.Set;
+public interface IdMapper<R> {
 
-import org.javersion.object.AbstractEntityTypeFactory;
-import org.javersion.reflect.TypeDescriptor;
-import org.javersion.reflect.TypeDescriptors;
-
-public class BasicEntityTypeFactory extends AbstractEntityTypeFactory<Object> {
+    public String getId(R object);
     
-    public BasicEntityTypeFactory(TypeDescriptors typeDescriptors) {
-        super(typeDescriptors);
-    }
-
-    @Override
-    protected BasicEntityType newEntityType(Set<TypeDescriptor> types) {
-        return new BasicEntityType(types);
-    }
+//    public void setId(R object, String id);
     
 }

@@ -47,7 +47,7 @@ public class PrimitiveSerializationTest {
         public char charPrimitive;
     }
     
-    private static final RootMapping<Object> primitivesValueMapping = BasicDescribeContext.describe(Primitives.class);
+    private static final RootMapping<Object> primitivesValueMapping = new BasicDescribeContext().describe(Primitives.class);
     
     @Test
     public void Primitive_Values() {

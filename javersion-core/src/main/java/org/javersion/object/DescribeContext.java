@@ -60,9 +60,10 @@ public class DescribeContext<V> {
         
         currentItem = new QueueItem<PropertyPath, ValueMappingKey>(PropertyPath.ROOT, mappingKey);
         
+        pathMappings.put(PropertyPath.ROOT, mappingKey);
         ValueType<V> valueType = createValueType(mappingKey);
         rootMapping = new RootMapping<>(valueType, unmodifiableMap(typeMappings));
-        register(currentItem, rootMapping);
+        registerMapping(currentItem, rootMapping);
 
         processSubMappings();
         
@@ -84,9 +85,9 @@ public class DescribeContext<V> {
         }
     }
 
-    private void register(QueueItem<? extends PropertyPath, ValueMappingKey> item, ValueMapping<V> mapping) {
+    private void registerMapping(QueueItem<? extends PropertyPath, ValueMappingKey> item, ValueMapping<V> mapping) {
         typeMappings.put(item.value, mapping);
-        pathMappings.put(item.key, item.value);
+
         // Add to parent
         if (item.key instanceof SubPath) {
             PropertyPath parentPath = ((SubPath) item.key).parent;
@@ -111,11 +112,11 @@ public class DescribeContext<V> {
                 pathMappings.put(path, mappingKey);
                 mapping = new ValueMapping<V>(createValueType(mappingKey));
             }
-            register(currentItem, mapping);
+            registerMapping(currentItem, mapping);
         }
     }
     
-    private ValueType<V> createValueType(ValueMappingKey mappingKey) {
+    public synchronized ValueType<V> createValueType(ValueMappingKey mappingKey) {
         ValueTypeFactory<V> valueTypeFactory = valueTypes.getFactory(mappingKey);
         return valueTypeFactory.describe(this);
     }
@@ -126,6 +127,10 @@ public class DescribeContext<V> {
     
     public synchronized ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> getCurrentParent() {
         return currentItem.value.parent;
+    }
+    
+    public synchronized ValueMappingKey getCurrentMappingKey() {
+        return currentItem.value;
     }
     
     public synchronized TypeDescriptor getCurrentType() {

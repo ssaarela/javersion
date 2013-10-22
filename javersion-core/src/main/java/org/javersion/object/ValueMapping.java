@@ -44,8 +44,9 @@ public class ValueMapping<V> {
         return !children.isEmpty();
     }
     
-    void addChild(String name, ValueMapping<V> chid) {
-        children.put(name, chid);
+    ValueMapping<V> addChild(String name, ValueMapping<V> child) {
+        children.put(name, child);
+        return child;
     }
     
     void lock() {

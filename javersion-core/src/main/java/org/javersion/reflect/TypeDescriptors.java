@@ -17,6 +17,8 @@ package org.javersion.reflect;
 
 import java.lang.reflect.Field;
 
+import org.javersion.util.Check;
+
 import com.google.common.base.Predicate;
 import com.google.common.reflect.TypeToken;
 
@@ -25,6 +27,7 @@ public class TypeDescriptors extends AbstractTypeDescriptors<FieldDescriptor, Ty
     public static final TypeDescriptors DEFAULT = new TypeDescriptors();
     
     public static TypeDescriptor getTypeDescriptor(Class<?> clazz) {
+        Check.notNull(clazz, "clazz");
         return DEFAULT.get(clazz);
     }
     

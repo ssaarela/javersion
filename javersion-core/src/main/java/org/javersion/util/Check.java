@@ -36,7 +36,7 @@ public class Check {
     }
     
     public static <T extends Iterable<?>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
-        checkArgument(!(reference == null || reference.iterator().hasNext()), messageFormat, args);
+        checkArgument(!(reference == null || !reference.iterator().hasNext()), messageFormat, args);
         return reference;
     }
     

@@ -17,38 +17,66 @@ package org.javersion.object.basic;
 
 import java.util.List;
 
+import org.javersion.object.AbstractValueTypes;
+import org.javersion.object.IdMapper;
 import org.javersion.object.ValueTypeFactory;
 import org.javersion.object.ValueTypes;
+import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
-public class BasicValueTypes extends ValueTypes<Object> {
+public class BasicValueTypes extends AbstractValueTypes<Object> {
     
-    private static List<ValueTypeFactory<Object>> defaultTypes(TypeDescriptors typeDescriptors) {
-        return ImmutableList.<ValueTypeFactory<Object>>of(
-            new BasicEntityTypeFactory(typeDescriptors),
-            PrimitivesType.FACTORY
-            );
-    };
-
-    @SafeVarargs
-    public BasicValueTypes(ValueTypeFactory<Object>... types) {
-        this(TypeDescriptors.DEFAULT, types);
-    }
-
-    public BasicValueTypes(Iterable<ValueTypeFactory<Object>> types) {
-        this(TypeDescriptors.DEFAULT, types);
-    }
-
-    @SafeVarargs
-    public BasicValueTypes(TypeDescriptors typeDescriptors, ValueTypeFactory<Object>... types) {
-        this(typeDescriptors, ImmutableList.copyOf(types));
+    public static Builder builder() {
+        return new Builder();
     }
     
-    public BasicValueTypes(TypeDescriptors typeDescriptors, Iterable<ValueTypeFactory<Object>> types) {
-        super(Iterables.concat(types, defaultTypes(typeDescriptors)));
+    private static List<ValueTypeFactory<Object>> DEFAULT_FACTORIES = ImmutableList.of(
+                PrimitivesType.FACTORY,
+                new VersionableTypeFactory()
+                );
+
+    public BasicValueTypes() {
+        super(DEFAULT_FACTORIES);
+    }
+    
+    public BasicValueTypes(Iterable<ValueTypeFactory<Object>> factories) {
+        this(TypeDescriptors.DEFAULT, factories);
+    }
+    
+    public BasicValueTypes(TypeDescriptors typeDescriptors, Iterable<ValueTypeFactory<Object>> factories) {
+        super(Iterables.concat(factories, DEFAULT_FACTORIES));
     }
 
+    public static class Builder extends AbstractValueTypes.Builder<Object, ValueTypes<Object>, Builder> {
+
+        public Builder() {
+            super(TypeDescriptors.DEFAULT);
+        }
+        
+        public Builder(TypeDescriptors typeDescriptors) {
+            super(typeDescriptors);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        protected ValueTypeFactory<Object> createObjectTypeFactory(
+                Iterable<TypeDescriptor> types, 
+                IdMapper<?> idMapper,
+                String alias) {
+            return new ObjectTypeFactory(types, idMapper, alias);
+        }
+
+        @Override
+        protected ValueTypes<Object> build(List<ValueTypeFactory<Object>> factories) {
+            return new BasicValueTypes(factories);
+        }
+        
+    }
 }

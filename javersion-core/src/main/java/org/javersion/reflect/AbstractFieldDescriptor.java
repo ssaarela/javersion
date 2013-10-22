@@ -25,7 +25,7 @@ public abstract class AbstractFieldDescriptor<
             Ts extends AbstractTypeDescriptors<F, T, Ts>> 
         extends ElementDescriptor<F, T, Ts> {
     
-    private final Field field;
+    protected final Field field;
 
     public AbstractFieldDescriptor(Ts typeDescriptors, Field field) {
         super(typeDescriptors);

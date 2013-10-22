@@ -55,9 +55,10 @@ public class RootMapping<V> extends ValueMapping<V> {
         for (PropertyPath currentPath : pathElements.subList(1, pathElements.size())) {
             String childName = currentPath.getName();
             if (!currentMapping.hasChild(childName)) {
-                currentMapping.addChild(childName, new ValueMapping<>(valueType));
+                currentMapping = currentMapping.addChild(childName, new ValueMapping<V>());
+            } else {
+                currentMapping = currentMapping.getChild(childName);
             }
-            currentMapping = currentMapping.getChild(childName);
         }
         return currentMapping;
     }

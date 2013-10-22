@@ -26,4 +26,7 @@ public class FieldDescriptor extends AbstractFieldDescriptor<
         super(typeDescriptors, field);
     }
 
+    public String toString() {
+        return field.getDeclaringClass().getCanonicalName() + "." + getName();
+    }
 }

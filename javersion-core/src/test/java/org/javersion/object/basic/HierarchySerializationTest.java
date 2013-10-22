@@ -35,9 +35,9 @@ public class HierarchySerializationTest {
     private static final RootMapping<Object> biTreeValueMapping;
     
     static {
-        BasicDescribeContext.describe(Tree.class);
-        treeValueMapping = BasicDescribeContext.describe(Tree.class);
-        biTreeValueMapping = BasicDescribeContext.describe(BiTree.class);
+        new BasicDescribeContext().describe(Tree.class);
+        treeValueMapping = new BasicDescribeContext().describe(Tree.class);
+        biTreeValueMapping = new BasicDescribeContext().describe(BiTree.class);
     }
     
     @Test

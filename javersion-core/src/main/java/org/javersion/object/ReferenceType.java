@@ -16,30 +16,26 @@
 package org.javersion.object;
 
 import org.javersion.path.PropertyPath;
-import org.javersion.reflect.FieldDescriptor;
 import org.javersion.util.Check;
 
 
-public final class ReferenceType<V> implements IndexableType<V> {
-
-    private final FieldDescriptor idField;
+public final class ReferenceType<V, R> implements IndexableType<V> {
     
-    private final ValueMappingKey idMappingKey;
+    private final IdMapper<R> idMapper;
     
     private final PropertyPath targetRoot;
     
-    public ReferenceType(FieldDescriptor idField) {
-        this.idField = Check.notNull(idField, "idField");
-        this.idMappingKey = new ValueMappingKey(idField);
-        this.targetRoot = AbstractEntityTypeFactory.getTargetRoot(idField);
-    }
+    private final ValueType<V> stringType;
     
+    public ReferenceType(IdMapper<R> idMapper, PropertyPath targetRoot, ValueType<V> stringType) {
+        this.idMapper = Check.notNull(idMapper, "idMapper");
+        this.targetRoot = Check.notNull(targetRoot, "targetRoot");
+        this.stringType = Check.notNull(stringType, "stringType");
+    }
+
+    @SuppressWarnings("unchecked")
     public String toString(Object object, RootMapping<V> rootMapping) {
-        return getIdType(rootMapping).toString(idField.get(object), rootMapping);
-    }
-    
-    private IndexableType<V> getIdType(RootMapping<V> rootMapping) {
-        return (IndexableType<V>) rootMapping.get(idMappingKey).valueType;
+        return idMapper.getId((R) object);
     }
     
     @Override
@@ -48,13 +44,9 @@ public final class ReferenceType<V> implements IndexableType<V> {
         if (object == null) {
             context.put(path, null);
         } else {
-            Object idValue = idField.get(object);
-            IndexableType<V> idType = getIdType(context.getRootMapping());
-            idType.serialize(idValue, context);
-            if (!context.containsKey(targetRoot)) {
-                String id = idType.toString(idValue, context.getRootMapping());
-                context.serialize(targetRoot.index(id), object);
-            }
+            String id = toString(object, null);
+            stringType.serialize(id, context);
+            context.serialize(targetRoot.index(id), object);
         }
     }
 

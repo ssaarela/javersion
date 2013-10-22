@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.basic;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.util.Set;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import org.javersion.object.AbstractObjectType;
+import org.javersion.reflect.TypeDescriptor;
 
-/**
- * {@literal @.<alias>[<id>]}
- */
-@Target({ FIELD })
-@Retention(RUNTIME)
-@Documented
-public @interface Id {
+public class ObjectType extends AbstractObjectType<Object> {
     
-    String alias();
-    
+    public ObjectType(Set<TypeDescriptor> types) {
+        super(types);
+    }
+
+    @Override
+    public Object toValue(Object object) {
+        if (object != null) {
+            return object.getClass();
+        } else {
+            return null;
+        }
+    }
+
 }

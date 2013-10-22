@@ -15,6 +15,9 @@
  */
 package org.javersion.reflect;
 
+import org.javersion.util.Check;
+
+import com.google.common.base.Function;
 import com.google.common.reflect.TypeToken;
 
 public class TypeDescriptor extends AbstractTypeDescriptor<
@@ -22,6 +25,14 @@ public class TypeDescriptor extends AbstractTypeDescriptor<
             TypeDescriptor, 
             TypeDescriptors>{
     
+    public static final Function<TypeDescriptor, Class<?>> getRawType = new Function<TypeDescriptor, Class<?>>() {
+        @Override
+        public Class<?> apply(TypeDescriptor input) {
+            Check.notNull(input, "input");
+            return input.getRawType();
+        }
+    };
+
     public TypeDescriptor(TypeDescriptors typeDescriptors, TypeToken<?> typeToken) {
         super(typeDescriptors, typeToken);
     }

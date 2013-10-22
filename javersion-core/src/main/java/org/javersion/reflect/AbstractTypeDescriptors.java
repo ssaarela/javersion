@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.javersion.util.Check;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -36,6 +37,13 @@ public abstract class AbstractTypeDescriptors<
         public boolean apply(Field field) {
             int mod = field.getModifiers();
             return !(Modifier.isStatic(mod) || field.isSynthetic());
+        }
+    };
+    
+    public final Function<Class<?>, T> getTypeDescriptor = new Function<Class<?>, T>() {
+        @Override
+        public T apply(Class<?> input) {
+            return get(input);
         }
     };
     

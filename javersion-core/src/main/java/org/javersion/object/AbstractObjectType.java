@@ -25,23 +25,14 @@ import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
-import com.google.common.base.Function;
 
-public abstract class AbstractEntityType<V> implements ValueType<V> {
+public abstract class AbstractObjectType<V> implements ValueType<V> {
 
-    private static final Function<TypeDescriptor, Class<?>> getRawType = new Function<TypeDescriptor, Class<?>>() {
-        @Override
-        public Class<?> apply(TypeDescriptor input) {
-            Check.notNull(input, "input");
-            return input.getRawType();
-        }
-    };
+    protected final Map<Class<?>, TypeDescriptor> types;
     
-    private final Map<Class<?>, TypeDescriptor> types;
-    
-    public AbstractEntityType(Set<TypeDescriptor> types) {
+    public AbstractObjectType(Set<TypeDescriptor> types) {
         Check.notNullOrEmpty(types, "types");
-        this.types = uniqueIndex(types, getRawType);
+        this.types = uniqueIndex(types, TypeDescriptor.getRawType);
     }
 
     @Override

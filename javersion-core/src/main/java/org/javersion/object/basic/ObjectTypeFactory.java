@@ -17,22 +17,26 @@ package org.javersion.object.basic;
 
 import java.util.Set;
 
-import org.javersion.object.AbstractEntityType;
+import org.javersion.object.AbstractObjectTypeFactory;
+import org.javersion.object.IdMapper;
 import org.javersion.reflect.TypeDescriptor;
 
-public class BasicEntityType extends AbstractEntityType<Object> {
-    
-    public BasicEntityType(Set<TypeDescriptor> types) {
+public class ObjectTypeFactory extends AbstractObjectTypeFactory<Object> {
+
+    public ObjectTypeFactory(Iterable<TypeDescriptor> types) {
         super(types);
+    }
+    
+    public ObjectTypeFactory(
+            Iterable<TypeDescriptor> types,
+            IdMapper<?> idMapper,
+            String alias) {
+        super(types, idMapper, alias, new PrimitivesType());
     }
 
     @Override
-    public Object toValue(Object object) {
-        if (object != null) {
-            return object.getClass();
-        } else {
-            return null;
-        }
+    protected ObjectType newEntityType(Set<TypeDescriptor> types) {
+        return new ObjectType(types);
     }
-
+    
 }
