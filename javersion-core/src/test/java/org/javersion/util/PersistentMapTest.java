@@ -32,24 +32,24 @@ public class PersistentMapTest {
     @Test
     public void Add_Values() {
         PersistentMap<String, String> map = new PersistentMap<String, String>();
-        PersistentMap<String, String> otherMap = map.put("key", "value");
+        PersistentMap<String, String> otherMap = map.assoc("key", "value");
         assertThat(otherMap.get("key"), equalTo("value"));
         assertThat(map.get("key"), nullValue());
 
-        map = otherMap.put("key", "value2");
+        map = otherMap.assoc("key", "value2");
         assertThat(map.get("key"), equalTo("value2"));
         assertThat(otherMap.get("key"), equalTo("value"));
 
-        map = map.put("key2", "value");
+        map = map.assoc("key2", "value");
         assertThat(map.get("key2"), equalTo("value"));
         assertThat(otherMap.get("key2"), nullValue());
         
-        map = map.put("null", null);
+        map = map.assoc("null", null);
         assertThat(map.get("null"), nullValue());
         assertThat(map.containsKey("null"), equalTo(true));
         
         assertThat(map.containsKey(null), equalTo(false));
-        map = map.put(null, "not-null");
+        map = map.assoc(null, "not-null");
         assertThat(map.get(null), equalTo("not-null"));
     }
     
@@ -59,9 +59,9 @@ public class PersistentMapTest {
         HashKey k1 = new HashKey(1);
         HashKey k2 = new HashKey(1);
         HashKey k3 = new HashKey(1);
-        map = map.put(k1, k1);
-        map = map.put(k2, k2);
-        map = map.put(k3, k3);
+        map = map.assoc(k1, k1);
+        map = map.assoc(k2, k2);
+        map = map.assoc(k3, k3);
         assertThat(map.get(k1), equalTo(k1));
         assertThat(map.get(k2), equalTo(k2));
         assertThat(map.get(k3), equalTo(k3));
@@ -109,7 +109,7 @@ public class PersistentMapTest {
     private static <KV> PersistentMap<KV, KV> incremental(List<KV> keys) {
         PersistentMap<KV, KV> persistentMap = new PersistentMap<KV, KV>();
         for (KV key : keys) {
-            persistentMap = persistentMap.put(key, key);
+            persistentMap = persistentMap.assoc(key, key);
         }
         return persistentMap;
     }
@@ -117,7 +117,7 @@ public class PersistentMapTest {
     public static <K, V> PersistentMap<K, V> incremental(Map<K, V> map) {
         PersistentMap<K, V> persistentMap = new PersistentMap<K, V>();
         for (Map.Entry<K, V> entry : map.entrySet()) {
-            persistentMap = persistentMap.put(entry.getKey(), entry.getValue());
+            persistentMap = persistentMap.assoc(entry.getKey(), entry.getValue());
         }
         return persistentMap;
     }
@@ -125,12 +125,12 @@ public class PersistentMapTest {
     public PersistentMap<HashKey, HashKey> bulk(List<HashKey> keys) {
         PersistentMap<HashKey, HashKey> map = new PersistentMap<HashKey, HashKey>();
         for (HashKey key : keys) {
-            map = map.put(key, key);
+            map = map.assoc(key, key);
         }
         return map;
     }
 
-   private static final int LENGTH = 1000000;
+    private static final int LENGTH = 1000000;
 
     public static void main(String[] args) {
         Random random = new Random(78);
@@ -140,14 +140,14 @@ public class PersistentMapTest {
         for (int i=0; i < LENGTH; i++) {
             String key = Integer.toString(i);
             keys[i] = key;
-            map = map.put(key, key); // warm up
+            map = map.assoc(key, key); // warm up
             hashMap.put(key, key);
         }
 
         for (int i=LENGTH; i < LENGTH*2; i++) {
             String key = Integer.toString(random.nextInt(LENGTH * 2));
             keys[i] = key;
-            map = map.put(key, key); // warm up
+            map = map.assoc(key, key); // warm up
             hashMap.put(key, key);
         }
         
@@ -177,7 +177,7 @@ public class PersistentMapTest {
         start = System.nanoTime();
         map = new PersistentMap<String, String>();
         for (String key : keys) {
-            map = map.put(key, key);
+            map = map.assoc(key, key);
         }
         elapsed = System.nanoTime() - start;
         System.out.println("Incremental: " + elapsed / 1000000.0);
