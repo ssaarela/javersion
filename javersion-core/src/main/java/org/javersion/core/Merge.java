@@ -19,7 +19,6 @@ import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Maps.filterValues;
-import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSet;
 
 import java.util.Iterator;
@@ -27,9 +26,16 @@ import java.util.Map;
 import java.util.Set;
 
 import org.javersion.util.Check;
+import org.javersion.util.PersistentMap;
+import org.javersion.util.PersistentSet;
 
 import com.google.common.base.Function;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 public final class Merge<K, V> {
 
@@ -62,23 +68,24 @@ public final class Merge<K, V> {
 
             // One version
             if (!iter.hasNext()) {
-                mergedProperties = versionNode.getProperties();
+                mergedProperties = versionNode.allProperties.asMap();
                 revisions = ImmutableSet.of(versionNode.getRevision());
                 conflicts = ImmutableMultimap.of();
             } 
             // More than one version -> merge!
             else {
-                Map<K, VersionProperty<V>> mergedProperties = Maps.newLinkedHashMap(versionNode.getProperties());
+                PersistentMap.Builder<K, VersionProperty<V>> mergedProperties = PersistentMap.builder(versionNode.allProperties);
                 Set<Long> heads = Sets.newHashSet(versionNode.getRevision());
+
                 ImmutableMultimap.Builder<K, VersionProperty<V>> conflicts = ImmutableMultimap.builder();
 
-                Set<Long> mergedRevisions = Sets.newHashSet(versionNode.getAllRevisions());
+                PersistentSet.Builder<Long> mergedRevisions = PersistentSet.<Long>builder(versionNode.allRevisions);
                 do {
                     versionNode = next(iter);
 
                     // Version already merged?
                     if (!mergedRevisions.contains(versionNode.getRevision())) {
-                        for (Map.Entry<K, VersionProperty<V>> entry : versionNode.getProperties().entrySet()) {
+                        for (Map.Entry<K, VersionProperty<V>> entry : versionNode.allProperties) {
                             K key = entry.getKey();
                             VersionProperty<V> nextValue = entry.getValue();
 
@@ -96,14 +103,14 @@ public final class Merge<K, V> {
                                 }
                             }
                         }
-                        mergedRevisions.addAll(versionNode.getAllRevisions());
+                        mergedRevisions.addAll(versionNode.allRevisions);
 
-                        heads.removeAll(versionNode.getAllRevisions());
+                        heads.removeAll(versionNode.allRevisions.asSet());
                         heads.add(versionNode.getRevision());
                     }
                 } while (iter.hasNext());
 
-                this.mergedProperties = unmodifiableMap(mergedProperties);
+                this.mergedProperties = mergedProperties.build().asMap();
                 this.revisions = unmodifiableSet(heads);
                 this.conflicts = conflicts.build();
             }

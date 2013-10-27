@@ -86,6 +86,15 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             return this;
         }
         
+        public boolean containsKey(Object key) {
+            return root.find(key) != null;
+        }
+        
+        public V get(Object key) {
+            Entry<K, V> entry = root.find(key);
+            return entry != null ? entry.getValue() : null;
+        }
+        
         public int size() {
             return size;
         }

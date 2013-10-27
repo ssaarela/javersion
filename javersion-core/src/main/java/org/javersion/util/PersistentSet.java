@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-public class PersistentSet<E> {
+public class PersistentSet<E> implements Iterable<E> {
     
     public static class Builder<E> {
         
@@ -30,9 +30,13 @@ public class PersistentSet<E> {
         
         private boolean modified;
         
-        public Builder(PersistentMap<E, Object> map) {
-            this.builder = PersistentMap.builder(map);
-            this.originalSize = map.size();
+        public Builder() {
+            this(new PersistentSet<E>());
+        }
+        
+        public Builder(PersistentSet<E> set) {
+            this.builder = PersistentMap.builder(set.map);
+            this.originalSize = set.size();
         }
         
         public Builder<E> add(E e) {
@@ -48,11 +52,30 @@ public class PersistentSet<E> {
             return this;
         }
         
+        public Builder<E> addAll(PersistentSet<? extends E> elements) {
+            for (E e : elements) {
+                add(e);
+            }
+            return this;
+        }
+        
+        public boolean contains(Object e) {
+            return builder.containsKey(e);
+        }
+        
         public PersistentSet<E> build() {
             return new PersistentSet<>(builder.build());
         }
     }
 
+    public static <E> Builder<E> builder() {
+        return new Builder<>();
+    }
+
+    public static <E> Builder<E> builder(PersistentSet<E> parent) {
+        return new Builder<>(parent);
+    }
+    
     private final PersistentMap<E, Object> map;
     
     private static final Object PRESENT = new Object(); 
@@ -134,7 +157,7 @@ public class PersistentSet<E> {
 
         @Override
         public boolean addAll(Collection<? extends E> c) {
-            Builder<E> builder = new Builder<>(set.map);
+            Builder<E> builder = new Builder<>(set);
             set = builder.addAll(c).build();
             return builder.modified;
         }
