@@ -66,12 +66,16 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             this.size = size;
         }
         
-        public Builder<K, V> put(K key, V value) {
-            root = root.assoc(version, new Entry<K, V>(key, value));
+        public Builder<K, V> put(Map.Entry<K, V> entry) {
+            root = root.assoc(version, entry);
             if (version.shouldIncrementSize()) {
                 size++;
             }
             return this;
+        }
+        
+        public Builder<K, V> put(K key, V value) {
+            return put(new Entry<K, V>(key, value));
         }
         
         public Builder<K, V> putAll(Map<? extends K, ? extends V> map) {
@@ -146,14 +150,6 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         return doReturn(root.assoc(new Version(1), entry), 1);
     }
     
-    private PersistentMap<K, V> doReturn(Node<K, V> newRoot, int additions) {
-        if (newRoot == root) {
-            return this;
-        } else {
-            return new PersistentMap<K, V>(newRoot, size + additions);
-        }
-    }
-    
     public PersistentMap<K, V> assocAll(Map<? extends K, ? extends V> map) {
         return builder(this, map.size()).putAll(map).build();
     }
@@ -186,6 +182,15 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     
     public Map<K, V> asMap() {
         return new AsMap<>(this);
+    }
+    
+    
+    private PersistentMap<K, V> doReturn(Node<K, V> newRoot, int additions) {
+        if (newRoot == root) {
+            return this;
+        } else {
+            return new PersistentMap<K, V>(newRoot, size + additions);
+        }
     }
     
     private static <K, V> Entry<K, V> toEntry(Map.Entry<K, V> entry) {
@@ -226,7 +231,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
 
         public abstract Entry<K, V> find(Object key);
 
-        public abstract Node<K, V> assoc(Version currentVersion, Entry<? extends K, ? extends V> newEntry);
+        public abstract Node<K, V> assoc(Version currentVersion, Map.Entry<? extends K, ? extends V> newEntry);
 
     }
     
@@ -239,8 +244,8 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         }
 
         @Override
-        public Node<K, V> assoc(Version currentVersion, Entry<? extends K, ? extends V> newEntry) {
-            return assocInternal(currentVersion, 0, newEntry);
+        public Node<K, V> assoc(Version currentVersion, Map.Entry<? extends K, ? extends V> newEntry) {
+            return assocInternal(currentVersion, 0, toEntry(newEntry));
         }
         
         abstract Entry<K, V> findInternal(int level, int hash, Object key);

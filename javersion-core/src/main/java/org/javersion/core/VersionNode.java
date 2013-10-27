@@ -62,7 +62,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
                         VersionProperty<V> value = entry.getValue();
                         VersionProperty<V> prevValue = properties.get(key);
                         if (prevValue == null || prevValue.revision < value.revision) {
-                            properties.put(key, value);
+                            properties.put(entry);
                         }
                     }
                 }

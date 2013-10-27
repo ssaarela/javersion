@@ -95,11 +95,11 @@ public final class Merge<K, V> {
 
                                 // New value
                                 if (previousValue == null) {
-                                    mergedProperties.put(key, nextValue);
+                                    mergedProperties.put(entry);
                                 }
                                 // Conflicting value?
                                 else if (!equal(previousValue.value, nextValue.value)) {
-                                    conflicts.put(key, nextValue);
+                                    conflicts.put(entry);
                                 }
                             }
                         }
