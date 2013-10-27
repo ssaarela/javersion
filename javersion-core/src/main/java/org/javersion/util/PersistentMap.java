@@ -318,7 +318,7 @@ public class PersistentMap<K, V> {
         }
         
         private int newSize(int childCount) {
-             return  2*(childCount + 1);
+             return childCount < 16 ? 2*(childCount + 1) : 32;
         }
         
         @Override
