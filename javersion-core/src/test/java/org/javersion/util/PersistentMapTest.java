@@ -1,6 +1,7 @@
 package org.javersion.util;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
@@ -12,6 +13,7 @@ import java.util.Random;
 import org.junit.Test;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class PersistentMapTest {
     
@@ -27,6 +29,15 @@ public class PersistentMapTest {
         public String toString() {
             return "" + hash + "@" + System.identityHashCode(this);
         }
+    }
+    
+    @Test
+    public void Empty_Map() {
+        PersistentMap<String, String> map = new PersistentMap<String, String>();
+        assertThat(map.size(), equalTo(0));
+        assertThat(map.containsKey("key"), equalTo(false));
+        assertThat(map.iterator(), not(nullValue()));
+        assertThat(map.iterator().hasNext(), equalTo(false));
     }
 
     @Test
@@ -70,7 +81,7 @@ public class PersistentMapTest {
     }
     
     @Test
-    public void Incremental_Collisions() {
+    public void Collisions() {
         List<HashKey> keys = Lists.newArrayList();
         for (int i=0; i < 4097; i++) {
             keys.add(new HashKey(i));
@@ -85,24 +96,32 @@ public class PersistentMapTest {
     }
     
     @Test
-    public void Bulk_Collisions() {
-        List<HashKey> keys = Lists.newArrayList();
-        for (int i=0; i < 4097; i++) {
-            keys.add(new HashKey(i));
-            keys.add(new HashKey(i));
+    public void As_Map() {
+        Random random = new Random(78);
+        Map<Integer, Integer> hashMap = Maps.newHashMap();
+        PersistentMap<Integer, Integer> map = new PersistentMap<>();
+        for (int i=1; i <= 257; i++) {
+            Integer kv = random.nextInt();
+            hashMap.put(kv, kv);
+            map = map.assoc(kv, kv);
         }
-        PersistentMap.Builder<HashKey, HashKey> builder = PersistentMap.builder();
+        hashMap.put(null, null);
+        map = map.assoc(null, null);
         
-        for (HashKey key : keys) {
-            builder.put(key, key);
+        assertThat(map.asMap(), equalTo(hashMap));
+    }
+    
+    @Test
+    public void Bulk() {
+        Random random = new Random(87);
+        Map<Integer, Integer> hashMap = Maps.newHashMap();
+        for (int i=1; i <= 257; i++) {
+            Integer kv = random.nextInt();
+            hashMap.put(kv, kv);
         }
-
-        PersistentMap<HashKey, HashKey> map = builder.build();
-        assertThat(map.size(), equalTo(keys.size()));
-        for (HashKey key : keys) {
-            assertThat(map.get(key), equalTo(key));
-        }
-        assertThat(map.get(new HashKey(5)), nullValue());
+        hashMap.put(null, null);
+        PersistentMap<Integer, Integer> map = new PersistentMap<Integer, Integer>().assocAll(hashMap);
+        assertThat(map.asMap(), equalTo(hashMap));
     }
     
     
@@ -114,22 +133,8 @@ public class PersistentMapTest {
         return persistentMap;
     }
 
-    public static <K, V> PersistentMap<K, V> incremental(Map<K, V> map) {
-        PersistentMap<K, V> persistentMap = new PersistentMap<K, V>();
-        for (Map.Entry<K, V> entry : map.entrySet()) {
-            persistentMap = persistentMap.assoc(entry.getKey(), entry.getValue());
-        }
-        return persistentMap;
-    }
     
-    public PersistentMap<HashKey, HashKey> bulk(List<HashKey> keys) {
-        PersistentMap<HashKey, HashKey> map = new PersistentMap<HashKey, HashKey>();
-        for (HashKey key : keys) {
-            map = map.assoc(key, key);
-        }
-        return map;
-    }
-
+    
     private static final int LENGTH = 1000000;
 
     public static void main(String[] args) {
@@ -150,7 +155,7 @@ public class PersistentMapTest {
             map = map.assoc(key, key); // warm up
             hashMap.put(key, key);
         }
-        
+
         long start;
         long elapsed; 
 
@@ -190,6 +195,12 @@ public class PersistentMapTest {
         }
         elapsed = System.nanoTime() - start;
         System.out.println("Verify: " + elapsed / 1000000.0);
+        
+        
+        start = System.nanoTime();
+        map.iterator();
+        elapsed = System.nanoTime() - start;
+        System.out.println("iterator(): " + elapsed / 1000000.0);
     }
 
     private static void verify(PersistentMap<String, String> map, String[] keys) {
