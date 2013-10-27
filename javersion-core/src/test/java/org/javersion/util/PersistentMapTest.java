@@ -65,12 +65,13 @@ public class PersistentMapTest {
     }
     
     @Test
-    public void Collision() {
+    public void Collisions() {
         PersistentMap<HashKey, HashKey> map = new PersistentMap<>();
         HashKey k1 = new HashKey(1);
         HashKey k2 = new HashKey(1);
         HashKey k3 = new HashKey(1);
         map = map.assoc(k1, k1);
+        map = map.assoc(k2, k2);
         map = map.assoc(k2, k2);
         map = map.assoc(k3, k3);
         assertThat(map.get(k1), equalTo(k1));
@@ -78,10 +79,24 @@ public class PersistentMapTest {
         assertThat(map.get(k3), equalTo(k3));
         
         assertThat(map.get(new HashKey(1)), nullValue());
+        
+        map = map.dissoc(k1);
+        assertThat(map.get(k1), nullValue());
+        assertThat(map.get(k2), equalTo(k2));
+        assertThat(map.get(k3), equalTo(k3));
+        
+        map = map.dissoc(k2);
+        map = map.dissoc(k2);
+        assertThat(map.get(k2), nullValue());
+
+        map = map.dissoc(k3);
+        assertThat(map.get(k3), nullValue());
+        
+        assertThat(map.size(), equalTo(0));
     }
     
     @Test
-    public void Collisions() {
+    public void Collisions_Incremental() {
         List<HashKey> keys = Lists.newArrayList();
         for (int i=0; i < 4097; i++) {
             keys.add(new HashKey(i));
@@ -93,6 +108,14 @@ public class PersistentMapTest {
             assertThat(map.get(key), equalTo(key));
         }
         assertThat(map.get(new HashKey(5)), nullValue());
+        
+        int size = map.size();
+        for (HashKey key : keys) {
+            map = map.dissoc(key);
+            map = map.dissoc(key);
+            assertThat(map.size(), equalTo(size-1));
+            size--;
+        }
     }
     
     @Test
