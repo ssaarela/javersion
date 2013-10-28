@@ -18,12 +18,8 @@ package org.javersion.util;
 import static com.google.common.base.Objects.equal;
 import static java.lang.System.arraycopy;
 
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
+
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
@@ -69,7 +65,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             this.size = size;
         }
         
-        public Builder<K, V> put(Map.Entry<K, V> entry) {
+        public Builder<K, V> put(Map.Entry<? extends K, ? extends V> entry) {
             root = root.assoc(version, entry);
             size += version.getAndResetChange();
             return this;
@@ -83,8 +79,22 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             Check.notNull(map, "map");
             
             for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
-                root = root.assoc(version, toEntry(entry));
-                size += version.getAndResetChange();
+                put(toEntry(entry));
+            }
+            return this;
+        }
+        
+        public Builder<K, V> remove(Object key) {
+            root = root.dissoc(version, key);
+            size += version.getAndResetChange();
+            return this;
+        }
+        
+        public Builder<K, V> removeAll(Iterable<? extends Object> keys) {
+            Check.notNull(keys, "keys");
+            
+            for (Object key : keys) {
+                remove(key);
             }
             return this;
         }
@@ -114,7 +124,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     
     private final Node<K, V> root;
     
-    private final int size;
+    final int size;
     
     public static <K, V> Builder<K, V> builder() {
         return builder(32);
@@ -186,8 +196,8 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         return root.iterator();
     }
     
-    public Map<K, V> asMap() {
-        return new AsMap<>(this);
+    public AtomicMap<K, V> atomicMap() {
+        return new AtomicMap<>(this);
     }
     
     
@@ -674,69 +684,5 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             }
             return array[pos++].iterator();
         }
-    }
-    
-    
-    static class AsMap<K, V> extends AbstractMap<K, V> {
-        
-        private PersistentMap<K, V> map;
-
-        public AsMap(PersistentMap<K, V> map) {
-            this.map = Check.notNull(map, "map");
-        }
-
-        @Override
-        public int size() {
-            return map.size;
-        }
-
-        @Override
-        public boolean containsKey(Object key) {
-            return map.containsKey(key);
-        }
-
-        @Override
-        public V get(Object key) {
-            return map.get(key);
-        }
-
-        @Override
-        public V put(K key, V value) {
-            V oldValue = map.get(key);
-            map = map.assoc(key, value);
-            return oldValue;
-        }
-
-        @Override
-        public V remove(Object key) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void putAll(Map<? extends K, ? extends V> m) {
-            map = map.assocAll(m);
-        }
-
-        @Override
-        public void clear() {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Set<Map.Entry<K, V>> entrySet() {
-            return new AbstractSet<Map.Entry<K, V>>() {
-
-                @Override
-                public Iterator<Map.Entry<K, V>> iterator() {
-                    return map.iterator();
-                }
-
-                @Override
-                public int size() {
-                    return map.size;
-                }
-            };
-        }
-        
     }
 }

@@ -12,6 +12,7 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -79,11 +80,17 @@ public class PersistentMapTest {
         assertThat(map.get(k3), equalTo(k3));
         
         assertThat(map.get(new HashKey(1)), nullValue());
+
+        Map<HashKey, HashKey> hashMap = ImmutableMap.of(k1, k1, k2, k2, k3, k3);
+        assertThat(map.atomicMap(), equalTo(hashMap));
+
+        map = PersistentMap.<HashKey, HashKey>builder().putAll(hashMap).build();
+        assertThat(map.atomicMap(), equalTo(hashMap));
         
         map = map.dissoc(k1);
-        assertThat(map.get(k1), nullValue());
-        assertThat(map.get(k2), equalTo(k2));
-        assertThat(map.get(k3), equalTo(k3));
+        assertThat(map.containsKey(k1), equalTo(false));
+        assertThat(map.containsKey(k2), equalTo(true));
+        assertThat(map.containsKey(k3), equalTo(true));
         
         map = map.dissoc(k2);
         map = map.dissoc(k2);
@@ -122,16 +129,29 @@ public class PersistentMapTest {
     public void As_Map() {
         Random random = new Random(78);
         Map<Integer, Integer> hashMap = Maps.newHashMap();
-        PersistentMap<Integer, Integer> map = new PersistentMap<>();
+        AtomicMap<Integer, Integer> map = new AtomicMap<Integer, Integer>();
+        
         for (int i=1; i <= 257; i++) {
             Integer kv = random.nextInt();
-            hashMap.put(kv, kv);
-            map = map.assoc(kv, kv);
+            assertThat(map.put(kv, kv), equalTo(hashMap.put(kv, kv)));
         }
         hashMap.put(null, null);
-        map = map.assoc(null, null);
+        assertThat(map.put(null, null), nullValue());
+ 
+        PersistentMap<Integer, Integer> persistentMap = map.getPersistentMap();
         
-        assertThat(map.asMap(), equalTo(hashMap));
+        assertThat(map, equalTo(hashMap));
+        
+        for (Integer key : map.keySet()) {
+            assertThat(map.remove(key), equalTo(hashMap.remove(key)));
+        }
+        assertThat(map, equalTo(hashMap));
+        
+        assertThat(persistentMap.size(), equalTo(258)); // PersitentMap not modified
+        
+        map = persistentMap.atomicMap();
+        map.clear();
+        assertThat(map, equalTo(hashMap)); // empty
     }
     
     @Test
@@ -144,7 +164,7 @@ public class PersistentMapTest {
         }
         hashMap.put(null, null);
         PersistentMap<Integer, Integer> map = new PersistentMap<Integer, Integer>().assocAll(hashMap);
-        assertThat(map.asMap(), equalTo(hashMap));
+        assertThat(map.atomicMap(), equalTo(hashMap));
     }
     
     
