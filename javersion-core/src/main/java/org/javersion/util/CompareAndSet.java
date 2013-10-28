@@ -39,19 +39,20 @@ public class CompareAndSet<V> {
         return ref.get();
     }
     
+    @SuppressWarnings("unchecked")
     public <T> T invoke(AtomicFunction<V, T> f) {
-        ThreadLocalResult<T> result = new ThreadLocalResult<>();
         try {
             V currentValue;
             V newValue;
             do {
-                result.set(null);
+                threadLocalResult.set(null);
                 currentValue = ref.get();
-                newValue = f.invoke(currentValue, result);
+                newValue = f.invoke(currentValue, RESULT);
             } while (!ref.compareAndSet(currentValue, newValue));
-            return result.get();
+            
+            return (T) threadLocalResult.get();
         } finally {
-            result.set(null);
+            threadLocalResult.set(null);
         }
     }
     
@@ -66,18 +67,14 @@ public class CompareAndSet<V> {
 
     private final AtomicReference<V> ref;
 
-    private static final class ThreadLocalResult<T> implements Result<T> {
-        
-        private static final ThreadLocal<Object> returnValue = new ThreadLocal<>();
-        
-        public void set(T result) {
-            returnValue.set(result);
-        }
+    private static final ThreadLocal<Object> threadLocalResult = new ThreadLocal<>();
 
-        @SuppressWarnings("unchecked")
-        T get() {
-            return (T) returnValue.get();
+    @SuppressWarnings("rawtypes")
+    private static final Result RESULT = new Result() {
+
+        public void set(Object result) {
+            threadLocalResult.set(result);
         }
         
-    }
+    };
 }

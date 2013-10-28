@@ -42,6 +42,23 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
     }
 
     @Override
+    public Set<Map.Entry<K, V>> entrySet() {
+        final PersistentMap<K, V> map = atomicMap.get();
+        return new AbstractSet<Map.Entry<K, V>>() {
+
+            @Override
+            public Iterator<Map.Entry<K, V>> iterator() {
+                return map.iterator();
+            }
+
+            @Override
+            public int size() {
+                return map.size;
+            }
+        };
+    }
+
+    @Override
     public V put(final K key, final V value) {
         return atomicMap.invoke(new AtomicFunction<PersistentMap<K,V>, V>() {
             @Override
@@ -85,23 +102,6 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
                 return builder.build();
             }
         });
-    }
-
-    @Override
-    public Set<Map.Entry<K, V>> entrySet() {
-        final PersistentMap<K, V> map = atomicMap.get();
-        return new AbstractSet<Map.Entry<K, V>>() {
-
-            @Override
-            public Iterator<Map.Entry<K, V>> iterator() {
-                return map.iterator();
-            }
-
-            @Override
-            public int size() {
-                return map.size;
-            }
-        };
     }
     
 }
