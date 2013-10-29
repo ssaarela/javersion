@@ -23,7 +23,11 @@ import clojure.lang.PersistentHashMap;
  */
 
 public class TestPersistentMapPerformance {
-    public static final int LENGTH = 1<<22;
+    public static final int TIMES = 1<<22; // 1
+    public static final int LENGTH = 1<<5; // 1<<22
+//    public static final int TIMES = 1;
+//    public static final int LENGTH = 1<<22;
+
     public static final String[] DATA = new String[LENGTH];
     static {
         for (int i=0; i < LENGTH/2; i++) {
@@ -49,42 +53,54 @@ public class TestPersistentMapPerformance {
         bulkInsertJaversion();
         bulkInsertClojure();
 
+        PersistentMap<String, String> javersionMap = null;
+        PersistentHashMap clojureMap = null;
+
+        
         start();
-        PersistentHashMap clojureMap = incrementalInsertClojure();
+        for (int i=0; i < TIMES; i++)
+            clojureMap = incrementalInsertClojure();
         end("incrementalInsertClojure");
         
         start();
-        incrementalDeleteClojure(clojureMap);
+        for (int i=0; i < TIMES; i++)
+            incrementalDeleteClojure(clojureMap);
         end("incrementalDeleteClojure");
         clojureMap = null;
         
 
         start();
-        PersistentMap<String, String> javersionMap = incrementalInsertJaversion();
+        for (int i=0; i < TIMES; i++)
+            javersionMap = incrementalInsertJaversion();
         end("incrementalInsertJaversion");
         
         start();
-        incrementalDeleteJaversion(javersionMap);
+        for (int i=0; i < TIMES; i++)
+            incrementalDeleteJaversion(javersionMap);
         end("incrementalDeleteJaversion");
         javersionMap = null;
 
         
         start();
-        clojureMap = bulkInsertClojure();
+        for (int i=0; i < TIMES; i++)
+            clojureMap = bulkInsertClojure();
         end("bulkInsertClojure");
 
         start();
-        bulkDeleteClojure(clojureMap);
+        for (int i=0; i < TIMES; i++)
+            bulkDeleteClojure(clojureMap);
         end("bulkDeleteClojure");
         clojureMap = null;
 
         
         start();
-        javersionMap = bulkInsertJaversion();
+        for (int i=0; i < TIMES; i++)
+            javersionMap = bulkInsertJaversion();
         end("bulkInsertJaversion");
         
         start();
-        bulkDeleteJaversion(javersionMap);
+        for (int i=0; i < TIMES; i++)
+            bulkDeleteJaversion(javersionMap);
         end("bulkDeleteJaversion");
         javersionMap = null;
     }
