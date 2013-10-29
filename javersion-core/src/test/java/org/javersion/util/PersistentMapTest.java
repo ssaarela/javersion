@@ -141,7 +141,6 @@ public class PersistentMapTest {
         PersistentMap<Integer, Integer> persistentMap = map.getPersistentMap();
         
         assertThat(map, equalTo(hashMap));
-        
         for (Integer key : map.keySet()) {
             assertThat(map.remove(key), equalTo(hashMap.remove(key)));
         }
