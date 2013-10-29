@@ -25,6 +25,8 @@ import org.javersion.util.CompareAndSet.AtomicFunction;
 import org.javersion.util.CompareAndSet.AtomicVoidFunction;
 import org.javersion.util.CompareAndSet.Result;
 
+import com.google.common.base.Function;
+
 public class AtomicMap<K, V> extends AbstractMap<K, V> {
     
     private CompareAndSet<PersistentMap<K, V>> atomicMap;
@@ -119,4 +121,14 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
         });
     }
     
+    public <T> T apply(final Function<AtomicMap<K, V>, T> f) {
+        return atomicMap.invoke(new AtomicFunction<PersistentMap<K,V>, T>() {
+            @Override
+            public PersistentMap<K, V> invoke(PersistentMap<K, V> map, Result<T> result) {
+                AtomicMap<K, V> copy = new AtomicMap<>(getPersistentMap());
+                result.set(f.apply(copy));
+                return copy.getPersistentMap();
+            }
+        });
+    }
 }

@@ -23,6 +23,8 @@ import org.javersion.util.CompareAndSet.AtomicFunction;
 import org.javersion.util.CompareAndSet.AtomicVoidFunction;
 import org.javersion.util.CompareAndSet.Result;
 
+import com.google.common.base.Function;
+
 public class AtomicSet<E> extends AbstractSet<E> {
 
     private CompareAndSet<PersistentSet<E>> atomicSet;
@@ -100,6 +102,17 @@ public class AtomicSet<E> extends AbstractSet<E> {
                     builder.remove(e);
                 }
                 return builder.build();
+            }
+        });
+    }
+    
+    public <T> T apply(final Function<AtomicSet<E>, T> f) {
+        return atomicSet.invoke(new AtomicFunction<PersistentSet<E>, T>() {
+            @Override
+            public PersistentSet<E> invoke(PersistentSet<E> set, Result<T> result) {
+                AtomicSet<E> copy = new AtomicSet<>(getPersistentSet());
+                result.set(f.apply(copy));
+                return copy.getPersistentSet();
             }
         });
     }
