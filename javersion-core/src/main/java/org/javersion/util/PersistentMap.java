@@ -17,6 +17,7 @@ package org.javersion.util;
 
 import static com.google.common.base.Objects.equal;
 import static java.lang.System.arraycopy;
+import static org.javersion.util.PersistentMapNodeFactory.*;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -194,11 +195,6 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     public AtomicMap<K, V> atomicMap() {
         return new AtomicMap<>(this);
     }
-    
-    protected Entry<K, V> newEntry(K key, V value) {
-        return new Entry<K, V>(key, value);
-    }
-    
     @SuppressWarnings("unchecked")
     protected AbstractNode<K, V> emptyNode() {
         return HashNode.EMPTY;
@@ -287,17 +283,6 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             if (currentVersion != null) currentVersion.recordAddition();
         }
         
-        protected Entry<K, V> newEntry(int hash, K key, V value) {
-            return new Entry<K, V>(hash, key, value);
-        }
-        
-        protected HashNode<K, V> newHashNode(Version version, int bitmap, AbstractNode<K, V>[] children) {
-            return new HashNode<>(version, bitmap, children);
-        }
-        
-        protected CollisionNode<K, V> newCollisionNode(Entry<? extends K, ? extends V>[] entries) {
-            return new CollisionNode<>(entries);
-        }
     }
     
     
