@@ -17,11 +17,14 @@ package org.javersion.util;
 
 import static com.google.common.base.Objects.equal;
 import static java.lang.System.arraycopy;
-import static org.javersion.util.PersistentMapNodeFactory.*;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import org.javersion.util.PersistentMapNodes.CollisionNode;
+import org.javersion.util.PersistentMapNodes.Entry;
+import org.javersion.util.PersistentMapNodes.HashNode;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
@@ -91,7 +94,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         public Builder<K, V> remove(Object key) {
             root = root.dissoc(version, key);
             if (root == null) {
-                root = HashNode.EMPTY;
+                root = AbstractHashNode.EMPTY;
             }
             size += version.getAndResetChange();
             return this;
@@ -111,7 +114,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         }
         
         public V get(Object key) {
-            Entry<K, V> entry = root.find(key);
+            AbstractEntry<K, V> entry = root.find(key);
             return entry != null ? entry.getValue() : null;
         }
         
@@ -180,7 +183,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     }
     
     public V get(Object key) {
-        Entry<K, V> entry = root.find(key);
+        AbstractEntry<K, V> entry = root.find(key);
         return entry != null ? entry.getValue() : null;
     }
     
@@ -196,8 +199,8 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         return new AtomicMap<>(this);
     }
     @SuppressWarnings("unchecked")
-    protected AbstractNode<K, V> emptyNode() {
-        return HashNode.EMPTY;
+    protected Node<K, V> emptyNode() {
+        return AbstractHashNode.EMPTY;
     }
     
     private PersistentMap<K, V> doReturn(Node<? extends K, ? extends V> newRoot, int change) {
@@ -209,7 +212,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     }
     
     private static <K, V> Entry<? extends K, ? extends V> toEntry(Map.Entry<? extends K, ? extends V> entry) {
-        if (entry instanceof Entry) {
+        if (entry instanceof AbstractEntry) {
             return (Entry<? extends K, ? extends V>) entry;
         } else {
             return new Entry<K, V>(entry.getKey(), entry.getValue());
@@ -217,30 +220,16 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     }
     
     
-    static interface Node<K, V> extends Iterable<Map.Entry<K, V>>{
+    protected static abstract class Node<K, V> implements Iterable<Map.Entry<K, V>> {
 
-        public abstract Entry<K, V> find(Object key);
-
-        public abstract Node<K, V> assoc(Version currentVersion, Map.Entry<? extends K, ? extends V> newEntry);
-
-        public abstract Node<K, V> dissoc(Version currentVersion, Object key);
-
-    }
-    
-    
-    protected static abstract class AbstractNode<K, V> implements Node<K, V> {
-
-        @Override
-        public Entry<K, V> find(Object key) {
+        public AbstractEntry<K, V> find(Object key) {
             return findInternal(0, hash(key), key);
         }
 
-        @Override
         public Node<K, V> assoc(Version currentVersion, Map.Entry<? extends K, ? extends V> newEntry) {
             return assocInternal(currentVersion, 0, toEntry(newEntry));
         }
 
-        @Override
         public Node<K, V> dissoc(Version currentVersion, Object key) {
             return dissocInternal(currentVersion, 0, hash(key), key);
         }
@@ -270,11 +259,11 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         }
         
         
-        abstract Entry<K, V> findInternal(int level, int hash, Object key);
+        abstract AbstractEntry<K, V> findInternal(int level, int hash, Object key);
 
-        abstract AbstractNode<K, V> assocInternal(Version currentVersion, int level, Entry<? extends K, ? extends V> newEntry);
+        abstract Node<K, V> assocInternal(Version currentVersion, int level, Entry<? extends K, ? extends V> newEntry);
 
-        abstract AbstractNode<K, V> dissocInternal(Version currentVersion, int level, int hash, Object key);
+        abstract Node<K, V> dissocInternal(Version currentVersion, int level, int hash, Object key);
         
         void recordRemoval(Version currentVersion) {
             if (currentVersion != null) currentVersion.recordRemoval();
@@ -286,7 +275,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     }
     
     
-    protected static class Entry<K, V> extends AbstractNode<K, V> implements Map.Entry<K, V> {
+    protected static abstract class AbstractEntry<K, V> extends Node<K, V> implements Map.Entry<K, V> {
         
         public final int hash;
         
@@ -294,11 +283,11 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         
         public final V value;
         
-        protected Entry(K key, V value) {
+        protected AbstractEntry(K key, V value) {
             this(hash(key), key, value);
         }
         
-        protected Entry(int hash, K key, V value) {
+        protected AbstractEntry(int hash, K key, V value) {
             this.hash = hash;
             this.key = key;
             this.value = value;
@@ -324,34 +313,34 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         }
 
         @SuppressWarnings("unchecked")
-        final AbstractNode<K, V> assocInternal(final Version currentVersion, final int level, final Entry<? extends K, ? extends V> newEntry) {
+        final Node<K, V> assocInternal(final Version currentVersion, final int level, final Entry<? extends K, ? extends V> newEntry) {
             if (equal(newEntry.key, key)) {
                 if (equal(newEntry.value, value)) {
                     return this;
                 } else {
                     recordAddition(currentVersion);
-                    return (AbstractNode<K, V>) newEntry;
+                    return (Entry<K, V>) newEntry;
                 }
             }
             else if (newEntry.hash == hash) {
                 recordAddition(currentVersion);
-                return newCollisionNode(new Entry[] { this, newEntry });
+                return new CollisionNode<K, V>(new Entry[] { (Entry<K, V>) this, (Entry<K, V>) newEntry });
             } 
             else {
                 HashNode<K, V> hashNode;
                 if (currentVersion == null) {
-                    hashNode = newHashNode(currentVersion, 0, new AbstractNode[2]);
+                    hashNode = new HashNode<K, V>(currentVersion, 0, new Node[2]);
                 } else {
-                    hashNode = newHashNode(currentVersion, 0, new AbstractNode[4]);
+                    hashNode = new HashNode<K, V>(currentVersion, 0, new Node[4]);
                 }
                 return hashNode
-                        .assocInternal(currentVersion, level, this)
+                        .assocInternal(currentVersion, level, (Entry<K, V>) this)
                         .assocInternal(currentVersion, level, newEntry);
             }
         }
 
         @Override
-        final AbstractNode<K, V> dissocInternal(Version currentVersion, int level, int hash, Object key) {
+        final Node<K, V> dissocInternal(Version currentVersion, int level, int hash, Object key) {
             if (equal(key, this.key)) {
                 recordRemoval(currentVersion);
                 return null;
@@ -360,7 +349,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         }
         
         @Override
-        public Entry<K, V> findInternal(int level, int hash, Object key) {
+        public AbstractEntry<K, V> findInternal(int level, int hash, Object key) {
             if (equal(this.key, key)) {
                 return this;
             }
@@ -374,27 +363,27 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     }
     
     
-    protected static class HashNode<K, V> extends AbstractNode<K, V> {
+    protected static abstract class AbstractHashNode<K, V> extends Node<K, V> {
         
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        public static HashNode EMPTY = new HashNode<>(null, 0, new AbstractNode[0]);
+        public static AbstractHashNode EMPTY = new HashNode<>(null, 0, new Node[0]);
         
         private final Version version;
         
         private int bitmap; 
         
-        private AbstractNode<K, V>[] children;
+        private Node<K, V>[] children;
 
-        protected HashNode(Version version) {
+        protected AbstractHashNode(Version version) {
             this(version, version.expectedSize);
         }
 
         @SuppressWarnings("unchecked")
-        protected HashNode(Version version, int expectedSize) {
-            this(version, 0, new AbstractNode[expectedSize < 32 ? expectedSize : 32]);
+        protected AbstractHashNode(Version version, int expectedSize) {
+            this(version, 0, new Node[expectedSize < 32 ? expectedSize : 32]);
         }
         
-        protected HashNode(Version version, int bitmap, AbstractNode<K, V>[] children) {
+        protected AbstractHashNode(Version version, int bitmap, Node<K, V>[] children) {
             this.version = version;
             this.bitmap = bitmap;
             this.children = children;
@@ -402,24 +391,24 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         
         @Override
         @SuppressWarnings("unchecked")
-        final AbstractNode<K, V> assocInternal(final Version currentVersion, final int level, final Entry<? extends K, ? extends V> newEntry) {
+        final Node<K, V> assocInternal(final Version currentVersion, final int level, final Entry<? extends K, ? extends V> newEntry) {
             int bit = bit(newEntry.hash, level);
             int index = index(bitmap, bit);
             if ((bitmap & bit) != 0) {
-                AbstractNode<K, V> oldNode = children[index];
-                AbstractNode<K, V> newNode = oldNode.assocInternal(currentVersion, level + 1, newEntry);
+                Node<K, V> oldNode = children[index];
+                Node<K, V> newNode = oldNode.assocInternal(currentVersion, level + 1, newEntry);
                 if (newNode == oldNode) {
                     return this;
                 } else {
-                    HashNode<K, V> editable = cloneForReplace(currentVersion);
+                    AbstractHashNode<K, V> editable = cloneForReplace(currentVersion);
                     editable.children[index] = newNode;
 
                     return editable;
                 }
             } else {
                 recordAddition(currentVersion);
-                HashNode<K, V> editable = cloneForInsert(currentVersion, index);
-                editable.children[index] = (AbstractNode<K, V>) newEntry;
+                AbstractHashNode<K, V> editable = cloneForInsert(currentVersion, index);
+                editable.children[index] = (Node<K, V>) newEntry;
                 editable.bitmap |= bit;
                 
                 return editable;
@@ -427,14 +416,14 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         }
 
         @Override
-        final AbstractNode<K, V> dissocInternal(Version currentVersion, int level, int hash, Object key) {
+        final Node<K, V> dissocInternal(Version currentVersion, int level, int hash, Object key) {
             int bit = bit(hash, level);
             if ((bitmap & bit) == 0) {
                 return this;
             }
             int index = index(bitmap, bit);
-            AbstractNode<K, V> oldNode = children[index];
-            AbstractNode<K, V> newNode = oldNode.dissocInternal(currentVersion, level + 1, hash, key);
+            Node<K, V> oldNode = children[index];
+            Node<K, V> newNode = oldNode.dissocInternal(currentVersion, level + 1, hash, key);
 
             if (newNode == oldNode) {
                 return this;
@@ -443,12 +432,12 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
                 if (childCount == 1) {
                     return null;
                 } else {
-                    HashNode<K, V> editable = cloneForDelete(currentVersion, index);
+                    AbstractHashNode<K, V> editable = cloneForDelete(currentVersion, index);
                     editable.bitmap = bitmap ^ bit;
                     return editable;
                 }
             } else {
-                HashNode<K, V> editable = cloneForReplace(currentVersion);
+                AbstractHashNode<K, V> editable = cloneForReplace(currentVersion);
                 editable.children[index] = newNode;
 
                 return editable;
@@ -456,27 +445,27 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         }
         
         @Override
-        final Entry<K, V> findInternal(int level, int hash, Object key) {
+        final AbstractEntry<K, V> findInternal(int level, int hash, Object key) {
             int bit = bit(hash, level);
             if ((bitmap & bit) == 0) {
                 return null;
             }
             int index = index(bitmap, bit);
-            AbstractNode<K, V> nodeOrEntry = children[index];
+            Node<K, V> nodeOrEntry = children[index];
             return nodeOrEntry.findInternal(level + 1, hash, key);
         }
         
 
         @SuppressWarnings("unchecked")
-        private HashNode<K, V> cloneForInsert(Version currentVersion, int index) {
+        private AbstractHashNode<K, V> cloneForInsert(Version currentVersion, int index) {
             int childCount = childCount();
             boolean editInPlace = isEditInPlace(currentVersion);
 
-            AbstractNode<K, V>[] newChildren;
+            Node<K, V>[] newChildren;
             if (editInPlace && childCount < children.length) {
                 newChildren = this.children;
             } else {
-                newChildren = new AbstractNode[newSize(currentVersion, childCount)];
+                newChildren = new Node[newSize(currentVersion, childCount)];
             }
 
             // make root for insertion
@@ -491,15 +480,15 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         }
 
         @SuppressWarnings("unchecked")
-        private HashNode<K, V> cloneForDelete(Version currentVersion, int index) {
+        private AbstractHashNode<K, V> cloneForDelete(Version currentVersion, int index) {
             int childCount = childCount();
             boolean editInPlace = isEditInPlace(currentVersion);
 
-            AbstractNode<K, V>[] newChildren;
+            Node<K, V>[] newChildren;
             if (editInPlace) {
                 newChildren = this.children;
             } else {
-                newChildren = new AbstractNode[childCount - 1];
+                newChildren = new Node[childCount - 1];
             }
 
             // Delete given node
@@ -515,13 +504,13 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             return withNewChildren(currentVersion, editInPlace, newChildren);
         }
 
-        private HashNode<K, V> withNewChildren(Version currentVersion,
-                boolean editInPlace, AbstractNode<K, V>[] newChildren) {
+        private AbstractHashNode<K, V> withNewChildren(Version currentVersion,
+                boolean editInPlace, Node<K, V>[] newChildren) {
             if (editInPlace) {
                 children = newChildren;
                 return this;
             } else {
-                return newHashNode(currentVersion, bitmap, newChildren);
+                return new HashNode<K, V>(currentVersion, bitmap, newChildren);
             }
         }
 
@@ -538,11 +527,11 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             }
         }
         
-        private HashNode<K, V> cloneForReplace(Version currentVersion) {
+        private AbstractHashNode<K, V> cloneForReplace(Version currentVersion) {
             if (currentVersion != null && currentVersion == this.version) {
                 return this;
             } else {
-                return newHashNode(currentVersion, bitmap, children.clone());
+                return new HashNode<K, V>(currentVersion, bitmap, children.clone());
             }
         }
 
@@ -555,7 +544,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             StringBuilder sb = new StringBuilder();
             sb.append("#{");
             boolean first = true;
-            for (AbstractNode<K, V> child : children) {
+            for (Node<K, V> child : children) {
                 if (child != null) {
                     if (!first) {
                         sb.append(", ");
@@ -570,19 +559,19 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     }
 
     
-    protected static class CollisionNode<K, V> extends AbstractNode<K, V> {
+    protected static abstract class AbstractCollisionNode<K, V> extends Node<K, V> {
         
         public final int hash;
         
         private Entry<K, V>[] entries;
 
         @SuppressWarnings("unchecked")
-        protected CollisionNode(Entry<? extends K, ? extends V> first, Entry<? extends K, ? extends V> second) {
+        protected AbstractCollisionNode(Entry<? extends K, ? extends V> first, Entry<? extends K, ? extends V> second) {
             this.hash = first.hash;
             this.entries = new Entry[] { first, second };
         }
         @SuppressWarnings("unchecked")
-        protected CollisionNode(Entry<? extends K, ? extends V>[] entries) {
+        protected AbstractCollisionNode(Entry<? extends K, ? extends V>[] entries) {
             this.hash = entries[0].hash;
             this.entries = (Entry<K, V>[]) entries;
         }
@@ -599,7 +588,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
 
         @Override
         @SuppressWarnings("unchecked")
-        final AbstractNode<K, V> assocInternal(final Version currentVersion, final int level, final Entry<? extends K, ? extends V> newEntry) {
+        final Node<K, V> assocInternal(final Version currentVersion, final int level, final Entry<? extends K, ? extends V> newEntry) {
             if (newEntry.hash == this.hash) {
                 for (int i=0; i < entries.length; i++) {
                     if (equal(entries[i].key, newEntry.key)) {
@@ -608,7 +597,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
                         }
                         Entry<K, V>[] newEntries = entries.clone();
                         newEntries[i] = (Entry<K, V>) newEntry;
-                        return newCollisionNode(newEntries);
+                        return new CollisionNode<K, V>(newEntries);
                     }
                 }
                 
@@ -617,19 +606,19 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
                 Entry<K, V>[] newEntries = new Entry[entries.length + 1];
                 arraycopy(entries, 0, newEntries, 0, entries.length);
                 newEntries[entries.length] = (Entry<K, V>) newEntry;
-                return newCollisionNode(newEntries);
+                return new CollisionNode<K, V>(newEntries);
             }
             
             
-            AbstractNode<K, V>[] newChildren = (currentVersion == null 
-                    ? new AbstractNode[] { this, null } : new AbstractNode[] { this, null, null, null });
+            Node<K, V>[] newChildren = (currentVersion == null 
+                    ? new Node[] { this, null } : new Node[] { this, null, null, null });
 
-            AbstractNode<K, V> newNode = newHashNode(currentVersion, bit(this.hash, level), newChildren);
+            Node<K, V> newNode = new HashNode<K, V>(currentVersion, bit(this.hash, level), newChildren);
             return newNode.assocInternal(currentVersion, level, newEntry);
         }
 
         @Override
-        final AbstractNode<K, V> dissocInternal(Version currentVersion, int level, int hash, Object key) {
+        final Node<K, V> dissocInternal(Version currentVersion, int level, int hash, Object key) {
             if (hash != this.hash) {
                 return this;
             }
@@ -650,7 +639,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
                     if (i + 1 < entries.length) {
                         arraycopy(entries, i + 1, newEntries, i, entries.length - i - 1);
                     }
-                    return newCollisionNode(newEntries);
+                    return new CollisionNode<K, V>(newEntries);
                 }
             }
             return this;
@@ -665,7 +654,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             StringBuilder sb = new StringBuilder();
             sb.append("[");
             boolean first = true;
-            for (Entry<K, V> entry : entries) {
+            for (AbstractEntry<K, V> entry : entries) {
                 if (entry != null) {
                     if (!first) {
                         sb.append(", ");
