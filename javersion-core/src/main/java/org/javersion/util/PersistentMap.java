@@ -475,21 +475,25 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         private HashNode<K, V> cloneForInsert(Version currentVersion, int index) {
             int childCount = childCount();
             boolean editInPlace = isEditInPlace(currentVersion);
-
+                    
             AbstractNode<K, V>[] newChildren;
             if (editInPlace && childCount < children.length) {
                 newChildren = this.children;
             } else {
                 newChildren = new AbstractNode[newSize(currentVersion, childCount)];
+                if (index > 0) {
+                    arraycopy(children, 0, newChildren, 0, index);
+                }
             }
 
             // make root for insertion
-            arraycopy(children, 0, newChildren, 0, index);
-            arraycopy(children, index, newChildren, index + 1, childCount - index);
+            if (index < childCount) {
+                arraycopy(children, index, newChildren, index + 1, childCount - index);
+            }
             
             return withNewChildren(currentVersion, editInPlace, newChildren);
         }
-
+        
         private int childCount() {
             return Integer.bitCount(bitmap);
         }
@@ -500,23 +504,25 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             boolean editInPlace = isEditInPlace(currentVersion);
 
             AbstractNode<K, V>[] newChildren;
-            if (editInPlace) {
+            if (editInPlace || currentVersion == null && isLastPosition(index, childCount)) {
                 newChildren = this.children;
             } else {
                 newChildren = new AbstractNode[childCount - 1];
+                if (index > 0) {
+                    arraycopy(children, 0, newChildren, 0, index);
+                }
             }
 
             // Delete given node
-            arraycopy(children, 0, newChildren, 0, index);
-            
             if (index + 1 < children.length) {
                 arraycopy(children, index + 1, newChildren, index, childCount - index - 1);
-                if (newChildren.length >= childCount) {
-                    newChildren[childCount - 1] = null;
-                }
             }
             
             return withNewChildren(currentVersion, editInPlace, newChildren);
+        }
+
+        private boolean isLastPosition(int index, int childCount) {
+            return index + 1 == childCount;
         }
 
         private HashNode<K, V> withNewChildren(Version currentVersion,

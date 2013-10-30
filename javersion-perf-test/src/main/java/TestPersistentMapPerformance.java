@@ -23,10 +23,10 @@ import clojure.lang.PersistentHashMap;
  */
 
 public class TestPersistentMapPerformance {
-    public static final int TIMES = 1<<22; // 1
-    public static final int LENGTH = 1<<5; // 1<<22
-//    public static final int TIMES = 1;
-//    public static final int LENGTH = 1<<22;
+//    public static final int TIMES = 1<<22; // 1
+//    public static final int LENGTH = 1<<5; // 1<<22
+    public static final int TIMES = 1;
+    public static final int LENGTH = 1<<22;
 
     public static final String[] DATA = new String[LENGTH];
     static {
@@ -178,9 +178,5 @@ public class TestPersistentMapPerformance {
 //        System.out.println("1");
 //        test.incrementalInsertJaversion();
 //        System.out.println("2");
-//        test.incrementalInsertJaversion();
-//        System.out.println("3");
-//        test.incrementalInsertJaversion();
-//        System.out.println("done");
     }
 }
