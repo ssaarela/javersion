@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <link media="screen" type="text/css" rel="stylesheet" href="css/jquery.dataTables.css">
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/jquery.dataTables.js"></script>
+    <script type="text/javascript">
+$(document).ready(function() {
+    var data = [
+{test:'incrementalInsert',impl:'Clojure',nature:'sequential',size:4194304,repetitions:1,time:4583.768},
+{test:'incrementalDelete',impl:'Clojure',nature:'sequential',size:4194304,repetitions:1,time:4124.361},
+{test:'incrementalInsert',impl:'Javersion',nature:'sequential',size:4194304,repetitions:1,time:3624.657},
+{test:'incrementalDelete',impl:'Javersion',nature:'sequential',size:4194304,repetitions:1,time:4609.133},
+{test:'bulkInsert',impl:'Clojure',nature:'sequential',size:4194304,repetitions:1,time:1490.464},
+{test:'bulkDelete',impl:'Clojure',nature:'sequential',size:4194304,repetitions:1,time:1318.838},
+{test:'bulkInsert',impl:'Javersion',nature:'sequential',size:4194304,repetitions:1,time:1617.123},
+{test:'bulkDelete',impl:'Javersion',nature:'sequential',size:4194304,repetitions:1,time:1374.418},
+{test:'incrementalInsert',impl:'Clojure',nature:'sequential',size:524288,repetitions:16,time:4487.364},
+{test:'incrementalDelete',impl:'Clojure',nature:'sequential',size:524288,repetitions:16,time:3529.993},
+{test:'incrementalInsert',impl:'Javersion',nature:'sequential',size:524288,repetitions:16,time:4681.027},
+{test:'incrementalDelete',impl:'Javersion',nature:'sequential',size:524288,repetitions:16,time:4030.772},
+{test:'bulkInsert',impl:'Clojure',nature:'sequential',size:524288,repetitions:16,time:2062.734},
+{test:'bulkDelete',impl:'Clojure',nature:'sequential',size:524288,repetitions:16,time:1922.545},
+{test:'bulkInsert',impl:'Javersion',nature:'sequential',size:524288,repetitions:16,time:1340.195},
+{test:'bulkDelete',impl:'Javersion',nature:'sequential',size:524288,repetitions:16,time:1781.358},
+{test:'incrementalInsert',impl:'Clojure',nature:'sequential',size:65536,repetitions:128,time:2655.395},
+{test:'incrementalDelete',impl:'Clojure',nature:'sequential',size:65536,repetitions:128,time:2532.255},
+{test:'incrementalInsert',impl:'Javersion',nature:'sequential',size:65536,repetitions:128,time:2353.509},
+{test:'incrementalDelete',impl:'Javersion',nature:'sequential',size:65536,repetitions:128,time:2982.945},
+{test:'bulkInsert',impl:'Clojure',nature:'sequential',size:65536,repetitions:128,time:1605.063},
+{test:'bulkDelete',impl:'Clojure',nature:'sequential',size:65536,repetitions:128,time:1292.854},
+{test:'bulkInsert',impl:'Javersion',nature:'sequential',size:65536,repetitions:128,time:950.31},
+{test:'bulkDelete',impl:'Javersion',nature:'sequential',size:65536,repetitions:128,time:1244.229},
+{test:'incrementalInsert',impl:'Clojure',nature:'sequential',size:8192,repetitions:1024,time:1991.295},
+{test:'incrementalDelete',impl:'Clojure',nature:'sequential',size:8192,repetitions:1024,time:1780.748},
+{test:'incrementalInsert',impl:'Javersion',nature:'sequential',size:8192,repetitions:1024,time:1828.294},
+{test:'incrementalDelete',impl:'Javersion',nature:'sequential',size:8192,repetitions:1024,time:2038.634},
+{test:'bulkInsert',impl:'Clojure',nature:'sequential',size:8192,repetitions:1024,time:1291.571},
+{test:'bulkDelete',impl:'Clojure',nature:'sequential',size:8192,repetitions:1024,time:900.342},
+{test:'bulkInsert',impl:'Javersion',nature:'sequential',size:8192,repetitions:1024,time:656.159},
+{test:'bulkDelete',impl:'Javersion',nature:'sequential',size:8192,repetitions:1024,time:757.842},
+{test:'incrementalInsert',impl:'Clojure',nature:'sequential',size:1024,repetitions:8192,time:1548.44},
+{test:'incrementalDelete',impl:'Clojure',nature:'sequential',size:1024,repetitions:8192,time:1314.308},
+{test:'incrementalInsert',impl:'Javersion',nature:'sequential',size:1024,repetitions:8192,time:1314.501},
+{test:'incrementalDelete',impl:'Javersion',nature:'sequential',size:1024,repetitions:8192,time:1359.37},
+{test:'bulkInsert',impl:'Clojure',nature:'sequential',size:1024,repetitions:8192,time:1135.605},
+{test:'bulkDelete',impl:'Clojure',nature:'sequential',size:1024,repetitions:8192,time:759.739},
+{test:'bulkInsert',impl:'Javersion',nature:'sequential',size:1024,repetitions:8192,time:508.14},
+{test:'bulkDelete',impl:'Javersion',nature:'sequential',size:1024,repetitions:8192,time:609.533},
+{test:'incrementalInsert',impl:'Clojure',nature:'sequential',size:128,repetitions:65536,time:1116.619},
+{test:'incrementalDelete',impl:'Clojure',nature:'sequential',size:128,repetitions:65536,time:908.287},
+{test:'incrementalInsert',impl:'Javersion',nature:'sequential',size:128,repetitions:65536,time:828.819},
+{test:'incrementalDelete',impl:'Javersion',nature:'sequential',size:128,repetitions:65536,time:929.164},
+{test:'bulkInsert',impl:'Clojure',nature:'sequential',size:128,repetitions:65536,time:859.77},
+{test:'bulkDelete',impl:'Clojure',nature:'sequential',size:128,repetitions:65536,time:723.241},
+{test:'bulkInsert',impl:'Javersion',nature:'sequential',size:128,repetitions:65536,time:436.431},
+{test:'bulkDelete',impl:'Javersion',nature:'sequential',size:128,repetitions:65536,time:474.061},
+{test:'incrementalInsert',impl:'Clojure',nature:'sequential',size:16,repetitions:524288,time:811.302},
+{test:'incrementalDelete',impl:'Clojure',nature:'sequential',size:16,repetitions:524288,time:689.474},
+{test:'incrementalInsert',impl:'Javersion',nature:'sequential',size:16,repetitions:524288,time:581.827},
+{test:'incrementalDelete',impl:'Javersion',nature:'sequential',size:16,repetitions:524288,time:624.822},
+{test:'bulkInsert',impl:'Clojure',nature:'sequential',size:16,repetitions:524288,time:658.035},
+{test:'bulkDelete',impl:'Clojure',nature:'sequential',size:16,repetitions:524288,time:572.454},
+{test:'bulkInsert',impl:'Javersion',nature:'sequential',size:16,repetitions:524288,time:306.625},
+{test:'bulkDelete',impl:'Javersion',nature:'sequential',size:16,repetitions:524288,time:328.591},
+{test:'incrementalInsert',impl:'Clojure',nature:'sequential',size:32,repetitions:4194304,time:20514.093},
+{test:'incrementalDelete',impl:'Clojure',nature:'sequential',size:32,repetitions:4194304,time:15232.488},
+{test:'incrementalInsert',impl:'Javersion',nature:'sequential',size:32,repetitions:4194304,time:11431.981},
+{test:'incrementalDelete',impl:'Javersion',nature:'sequential',size:32,repetitions:4194304,time:11414.546},
+{test:'bulkInsert',impl:'Clojure',nature:'sequential',size:32,repetitions:4194304,time:19126.109},
+{test:'bulkDelete',impl:'Clojure',nature:'sequential',size:32,repetitions:4194304,time:11258.401},
+{test:'bulkInsert',impl:'Javersion',nature:'sequential',size:32,repetitions:4194304,time:7003.769},
+{test:'bulkDelete',impl:'Javersion',nature:'sequential',size:32,repetitions:4194304,time:7364.181},
+{test:'incrementalInsert',impl:'Clojure',nature:'random',size:4194304,repetitions:1,time:4445.298},
+{test:'incrementalDelete',impl:'Clojure',nature:'random',size:4194304,repetitions:1,time:2920.348},
+{test:'incrementalInsert',impl:'Javersion',nature:'random',size:4194304,repetitions:1,time:3780.098},
+{test:'incrementalDelete',impl:'Javersion',nature:'random',size:4194304,repetitions:1,time:2699.854},
+{test:'bulkInsert',impl:'Clojure',nature:'random',size:4194304,repetitions:1,time:2587.63},
+{test:'bulkDelete',impl:'Clojure',nature:'random',size:4194304,repetitions:1,time:1537.511},
+{test:'bulkInsert',impl:'Javersion',nature:'random',size:4194304,repetitions:1,time:2150.615},
+{test:'bulkDelete',impl:'Javersion',nature:'random',size:4194304,repetitions:1,time:1588.679},
+{test:'incrementalInsert',impl:'Clojure',nature:'random',size:524288,repetitions:16,time:5922.771},
+{test:'incrementalDelete',impl:'Clojure',nature:'random',size:524288,repetitions:16,time:3708.785},
+{test:'incrementalInsert',impl:'Javersion',nature:'random',size:524288,repetitions:16,time:4865.891},
+{test:'incrementalDelete',impl:'Javersion',nature:'random',size:524288,repetitions:16,time:3771.924},
+{test:'bulkInsert',impl:'Clojure',nature:'random',size:524288,repetitions:16,time:3166.475},
+{test:'bulkDelete',impl:'Clojure',nature:'random',size:524288,repetitions:16,time:2143.405},
+{test:'bulkInsert',impl:'Javersion',nature:'random',size:524288,repetitions:16,time:2938.418},
+{test:'bulkDelete',impl:'Javersion',nature:'random',size:524288,repetitions:16,time:2065.107},
+{test:'incrementalInsert',impl:'Clojure',nature:'random',size:65536,repetitions:128,time:4528.393},
+{test:'incrementalDelete',impl:'Clojure',nature:'random',size:65536,repetitions:128,time:2524.375},
+{test:'incrementalInsert',impl:'Javersion',nature:'random',size:65536,repetitions:128,time:2973.77},
+{test:'incrementalDelete',impl:'Javersion',nature:'random',size:65536,repetitions:128,time:2634.391},
+{test:'bulkInsert',impl:'Clojure',nature:'random',size:65536,repetitions:128,time:2224.55},
+{test:'bulkDelete',impl:'Clojure',nature:'random',size:65536,repetitions:128,time:1181.032},
+{test:'bulkInsert',impl:'Javersion',nature:'random',size:65536,repetitions:128,time:1592.773},
+{test:'bulkDelete',impl:'Javersion',nature:'random',size:65536,repetitions:128,time:1199.949},
+{test:'incrementalInsert',impl:'Clojure',nature:'random',size:8192,repetitions:1024,time:2625.304},
+{test:'incrementalDelete',impl:'Clojure',nature:'random',size:8192,repetitions:1024,time:1617.586},
+{test:'incrementalInsert',impl:'Javersion',nature:'random',size:8192,repetitions:1024,time:1649.279},
+{test:'incrementalDelete',impl:'Javersion',nature:'random',size:8192,repetitions:1024,time:1391.407},
+{test:'bulkInsert',impl:'Clojure',nature:'random',size:8192,repetitions:1024,time:1313.117},
+{test:'bulkDelete',impl:'Clojure',nature:'random',size:8192,repetitions:1024,time:823.78},
+{test:'bulkInsert',impl:'Javersion',nature:'random',size:8192,repetitions:1024,time:938.397},
+{test:'bulkDelete',impl:'Javersion',nature:'random',size:8192,repetitions:1024,time:767.351},
+{test:'incrementalInsert',impl:'Clojure',nature:'random',size:1024,repetitions:8192,time:2042.152},
+{test:'incrementalDelete',impl:'Clojure',nature:'random',size:1024,repetitions:8192,time:1093.697},
+{test:'incrementalInsert',impl:'Javersion',nature:'random',size:1024,repetitions:8192,time:1010.012},
+{test:'incrementalDelete',impl:'Javersion',nature:'random',size:1024,repetitions:8192,time:909.213},
+{test:'bulkInsert',impl:'Clojure',nature:'random',size:1024,repetitions:8192,time:1197.058},
+{test:'bulkDelete',impl:'Clojure',nature:'random',size:1024,repetitions:8192,time:670.072},
+{test:'bulkInsert',impl:'Javersion',nature:'random',size:1024,repetitions:8192,time:698.48},
+{test:'bulkDelete',impl:'Javersion',nature:'random',size:1024,repetitions:8192,time:538.598},
+{test:'incrementalInsert',impl:'Clojure',nature:'random',size:128,repetitions:65536,time:1387.059},
+{test:'incrementalDelete',impl:'Clojure',nature:'random',size:128,repetitions:65536,time:808.184},
+{test:'incrementalInsert',impl:'Javersion',nature:'random',size:128,repetitions:65536,time:775.022},
+{test:'incrementalDelete',impl:'Javersion',nature:'random',size:128,repetitions:65536,time:578.748},
+{test:'bulkInsert',impl:'Clojure',nature:'random',size:128,repetitions:65536,time:950.451},
+{test:'bulkDelete',impl:'Clojure',nature:'random',size:128,repetitions:65536,time:577.612},
+{test:'bulkInsert',impl:'Javersion',nature:'random',size:128,repetitions:65536,time:498.84},
+{test:'bulkDelete',impl:'Javersion',nature:'random',size:128,repetitions:65536,time:351.583},
+{test:'incrementalInsert',impl:'Clojure',nature:'random',size:16,repetitions:524288,time:887.264},
+{test:'incrementalDelete',impl:'Clojure',nature:'random',size:16,repetitions:524288,time:542.264},
+{test:'incrementalInsert',impl:'Javersion',nature:'random',size:16,repetitions:524288,time:529.008},
+{test:'incrementalDelete',impl:'Javersion',nature:'random',size:16,repetitions:524288,time:424.793},
+{test:'bulkInsert',impl:'Clojure',nature:'random',size:16,repetitions:524288,time:826.412},
+{test:'bulkDelete',impl:'Clojure',nature:'random',size:16,repetitions:524288,time:506.974},
+{test:'bulkInsert',impl:'Javersion',nature:'random',size:16,repetitions:524288,time:400.279},
+{test:'bulkDelete',impl:'Javersion',nature:'random',size:16,repetitions:524288,time:267.915},
+{test:'incrementalInsert',impl:'Clojure',nature:'random',size:32,repetitions:4194304,time:22837.155},
+{test:'incrementalDelete',impl:'Clojure',nature:'random',size:32,repetitions:4194304,time:12193.738},
+{test:'incrementalInsert',impl:'Javersion',nature:'random',size:32,repetitions:4194304,time:9810.207},
+{test:'incrementalDelete',impl:'Javersion',nature:'random',size:32,repetitions:4194304,time:8027.228},
+{test:'bulkInsert',impl:'Clojure',nature:'random',size:32,repetitions:4194304,time:21949.518},
+{test:'bulkDelete',impl:'Clojure',nature:'random',size:32,repetitions:4194304,time:9219.493},
+{test:'bulkInsert',impl:'Javersion',nature:'random',size:32,repetitions:4194304,time:6877.07},
+{test:'bulkDelete',impl:'Javersion',nature:'random',size:32,repetitions:4194304,time:4990.775}
+];
+ 
+    var cmpr = {};
+    for (var i=0; i < data.length; i++) {
+        var d = data[i];
+        var key = d.test + "/" + d.nature + "/" + d.size + "/" + d.repetitions;
+        var c = cmpr[key];
+        if (!c) {
+            cmpr[key] = c = {};
+            c.test = d.test;
+            c.nature = d.nature;
+            c.size = d.size;
+            c.repetitions = d.repetitions;
+        }
+        c[d.impl] = d.time;
+    }
+    var table = [];
+    for (key in cmpr) {
+        var c = cmpr[key];
+        c.diff = Math.round( ((c.Clojure + (c.Javersion - c.Clojure)) / c.Clojure) * 100 );
+        table.push("<tr><td>", c.test, "</td><td>", c.nature, "</td><td>", c.size, "</td><td>", 
+                c.repetitions, "</td><td>", c.Javersion, "</td><td>", c.Clojure, "</td><td>", 
+                c.diff, "</td></tr>");
+    }
+    $("#results tbody").html(table.join(""));
+    $('#results').dataTable();
+});
+    </script>
+  </head>
+
+  <body>
+  <table id="results">
+    <thead>
+      <tr>
+        <th>
+        Test Case
+        </th>
+        <th>
+        Data Nature
+        </th>
+        <th>
+        Data Size
+        </th>
+        <th>
+        Repetitions
+        </th>
+        <th>
+        Javersion
+        </th>
+        <th>
+        Clojure
+        </th>
+        <th>
+        Diff
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  </body>
+</html>

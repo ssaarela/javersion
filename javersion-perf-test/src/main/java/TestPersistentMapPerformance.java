@@ -1,4 +1,3 @@
-import java.util.Date;
 import java.util.Random;
 
 import org.javersion.util.PersistentMap;
@@ -125,7 +124,7 @@ public class TestPersistentMapPerformance {
     }
     private void end(String title, String implementation) {
         elapsed = System.nanoTime() - start;
-        System.out.println(String.format("%s, %s, %s, %s, %s, %s", title, implementation, descriptor, data.length, times, elapsed / 1000000.0));
+        System.out.println(String.format("{test:'%s',impl:'%s',nature:'%s',size:%s,repetitions:%s,time:%s},", title, implementation, descriptor, data.length, times, elapsed / 1000000.0));
     }
     private PersistentHashMap incrementalInsertClojure() {
         IPersistentMap map = PersistentHashMap.EMPTY;
@@ -186,7 +185,9 @@ public class TestPersistentMapPerformance {
         new TestPersistentMapPerformance("sequential", sequentialData(1<<10), 1<<13).run();
         new TestPersistentMapPerformance("sequential", sequentialData(1<<7),  1<<16).run();
         new TestPersistentMapPerformance("sequential", sequentialData(1<<4),  1<<19).run();
-        
+
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<5),  1<<22).run();
+
         new TestPersistentMapPerformance("random", randomData(1<<22), 1).run();
         new TestPersistentMapPerformance("random", randomData(1<<19), 1<<4).run();
         new TestPersistentMapPerformance("random", randomData(1<<16), 1<<7).run();
@@ -194,6 +195,8 @@ public class TestPersistentMapPerformance {
         new TestPersistentMapPerformance("random", randomData(1<<10), 1<<13).run();
         new TestPersistentMapPerformance("random", randomData(1<<7),  1<<16).run();
         new TestPersistentMapPerformance("random", randomData(1<<4),  1<<19).run();
+
+        new TestPersistentMapPerformance("random", randomData(1<<5),  1<<22).run();
 
         // For Profiling: 
 //        try {
