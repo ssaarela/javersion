@@ -1,3 +1,4 @@
+import java.util.Date;
 import java.util.Random;
 
 import org.javersion.util.PersistentMap;
@@ -23,21 +24,29 @@ import clojure.lang.PersistentHashMap;
  */
 
 public class TestPersistentMapPerformance {
-//    public static final int TIMES = 1<<22; // 1
-//    public static final int LENGTH = 1<<5; // 1<<22
-    public static final int TIMES = 1;
-    public static final int LENGTH = 1<<22;
+    private final int times; // = 1<<22; // 1
+//    private final int length; // = 1<<5; // 1<<22
+    private final String descriptor;
+//    public static final int TIMES = 1;
+//    public static final int LENGTH = 1<<22;
 
-    public static final String[] DATA = new String[LENGTH];
-    static {
-        for (int i=0; i < LENGTH/2; i++) {
-            DATA[i] = Integer.toString(i);
+    private final Object[] data;// = new String[length];
+    
+    private static final Random RANDOM = new Random();
+    
+    private static Object[] sequentialData(int length) {
+        Object[] data = new Object[length];
+        for (int i=0; i < length; i++) {
+            data[i] = Integer.toString(i);
         }
-        
-        Random random = new Random(78);
-        for (int i=LENGTH; i < LENGTH; i++) {
-            DATA[i] = Integer.toString(random.nextInt(LENGTH));
+        return data;
+    }
+    private static Object[] randomData(int length) {
+        Object[] data = new Object[length];
+        for (int i=0; i < length; i++) {
+            data[i] = Integer.toString(RANDOM.nextInt(length));
         }
+        return data;
     }
 
 //    private PersistentHashMap clojureMap = PersistentHashMap.EMPTY;
@@ -46,128 +55,146 @@ public class TestPersistentMapPerformance {
     private long start;
     private long elapsed; 
     
-    public void run() {
-        // warmup
-        incrementalInsertJaversion();
-        incrementalInsertClojure();
+    
+    
+    public TestPersistentMapPerformance(String descriptor, Object[] data, int times) {
+        this.descriptor = descriptor;
+        this.data = data;
+        this.times = times;
+    }
+    public TestPersistentMapPerformance warmup() {
         bulkInsertJaversion();
         bulkInsertClojure();
-
-        PersistentMap<String, String> javersionMap = null;
+        return this;
+    }
+    
+    public void run() {
+        PersistentMap<Object, Object> javersionMap = null;
         PersistentHashMap clojureMap = null;
-
         
         start();
-        for (int i=0; i < TIMES; i++)
+        for (int i=0; i < times; i++)
             clojureMap = incrementalInsertClojure();
-        end("incrementalInsertClojure");
+        end("incrementalInsert", "Clojure");
         
         start();
-        for (int i=0; i < TIMES; i++)
+        for (int i=0; i < times; i++)
             incrementalDeleteClojure(clojureMap);
-        end("incrementalDeleteClojure");
+        end("incrementalDelete", "Clojure");
         clojureMap = null;
         
 
         start();
-        for (int i=0; i < TIMES; i++)
+        for (int i=0; i < times; i++)
             javersionMap = incrementalInsertJaversion();
-        end("incrementalInsertJaversion");
+        end("incrementalInsert", "Javersion");
         
         start();
-        for (int i=0; i < TIMES; i++)
+        for (int i=0; i < times; i++)
             incrementalDeleteJaversion(javersionMap);
-        end("incrementalDeleteJaversion");
+        end("incrementalDelete", "Javersion");
         javersionMap = null;
 
         
         start();
-        for (int i=0; i < TIMES; i++)
+        for (int i=0; i < times; i++)
             clojureMap = bulkInsertClojure();
-        end("bulkInsertClojure");
+        end("bulkInsert", "Clojure");
 
         start();
-        for (int i=0; i < TIMES; i++)
+        for (int i=0; i < times; i++)
             bulkDeleteClojure(clojureMap);
-        end("bulkDeleteClojure");
+        end("bulkDelete", "Clojure");
         clojureMap = null;
 
         
         start();
-        for (int i=0; i < TIMES; i++)
+        for (int i=0; i < times; i++)
             javersionMap = bulkInsertJaversion();
-        end("bulkInsertJaversion");
+        end("bulkInsert", "Javersion");
         
         start();
-        for (int i=0; i < TIMES; i++)
+        for (int i=0; i < times; i++)
             bulkDeleteJaversion(javersionMap);
-        end("bulkDeleteJaversion");
+        end("bulkDelete", "Javersion");
         javersionMap = null;
     }
     private void start() {
         System.gc();
         start = System.nanoTime();
     }
-    private void end(String title) {
+    private void end(String title, String implementation) {
         elapsed = System.nanoTime() - start;
-        System.out.println(title + ": " + elapsed / 1000000.0);
+        System.out.println(String.format("%s, %s, %s, %s, %s, %s", title, implementation, descriptor, data.length, times, elapsed / 1000000.0));
     }
     private PersistentHashMap incrementalInsertClojure() {
         IPersistentMap map = PersistentHashMap.EMPTY;
-        for (int i=0; i < LENGTH; i++) {
-            map = map.assoc(DATA[i], DATA[i]);
+        for (int i=0; i < data.length; i++) {
+            map = map.assoc(data[i], data[i]);
         }
         return (PersistentHashMap) map;
     }
-    private PersistentMap<String, String> incrementalInsertJaversion() {
-        PersistentMap<String, String> map = new PersistentMap<String, String>();
-        for (int i=0; i < LENGTH; i++) {
-            map = map.assoc(DATA[i], DATA[i]);
+    private PersistentMap<Object, Object> incrementalInsertJaversion() {
+        PersistentMap<Object, Object> map = new PersistentMap<Object, Object>();
+        for (int i=0; i < data.length; i++) {
+            map = map.assoc(data[i], data[i]);
         }
         return map;
     }
     private void incrementalDeleteClojure(IPersistentMap map) {
-        for (int i=0; i < LENGTH; i++) {
-            map = map.without(DATA[i]);
+        for (int i=0; i < data.length; i++) {
+            map = map.without(data[i]);
         }
     }
-    private void incrementalDeleteJaversion(PersistentMap<String, String> map) {
-        for (int i=0; i < LENGTH; i++) {
-            map = map.dissoc(DATA[i]);
+    private void incrementalDeleteJaversion(PersistentMap<Object, Object> map) {
+        for (int i=0; i < data.length; i++) {
+            map = map.dissoc(data[i]);
         }
     }
     private void bulkDeleteClojure(PersistentHashMap persistentMap) {
         ITransientMap map = persistentMap.asTransient();
-        for (int i=0; i < LENGTH; i++) {
-            map = map.without(DATA[i]);
+        for (int i=0; i < data.length; i++) {
+            map = map.without(data[i]);
         }
         map.persistent();
     }
-    private void bulkDeleteJaversion(PersistentMap<String, String> persistentMap) {
-        PersistentMap.Builder<String, String> map = PersistentMap.builder(persistentMap);
-        for (int i=0; i < LENGTH; i++) {
-            map = map.remove(DATA[i]);
+    private void bulkDeleteJaversion(PersistentMap<Object, Object> persistentMap) {
+        PersistentMap.Builder<Object, Object> map = PersistentMap.builder(persistentMap);
+        for (int i=0; i < data.length; i++) {
+            map = map.remove(data[i]);
         }
     }
     private PersistentHashMap bulkInsertClojure() {
         ITransientMap map = PersistentHashMap.EMPTY.asTransient();
-        for (int i=0; i < LENGTH; i++) {
-            map = map.assoc(DATA[i], DATA[i]);
+        for (int i=0; i < data.length; i++) {
+            map = map.assoc(data[i], data[i]);
         }
         return (PersistentHashMap) map.persistent();
     }
-    private PersistentMap<String, String> bulkInsertJaversion() {
-        PersistentMap.Builder<String, String> map = PersistentMap.builder();
-        for (int i=0; i < LENGTH; i++) {
-            map.put(DATA[i], DATA[i]);
+    private PersistentMap<Object, Object> bulkInsertJaversion() {
+        PersistentMap.Builder<Object, Object> map = PersistentMap.builder();
+        for (int i=0; i < data.length; i++) {
+            map.put(data[i], data[i]);
         }
         return map.build();
     }
     public static void main(String[] args) {
-        TestPersistentMapPerformance test = new TestPersistentMapPerformance();
-        test.incrementalInsertJaversion();
-        test.run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<22), 1).warmup().run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<19), 1<<4).run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<16), 1<<7).run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<13), 1<<10).run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<10), 1<<13).run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<7),  1<<16).run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<4),  1<<19).run();
         
+        new TestPersistentMapPerformance("random", randomData(1<<22), 1).run();
+        new TestPersistentMapPerformance("random", randomData(1<<19), 1<<4).run();
+        new TestPersistentMapPerformance("random", randomData(1<<16), 1<<7).run();
+        new TestPersistentMapPerformance("random", randomData(1<<13), 1<<10).run();
+        new TestPersistentMapPerformance("random", randomData(1<<10), 1<<13).run();
+        new TestPersistentMapPerformance("random", randomData(1<<7),  1<<16).run();
+        new TestPersistentMapPerformance("random", randomData(1<<4),  1<<19).run();
+
         // For Profiling: 
 //        try {
 //            Thread.sleep(60000);

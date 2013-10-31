@@ -1,6 +1,6 @@
 package org.javersion.util;
 
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
@@ -66,15 +66,100 @@ public class PersistentMapTest {
     }
     
     @Test
-    public void Collisions() {
-        PersistentMap<HashKey, HashKey> map = new PersistentMap<>();
+    public void Size() {
         HashKey k1 = new HashKey(1);
         HashKey k2 = new HashKey(1);
         HashKey k3 = new HashKey(1);
+        
+        PersistentMap<Object, Object> map = new PersistentMap<>();
+        assertThat(map.size(), equalTo(0));
+
         map = map.assoc(k1, k1);
+        assertThat(map.size(), equalTo(1));
+
+        // Same key and value
+        map = map.assoc(k1, k1);
+        assertThat(map.size(), equalTo(1));
+
+        // Same key, different value
+        map = map.assoc(k1, k2);
+        assertThat(map.size(), equalTo(1));
+        
+        // Colliding key
         map = map.assoc(k2, k2);
+        assertThat(map.size(), equalTo(2));
+
+        // Same colliding key and value
+        map = map.assoc(k2, k2);
+        assertThat(map.size(), equalTo(2));
+
+        // Same colliding key, different value
+        map = map.assoc(k2, k1);
+        assertThat(map.size(), equalTo(2));
+
+        // Another colliding key
+        map = map.assoc(k3, k3);
+        assertThat(map.size(), equalTo(3));
+        
+    }
+    
+    @Test
+    public void Size_With_Deep_Collision() {
+        HashKey k0 = new HashKey(0);
+        HashKey k1 = new HashKey(0);
+        
+        PersistentMap<Object, Object> map = new PersistentMap<>();
+        map = map.assoc(k0, k0);
+        map = map.assoc(k1, k1);
+        assertThat(map.size(), equalTo(2));
+        
+        for (int i=1; i < 32; i++) {
+            map = map.assoc(i, i);
+            assertThat(map.size(), equalTo(i + 2));
+        }
+        assertThat(map.size(), equalTo(33));
+        map = map.assoc(32, 32);
+        assertThat(map.size(), equalTo(34));
+    }
+    
+    @Test
+    public void Collision_Dissoc() {
+        HashKey k0 = new HashKey(0);
+        HashKey k1 = new HashKey(0);
+        HashKey k3 = new HashKey(0);
+
+        PersistentMap<Object, Object> map = new PersistentMap<>();
+        map = map.assoc(k0, k0);
+        map = map.assoc(k1, k1);
+
+        assertThat(map.dissoc(0).size(), equalTo(2));
+        
+        assertThat(map.dissoc(k1).size(), equalTo(1));
+        assertThat(map.dissoc(k1).get(k0), equalTo((Object) k0));
+        
+        assertThat(map.dissoc(k0).size(), equalTo(1));
+        assertThat(map.dissoc(k0).get(k0), nullValue());
+        
+        map = map.assoc(k3, k3);
+        assertThat(map.dissoc(k1).size(), equalTo(2));
+        assertThat(map.dissoc(k0).size(), equalTo(2));
+        assertThat(map.dissoc(k0).get(k3), equalTo((Object) k3));
+        assertThat(map.dissoc(k3).size(), equalTo(2));
+        assertThat(map.dissoc(0), sameInstance(map));
+    }
+    
+    @Test
+    public void Collisions() {
+        HashKey k1 = new HashKey(1);
+        HashKey k2 = new HashKey(1);
+        HashKey k3 = new HashKey(1);
+
+        PersistentMap<HashKey, HashKey> map = new PersistentMap<>();
+        map = map.assoc(k1, k1);
+        map = map.assoc(k2, k1);
         map = map.assoc(k2, k2);
         map = map.assoc(k3, k3);
+        
         assertThat(map.get(k1), equalTo(k1));
         assertThat(map.get(k2), equalTo(k2));
         assertThat(map.get(k3), equalTo(k3));
