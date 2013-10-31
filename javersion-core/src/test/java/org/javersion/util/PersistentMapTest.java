@@ -127,7 +127,7 @@ public class PersistentMapTest {
     public void Collision_Dissoc() {
         HashKey k0 = new HashKey(0);
         HashKey k1 = new HashKey(0);
-        HashKey k3 = new HashKey(0);
+        HashKey k2 = new HashKey(0);
 
         PersistentMap<Object, Object> map = new PersistentMap<>();
         map = map.assoc(k0, k0);
@@ -141,11 +141,19 @@ public class PersistentMapTest {
         assertThat(map.dissoc(k0).size(), equalTo(1));
         assertThat(map.dissoc(k0).get(k0), nullValue());
         
-        map = map.assoc(k3, k3);
-        assertThat(map.dissoc(k1).size(), equalTo(2));
+        map = map.assoc(k2, k2);
         assertThat(map.dissoc(k0).size(), equalTo(2));
-        assertThat(map.dissoc(k0).get(k3), equalTo((Object) k3));
-        assertThat(map.dissoc(k3).size(), equalTo(2));
+        assertThat(map.dissoc(k0).get(k2), equalTo((Object) k2));
+        assertThat(map.dissoc(k0).get(k1), equalTo((Object) k1));
+
+        assertThat(map.dissoc(k1).size(), equalTo(2));
+        assertThat(map.dissoc(k1).get(k0), equalTo((Object) k0));
+        assertThat(map.dissoc(k1).get(k2), equalTo((Object) k2));
+        
+        assertThat(map.dissoc(k2).size(), equalTo(2));
+        assertThat(map.dissoc(k2).get(k0), equalTo((Object) k0));
+        assertThat(map.dissoc(k2).get(k1), equalTo((Object) k1));
+        
         assertThat(map.dissoc(0), sameInstance(map));
     }
     
