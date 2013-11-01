@@ -17,62 +17,15 @@ package org.javersion.util;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
+
+import org.javersion.util.PersistentMap.Version;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Iterators;
 
 
 public class PersistentSet<E> implements Iterable<E> {
-    
-    public static class Builder<E> {
-        
-        private final PersistentMap.Builder<E, Object> builder;
-        
-        public Builder() {
-            this(new PersistentSet<E>());
-        }
-        
-        public Builder(PersistentSet<E> set) {
-            this.builder = PersistentMap.builder(set.map);
-        }
-        
-        public Builder<E> add(E e) {
-            builder.put(e, PRESENT);
-            return this;
-        }
-        
-        public Builder<E> addAll(Collection<? extends E> elements) {
-            for (E e : elements) {
-                add(e);
-            }
-            return this;
-        }
-        
-        public Builder<E> remove(Object e) {
-            builder.remove(e);
-            return this;
-        }
-        
-        public Builder<E> addAll(PersistentSet<? extends E> elements) {
-            for (E e : elements) {
-                add(e);
-            }
-            return this;
-        }
-        
-        public boolean contains(Object e) {
-            return builder.containsKey(e);
-        }
-        
-        public PersistentSet<E> build() {
-            return new PersistentSet<>(builder.build());
-        }
-    }
-
-    public static <E> Builder<E> builder() {
-        return new Builder<>();
-    }
-
-    public static <E> Builder<E> builder(PersistentSet<E> parent) {
-        return new Builder<>(parent);
-    }
     
     private final PersistentMap<E, Object> map;
     
@@ -86,8 +39,20 @@ public class PersistentSet<E> implements Iterable<E> {
         this.map = map;
     }
 
+    public MutableSet<E> toMutableSet() {
+        return new MutableSet<>(this);
+    }
+    
+    public AtomicSet<E> toAtomicSet() {
+        return new AtomicSet<>(this);
+    }
+    
     public PersistentSet<E> conj(E element) {
         return doReturn(map.assoc(element, PRESENT));
+    }
+
+    PersistentSet<E> conj(Version version, E element) {
+        return doReturn(map.assoc(version, new PersistentMap.Entry<E, Object>(element, PRESENT)));
     }
     
     private PersistentSet<E> doReturn(PersistentMap<E, Object> newMap) {
@@ -98,11 +63,12 @@ public class PersistentSet<E> implements Iterable<E> {
     }
 
     public PersistentSet<E> conjAll(Collection<? extends E> elements) {
-        PersistentMap.Builder<E, Object> builder = PersistentMap.builder(map, elements.size());
-        for (E element : elements) {
-            builder.put(element, PRESENT);
+        Version version = new Version(elements.size());
+        PersistentSet<E> result = this;
+        for (E e : elements) {
+            result = result.conj(version, e);
         }
-        return doReturn(builder.build());
+        return result;
     }
     
     public PersistentSet<E> disjoin(Object element) {
@@ -114,7 +80,14 @@ public class PersistentSet<E> implements Iterable<E> {
     }
     
     public Iterator<E> iterator() {
-        return map.atomicMap().keySet().iterator();
+        return Iterators.transform(map.iterator(), new Function<Map.Entry<E, Object>, E>() {
+
+            @Override
+            public E apply(java.util.Map.Entry<E, Object> input) {
+                return input.getKey();
+            }
+            
+        });
     }
 
     public boolean contains(Object o) {

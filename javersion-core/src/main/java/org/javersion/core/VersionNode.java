@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.javersion.util.Check;
+import org.javersion.util.MutableMap;
+import org.javersion.util.MutableSet;
 import org.javersion.util.PersistentMap;
 import org.javersion.util.PersistentSet;
 
@@ -48,15 +50,15 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
         this.version = version;
         this.parents = ImmutableSet.copyOf(parents);
 
-        PersistentSet.Builder<Long> revisions = null;
-        PersistentMap.Builder<K, VersionProperty<V>> properties = null;
+        MutableSet<Long> revisions = null;
+        MutableMap<K, VersionProperty<V>> properties = null;
         if (!parents.isEmpty()) {
             for (VersionNode<K, V, T> parent : parents) {
                 if (revisions == null) {
-                    revisions = PersistentSet.builder(parent.allRevisions);
-                    properties = PersistentMap.builder(parent.allProperties);
+                    revisions = parent.allRevisions.toMutableSet();
+                    properties = parent.allProperties.toMutableMap();
                 } else {
-                    revisions.addAll(parent.allRevisions);
+                    revisions.addAll(parent.allRevisions.toMutableSet());
                     for (Map.Entry<K, VersionProperty<V>> entry : parent.allProperties) {
                         K key = entry.getKey();
                         VersionProperty<V> value = entry.getValue();
@@ -68,15 +70,15 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
                 }
             }
         } else {
-            revisions = PersistentSet.builder();
-            properties = PersistentMap.builder();
+            revisions = new MutableSet<>();
+            properties = new MutableMap<>();
         }
         
         revisions.add(version.revision);
         properties.putAll(version.getVersionProperties());
         
-        this.allRevisions = revisions.build();
-        this.allProperties = properties.build();
+        this.allRevisions = revisions.persistentValue();
+        this.allProperties = properties.persistentValue();
     }
     
     public long getRevision() {

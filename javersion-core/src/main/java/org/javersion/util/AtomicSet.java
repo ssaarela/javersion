@@ -18,27 +18,28 @@ package org.javersion.util;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
-
-import org.javersion.util.CompareAndSet.AtomicFunction;
-import org.javersion.util.CompareAndSet.AtomicVoidFunction;
-import org.javersion.util.CompareAndSet.Result;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Function;
 
 public class AtomicSet<E> extends AbstractSet<E> {
 
-    private CompareAndSet<PersistentSet<E>> atomicSet;
+    private AtomicReference<PersistentSet<E>> atomicSet;
     
     public AtomicSet() {
         this(new PersistentSet<E>());
     }
     
     public AtomicSet(PersistentSet<E> set) {
-        atomicSet = new CompareAndSet<PersistentSet<E>>(set);
+        atomicSet = new AtomicReference<PersistentSet<E>>(set);
     }
     
-    public PersistentSet<E> getPersistentSet() {
+    public PersistentSet<E> toPersistentSet() {
         return atomicSet.get();
+    }
+    
+    public MutableSet<E> toMutableSet() {
+        return new MutableSet<>(atomicSet.get());
     }
 
     @Override
@@ -58,63 +59,63 @@ public class AtomicSet<E> extends AbstractSet<E> {
 
     @Override
     public boolean add(final E e) {
-        return atomicSet.invoke(new AtomicFunction<PersistentSet<E>, Boolean>() {
+        return apply(new Function<MutableSet<E>, Boolean>() {
+
             @Override
-            public PersistentSet<E> invoke(PersistentSet<E> set, Result<Boolean> result) {
-                PersistentSet<E> newSet = set.conj(e);
-                result.set(set != newSet);
-                return newSet;
+            public Boolean apply(MutableSet<E> input) {
+                return input.add(e);
             }
+            
         });
     }
 
     @Override
     public boolean remove(final Object o) {
-        return atomicSet.invoke(new AtomicFunction<PersistentSet<E>, Boolean>() {
+        return apply(new Function<MutableSet<E>, Boolean>() {
+
             @Override
-            public PersistentSet<E> invoke(PersistentSet<E> set, Result<Boolean> result) {
-                PersistentSet<E> newSet = set.disjoin(o);
-                result.set(set != newSet);
-                return newSet;
+            public Boolean apply(MutableSet<E> input) {
+                return input.remove(o);
             }
+            
         });
     }
 
     @Override
     public boolean addAll(final Collection<? extends E> c) {
-        return atomicSet.invoke(new AtomicFunction<PersistentSet<E>, Boolean>() {
+        return apply(new Function<MutableSet<E>, Boolean>() {
+
             @Override
-            public PersistentSet<E> invoke(PersistentSet<E> set, Result<Boolean> result) {
-                PersistentSet<E> newSet = set.conjAll(c);
-                result.set(set != newSet);
-                return newSet;
+            public Boolean apply(MutableSet<E> input) {
+                return input.addAll(c);
             }
+            
         });
     }
 
     @Override
     public void clear() {
-        atomicSet.invoke(new AtomicVoidFunction<PersistentSet<E>>() {
+        apply(new Function<MutableSet<E>, Void>() {
+
             @Override
-            public PersistentSet<E> invoke(PersistentSet<E> set) {
-                PersistentSet.Builder<E> builder = PersistentSet.builder(set);
-                for (E e : set) {
-                    builder.remove(e);
-                }
-                return builder.build();
+            public Void apply(MutableSet<E> input) {
+                input.clear();
+                return null;
             }
+            
         });
     }
     
-    public <T> T apply(final Function<AtomicSet<E>, T> f) {
-        return atomicSet.invoke(new AtomicFunction<PersistentSet<E>, T>() {
-            @Override
-            public PersistentSet<E> invoke(PersistentSet<E> set, Result<T> result) {
-                AtomicSet<E> copy = new AtomicSet<>(getPersistentSet());
-                result.set(f.apply(copy));
-                return copy.getPersistentSet();
-            }
-        });
+    public <T> T apply(final Function<MutableSet<E>, T> f) {
+        PersistentSet<E> currentValue;
+        MutableSet<E> mutableSet;
+        T result;
+        do {
+            currentValue = atomicSet.get();
+            mutableSet = currentValue.toMutableSet();
+            result = f.apply(mutableSet);
+        } while (!atomicSet.compareAndSet(currentValue, mutableSet.persistentValue()));
+        return result;
     }
     
 }

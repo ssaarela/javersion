@@ -26,8 +26,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.javersion.util.Check;
-import org.javersion.util.PersistentMap;
-import org.javersion.util.PersistentSet;
+import org.javersion.util.MutableMap;
+import org.javersion.util.MutableSet;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -68,18 +68,18 @@ public final class Merge<K, V> {
 
             // One version
             if (!iter.hasNext()) {
-                mergedProperties = versionNode.allProperties.atomicMap();
+                mergedProperties = versionNode.allProperties.toAtomicMap();
                 revisions = ImmutableSet.of(versionNode.getRevision());
                 conflicts = ImmutableMultimap.of();
             } 
             // More than one version -> merge!
             else {
-                PersistentMap.Builder<K, VersionProperty<V>> mergedProperties = PersistentMap.builder(versionNode.allProperties);
+                MutableMap<K, VersionProperty<V>> mergedProperties = versionNode.allProperties.toMutableMap();
                 Set<Long> heads = Sets.newHashSet(versionNode.getRevision());
 
                 ImmutableMultimap.Builder<K, VersionProperty<V>> conflicts = ImmutableMultimap.builder();
 
-                PersistentSet.Builder<Long> mergedRevisions = PersistentSet.<Long>builder(versionNode.allRevisions);
+                MutableSet<Long> mergedRevisions = versionNode.allRevisions.toMutableSet();
                 do {
                     versionNode = next(iter);
 
@@ -103,14 +103,14 @@ public final class Merge<K, V> {
                                 }
                             }
                         }
-                        mergedRevisions.addAll(versionNode.allRevisions);
+                        mergedRevisions.addAll(versionNode.allRevisions.toMutableSet());
 
                         heads.removeAll(versionNode.allRevisions.asSet());
                         heads.add(versionNode.getRevision());
                     }
                 } while (iter.hasNext());
 
-                this.mergedProperties = mergedProperties.build().atomicMap();
+                this.mergedProperties = mergedProperties.toAtomicMap();
                 this.revisions = unmodifiableSet(heads);
                 this.conflicts = conflicts.build();
             }

@@ -27,131 +27,57 @@ import com.google.common.collect.UnmodifiableIterator;
 
 public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     
-    private static final class Version{
+    protected static final class Version{
         final int expectedSize;
         private int change = 0;
+        private boolean changed = false;
         public Version(int expectedSize) {
             this.expectedSize = expectedSize;
         }
-        int getAndResetChange() {
+        boolean isChanged() {
+            return changed;
+        }
+        int getChangeAndReset() {
             try {
                 return change;
             } finally {
                 change = 0;
+                changed = false;
             }
+        }
+        void recordChange() {
+            changed = true;
         }
         void recordAddition() {
             change = 1;
+            changed = true;
         }
         void recordRemoval() {
             change = -1;
-        }
-    }
-    
-    public static class Builder<K, V> {
-        
-        private Version version;
-        
-        private Node<K, V> root;
-        
-        private int size;
-        
-        public Builder(int size, int expectedSize) {
-            this(null, size, expectedSize);
-        }
-        
-        @SuppressWarnings("unchecked")
-        public Builder(Node<? extends K, ? extends V> root, int size, int expectedSize) {
-            this.version = new Version(expectedSize);
-            this.root = (root != null ? (Node<K, V>) root : new HashNode<K, V>(version));
-            this.size = size;
-        }
-        
-        public Builder<K, V> put(Map.Entry<? extends K, ? extends V> entry) {
-            root = root.assoc(version, entry);
-            size += version.getAndResetChange();
-            return this;
-        }
-        
-        public Builder<K, V> put(K key, V value) {
-            return put(new Entry<K, V>(key, value));
-        }
-        
-        public Builder<K, V> putAll(Map<? extends K, ? extends V> map) {
-            Check.notNull(map, "map");
-            
-            for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
-                put(entry);
-            }
-            return this;
-        }
-        
-        public Builder<K, V> remove(Object key) {
-            root = root.dissoc(version, key);
-            size += version.getAndResetChange();
-            return this;
-        }
-        
-        public Builder<K, V> removeAll(Iterable<? extends Object> keys) {
-            Check.notNull(keys, "keys");
-            
-            for (Object key : keys) {
-                remove(key);
-            }
-            return this;
-        }
-        
-        public boolean containsKey(Object key) {
-            return root.find(key) != null;
-        }
-        
-        public V get(Object key) {
-            Entry<K, V> entry = root.find(key);
-            return entry != null ? entry.getValue() : null;
-        }
-        
-        public int size() {
-            return size;
-        }
-        
-        public PersistentMap<K, V> build() {
-            try {
-                return new PersistentMap<K, V>(root, size);
-            } finally {
-                this.root = null;
-                this.version = null;
-            }
+            changed = true;
         }
     }
             
     private final Node<K, V> root;
     
-    final int size;
-    
-    public static <K, V> Builder<K, V> builder() {
-        return builder(32);
-    }
-    
-    public static <K, V> Builder<K, V> builder(int expectedSize) {
-        return new Builder<K, V>(0, expectedSize);
-    }
-    
-    public static <K, V> Builder<K, V> builder(PersistentMap<K, V> parent) {
-        return builder(parent, 32);
-    }
-    
-    public static <K, V> Builder<K, V> builder(PersistentMap<K, V> parent, int expectedUpdateSize) {
-        return new Builder<K, V>(parent.root, parent.size, expectedUpdateSize);
-    }
+    private final int size;
     
     public PersistentMap() {
         this(null, 0);
     }
     
     @SuppressWarnings("unchecked")
-    private PersistentMap(Node<? extends K, ? extends V> root, int size) {
+    public PersistentMap(Node<? extends K, ? extends V> root, int size) {
         this.root = (Node<K, V>) root == null ? HashNode.EMPTY: root;
         this.size = size;
+    }
+    
+    public MutableMap<K, V> toMutableMap() {
+        return new MutableMap<>(this);
+    }
+    
+    public Node<K, V> getRoot() {
+        return root;
     }
     
     public PersistentMap<K, V> assoc(K key, V value) {
@@ -159,17 +85,28 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
     }
     
     public PersistentMap<K, V> assoc(Map.Entry<? extends K, ? extends V> entry) {
-        Version version = new Version(1);
-        return doReturn(root.assoc(version, entry), version.getAndResetChange());
+        return assoc(new Version(1), entry);
+    }
+    
+    PersistentMap<K, V> assoc(Version version, Map.Entry<? extends K, ? extends V> entry) {
+        return doReturn(root.assoc(version, toEntry(entry)), version);
     }
     
     public PersistentMap<K, V> assocAll(Map<? extends K, ? extends V> map) {
-        return builder(this, map.size()).putAll(map).build();
+        Version version = new Version(map.size());
+        PersistentMap<K, V> result = this;
+        for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
+            result = result.assoc(version, entry);
+        }
+        return result;
     }
     
     public PersistentMap<K, V> dissoc(Object key) {
-        Version version = new Version(1);
-        return doReturn(root.dissoc(version, key), version.getAndResetChange());
+        return dissoc(new Version(1), key);
+    }
+        
+    PersistentMap<K, V> dissoc(Version version, Object key) {
+        return doReturn(root.dissoc(version, key), version);
     }
     
     public int size() {
@@ -189,20 +126,20 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         return root.iterator();
     }
     
-    public AtomicMap<K, V> atomicMap() {
+    public AtomicMap<K, V> toAtomicMap() {
         return new AtomicMap<>(this);
     }
     
     
-    private PersistentMap<K, V> doReturn(Node<? extends K, ? extends V> newRoot, int change) {
-        if (newRoot == root) {
+    private PersistentMap<K, V> doReturn(Node<? extends K, ? extends V> newRoot, Version version) {
+        if (!version.isChanged()) {
             return this;
         } else {
-            return new PersistentMap<K, V>(newRoot, size + change);
+            return new PersistentMap<K, V>(newRoot, size + version.getChangeAndReset());
         }
     }
     
-    private static <K, V> Entry<? extends K, ? extends V> toEntry(Map.Entry<? extends K, ? extends V> entry) {
+    protected static <K, V> Entry<? extends K, ? extends V> toEntry(Map.Entry<? extends K, ? extends V> entry) {
         if (entry instanceof Entry) {
             return (Entry<? extends K, ? extends V>) entry;
         } else {
@@ -217,9 +154,9 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
             return findInternal(0, hash(key), key);
         }
 
-        public Node<K, V> assoc(Version currentVersion, Map.Entry<? extends K, ? extends V> newEntry) {
+        public Node<K, V> assoc(Version currentVersion, Entry<? extends K, ? extends V> newEntry) {
             Check.notNull(currentVersion, "currentVersion");
-            return assocInternal(currentVersion, 0, toEntry(newEntry));
+            return assocInternal(currentVersion, 0, newEntry);
         }
 
         public Node<K, V> dissoc(Version currentVersion, Object key) {
@@ -301,10 +238,10 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
         @SuppressWarnings("unchecked")
         public Node<K, V> assocInternal(final Version currentVersion, final int level, final Entry<? extends K, ? extends V> newEntry) {
             if (equal(newEntry.key, key)) {
-                // Replace - not addition!
                 if (equal(newEntry.value, value)) {
                     return this;
                 } else {
+                    currentVersion.recordChange();
                     return (Node<K, V>) newEntry;
                 }
             }
@@ -580,6 +517,7 @@ public class PersistentMap<K, V> implements Iterable<Map.Entry<K, V>>{
                         if (equal(entries[i].value, newEntry.value)) {
                             return this;
                         }
+                        currentVersion.recordChange();
                         Entry<K, V>[] newEntries = entries.clone();
                         newEntries[i] = (Entry<K, V>) newEntry;
                         return new CollisionNode<K, V>(newEntries);

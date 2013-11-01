@@ -20,23 +20,20 @@ import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import org.javersion.util.CompareAndSet.AtomicFunction;
-import org.javersion.util.CompareAndSet.AtomicVoidFunction;
-import org.javersion.util.CompareAndSet.Result;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Function;
 
 public class AtomicMap<K, V> extends AbstractMap<K, V> {
     
-    private CompareAndSet<PersistentMap<K, V>> atomicMap;
+    private final AtomicReference<PersistentMap<K, V>> atomicMap;
     
     public AtomicMap() {
         this(new PersistentMap<K, V>());
     }
     
     public AtomicMap(PersistentMap<K, V> map) {
-        this.atomicMap = new CompareAndSet<>(Check.notNull(map, "map"));
+        this.atomicMap = new AtomicReference<>(Check.notNull(map, "map"));
     }
     
     public PersistentMap<K, V> getPersistentMap() {
@@ -45,12 +42,16 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
 
     @Override
     public int size() {
-        return atomicMap.get().size;
+        return atomicMap.get().size();
     }
 
     @Override
     public boolean containsKey(Object key) {
         return atomicMap.get().containsKey(key);
+    }
+    
+    public MutableMap<K, V> toMutableMap() {
+        return atomicMap.get().toMutableMap();
     }
 
     @Override
@@ -70,65 +71,62 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
 
             @Override
             public int size() {
-                return map.size;
+                return map.size();
             }
         };
     }
 
     @Override
     public V put(final K key, final V value) {
-        return atomicMap.invoke(new AtomicFunction<PersistentMap<K,V>, V>() {
+        return apply(new Function<MutableMap<K,V>, V>() {
             @Override
-            public PersistentMap<K, V> invoke(PersistentMap<K, V> map, Result<V> result) {
-                result.set(map.get(key));
-                return map.assoc(key, value);
+            public V apply(MutableMap<K, V> map) {
+                return map.put(key, value);
             }
         });
     }
 
     @Override
     public V remove(final Object key) {
-        return atomicMap.invoke(new AtomicFunction<PersistentMap<K,V>, V>() {
+        return apply(new Function<MutableMap<K,V>, V>() {
             @Override
-            public PersistentMap<K, V> invoke(PersistentMap<K, V> map, Result<V> result) {
-                result.set(map.get(key));
-                return map.dissoc(key);
+            public V apply(MutableMap<K, V> map) {
+                return map.remove(key);
             }
         });
     }
 
     @Override
     public void putAll(final Map<? extends K, ? extends V> m) {
-        atomicMap.invoke(new AtomicVoidFunction<PersistentMap<K,V>>() {
+        apply(new Function<MutableMap<K,V>, Void>() {
             @Override
-            public PersistentMap<K, V> invoke(PersistentMap<K, V> map) {
-                return map.assocAll(m);
+            public Void apply(MutableMap<K, V> map) {
+                map.putAll(m);
+                return null;
             }
         });
     }
 
     @Override
     public void clear() {
-        atomicMap.invoke(new AtomicVoidFunction<PersistentMap<K,V>>() {
+        apply(new Function<MutableMap<K,V>, Void>() {
             @Override
-            public PersistentMap<K, V> invoke(PersistentMap<K, V> map) {
-                PersistentMap.Builder<K, V> builder = PersistentMap.builder(map);
-                for (Map.Entry<K, V> entry : map) {
-                    builder.remove(entry.getKey());
-                }
-                return builder.build();
+            public Void apply(MutableMap<K, V> map) {
+                map.clear();
+                return null;
             }
         });
     }
     
-    public <T> T apply(final Function<AtomicMap<K, V>, T> f) {
-        return atomicMap.invoke(new AtomicFunction<PersistentMap<K,V>, T>() {
-            @Override
-            public PersistentMap<K, V> invoke(PersistentMap<K, V> map, Result<T> result) {
-                AtomicMap<K, V> copy = new AtomicMap<>(getPersistentMap());
-                result.set(f.apply(copy));
-                return copy.getPersistentMap();
-            }
-        });
+    public <T> T apply(final Function<MutableMap<K, V>, T> f) {
+        PersistentMap<K, V> currentValue;
+        MutableMap<K, V> mutableMap;
+        T result;
+        do {
+            currentValue = atomicMap.get();
+            mutableMap = currentValue.toMutableMap();
+            result = f.apply(mutableMap);
+        } while (!atomicMap.compareAndSet(currentValue, mutableMap.persistentValue()));
+        return result;
     }
 }

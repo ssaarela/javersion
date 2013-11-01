@@ -1,5 +1,6 @@
 import java.util.Random;
 
+import org.javersion.util.MutableMap;
 import org.javersion.util.PersistentMap;
 
 import clojure.lang.IPersistentMap;
@@ -158,9 +159,9 @@ public class TestPersistentMapPerformance {
         map.persistent();
     }
     private void bulkDeleteJaversion(PersistentMap<Object, Object> persistentMap) {
-        PersistentMap.Builder<Object, Object> map = PersistentMap.builder(persistentMap);
+        MutableMap<Object, Object> map = persistentMap.toMutableMap();
         for (int i=0; i < data.length; i++) {
-            map = map.remove(data[i]);
+            map.remove(data[i]);
         }
     }
     private PersistentHashMap bulkInsertClojure() {
@@ -171,11 +172,11 @@ public class TestPersistentMapPerformance {
         return (PersistentHashMap) map.persistent();
     }
     private PersistentMap<Object, Object> bulkInsertJaversion() {
-        PersistentMap.Builder<Object, Object> map = PersistentMap.builder();
+        MutableMap<Object, Object> map = new MutableMap<>();
         for (int i=0; i < data.length; i++) {
             map.put(data[i], data[i]);
         }
-        return map.build();
+        return map.persistentValue();
     }
     public static void main(String[] args) {
         new TestPersistentMapPerformance("sequential", sequentialData(1<<22), 1).warmup().run();

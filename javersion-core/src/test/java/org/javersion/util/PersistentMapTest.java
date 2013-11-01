@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -176,10 +175,10 @@ public class PersistentMapTest {
         assertThat(map.get(new HashKey(1)), nullValue());
 
         Map<HashKey, HashKey> hashMap = ImmutableMap.of(k1, k1, k2, k2, k3, k3);
-        assertThat(map.atomicMap(), equalTo(hashMap));
+        assertThat(map.toAtomicMap(), equalTo(hashMap));
 
-        map = PersistentMap.<HashKey, HashKey>builder().putAll(hashMap).build();
-        assertThat(map.atomicMap(), equalTo(hashMap));
+        map = map.assocAll(hashMap);
+        assertThat(map.toAtomicMap(), equalTo(hashMap));
         
         map = map.dissoc(k1);
         assertThat(map.containsKey(k1), equalTo(false));
@@ -242,7 +241,7 @@ public class PersistentMapTest {
         
         assertThat(persistentMap.size(), equalTo(258)); // PersitentMap not modified
         
-        map = persistentMap.atomicMap();
+        map = persistentMap.toAtomicMap();
         map.clear();
         assertThat(map, equalTo(hashMap)); // empty
     }
@@ -257,7 +256,7 @@ public class PersistentMapTest {
         }
         hashMap.put(null, null);
         PersistentMap<Integer, Integer> map = new PersistentMap<Integer, Integer>().assocAll(hashMap);
-        assertThat(map.atomicMap(), equalTo(hashMap));
+        assertThat(map.toAtomicMap(), equalTo(hashMap));
     }
     
     
@@ -267,91 +266,6 @@ public class PersistentMapTest {
             persistentMap = persistentMap.assoc(key, key);
         }
         return persistentMap;
-    }
-
-    
-    
-    private static final int LENGTH = 1000000;
-
-    public static void main(String[] args) {
-        Random random = new Random(78);
-        String[] keys = new String[LENGTH * 2];
-        HashMap<String, String> hashMap = new HashMap<>();
-        PersistentMap<String, String> map = new PersistentMap<String, String>();
-        for (int i=0; i < LENGTH; i++) {
-            String key = Integer.toString(i);
-            keys[i] = key;
-            map = map.assoc(key, key); // warm up
-            hashMap.put(key, key);
-        }
-
-        for (int i=LENGTH; i < LENGTH*2; i++) {
-            String key = Integer.toString(random.nextInt(LENGTH * 2));
-            keys[i] = key;
-            map = map.assoc(key, key); // warm up
-            hashMap.put(key, key);
-        }
-
-        long start;
-        long elapsed; 
-
-        // Bulk
-        start = System.nanoTime();
-        PersistentMap.Builder<String, String> builder = PersistentMap.builder();
-        for (String key : keys) {
-            builder.put(key, key);
-        }
-        map = builder.build();
-        elapsed = System.nanoTime() - start;
-        System.out.println("Bulk: " + elapsed / 1000000.0);
-        
-        // Verify
-        start = System.nanoTime();
-        verify(map, keys);
-        if (map.size() != hashMap.size()) {
-            throw new AssertionError();
-        }
-        elapsed = System.nanoTime() - start;
-        System.out.println("Verify: " + elapsed / 1000000.0);
-        
-        // Incremental
-        start = System.nanoTime();
-        map = new PersistentMap<String, String>();
-        for (String key : keys) {
-            map = map.assoc(key, key);
-        }
-        elapsed = System.nanoTime() - start;
-        System.out.println("Incremental: " + elapsed / 1000000.0);
-        
-        // Verify
-        start = System.nanoTime();
-        verify(map, keys);
-        if (map.size() != hashMap.size()) {
-            throw new AssertionError();
-        }
-        elapsed = System.nanoTime() - start;
-        System.out.println("Verify: " + elapsed / 1000000.0);
-        
-        
-        start = System.nanoTime();
-        map.iterator();
-        elapsed = System.nanoTime() - start;
-        System.out.println("iterator(): " + elapsed / 1000000.0);
-    }
-
-    private static void verify(PersistentMap<String, String> map, String[] keys) {
-        for (int i=0; i < keys.length; i++) {
-            String key = keys[i];
-            if (key != null && !key.equals(map.get(key))) {
-                throw new AssertionError();
-            }
-        }
-        if (map.containsKey(Integer.toString(-1))) {
-            throw new AssertionError();
-        }
-        if (map.containsKey(Integer.toString(LENGTH*2))) {
-            throw new AssertionError();
-        }
     }
 
 }
