@@ -4,6 +4,7 @@
     <link media="screen" type="text/css" rel="stylesheet" href="css/jquery.dataTables.css">
     <script type="text/javascript" src="js/jquery.js"></script>
     <script type="text/javascript" src="js/jquery.dataTables.js"></script>
+    <script type="text/javascript" src="js/jquery.number.min.js"></script>
     <script type="text/javascript">
 $(document).ready(function() {
     var data = [
@@ -151,20 +152,28 @@ $(document).ready(function() {
             c.version = d.version;
             c.repetitions = d.repetitions;
         }
-        c[d.impl] = d.time;
+        var avg = d.time / d.repetitions;
+        c[d.impl] = avg;
     }
     var table = [];
     for (key in cmpr) {
         var c = cmpr[key];
         c.diff = Math.round( ((c.Clojure + (c.Javersion - c.Clojure)) / c.Clojure) * 100 );
-        table.push("<tr><td>", c.test, "</td><td>", c.nature, "</td><td>", c.size, "</td><td>", 
-                c.repetitions, "</td><td>", c.Javersion, "</td><td>", c.Clojure, "</td><td>", 
+        table.push("<tr><td>", c.test, "</td><td>", c.nature, "</td><td class='num'>", c.size, "</td><td class='num'>", 
+                c.repetitions, "</td><td class='num'>", 
+                $.number(c.Javersion, 4), "</td><td class='num'>", 
+                $.number(c.Clojure, 4), "</td><td class='num'>", 
                 c.diff, "</td></tr>");
     }
     $("#results tbody").html(table.join(""));
     $('#results').dataTable();
 });
     </script>
+    <style type="text/css">
+    .num {
+        text-align: right;
+    }
+    </style>
   </head>
 
   <body>
@@ -184,7 +193,7 @@ $(document).ready(function() {
         Repetitions
         </th>
         <th>
-        Javersion
+        Javersion (avg ms)
         </th>
         <th>
         Clojure
