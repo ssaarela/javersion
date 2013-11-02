@@ -27,10 +27,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 
-import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.Index;
 import org.javersion.path.PropertyPath.SubPath;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class PropertyPathTest {

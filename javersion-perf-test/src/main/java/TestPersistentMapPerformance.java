@@ -2,6 +2,7 @@ import java.util.Random;
 
 import org.javersion.util.MutableMap;
 import org.javersion.util.PersistentMap;
+import org.javersion.util.MapUpdate;
 
 import clojure.lang.IPersistentMap;
 import clojure.lang.ITransientMap;
@@ -63,7 +64,7 @@ public class TestPersistentMapPerformance {
         this.times = times;
     }
     public TestPersistentMapPerformance warmup() {
-        bulkInsertJaversion();
+        bulkInsertJaversion(data.length);
         bulkInsertClojure();
         return this;
     }
@@ -105,12 +106,12 @@ public class TestPersistentMapPerformance {
         for (int i=0; i < times; i++)
             bulkDeleteClojure(clojureMap);
         end("bulkDelete", "Clojure");
+        int expectedSize = clojureMap.size();
         clojureMap = null;
-
         
         start();
         for (int i=0; i < times; i++)
-            javersionMap = bulkInsertJaversion();
+            javersionMap = bulkInsertJaversion(expectedSize);
         end("bulkInsert", "Javersion");
         
         start();
@@ -158,10 +159,17 @@ public class TestPersistentMapPerformance {
         }
         map.persistent();
     }
-    private void bulkDeleteJaversion(PersistentMap<Object, Object> persistentMap) {
-        MutableMap<Object, Object> map = persistentMap.toMutableMap();
-        for (int i=0; i < data.length; i++) {
-            map.remove(data[i]);
+    private void bulkDeleteJaversion(final PersistentMap<Object, Object> persistentMap) {
+        int sizeAfterDelete = persistentMap.update(new MapUpdate<Object, Object>() {
+            @Override
+            public void apply(MutableMap<Object, Object> map) {
+                for (int i=0; i < data.length; i++) {
+                    map.dissoc(data[i]);
+                }
+            }
+        }).size();
+        if (sizeAfterDelete != 0) {
+            throw new AssertionError();
         }
     }
     private PersistentHashMap bulkInsertClojure() {
@@ -171,12 +179,20 @@ public class TestPersistentMapPerformance {
         }
         return (PersistentHashMap) map.persistent();
     }
-    private PersistentMap<Object, Object> bulkInsertJaversion() {
-        MutableMap<Object, Object> map = new MutableMap<>();
-        for (int i=0; i < data.length; i++) {
-            map.put(data[i], data[i]);
+    private PersistentMap<Object, Object> bulkInsertJaversion(int expectedSize) {
+        PersistentMap<Object, Object> map = new PersistentMap<>()
+                .update(new MapUpdate<Object, Object>() {
+                    @Override
+                    public void apply(MutableMap<Object, Object> map) {
+                        for (int i=0; i < data.length; i++) {
+                            map.assoc(data[i], data[i]);
+                        }
+                    }
+                });
+        if (map.size() != expectedSize) {
+            throw new AssertionError();
         }
-        return map.persistentValue();
+        return map;
     }
     public static void main(String[] args) {
         new TestPersistentMapPerformance("sequential", sequentialData(1<<22), 1).warmup().run();

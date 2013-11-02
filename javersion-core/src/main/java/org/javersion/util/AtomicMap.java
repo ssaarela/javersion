@@ -49,10 +49,6 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
     public boolean containsKey(Object key) {
         return atomicMap.get().containsKey(key);
     }
-    
-    public MutableMap<K, V> toMutableMap() {
-        return atomicMap.get().toMutableMap();
-    }
 
     @Override
     public V get(Object key) {
@@ -78,55 +74,68 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
 
     @Override
     public V put(final K key, final V value) {
-        return apply(new Function<MutableMap<K,V>, V>() {
-            @Override
-            public V apply(MutableMap<K, V> map) {
-                return map.put(key, value);
-            }
-        });
+        return apply(1, 
+                new Function<MutableMap<K,V>, V>() {
+                    @Override
+                    public V apply(MutableMap<K, V> input) {
+                        V oldValue = input.get(key);
+                        input.assoc(key, value);
+                        return oldValue;
+                    }
+                });
     }
 
     @Override
     public V remove(final Object key) {
-        return apply(new Function<MutableMap<K,V>, V>() {
-            @Override
-            public V apply(MutableMap<K, V> map) {
-                return map.remove(key);
-            }
-        });
+        return apply(1, 
+                new Function<MutableMap<K,V>, V>() {
+                    @Override
+                    public V apply(MutableMap<K, V> input) {
+                        V oldValue = input.get(key);
+                        input.dissoc(key);
+                        return oldValue;
+                    }
+                });
     }
 
     @Override
     public void putAll(final Map<? extends K, ? extends V> m) {
-        apply(new Function<MutableMap<K,V>, Void>() {
-            @Override
-            public Void apply(MutableMap<K, V> map) {
-                map.putAll(m);
-                return null;
-            }
-        });
+        apply(m.size(), 
+                new MapUpdate<K, V>() {
+                    @Override
+                    public void apply(MutableMap<K, V> map) {
+                        map.assocAll(m);
+                    }
+                });
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void clear() {
-        apply(new Function<MutableMap<K,V>, Void>() {
-            @Override
-            public Void apply(MutableMap<K, V> map) {
-                map.clear();
-                return null;
-            }
-        });
+        atomicMap.getAndSet(PersistentMap.EMPTY);
+    }
+
+    
+    public <T> T apply(int expectedUpdates, final Function<MutableMap<K, V>, T> f) {
+        return apply(32, 
+                new MapUpdate<K, V>() {
+                    @Override
+                    public void apply(MutableMap<K, V> map) {
+                        result.set(f.apply(map));
+                    }
+                });
     }
     
-    public <T> T apply(final Function<MutableMap<K, V>, T> f) {
-        PersistentMap<K, V> currentValue;
-        MutableMap<K, V> mutableMap;
-        T result;
-        do {
-            currentValue = atomicMap.get();
-            mutableMap = currentValue.toMutableMap();
-            result = f.apply(mutableMap);
-        } while (!atomicMap.compareAndSet(currentValue, mutableMap.persistentValue()));
-        return result;
+    @SuppressWarnings("unchecked")
+    private <T> T apply(int expectedUpdates, MapUpdate<K, V> updateFunction) {
+        try {
+            atomicMap.getAndSet(atomicMap.get().update(expectedUpdates, updateFunction));
+            return (T) result.get();
+        } finally {
+            result.set(null);
+        }
     }
+    
+    private final static ThreadLocal<Object> result = new ThreadLocal<Object>();
 }
+

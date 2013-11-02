@@ -15,101 +15,48 @@
  */
 package org.javersion.util;
 
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import org.javersion.util.PersistentMap.UpdateContext;
 
-import org.javersion.util.PersistentMap.Version;
+public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
+    
+    private final UpdateContext updateContext;
+    
+    private Node<K, V> root;
+    
+    private int size;
+    
+    MutableMap(UpdateContext context, Node<K, V> root, int size) {
+        this.updateContext = context;
+        this.root = root;
+        this.size = size;
+    }
 
-public class MutableMap<K, V> extends AbstractMap<K, V> {
-    
-    private Version version;
-    
-    private PersistentMap<K, V> map;
-    
-    public MutableMap() {
-        this(new PersistentMap<K, V>(), 32);
+    @Override
+    protected Node<K, V> getRoot() {
+        return root;
     }
-    
-    public MutableMap(PersistentMap<K, V> map) {
-        this(map, 32);
+
+    @Override
+    protected MutableMap<K, V> self() {
+        return this;
     }
-    public MutableMap(PersistentMap<K, V> map, int expectedSize) {
-        this.map = Check.notNull(map, "map");
-        this.version = new Version(expectedSize);
-    }
-    
-    public PersistentMap<K, V> persistentValue() {
-        return map;
-    }
-    
-    public AtomicMap<K, V> toAtomicMap() {
-        return new AtomicMap<>(map);
+
+    @Override
+    protected UpdateContext updateContext(int expectedUpdates) {
+        return updateContext;
     }
 
     @Override
     public int size() {
-        return map.size();
+        return size;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public boolean containsKey(Object key) {
-        return map.containsKey(key);
-    }
-
-    @Override
-    public V get(Object key) {
-        return map.get(key);
-    }
-
-    @Override
-    public Set<Map.Entry<K, V>> entrySet() {
-        return new AbstractSet<Map.Entry<K, V>>() {
-
-            @Override
-            public Iterator<Map.Entry<K, V>> iterator() {
-                return map.iterator();
-            }
-
-            @Override
-            public int size() {
-                return map.size();
-            }
-        };
-    }
-
-    @Override
-    public V put(final K key, final V value) { 
-        V result = get(key);
-        put(new PersistentMap.Entry<K, V>(key, value));
-        return result;
-    }
-
-    public void put(Map.Entry<? extends K, ? extends V> entry) {
-        map = map.assoc(version, entry);
-    }
-    
-    @Override
-    public V remove(final Object key) {
-        V result = get(key);
-        map = map.dissoc(version, key);
-        return result;
-    }
-
-    @Override
-    public void putAll(final Map<? extends K, ? extends V> m) {
-        for (Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
-            put(entry);
-        }
-    }
-
-    @Override
-    public void clear() {
-        for (Map.Entry<K, V> entry : map) {
-            remove(entry.getKey());
-        }
+    protected MutableMap<K, V> doReturn(Node<? extends K, ? extends V> newRoot, int newSize) {
+        this.root = (Node<K, V>) newRoot != null ? newRoot : HashNode.EMPTY;
+        this.size = newSize;
+        return this;
     }
 
 }

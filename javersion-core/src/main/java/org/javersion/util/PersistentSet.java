@@ -19,8 +19,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.javersion.util.PersistentMap.Version;
-
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
@@ -47,12 +45,12 @@ public class PersistentSet<E> implements Iterable<E> {
         return new AtomicSet<>(this);
     }
     
+    public ImmutableSet<E> toImmutableSet() {
+        return new ImmutableSet<>(this);
+    }
+    
     public PersistentSet<E> conj(E element) {
         return doReturn(map.assoc(element, PRESENT));
-    }
-
-    PersistentSet<E> conj(Version version, E element) {
-        return doReturn(map.assoc(version, new PersistentMap.Entry<E, Object>(element, PRESENT)));
     }
     
     private PersistentSet<E> doReturn(PersistentMap<E, Object> newMap) {
@@ -62,13 +60,26 @@ public class PersistentSet<E> implements Iterable<E> {
         return new PersistentSet<>(newMap);
     }
 
-    public PersistentSet<E> conjAll(Collection<? extends E> elements) {
-        Version version = new Version(elements.size());
-        PersistentSet<E> result = this;
-        for (E e : elements) {
-            result = result.conj(version, e);
-        }
-        return result;
+    public PersistentSet<E> conjAll(final Collection<? extends E> elements) {
+        return conjAll(elements, elements.size());
+    }
+
+    public PersistentSet<E> conjAll(PersistentSet<? extends E> elements) {
+        return conjAll(elements, elements.size());
+    }
+
+    private PersistentSet<E> conjAll(final Iterable<? extends E> elements, int size) {
+        PersistentMap<E, Object> newMap = map.update(
+                size, 
+                new MapUpdate<E, Object>() {
+                    @Override
+                    public void apply(MutableMap<E, Object> map) {
+                        for (E e : elements) {
+                            map.assoc(e, PRESENT);
+                        }
+                    }
+                });
+        return doReturn(newMap);
     }
     
     public PersistentSet<E> disjoin(Object element) {

@@ -15,14 +15,13 @@
  */
 package org.javersion.core;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import org.javersion.util.Check;
-import org.javersion.util.MutableMap;
-import org.javersion.util.MutableSet;
-import org.javersion.util.PersistentMap;
 import org.javersion.util.PersistentSet;
+import org.javersion.util.PersistentMap;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -49,36 +48,35 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
         this.previous = previous;
         this.version = version;
         this.parents = ImmutableSet.copyOf(parents);
+        
+        Iterator<VersionNode<K, V, T>> iter = parents.iterator();
+        
+        if (!iter.hasNext()) {
+            this.allRevisions = new PersistentSet<Long>().conj(version.revision);
+            this.allProperties = new PersistentMap<K, VersionProperty<V>>().assocAll(version.getVersionProperties());
+        } else {
+            VersionNode<K, V, T> parent = iter.next();
+            PersistentSet<Long> revisions = parent.allRevisions;
+            PersistentMap<K, VersionProperty<V>> properties = parent.allProperties;
+            
+            while (iter.hasNext()) {
+                parent = iter.next();
+                revisions = revisions.conjAll(parent.allRevisions);
 
-        MutableSet<Long> revisions = null;
-        MutableMap<K, VersionProperty<V>> properties = null;
-        if (!parents.isEmpty()) {
-            for (VersionNode<K, V, T> parent : parents) {
-                if (revisions == null) {
-                    revisions = parent.allRevisions.toMutableSet();
-                    properties = parent.allProperties.toMutableMap();
-                } else {
-                    revisions.addAll(parent.allRevisions.toMutableSet());
-                    for (Map.Entry<K, VersionProperty<V>> entry : parent.allProperties) {
-                        K key = entry.getKey();
-                        VersionProperty<V> value = entry.getValue();
-                        VersionProperty<V> prevValue = properties.get(key);
-                        if (prevValue == null || prevValue.revision < value.revision) {
-                            properties.put(entry);
-                        }
+                for (Map.Entry<K, VersionProperty<V>> entry : parent.allProperties) {
+                    K key = entry.getKey();
+                    VersionProperty<V> value = entry.getValue();
+                    VersionProperty<V> prevValue = properties.get(key);
+                    if (prevValue == null || prevValue.revision < value.revision) {
+                        properties = properties.assoc(entry);
                     }
                 }
             }
-        } else {
-            revisions = new MutableSet<>();
-            properties = new MutableMap<>();
+            this.allRevisions = revisions.conj(version.revision);
+            this.allProperties = properties.assocAll(version.getVersionProperties());
         }
         
-        revisions.add(version.revision);
-        properties.putAll(version.getVersionProperties());
         
-        this.allRevisions = revisions.persistentValue();
-        this.allProperties = properties.persistentValue();
     }
     
     public long getRevision() {
