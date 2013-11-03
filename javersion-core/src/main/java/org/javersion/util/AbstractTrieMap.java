@@ -18,11 +18,12 @@ package org.javersion.util;
 import static com.google.common.base.Objects.equal;
 import static java.lang.System.arraycopy;
 
-import org.javersion.util.PersistentMap.UpdateContext;
-
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+
+import org.javersion.util.PersistentMap.UpdateContext;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
@@ -48,20 +49,40 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     public final M assoc(java.util.Map.Entry<? extends K, ? extends V> entry) {
         return assoc(updateContext(1), entry);
     }
-
-    public final M assocAll(Map<? extends K, ? extends V> map) {
-        return assocAll(updateContext(map.size()), map);
-    }
     
     final M assoc(UpdateContext updateContext, Map.Entry<? extends K, ? extends V> entry) {
         Node<K, V> newRoot = getRoot().assoc(updateContext, toEntry(entry));
         return doReturn(newRoot, size() + updateContext.getChangeAndReset());
+    }
+
+    
+    public final M assocAll(Map<? extends K, ? extends V> map) {
+        return assocAll(updateContext(map.size()), map);
+    }
+
+    public final M assocAll(Collection<Map.Entry<? extends K, ? extends V>> entries) {
+        return doAssocAll(updateContext(entries.size()), entries);
+    }
+
+    public final M assocAll(Iterable<Map.Entry<? extends K, ? extends V>> entries, int expectedUpdates) {
+        return doAssocAll(updateContext(expectedUpdates), entries);
     }
     
     final M assocAll(UpdateContext updateContext, Map<? extends K, ? extends V> map) {
         Node<K, V> newRoot = getRoot();
         int size = size();
         for (Map.Entry<? extends K, ? extends V> entry : map.entrySet()) {
+            newRoot = newRoot.assoc(updateContext, toEntry(entry));
+            size += updateContext.getChangeAndReset();
+        }
+        
+        return doReturn(newRoot, size);
+    }
+    
+    final M doAssocAll(UpdateContext updateContext, Iterable<Map.Entry<? extends K, ? extends V>> entries) {
+        Node<K, V> newRoot = getRoot();
+        int size = size();
+        for (Map.Entry<? extends K, ? extends V> entry : entries) {
             newRoot = newRoot.assoc(updateContext, toEntry(entry));
             size += updateContext.getChangeAndReset();
         }
@@ -149,6 +170,34 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         
     }
     
+    @SuppressWarnings("rawtypes")
+    private static final Iterator<Map.Entry> EMTPY_ITER = Iterators.emptyIterator();
+    
+    @SuppressWarnings("rawtypes")
+    static final Node EMPTY_NODE = new Node() {
+        
+        @Override
+        public Iterator<Map.Entry> iterator() {
+            return EMTPY_ITER;
+        }
+        
+        @Override
+        Entry findInternal(int level, int hash, Object key) {
+            return null;
+        }
+        
+        @Override
+        Node dissocInternal(UpdateContext currentContext, int level, int hash, Object key) {
+            return this;
+        }
+        
+        @SuppressWarnings("unchecked")
+        @Override
+        Node assocInternal(UpdateContext currentContext, int level, Entry newEntry) {
+            Node node = new HashNode<>(currentContext);
+            return node.assocInternal(currentContext, level, newEntry);
+        }
+    };
     
     static final class Entry<K, V> extends Node<K, V> implements Map.Entry<K, V> {
         
@@ -232,9 +281,6 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     
     
     static final class HashNode<K, V> extends Node<K, V> {
-        
-        @SuppressWarnings("rawtypes")
-        public static HashNode EMPTY = new HashNode<>(null, 0);
         
         private final UpdateContext updateContext;
         

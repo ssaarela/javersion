@@ -34,7 +34,7 @@ public class PersistentMapTest {
     
     @Test
     public void Empty_Map() {
-        PersistentMap<String, String> map = new PersistentMap<String, String>();
+        PersistentMap<String, String> map = PersistentMap.empty();
         assertThat(map.size(), equalTo(0));
         assertThat(map.containsKey("key"), equalTo(false));
         assertThat(map.iterator(), not(nullValue()));
@@ -43,7 +43,7 @@ public class PersistentMapTest {
 
     @Test
     public void Add_Values() {
-        PersistentMap<String, String> map = new PersistentMap<String, String>();
+        PersistentMap<String, String> map = PersistentMap.empty();
         PersistentMap<String, String> otherMap = map.assoc("key", "value");
         assertThat(otherMap.get("key"), equalTo("value"));
         assertThat(map.get("key"), nullValue());
@@ -71,7 +71,7 @@ public class PersistentMapTest {
         HashKey k2 = new HashKey(1);
         HashKey k3 = new HashKey(1);
         
-        PersistentMap<Object, Object> map = new PersistentMap<>();
+        PersistentMap<Object, Object> map = PersistentMap.empty();
         assertThat(map.size(), equalTo(0));
 
         map = map.assoc(k1, k1);
@@ -108,7 +108,7 @@ public class PersistentMapTest {
         HashKey k0 = new HashKey(0);
         HashKey k1 = new HashKey(0);
         
-        PersistentMap<Object, Object> map = new PersistentMap<>();
+        PersistentMap<Object, Object> map = PersistentMap.empty();
         map = map.assoc(k0, k0);
         map = map.assoc(k1, k1);
         assertThat(map.size(), equalTo(2));
@@ -128,7 +128,7 @@ public class PersistentMapTest {
         HashKey k1 = new HashKey(0);
         HashKey k2 = new HashKey(0);
 
-        PersistentMap<Object, Object> map = new PersistentMap<>();
+        PersistentMap<Object, Object> map = PersistentMap.empty();
         map = map.assoc(k0, k0);
         map = map.assoc(k1, k1);
 
@@ -162,7 +162,7 @@ public class PersistentMapTest {
         HashKey k2 = new HashKey(1);
         HashKey k3 = new HashKey(1);
 
-        PersistentMap<HashKey, HashKey> map = new PersistentMap<>();
+        PersistentMap<HashKey, HashKey> map = PersistentMap.empty();
         map = map.assoc(k1, k1);
         map = map.assoc(k2, k1);
         map = map.assoc(k2, k2);
@@ -255,13 +255,13 @@ public class PersistentMapTest {
             hashMap.put(kv, kv);
         }
         hashMap.put(null, null);
-        PersistentMap<Integer, Integer> map = new PersistentMap<Integer, Integer>().assocAll(hashMap);
+        PersistentMap<Integer, Integer> map = PersistentMap.copyOf(hashMap);
         assertThat(map.toAtomicMap(), equalTo(hashMap));
     }
     
     
     private static <KV> PersistentMap<KV, KV> incremental(List<KV> keys) {
-        PersistentMap<KV, KV> persistentMap = new PersistentMap<KV, KV>();
+        PersistentMap<KV, KV> persistentMap = PersistentMap.empty();
         for (KV key : keys) {
             persistentMap = persistentMap.assoc(key, key);
         }

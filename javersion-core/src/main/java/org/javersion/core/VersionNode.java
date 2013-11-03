@@ -53,7 +53,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
         
         if (!iter.hasNext()) {
             this.allRevisions = new PersistentSet<Long>().conj(version.revision);
-            this.allProperties = new PersistentMap<K, VersionProperty<V>>().assocAll(version.getVersionProperties());
+            this.allProperties = PersistentMap.copyOf(version.getVersionProperties());
         } else {
             VersionNode<K, V, T> parent = iter.next();
             PersistentSet<Long> revisions = parent.allRevisions;

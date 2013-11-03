@@ -30,7 +30,7 @@ public class PersistentSet<E> implements Iterable<E> {
     private static final Object PRESENT = new Object(); 
     
     public PersistentSet() {
-        this(new PersistentMap<E, Object>());
+        this(PersistentMap.<E, Object>empty());
     }
     
     private PersistentSet(PersistentMap<E, Object> map) {

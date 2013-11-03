@@ -136,7 +136,7 @@ public class TestPersistentMapPerformance {
         return (PersistentHashMap) map;
     }
     private PersistentMap<Object, Object> incrementalInsertJaversion() {
-        PersistentMap<Object, Object> map = new PersistentMap<Object, Object>();
+        PersistentMap<Object, Object> map = PersistentMap.empty();
         for (int i=0; i < data.length; i++) {
             map = map.assoc(data[i], data[i]);
         }
@@ -160,14 +160,16 @@ public class TestPersistentMapPerformance {
         map.persistent();
     }
     private void bulkDeleteJaversion(final PersistentMap<Object, Object> persistentMap) {
-        int sizeAfterDelete = persistentMap.update(new MapUpdate<Object, Object>() {
-            @Override
-            public void apply(MutableMap<Object, Object> map) {
-                for (int i=0; i < data.length; i++) {
-                    map.dissoc(data[i]);
-                }
-            }
-        }).size();
+        int sizeAfterDelete = persistentMap.update(
+                persistentMap.size(),
+                        new MapUpdate<Object, Object>() {
+                    @Override
+                    public void apply(MutableMap<Object, Object> map) {
+                        for (int i=0; i < data.length; i++) {
+                            map.dissoc(data[i]);
+                        }
+                    }
+                }).size();
         if (sizeAfterDelete != 0) {
             throw new AssertionError();
         }
@@ -180,8 +182,9 @@ public class TestPersistentMapPerformance {
         return (PersistentHashMap) map.persistent();
     }
     private PersistentMap<Object, Object> bulkInsertJaversion(int expectedSize) {
-        PersistentMap<Object, Object> map = new PersistentMap<>()
-                .update(new MapUpdate<Object, Object>() {
+        PersistentMap<Object, Object> map = PersistentMap.empty().update(
+                expectedSize,
+                new MapUpdate<Object, Object>() {
                     @Override
                     public void apply(MutableMap<Object, Object> map) {
                         for (int i=0; i < data.length; i++) {

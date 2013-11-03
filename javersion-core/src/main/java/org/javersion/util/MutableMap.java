@@ -54,7 +54,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     @SuppressWarnings("unchecked")
     @Override
     protected MutableMap<K, V> doReturn(Node<? extends K, ? extends V> newRoot, int newSize) {
-        this.root = (Node<K, V>) newRoot != null ? newRoot : HashNode.EMPTY;
+        this.root = (Node<K, V>) (newRoot == null ? EMPTY_NODE : newRoot);
         this.size = newSize;
         return this;
     }

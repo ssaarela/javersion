@@ -29,7 +29,7 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
     private final AtomicReference<PersistentMap<K, V>> atomicMap;
     
     public AtomicMap() {
-        this(new PersistentMap<K, V>());
+        this(PersistentMap.<K, V>empty());
     }
     
     public AtomicMap(PersistentMap<K, V> map) {
@@ -109,10 +109,9 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
                 });
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void clear() {
-        atomicMap.getAndSet(PersistentMap.EMPTY);
+        atomicMap.getAndSet(PersistentMap.<K, V>empty());
     }
 
     
