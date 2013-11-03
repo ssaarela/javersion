@@ -19,13 +19,13 @@ import org.javersion.util.PersistentMap.UpdateContext;
 
 public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     
-    private final UpdateContext updateContext;
+    private final UpdateContext<K, V>  updateContext;
     
     private Node<K, V> root;
     
     private int size;
     
-    MutableMap(UpdateContext context, Node<K, V> root, int size) {
+    MutableMap(UpdateContext<K, V>  context, Node<K, V> root, int size) {
         this.updateContext = context;
         this.root = root;
         this.size = size;
@@ -42,7 +42,8 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     @Override
-    protected UpdateContext updateContext(int expectedUpdates) {
+    protected UpdateContext<K, V>  updateContext(int expectedUpdates, Merger<K, V> merger) {
+        updateContext.merger = merger;
         return updateContext;
     }
 

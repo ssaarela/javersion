@@ -19,20 +19,27 @@ import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Maps.filterValues;
-import static java.util.Collections.unmodifiableMap;
 import static java.util.Collections.unmodifiableSet;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.util.AbstractTrieMap.Entry;
 import org.javersion.util.Check;
+import org.javersion.util.Merger;
+import org.javersion.util.PersistentMap;
 
 import com.google.common.base.Function;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 public final class Merge<K, V> {
-
+    
     public final Map<K, VersionProperty<V>> mergedProperties;
 
     public final Multimap<K, VersionProperty<V>> conflicts;
@@ -58,6 +65,7 @@ public final class Merge<K, V> {
             revisions = ImmutableSet.of();
             conflicts = ImmutableMultimap.of();
         } else {
+
             VersionNode<K, V, T> versionNode = next(iter);
 
             // One version
@@ -68,42 +76,49 @@ public final class Merge<K, V> {
             } 
             // More than one version -> merge!
             else {
-                Map<K, VersionProperty<V>> mergedProperties = Maps.newLinkedHashMap(versionNode.allProperties.toImmutableMap());
-                Set<Long> heads = Sets.newHashSet(versionNode.getRevision());
-                ImmutableMultimap.Builder<K, VersionProperty<V>> conflicts = ImmutableMultimap.builder();
+                PersistentMap<K, VersionProperty<V>> mergedProperties = versionNode.allProperties;
 
-                Set<Long> mergedRevisions = Sets.newHashSet(versionNode.allRevisions);
+                Set<Long> heads = Sets.newHashSet(versionNode.getRevision());
+                
+                final ImmutableMultimap.Builder<K, VersionProperty<V>> conflicts = ImmutableMultimap.builder();
+                
+                final Set<Long> mergedRevisions = Sets.newHashSet(versionNode.allRevisions);
+
+                Merger<K, VersionProperty<V>> merger = new Merger<K, VersionProperty<V>>() {
+                    @Override
+                    public Entry<K, VersionProperty<V>> merge(
+                            Entry<K, VersionProperty<V>> oldEntry,
+                            Entry<K, VersionProperty<V>> newEntry) {
+                        // newEntry derives from a common ancestor?
+                        if (mergedRevisions.contains(newEntry.getValue().revision)) {
+                            return oldEntry;
+                        } 
+                        // Conflicting value?
+                        else if (oldEntry != null) {
+                            if (!equal(oldEntry.getValue().value, newEntry.getValue().value)) {
+                                conflicts.put(newEntry);
+                            }
+                            return oldEntry;
+                        } 
+                        // New property
+                        else {
+                            return newEntry;
+                        }
+                    }
+                };
                 do {
                     versionNode = next(iter);
 
                     // Version already merged?
                     if (!mergedRevisions.contains(versionNode.getRevision())) {
-                        for (Map.Entry<K, VersionProperty<V>> entry : versionNode.allProperties) {
-                            K key = entry.getKey();
-                            VersionProperty<V> nextValue = entry.getValue();
-
-                            // nextValue derives from common ancestor?
-                            if (!mergedRevisions.contains(nextValue.revision)) {
-                                VersionProperty<V> previousValue = mergedProperties.get(key);
-
-                                // New value
-                                if (previousValue == null) {
-                                    mergedProperties.put(key, nextValue);
-                                }
-                                // Conflicting value?
-                                else if (!equal(previousValue.value, nextValue.value)) {
-                                    conflicts.put(key, nextValue);
-                                }
-                            }
-                        }
+                        mergedProperties = mergedProperties.mergeAll(versionNode.allProperties, merger);
                         mergedRevisions.addAll(versionNode.allRevisions.toImmutableSet());
-
                         heads.removeAll(versionNode.allRevisions.toImmutableSet());
                         heads.add(versionNode.getRevision());
                     }
                 } while (iter.hasNext());
 
-                this.mergedProperties = unmodifiableMap(mergedProperties);
+                this.mergedProperties = mergedProperties.toImmutableMap();
                 this.revisions = unmodifiableSet(heads);
                 this.conflicts = conflicts.build();
             }

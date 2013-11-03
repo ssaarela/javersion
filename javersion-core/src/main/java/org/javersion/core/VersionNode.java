@@ -19,14 +19,34 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.util.AbstractTrieMap.Entry;
 import org.javersion.util.Check;
-import org.javersion.util.PersistentSet;
+import org.javersion.util.Merger;
 import org.javersion.util.PersistentMap;
+import org.javersion.util.PersistentSet;
 
 import com.google.common.collect.ImmutableSet;
 
 public final class VersionNode<K, V, T extends Version<K, V>> implements Comparable<VersionNode<K, V, T>> {
 
+    private final Merger<K, VersionProperty<V>> merger;
+    
+    private static <K, V> Merger<K, VersionProperty<V>> newMerger() {
+        return new Merger<K, VersionProperty<V>>() {
+
+            @Override
+            public Entry<K, VersionProperty<V>> merge(
+                    Entry<K, VersionProperty<V>> oldEntry,
+                    Entry<K, VersionProperty<V>> newEntry) {
+                if (oldEntry != null && newEntry != null) {
+                    return oldEntry.getValue().revision < newEntry.getValue().revision ? newEntry : oldEntry;
+                }
+                return newEntry;
+            }
+
+        };
+    }
+    
     public final T version;
     
     public final Set<VersionNode<K, V, T>> parents;
@@ -54,23 +74,17 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
         if (!iter.hasNext()) {
             this.allRevisions = new PersistentSet<Long>().conj(version.revision);
             this.allProperties = PersistentMap.copyOf(version.getVersionProperties());
+            this.merger = newMerger();
         } else {
             VersionNode<K, V, T> parent = iter.next();
+            this.merger = parent.merger;
             PersistentSet<Long> revisions = parent.allRevisions;
             PersistentMap<K, VersionProperty<V>> properties = parent.allProperties;
             
             while (iter.hasNext()) {
                 parent = iter.next();
                 revisions = revisions.conjAll(parent.allRevisions);
-
-                for (Map.Entry<K, VersionProperty<V>> entry : parent.allProperties) {
-                    K key = entry.getKey();
-                    VersionProperty<V> value = entry.getValue();
-                    VersionProperty<V> prevValue = properties.get(key);
-                    if (prevValue == null || prevValue.revision < value.revision) {
-                        properties = properties.assoc(entry);
-                    }
-                }
+                properties = properties.mergeAll(parent.allProperties, merger);
             }
             this.allRevisions = revisions.conj(version.revision);
             this.allProperties = properties.assocAll(version.getVersionProperties());

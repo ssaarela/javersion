@@ -6,14 +6,20 @@ import java.util.Map;
 
 public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, V>> {
 
-    protected static final class UpdateContext {
+    protected static final class UpdateContext<K, V> implements Merger<K, V> {
         
         final int expectedUpdates;
+        
+        Merger<K, V> merger;
         
         private int change = 0;
         
         private UpdateContext(int expectedUpdates) {
+            this(expectedUpdates, null);
+        }
+        private UpdateContext(int expectedUpdates, Merger<K, V> merger) {
             this.expectedUpdates = expectedUpdates;
+            this.merger = merger;
         }
         
         int getChangeAndReset() {
@@ -23,13 +29,15 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
                 change = 0;
             }
         }
-        
-        void recordAddition() {
-            change = 1;
-        }
-        
-        void recordRemoval() {
-            change = -1;
+
+        @Override
+        public Entry<K, V> merge(Entry<K, V> oldEntry, Entry<K, V> newEntry) {
+            if (newEntry != null) {
+                change = oldEntry != null ? 0 : 1;
+            } else {
+                change = oldEntry != null ? -1 : 0;
+            }
+            return merger != null ? merger.merge(oldEntry, newEntry) : newEntry;
         }
     }
     
@@ -84,8 +92,8 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
     }
 
     @Override
-    protected UpdateContext updateContext(int expectedUpdates) {
-        return new UpdateContext(expectedUpdates);
+    protected UpdateContext<K, V> updateContext(int expectedUpdates, Merger<K, V> merger) {
+        return new UpdateContext<K, V>(expectedUpdates, merger);
     }
 
     @Override
@@ -103,7 +111,11 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
     }
 
     public PersistentMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction) {
-        MutableMap<K, V> mutableMap = new MutableMap<>(new UpdateContext(expectedUpdates), root, size);
+        return update(expectedUpdates, updateFunction, null);
+    }
+
+    public PersistentMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<K, V> merger) {
+        MutableMap<K, V> mutableMap = new MutableMap<>(new UpdateContext<K, V>(expectedUpdates, merger), root, size);
         updateFunction.apply(mutableMap);
         return doReturn(mutableMap.getRoot(), mutableMap.size());
     }
