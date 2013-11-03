@@ -440,7 +440,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         
         private int newSize(UpdateContext currentContext, int childCount) {
             if (currentContext.expectedUpdates == 1) {
-                return childCount < 32 ? childCount + 1 : 32;
+                return childCount + 1;
             } else {
                 return childCount < 16 ? 2*(childCount + 1) : 32;
             }
