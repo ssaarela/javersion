@@ -110,6 +110,10 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     public final M dissoc(Object key) {
         return dissoc(updateContext(1, null), key);
     }
+
+    public final M dissoc(Object key, Merger<K, V> merger) {
+        return dissoc(updateContext(1, merger), key);
+    }
         
     private M dissoc(UpdateContext<K, V> updateContext, Object key) {
         Node<K, V> newRoot = getRoot().dissoc(updateContext, key);

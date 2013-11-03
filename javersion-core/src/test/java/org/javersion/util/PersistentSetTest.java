@@ -14,13 +14,13 @@ import com.google.common.collect.Sets;
 
 public class PersistentSetTest {
 
-    private static final PersistentSet<Integer> SET;
+    public static final PersistentSet<Integer> SET;
     
     static {
         SET = new PersistentSet<Integer>().conjAll(integers());
     }
     
-    private static Set<Integer> integers() {
+    static Set<Integer> integers() {
         Random random = new Random(2004);
         Set<Integer> set = Sets.newLinkedHashSet();
         for (int i=1; i <= 257; i++) {

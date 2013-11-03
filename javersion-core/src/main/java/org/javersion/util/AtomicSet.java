@@ -106,7 +106,7 @@ public class AtomicSet<E> extends AbstractSet<E> {
         });
     }
     
-    public <T> T apply(final Function<MutableSet<E>, T> f) {
+    private <T> T apply(final Function<MutableSet<E>, T> f) {
         PersistentSet<E> currentValue;
         MutableSet<E> mutableSet;
         T result;

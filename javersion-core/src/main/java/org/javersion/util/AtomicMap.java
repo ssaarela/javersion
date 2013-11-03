@@ -75,12 +75,10 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
     @Override
     public V put(final K key, final V value) {
         return apply(1, 
-                new Function<MutableMap<K,V>, V>() {
+                new MapUpdate<K, V>() {
                     @Override
-                    public V apply(MutableMap<K, V> input) {
-                        V oldValue = input.get(key);
-                        input.assoc(key, value);
-                        return oldValue;
+                    public void apply(MutableMap<K, V> input) {
+                        input.merge(key, value, merger);
                     }
                 });
     }
@@ -88,12 +86,10 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
     @Override
     public V remove(final Object key) {
         return apply(1, 
-                new Function<MutableMap<K,V>, V>() {
+                new MapUpdate<K, V>() {
                     @Override
-                    public V apply(MutableMap<K, V> input) {
-                        V oldValue = input.get(key);
-                        input.dissoc(key);
-                        return oldValue;
+                    public void apply(MutableMap<K, V> input) {
+                        input.dissoc(key, merger);
                     }
                 });
     }
@@ -136,5 +132,20 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
     }
     
     private final static ThreadLocal<Object> result = new ThreadLocal<Object>();
+
+    private final Merger<K, V> merger = new  Merger<K, V>() {
+        @Override
+        public org.javersion.util.AbstractTrieMap.Entry<K, V> merge(
+                org.javersion.util.AbstractTrieMap.Entry<K, V> oldEntry,
+                org.javersion.util.AbstractTrieMap.Entry<K, V> newEntry) {
+            if (oldEntry == null) {
+                result.set(null);
+            } else {
+                result.set(oldEntry.getValue());
+            }
+            return newEntry;
+        }
+    };
+
 }
 
