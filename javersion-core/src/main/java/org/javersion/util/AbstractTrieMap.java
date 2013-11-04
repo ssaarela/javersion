@@ -167,17 +167,15 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     
     static abstract class Node<K, V> implements Iterable<Map.Entry<K, V>> {
 
-        public Entry<K, V> find(Object key) {
+        Entry<K, V> find(Object key) {
             return findInternal(0, hash(key), key);
         }
 
-        public Node<K, V> assoc(ContextHolder<K, V>  currentContext, Entry<K, V> newEntry) {
-            Check.notNull(currentContext, "currentContext");
+        Node<K, V> assoc(ContextHolder<K, V>  currentContext, Entry<K, V> newEntry) {
             return assocInternal(currentContext, 0, newEntry);
         }
 
-        public Node<K, V> dissoc(ContextHolder<K, V>  currentContext, Object key) {
-            Check.notNull(currentContext, "currentContext");
+        Node<K, V> dissoc(ContextHolder<K, V>  currentContext, Object key) {
             return dissocInternal(currentContext, 0, hash(key), key);
         }
         

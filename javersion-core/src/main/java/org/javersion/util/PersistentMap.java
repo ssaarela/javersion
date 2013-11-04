@@ -8,7 +8,7 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
 
     protected static final class UpdateContext<K, V> implements Merger<K, V> {
         
-        final Thread owner = Thread.currentThread();
+        private final Thread owner = Thread.currentThread();
         
         final int expectedUpdates;
         
