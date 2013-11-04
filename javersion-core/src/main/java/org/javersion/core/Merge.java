@@ -85,6 +85,11 @@ public final class Merge<K, V> {
                 final Set<Long> mergedRevisions = Sets.newHashSet(versionNode.allRevisions);
 
                 Merger<K, VersionProperty<V>> merger = new Merger<K, VersionProperty<V>>() {
+
+                    @Override
+                    public void insert(Entry<K, VersionProperty<V>> newEntry) {
+                    }
+
                     @Override
                     public Entry<K, VersionProperty<V>> merge(
                             Entry<K, VersionProperty<V>> oldEntry,
@@ -94,16 +99,19 @@ public final class Merge<K, V> {
                             return oldEntry;
                         } 
                         // Conflicting value?
-                        else if (oldEntry != null) {
-                            if (!equal(oldEntry.getValue().value, newEntry.getValue().value)) {
-                                conflicts.put(newEntry);
-                            }
+                        else if (!equal(oldEntry.getValue().value, newEntry.getValue().value)) {
+                            conflicts.put(newEntry);
                             return oldEntry;
                         } 
                         // New property
                         else {
                             return newEntry;
                         }
+                    }
+
+                    @Override
+                    public void delete(Entry<K, VersionProperty<V>> oldEntry) {
+                        throw new UnsupportedOperationException();
                     }
                 };
                 do {

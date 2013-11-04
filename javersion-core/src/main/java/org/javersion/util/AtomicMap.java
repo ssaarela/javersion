@@ -134,16 +134,23 @@ public class AtomicMap<K, V> extends AbstractMap<K, V> {
     private final static ThreadLocal<Object> result = new ThreadLocal<Object>();
 
     private final Merger<K, V> merger = new  Merger<K, V>() {
+
+        @Override
+        public void insert(org.javersion.util.AbstractTrieMap.Entry<K, V> newEntry) {
+            result.set(null);
+        }
+
         @Override
         public org.javersion.util.AbstractTrieMap.Entry<K, V> merge(
                 org.javersion.util.AbstractTrieMap.Entry<K, V> oldEntry,
                 org.javersion.util.AbstractTrieMap.Entry<K, V> newEntry) {
-            if (oldEntry == null) {
-                result.set(null);
-            } else {
-                result.set(oldEntry.getValue());
-            }
+            result.set(oldEntry.getValue());
             return newEntry;
+        }
+
+        @Override
+        public void delete(org.javersion.util.AbstractTrieMap.Entry<K, V> oldEntry) {
+            result.set(oldEntry.getValue());
         }
     };
 

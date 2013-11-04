@@ -31,13 +31,24 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
         }
 
         @Override
-        public Entry<K, V> merge(Entry<K, V> oldEntry, Entry<K, V> newEntry) {
-            if (newEntry != null) {
-                change = oldEntry != null ? 0 : 1;
-            } else {
-                change = oldEntry != null ? -1 : 0;
+        public void insert(Entry<K, V> newEntry) {
+            change = 1;
+            if (merger != null) {
+                merger.insert(newEntry);
             }
-            return merger != null ? merger.merge(oldEntry, newEntry) : newEntry;
+        }
+
+        @Override
+        public Entry<K, V> merge(Entry<K, V> oldEntry, Entry<K, V> newEntry) {
+            return merger == null ? newEntry : merger.merge(oldEntry, newEntry);
+        }
+        
+        @Override
+        public void delete(Entry<K, V> oldEntry) {
+            change = -1;
+            if (merger != null) {
+                merger.delete(oldEntry);
+            }
         }
     }
     

@@ -35,13 +35,19 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
         return new Merger<K, VersionProperty<V>>() {
 
             @Override
+            public void insert(Entry<K, VersionProperty<V>> newEntry) {
+            }
+
+            @Override
             public Entry<K, VersionProperty<V>> merge(
                     Entry<K, VersionProperty<V>> oldEntry,
                     Entry<K, VersionProperty<V>> newEntry) {
-                if (oldEntry != null && newEntry != null) {
-                    return oldEntry.getValue().revision < newEntry.getValue().revision ? newEntry : oldEntry;
-                }
-                return newEntry;
+                return oldEntry.getValue().revision < newEntry.getValue().revision ? newEntry : oldEntry;
+            }
+
+            @Override
+            public void delete(Entry<K, VersionProperty<V>> oldEntry) {
+                throw new UnsupportedOperationException();
             }
 
         };
