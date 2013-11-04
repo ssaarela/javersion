@@ -9,7 +9,6 @@ import org.javersion.util.PersistentMap;
 import clojure.lang.IPersistentMap;
 import clojure.lang.ITransientMap;
 import clojure.lang.PersistentHashMap;
-import clojure.lang.RT;
 
 /*
  * Copyright 2013 Samppa Saarela
@@ -88,6 +87,11 @@ public class TestPersistentMapPerformance {
         
         start();
         for (int i=0; i < times; i++)
+            getAllByKeysClojure(clojureMap);
+        end("getAllByKeys", "Clojure");
+        
+        start();
+        for (int i=0; i < times; i++)
             incrementalDeleteClojure(clojureMap);
         end("incrementalDelete", "Clojure");
         clojureMap = null;
@@ -102,6 +106,11 @@ public class TestPersistentMapPerformance {
         for (int i=0; i < times; i++)
             iterateAllJaversion(javersionMap);
         end("iterateAll", "Javersion");
+        
+        start();
+        for (int i=0; i < times; i++)
+            getAllByKeysJaversion(javersionMap);
+        end("getAllByKeys", "Javersion");
         
         start();
         for (int i=0; i < times; i++)
@@ -140,11 +149,27 @@ public class TestPersistentMapPerformance {
             iter.next();
         }
     }
+    private void getAllByKeysJaversion(PersistentMap<Object, Object> javersionMap) {
+        for (int i=0; i < data.length; i++) {
+            Object value = javersionMap.get(data[i]);
+            if (!data[i].equals(value)) {
+                throw new IllegalStateException(String.format("getAllByKeysJaversion: expected %s, got %s", data[i], value));
+            }
+        }
+    }
     private void iterateAllClojure(PersistentHashMap clojureMap) {
         @SuppressWarnings("rawtypes")
         Iterator iter = clojureMap.iterator();
         while (iter.hasNext()) {
             iter.next();
+        }
+    }
+    private void getAllByKeysClojure(PersistentHashMap clojureMap) {
+        for (int i=0; i < data.length; i++) {
+            Object value = clojureMap.get(data[i]);
+            if (!data[i].equals(value)) {
+                throw new IllegalStateException(String.format("getAllByKeysClojure: expected %s, got %s", data[i], value));
+            }
         }
     }
     private void start() {

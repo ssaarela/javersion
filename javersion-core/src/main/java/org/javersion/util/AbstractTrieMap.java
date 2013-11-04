@@ -496,7 +496,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
 
         @Override
         public Iterator<Map.Entry<K, V>> iterator() {
-            return Iterators.concat(new ArrayIterator<>(children, childCount()));
+            return new ArrayIterator<>(children, childCount());
         }
         
         public String toString() {
@@ -605,7 +605,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         
         @Override
         public Iterator<Map.Entry<K, V>> iterator() {
-            return Iterators.concat(new ArrayIterator<>(entries));
+            return new ArrayIterator<>(entries);
         }
         
         public String toString() {
@@ -626,11 +626,13 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         }
     }
     
-    static class ArrayIterator<K, V, T extends Node<K, V>> extends UnmodifiableIterator<Iterator<Map.Entry<K, V>>> {
+    static class ArrayIterator<K, V, T extends Node<K, V>> extends UnmodifiableIterator<Map.Entry<K, V>> {
         
         private final T[] array;
         
         private final int limit;
+        
+        private Iterator<Map.Entry<K, V>> subIterator;
         
         private int pos = 0;
         
@@ -645,15 +647,35 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         
         @Override
         public boolean hasNext() {
-            return pos < limit;
+            if (subIterator != null) {
+                if (subIterator.hasNext()) {
+                    return true;
+                } else {
+                    pos++;
+                }
+            }
+            if (pos < limit) {
+                if (array[pos] instanceof Entry) {
+                    subIterator = null;
+                } else {
+                    subIterator = array[pos].iterator();
+                }
+                return true;
+            } else {
+                return false;
+            }
         }
 
         @Override
-        public Iterator<Map.Entry<K, V>> next() {
+        public Map.Entry<K, V> next() {
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            return array[pos++].iterator();
+            if (subIterator != null) {
+                return subIterator.next();
+            } else {
+                return (Entry<K, V>) array[pos++];
+            }
         }
     }
 }
