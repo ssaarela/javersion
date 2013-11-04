@@ -8,6 +8,8 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
 
     protected static final class UpdateContext<K, V> implements Merger<K, V> {
         
+        final Thread owner = Thread.currentThread();
+        
         final int expectedUpdates;
         
         Merger<K, V> merger;
@@ -48,6 +50,12 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
             change = -1;
             if (merger != null) {
                 merger.delete(oldEntry);
+            }
+        }
+        
+        public void validate() {
+            if (owner != Thread.currentThread()) {
+                throw new IllegalStateException("MutableMap should only be accessed form the thread it was created in.");
             }
         }
     }
@@ -103,8 +111,8 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
     }
 
     @Override
-    protected UpdateContext<K, V> updateContext(int expectedUpdates, Merger<K, V> merger) {
-        return new UpdateContext<K, V>(expectedUpdates, merger);
+    protected ContextHolder<K, V> updateContext(int expectedUpdates, Merger<K, V> merger) {
+        return new ContextHolder<K, V>(new UpdateContext<K, V>(expectedUpdates, merger));
     }
 
     @Override
@@ -126,13 +134,15 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
     }
 
     public PersistentMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<K, V> merger) {
-        MutableMap<K, V> mutableMap = new MutableMap<>(new UpdateContext<K, V>(expectedUpdates, merger), root, size);
+        ContextHolder<K, V> context = updateContext(expectedUpdates, merger);
+        MutableMap<K, V> mutableMap = new MutableMap<>(context, root, size);
         updateFunction.apply(mutableMap);
-        return doReturn(mutableMap.getRoot(), mutableMap.size());
+        return doReturn(context, mutableMap.getRoot(), mutableMap.size());
     }
 
     @Override
-    protected PersistentMap<K, V> doReturn(Node<? extends K, ? extends V> newRoot, int newSize) {
+    protected PersistentMap<K, V> doReturn(ContextHolder<K, V> context, Node<K, V> newRoot, int newSize) {
+        context.commit();
         if (newRoot == root) {
             return this;
         } else {

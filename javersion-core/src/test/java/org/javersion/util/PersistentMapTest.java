@@ -1,6 +1,7 @@
 package org.javersion.util;
 
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.isA;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -9,6 +10,8 @@ import static org.junit.Assert.assertThat;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
 
@@ -259,6 +262,51 @@ public class PersistentMapTest {
         assertThat(map.toAtomicMap(), equalTo(hashMap));
     }
     
+    @Test(expected=IllegalStateException.class)
+    public void Edit_MutableMap_After_Committed() {
+        PersistentMap<Integer, Integer> map = PersistentMap.empty();
+        final AtomicReference<MutableMap<Integer, Integer>> mutableMapRef = new AtomicReference<>();
+        map.update(new MapUpdate<Integer, Integer>() {
+            
+            @Override
+            public void apply(MutableMap<Integer, Integer> map) {
+                mutableMapRef.set(map);
+            }
+        });
+        // This should throw IllegalStateException!
+        mutableMapRef.get().assoc(1, 1);
+    }
+    
+    @Test(expected=IllegalStateException.class)
+    public void Edit_MutableMap_From_Another_Thread() throws Throwable {
+        PersistentMap<Integer, Integer> map = PersistentMap.empty();
+        final AtomicReference<Throwable> exception = new AtomicReference<>();
+        map.update(new MapUpdate<Integer, Integer>() {
+            @Override
+            public void apply(final MutableMap<Integer, Integer> map) {
+                final CountDownLatch countDown = new CountDownLatch(1);
+                new Thread() {
+                    public void run() {
+                        // This should throw IllegalStateException!
+                        try {
+                            map.assoc(1, 2);
+                        } catch (Throwable t) {
+                            exception.set(t);
+                        } finally {
+                            countDown.countDown();
+                        }
+                    }
+                }.start();
+                try {
+                    countDown.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        assertThat(exception.get(), notNullValue());
+        throw exception.get();
+    }
     
     private static <KV> PersistentMap<KV, KV> incremental(List<KV> keys) {
         PersistentMap<KV, KV> persistentMap = PersistentMap.empty();

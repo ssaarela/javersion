@@ -30,15 +30,35 @@ import com.google.common.collect.UnmodifiableIterator;
 
 public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> implements Iterable<Map.Entry<K, V>>{
     
+    public static class ContextHolder<K, V> {
+        private UpdateContext<K, V> context;
+        ContextHolder(UpdateContext<K, V> context) {
+            this.context = context;
+        }
+        void commit() {
+            this.context = null;
+        }
+        UpdateContext<K, V> get() {
+            return context;
+        }
+        void validate() {
+            if (context == null) {
+                throw new IllegalStateException("This update is already committed");
+            } else {
+                context.validate();
+            }
+        }
+    }
+    
     public abstract int size();
 
-    protected abstract UpdateContext<K, V> updateContext(int expectedUpdates, Merger<K, V> merger);
+    protected abstract ContextHolder<K, V> updateContext(int expectedUpdates, Merger<K, V> merger);
     
     protected abstract Node<K, V> getRoot();
     
     protected abstract M self();
     
-    protected abstract M doReturn(Node<? extends K, ? extends V> newRoot, int newSize);
+    protected abstract M doReturn(ContextHolder<K, V> context, Node<K, V> newRoot, int newSize);
 
     
     public M assoc(K key, V value) {
@@ -46,12 +66,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     }
     
     public final M assoc(java.util.Map.Entry<? extends K, ? extends V> entry) {
-        return assoc(updateContext(1, null), entry);
-    }
-    
-    final M assoc(UpdateContext<K, V> updateContext, Map.Entry<? extends K, ? extends V> entry) {
-        Node<K, V> newRoot = getRoot().assoc(updateContext, toEntry(entry));
-        return doReturn(newRoot, size() + updateContext.getChangeAndReset());
+        return doAssoc(updateContext(1, null), entry);
     }
 
     
@@ -74,7 +89,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     }
     
     public final M merge(java.util.Map.Entry<? extends K, ? extends V> entry, Merger<K, V> merger) {
-        return assoc(updateContext(1, merger), entry);
+        return doAssoc(updateContext(1, merger), entry);
     }
 
     
@@ -94,31 +109,15 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         return doAssocAll(updateContext(expectedUpdates, merger), entries);
     }
 
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private final M doAssocAll(UpdateContext<K, V> updateContext, Iterable entries) {
-        Node<K, V> newRoot = getRoot();
-        int size = size();
-        for (Map.Entry<K, V> entry : (Iterable<Map.Entry<K, V>>) entries) {
-            newRoot = newRoot.assoc(updateContext, toEntry(entry));
-            size += updateContext.getChangeAndReset();
-        }
-        
-        return doReturn(newRoot, size);
-    }
-
+    
     public final M dissoc(Object key) {
-        return dissoc(updateContext(1, null), key);
+        return doDissoc(updateContext(1, null), key);
     }
 
     public final M dissoc(Object key, Merger<K, V> merger) {
-        return dissoc(updateContext(1, merger), key);
+        return doDissoc(updateContext(1, merger), key);
     }
-        
-    private M dissoc(UpdateContext<K, V> updateContext, Object key) {
-        Node<K, V> newRoot = getRoot().dissoc(updateContext, key);
-        return doReturn(newRoot, size() + updateContext.getChangeAndReset());
-    }
+    
     
     public V get(Object key) {
         Entry<K, V> entry = getRoot().find(key);
@@ -141,6 +140,29 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             return new Entry<K, V>(entry.getKey(), entry.getValue());
         }
     }
+
+    
+    private final M doAssoc(ContextHolder<K, V> updateContext, Map.Entry<? extends K, ? extends V> entry) {
+        Node<K, V> newRoot = getRoot().assoc(updateContext, toEntry(entry));
+        return doReturn(updateContext, newRoot, size() + updateContext.get().getChangeAndReset());
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private final M doAssocAll(ContextHolder<K, V> updateContext, Iterable entries) {
+        Node<K, V> newRoot = getRoot();
+        int size = size();
+        for (Map.Entry<K, V> entry : (Iterable<Map.Entry<K, V>>) entries) {
+            newRoot = newRoot.assoc(updateContext, toEntry(entry));
+            size += updateContext.get().getChangeAndReset();
+        }
+        
+        return doReturn(updateContext, newRoot, size);
+    }
+        
+    private M doDissoc(ContextHolder<K, V> updateContext, Object key) {
+        Node<K, V> newRoot = getRoot().dissoc(updateContext, key);
+        return doReturn(updateContext, newRoot, size() + updateContext.get().getChangeAndReset());
+    }
     
     
     static abstract class Node<K, V> implements Iterable<Map.Entry<K, V>> {
@@ -149,12 +171,12 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             return findInternal(0, hash(key), key);
         }
 
-        public Node<K, V> assoc(UpdateContext<K, V>  currentContext, Entry<K, V> newEntry) {
+        public Node<K, V> assoc(ContextHolder<K, V>  currentContext, Entry<K, V> newEntry) {
             Check.notNull(currentContext, "currentContext");
             return assocInternal(currentContext, 0, newEntry);
         }
 
-        public Node<K, V> dissoc(UpdateContext<K, V>  currentContext, Object key) {
+        public Node<K, V> dissoc(ContextHolder<K, V>  currentContext, Object key) {
             Check.notNull(currentContext, "currentContext");
             return dissocInternal(currentContext, 0, hash(key), key);
         }
@@ -186,9 +208,9 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         
         abstract Entry<K, V> findInternal(int level, int hash, Object key);
 
-        abstract Node<K, V> assocInternal(UpdateContext<K, V>  currentContext, int level, Entry<K, V> newEntry);
+        abstract Node<K, V> assocInternal(ContextHolder<K, V>  currentContext, int level, Entry<K, V> newEntry);
 
-        abstract Node<K, V> dissocInternal(UpdateContext<K, V>  currentContext, int level, int hash, Object key);
+        abstract Node<K, V> dissocInternal(ContextHolder<K, V>  currentContext, int level, int hash, Object key);
         
     }
     
@@ -209,13 +231,13 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         }
         
         @Override
-        Node dissocInternal(UpdateContext  currentContext, int level, int hash, Object key) {
+        Node dissocInternal(ContextHolder  currentContext, int level, int hash, Object key) {
             return this;
         }
         
         @SuppressWarnings("unchecked")
         @Override
-        Node assocInternal(UpdateContext  currentContext, int level, Entry newEntry) {
+        Node assocInternal(ContextHolder  currentContext, int level, Entry newEntry) {
             Node node = new HashNode<>(currentContext);
             return node.assocInternal(currentContext, level, newEntry);
         }
@@ -258,16 +280,16 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             return "" + key + ": " + value;
         }
 
-        public Node<K, V> assocInternal(final UpdateContext<K, V>  currentContext, final int level, final Entry<K, V> newEntry) {
+        public Node<K, V> assocInternal(final ContextHolder<K, V>  currentContext, final int level, final Entry<K, V> newEntry) {
             if (equal(newEntry.key, key)) {
                 if (equal(newEntry.value, value)) {
                     return this;
                 } else {
-                    return currentContext.merge(this, newEntry);
+                    return currentContext.get().merge(this, newEntry);
                 }
             }
             else if (newEntry.hash == hash) {
-                currentContext.insert(newEntry);
+                currentContext.get().insert(newEntry);
                 return new CollisionNode<K, V>(this, newEntry);
             }
             else {
@@ -278,9 +300,9 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         }
 
         @Override
-        Node<K, V> dissocInternal(UpdateContext<K, V>  currentContext, int level, int hash, Object key) {
+        Node<K, V> dissocInternal(ContextHolder<K, V>  currentContext, int level, int hash, Object key) {
             if (equal(key, this.key)) {
-                currentContext.delete(this);
+                currentContext.get().delete(this);
                 return null;
             }
             return this;
@@ -303,29 +325,29 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     
     static final class HashNode<K, V> extends Node<K, V> {
         
-        private final UpdateContext<K, V>  updateContext;
+        private final ContextHolder<K, V>  updateContext;
         
         private int bitmap; 
         
         private Node<K, V>[] children;
 
-        HashNode(UpdateContext<K, V>  updateContext) {
-            this(updateContext, updateContext.expectedUpdates);
+        HashNode(ContextHolder<K, V>  updateContext) {
+            this(updateContext, updateContext.get().expectedUpdates);
         }
 
         @SuppressWarnings("unchecked")
-        HashNode(UpdateContext<K, V>  updateContext, int expectedSize) {
+        HashNode(ContextHolder<K, V>  updateContext, int expectedSize) {
             this(updateContext, 0, new Node[expectedSize < 32 ? expectedSize : 32]);
         }
         
-        HashNode(UpdateContext<K, V>  updateContext, int bitmap, Node<K, V>[] children) {
+        HashNode(ContextHolder<K, V>  updateContext, int bitmap, Node<K, V>[] children) {
             this.updateContext = updateContext;
             this.bitmap = bitmap;
             this.children = children;
         }
-        
+
         @Override
-        Node<K, V> assocInternal(final UpdateContext<K, V>  currentContext, final int level, final Entry<K, V> newEntry) {
+        Node<K, V> assocInternal(final ContextHolder<K, V>  currentContext, final int level, final Entry<K, V> newEntry) {
             int bit = bit(newEntry.hash, level);
             int index = index(bitmap, bit);
             if ((bitmap & bit) != 0) {
@@ -340,7 +362,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
                     return editable;
                 }
             } else {
-                currentContext.insert(newEntry);
+                currentContext.get().insert(newEntry);
                 HashNode<K, V> editable = cloneForInsert(currentContext, index);
                 editable.children[index] = newEntry;
                 editable.bitmap |= bit;
@@ -350,7 +372,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         }
 
         @Override
-        Node<K, V> dissocInternal(UpdateContext<K, V>  currentContext, int level, int hash, Object key) {
+        Node<K, V> dissocInternal(ContextHolder<K, V>  currentContext, int level, int hash, Object key) {
             int bit = bit(hash, level);
             if ((bitmap & bit) == 0) {
                 return this;
@@ -391,7 +413,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         
 
         @SuppressWarnings("unchecked")
-        private HashNode<K, V> cloneForInsert(UpdateContext<K, V>  currentContext, int index) {
+        private HashNode<K, V> cloneForInsert(ContextHolder<K, V>  currentContext, int index) {
             int childCount = childCount();
             boolean editInPlace = isEditInPlace(currentContext);
 
@@ -418,7 +440,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         }
 
         @SuppressWarnings("unchecked")
-        private HashNode<K, V> cloneForDelete(UpdateContext<K, V>  currentContext, int index) {
+        private HashNode<K, V> cloneForDelete(ContextHolder<K, V>  currentContext, int index) {
             int childCount = childCount();
             boolean editInPlace = isEditInPlace(currentContext);
 
@@ -443,7 +465,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             return withNewChildren(currentContext, editInPlace, newChildren);
         }
 
-        private HashNode<K, V> withNewChildren(UpdateContext<K, V>  currentContext,
+        private HashNode<K, V> withNewChildren(ContextHolder<K, V>  currentContext,
                 boolean editInPlace, Node<K, V>[] newChildren) {
             if (editInPlace) {
                 children = newChildren;
@@ -453,21 +475,21 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             }
         }
 
-        private boolean isEditInPlace(UpdateContext<K, V>  currentContext) {
+        private boolean isEditInPlace(ContextHolder<K, V>  currentContext) {
             boolean editInPlace = currentContext == this.updateContext;
             return editInPlace;
         }
         
-        private int newSize(UpdateContext<K, V>  currentContext, int childCount) {
-            if (currentContext.expectedUpdates == 1) {
+        private int newSize(ContextHolder<K, V>  currentContext, int childCount) {
+            if (currentContext.get().expectedUpdates == 1) {
                 return childCount + 1;
             } else {
                 return childCount < 16 ? 2*(childCount + 1) : 32;
             }
         }
         
-        private HashNode<K, V> cloneForReplace(UpdateContext<K, V>  currentContext) {
-            if (currentContext == this.updateContext) {
+        private HashNode<K, V> cloneForReplace(ContextHolder<K, V>  currentContext) {
+            if (currentContext.get() == this.updateContext.get()) {
                 return this;
             } else {
                 return new HashNode<>(currentContext, bitmap, children.clone());
@@ -527,7 +549,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
 
         @Override
         @SuppressWarnings("unchecked")
-        public Node<K, V> assocInternal(final UpdateContext<K, V>  currentContext, final int level, final Entry<K, V> newEntry) {
+        public Node<K, V> assocInternal(final ContextHolder<K, V>  currentContext, final int level, final Entry<K, V> newEntry) {
             if (newEntry.hash == this.hash) {
                 for (int i=0; i < entries.length; i++) {
                     if (equal(entries[i].key, newEntry.key)) {
@@ -535,12 +557,12 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
                             return this;
                         }
                         Entry<K, V>[] newEntries = entries.clone();
-                        newEntries[i] = currentContext.merge(entries[i], newEntry);
+                        newEntries[i] = currentContext.get().merge(entries[i], newEntry);
                         return new CollisionNode<K, V>(newEntries);
                     }
                 }
                 
-                currentContext.insert(newEntry);
+                currentContext.get().insert(newEntry);
 
                 Entry<K, V>[] newEntries = new Entry[entries.length + 1];
                 arraycopy(entries, 0, newEntries, 0, entries.length);
@@ -549,7 +571,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             }
             
             
-            Node<K, V>[] newChildren = (currentContext.expectedUpdates == 1 
+            Node<K, V>[] newChildren = (currentContext.get().expectedUpdates == 1 
                     ? new Node[] { this, null } : new Node[] { this, null, null, null });
 
             Node<K, V> newNode = new HashNode<K, V>(currentContext, bit(this.hash, level), newChildren);
@@ -557,11 +579,11 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         }
 
         @Override
-        Node<K, V> dissocInternal(UpdateContext<K, V>  currentContext, int level, int hash, Object key) {
+        Node<K, V> dissocInternal(ContextHolder<K, V>  currentContext, int level, int hash, Object key) {
             if (hash == this.hash) {
                 for (int i=0; i < entries.length; i++) {
                     if (equal(entries[i].key, key)) {
-                        currentContext.delete(entries[i]);
+                        currentContext.get().delete(entries[i]);
     
                         if (entries.length == 2) {
                             if (i == 1) {

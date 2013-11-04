@@ -15,17 +15,16 @@
  */
 package org.javersion.util;
 
-import org.javersion.util.PersistentMap.UpdateContext;
 
 public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     
-    private final UpdateContext<K, V>  updateContext;
+    private final ContextHolder<K, V>  updateContext;
     
     private Node<K, V> root;
     
     private int size;
     
-    MutableMap(UpdateContext<K, V>  context, Node<K, V> root, int size) {
+    MutableMap(ContextHolder<K, V>  context, Node<K, V> root, int size) {
         this.updateContext = context;
         this.root = root;
         this.size = size;
@@ -42,8 +41,9 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     @Override
-    protected UpdateContext<K, V>  updateContext(int expectedUpdates, Merger<K, V> merger) {
-        updateContext.merger = merger;
+    protected ContextHolder<K, V>  updateContext(int expectedUpdates, Merger<K, V> merger) {
+        updateContext.validate();
+        updateContext.get().merger = merger;
         return updateContext;
     }
 
@@ -54,7 +54,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected MutableMap<K, V> doReturn(Node<? extends K, ? extends V> newRoot, int newSize) {
+    protected MutableMap<K, V> doReturn(ContextHolder<K, V> context, Node<K, V> newRoot, int newSize) {
         this.root = (Node<K, V>) (newRoot == null ? EMPTY_NODE : newRoot);
         this.size = newSize;
         return this;
