@@ -1,12 +1,15 @@
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
+import org.javersion.util.MapUpdate;
 import org.javersion.util.MutableMap;
 import org.javersion.util.PersistentMap;
-import org.javersion.util.MapUpdate;
 
 import clojure.lang.IPersistentMap;
 import clojure.lang.ITransientMap;
 import clojure.lang.PersistentHashMap;
+import clojure.lang.RT;
 
 /*
  * Copyright 2013 Samppa Saarela
@@ -64,8 +67,8 @@ public class TestPersistentMapPerformance {
         this.times = times;
     }
     public TestPersistentMapPerformance warmup() {
-        bulkInsertJaversion(data.length);
-        bulkInsertClojure();
+        iterateAllJaversion(bulkInsertJaversion(data.length));
+        iterateAllClojure(bulkInsertClojure());
         return this;
     }
     
@@ -80,6 +83,11 @@ public class TestPersistentMapPerformance {
         
         start();
         for (int i=0; i < times; i++)
+            iterateAllClojure(clojureMap);
+        end("iterateAll", "Clojure");
+        
+        start();
+        for (int i=0; i < times; i++)
             incrementalDeleteClojure(clojureMap);
         end("incrementalDelete", "Clojure");
         clojureMap = null;
@@ -89,6 +97,11 @@ public class TestPersistentMapPerformance {
         for (int i=0; i < times; i++)
             javersionMap = incrementalInsertJaversion();
         end("incrementalInsert", "Javersion");
+        
+        start();
+        for (int i=0; i < times; i++)
+            iterateAllJaversion(javersionMap);
+        end("iterateAll", "Javersion");
         
         start();
         for (int i=0; i < times; i++)
@@ -119,6 +132,20 @@ public class TestPersistentMapPerformance {
             bulkDeleteJaversion(javersionMap);
         end("bulkDelete", "Javersion");
         javersionMap = null;
+    }
+
+    private void iterateAllJaversion(PersistentMap<Object, Object> javersionMap) {
+        Iterator<Map.Entry<Object, Object>> iter = javersionMap.iterator();
+        while(iter.hasNext()) {
+            iter.next();
+        }
+    }
+    private void iterateAllClojure(PersistentHashMap clojureMap) {
+        @SuppressWarnings("rawtypes")
+        Iterator iter = clojureMap.iterator();
+        while (iter.hasNext()) {
+            iter.next();
+        }
     }
     private void start() {
         System.gc();
