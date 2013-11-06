@@ -6,6 +6,10 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +17,9 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.javersion.util.AbstractTrieMap.Entry;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -178,10 +184,10 @@ public class PersistentMapTest {
         assertThat(map.get(new HashKey(1)), nullValue());
 
         Map<HashKey, HashKey> hashMap = ImmutableMap.of(k1, k1, k2, k2, k3, k3);
-        assertThat(map.asImmutableMap(), equalTo(hashMap));
+        assertThat(map.asMap(), equalTo(hashMap));
 
         map = map.assocAll(hashMap);
-        assertThat(map.asImmutableMap(), equalTo(hashMap));
+        assertThat(map.asMap(), equalTo(hashMap));
         
         map = map.dissoc(k1);
         assertThat(map.containsKey(k1), equalTo(false));
@@ -231,7 +237,136 @@ public class PersistentMapTest {
         }
         hashMap.put(null, null);
         PersistentMap<Integer, Integer> map = PersistentMap.copyOf(hashMap);
-        assertThat(map.asImmutableMap(), equalTo(hashMap));
+        assertThat(map.asMap(), equalTo(hashMap));
+    }
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void Merger_Gets_Called() {
+        Merger<Integer, Integer> merger = mock(Merger.class); 
+        doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
+
+        PersistentMap<Integer, Integer> map = PersistentMap.empty();
+        
+        map = map.merge(1, 1, merger);
+        assertThat(map.get(1), equalTo(1));
+        
+        map = map.merge(1, 2, merger);
+        assertThat(map.get(1), equalTo(2));
+
+        map = map.dissoc(1, merger);
+        assertThat(map.get(1), nullValue());
+
+        ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
+        ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
+
+        verify(merger).insert(entry1.capture());
+        assertEntry(entry1, 1, 1);
+
+        verify(merger).merge(entry1.capture(), entry2.capture());
+        assertEntry(entry1, 1, 1);
+        assertEntry(entry2, 1, 2);
+
+        verify(merger).delete(entry2.capture());
+        assertEntry(entry2, 1, 2);
+    }
+    
+    @SuppressWarnings({ "rawtypes" })
+    private void assertEntry(ArgumentCaptor<Entry> argument, Object key, Object value) {
+        assertThat(argument.getValue().getKey(), equalTo(key));
+        assertThat(argument.getValue().getValue(), equalTo(value));
+    }
+    
+    @Test
+    public void Assoc_All_Map() {
+        Map<Integer, Integer> ints = ImmutableMap.of(1, 1, 2, 2);
+        Map<Integer, Integer> map = PersistentMap.copyOf(ints).asMap();
+        assertThat(map, equalTo(ints));
+    }
+    
+    @Test
+    public void Assoc_All_PersistentMap() {
+        PersistentMap<Integer, Integer> map = PersistentMap.of(1, 1);
+        PersistentMap<Integer, Integer> ints = PersistentMap.of(2, 2, 3, 3);
+        Map<Integer, Integer> expected = ImmutableMap.of(1, 1, 2, 2, 3, 3);
+
+        assertThat(map.assocAll(ints).asMap(), equalTo(expected));
+    }
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void Merge_All_Map() {
+        PersistentMap<Integer, Integer> map = PersistentMap.of(1, 1);
+        Map<Integer, Integer> ints = ImmutableMap.of(1, 2, 3, 3);
+        Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
+
+        Merger<Integer, Integer> merger = mock(Merger.class); 
+        doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
+        
+        map = map.mergeAll(ints, merger);
+        
+        assertThat(map.asMap(), equalTo(expected));
+        
+        ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
+        ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
+        
+        verify(merger).merge(entry1.capture(), entry2.capture());
+        assertEntry(entry1, 1, 1);
+        assertEntry(entry2, 1, 2);
+        
+        verify(merger).insert(entry1.capture());
+        assertEntry(entry1,3, 3);
+    }
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void Merge_All_PersistentMap() {
+        PersistentMap<Integer, Integer> map = PersistentMap.of(1, 1);
+        PersistentMap<Integer, Integer> ints = PersistentMap.of(1, 2, 3, 3);
+        Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
+
+        Merger<Integer, Integer> merger = mock(Merger.class); 
+        doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
+        
+        map = map.mergeAll(ints, merger);
+        
+        assertThat(map.asMap(), equalTo(expected));
+        
+        ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
+        ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
+
+        verify(merger).merge(entry1.capture(), entry2.capture());
+        assertEntry(entry1, 1, 1);
+        assertEntry(entry2, 1, 2);
+        
+        verify(merger).insert(entry1.capture());
+        assertEntry(entry1,3, 3);
+    }
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void Merge_And_Keep_Old_Entry() {
+        PersistentMap<Integer, Integer> map = PersistentMap.of(1, 1);
+        PersistentMap<Integer, Integer> ints = PersistentMap.of(1, 2, 3, 3);
+        Map<Integer, Integer> expected = ImmutableMap.of(1, 1, 3, 3);
+
+        ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
+        ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
+        Merger<Integer, Integer> merger = mock(Merger.class); 
+        doReturn(new Entry(1, 1)).when(merger).merge(any(Entry.class), any(Entry.class));
+        
+        map = map.mergeAll(ints, merger);
+        
+        assertThat(map.asMap(), equalTo(expected));
+
+        assertThat(map.get(1), equalTo(1));
+        
+        verify(merger).merge(entry1.capture(), entry2.capture());
+        assertEntry(entry1, 1, 1);
+        assertEntry(entry2, 1, 2);
+        
+        verify(merger).insert(entry1.capture());
+        assertEntry(entry1,3, 3);
     }
     
     @Test

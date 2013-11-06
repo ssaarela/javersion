@@ -54,7 +54,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     public PersistentMap<K, V> toPersistentMap() {
         verifyThread();
         contextReference.commit();
-        return new PersistentMap<K, V>(root, size);
+        return PersistentMap.create(root, size);
     }
     
     private void verifyThread() {

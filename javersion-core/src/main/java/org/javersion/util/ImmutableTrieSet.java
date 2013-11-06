@@ -19,11 +19,11 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class ImmutableSet<E> extends AbstractSet<E> {
+class ImmutableTrieSet<E> extends AbstractSet<E> {
 
     private PersistentSet<E> set;
     
-    public ImmutableSet(PersistentSet<E> set) {
+    ImmutableTrieSet(PersistentSet<E> set) {
         this.set = Check.notNull(set, "set");
     }
     

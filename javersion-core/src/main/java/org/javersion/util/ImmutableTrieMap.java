@@ -22,11 +22,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class ImmutableMap<K, V> extends AbstractMap<K, V> {
+class ImmutableTrieMap<K, V> extends AbstractMap<K, V> {
     
     private final PersistentMap<K, V> map;
     
-    public ImmutableMap(PersistentMap<K, V> map) {
+    ImmutableTrieMap(PersistentMap<K, V> map) {
         this.map = Check.notNull(map, "map");
     }
     

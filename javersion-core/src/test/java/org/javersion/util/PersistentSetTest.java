@@ -30,7 +30,7 @@ public class PersistentSetTest {
     
     @Test
     public void Set_Equals() {
-        assertThat(SET.asImmutableSet(), equalTo(integers()));
+        assertThat(SET.asSet(), equalTo(integers()));
     }
     
     @Test
@@ -52,7 +52,7 @@ public class PersistentSetTest {
         PersistentSet<Integer> set = new PersistentSet<Integer>();
         Set<Integer> ints = integers();
         set = set.conjAll(ints);
-        assertThat(set.asImmutableSet(), equalTo(ints));
+        assertThat(set.asSet(), equalTo(ints));
     }
     
     @Test
@@ -62,7 +62,7 @@ public class PersistentSetTest {
         for (Integer integer : ints) {
             set = set.conj(integer);
         }
-        assertThat(set.asImmutableSet(), equalTo(ints));
+        assertThat(set.asSet(), equalTo(ints));
     }
 
 }

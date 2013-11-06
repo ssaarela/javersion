@@ -1,6 +1,5 @@
 package org.javersion.util;
 
-import java.util.Collection;
 import java.util.Map;
 
 
@@ -18,27 +17,44 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
         return (PersistentMap<K, V>) EMPTY_MAP;
     }
     
-    public static <K, V> PersistentMap<K, V> copyOf(Collection<Map.Entry<? extends K, ? extends V>> entries) {
-        return copyOf(entries, entries.size());
-    }
-    
-    @SuppressWarnings("unchecked")
-    public static <K, V> PersistentMap<K, V> copyOf(Iterable<Map.Entry<? extends K, ? extends V>> entries, int expectedUpdates) {
-        return ((PersistentMap<K, V>) EMPTY_MAP).assocAll(entries, expectedUpdates);
-    }
-    
     @SuppressWarnings("unchecked")
     public static <K, V> PersistentMap<K, V> copyOf(Map<? extends K, ? extends V> map) {
         return ((PersistentMap<K, V>) EMPTY_MAP).assocAll(map);
     }
     
+    public static <K, V> PersistentMap<K, V> of() {
+        return empty();
+    }
+    
+    public static <K, V> PersistentMap<K, V> of(K k1, V v1) {
+        return new MutableMap<K, V>()
+                .assoc(k1, v1)
+                .toPersistentMap();
+    }
+    
+    public static <K, V> PersistentMap<K, V> of(K k1, V v1, K k2, V v2) {
+        return new MutableMap<K, V>()
+                .assoc(k1, v1)
+                .assoc(k2, v2)
+                .toPersistentMap();
+    }
+    
+    public static <K, V> PersistentMap<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
+        return new MutableMap<K, V>()
+                .assoc(k1, v1)
+                .assoc(k2, v2)
+                .assoc(k3, v3)
+                .toPersistentMap();
+    }
+
+    
     @SuppressWarnings("unchecked")
-    private static <K, V> PersistentMap<K, V> create(Node<? extends K, ? extends V> newRoot, int newSize) {
+    static <K, V> PersistentMap<K, V> create(Node<? extends K, ? extends V> newRoot, int newSize) {
         return newRoot == null ? (PersistentMap<K, V>) EMPTY_MAP : new PersistentMap<K, V>(newRoot, newSize);
     }
     
     @SuppressWarnings("unchecked")
-    PersistentMap(Node<? extends K, ? extends V> newRoot, int newSize) {
+    private PersistentMap(Node<? extends K, ? extends V> newRoot, int newSize) {
         this.root = (Node<K, V>) newRoot;
         this.size = newSize;
     }
@@ -47,8 +63,8 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
         return new MutableMap<K, V>(root, size);
     }
     
-    public ImmutableMap<K, V> asImmutableMap() {
-        return new ImmutableMap<>(this);
+    public Map<K, V> asMap() {
+        return new ImmutableTrieMap<>(this);
     }
 
     @Override

@@ -18,7 +18,6 @@ package org.javersion.util;
 import static com.google.common.base.Objects.equal;
 import static java.lang.System.arraycopy;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -111,15 +110,10 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     public final M assocAll(Map<? extends K, ? extends V> map) {
         return doAssocAll(contextReference(map.size(), null), map.entrySet());
     }
-
-    public final M assocAll(Collection<Map.Entry<? extends K, ? extends V>> entries) {
-        return doAssocAll(contextReference(entries.size(), null), entries);
+    
+    public final M assocAll(PersistentMap<? extends K, ? extends V> map) {
+        return doAssocAll(contextReference(map.size(), null), map);
     }
-
-    public final M assocAll(Iterable<Map.Entry<? extends K, ? extends V>> entries, int expectedUpdates) {
-        return doAssocAll(contextReference(expectedUpdates, null), entries);
-    }
-
 
     
     public M merge(K key, V value, Merger<K, V> merger) {
@@ -135,16 +129,8 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         return doAssocAll(contextReference(map.size(), merger), map.entrySet());
     }
 
-    public final M mergeAll(Collection<Map.Entry<? extends K, ? extends V>> entries, Merger<K, V> merger) {
-        return doAssocAll(contextReference(entries.size(), merger), entries);
-    }
-
     public final M mergeAll(PersistentMap<K, V> map, Merger<K, V> merger) {
         return doAssocAll(contextReference(map.size(), merger), map);
-    }
-
-    public final M mergeAll(Iterable<Map.Entry<? extends K, ? extends V>> entries, int expectedUpdates, Merger<K, V> merger) {
-        return doAssocAll(contextReference(expectedUpdates, merger), entries);
     }
 
     
@@ -286,8 +272,10 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         @SuppressWarnings("unchecked")
         @Override
         Node assocInternal(ContextReference  currentContext, int level, Entry newEntry) {
-            Node node = new HashNode<>(currentContext);
-            return node.assocInternal(currentContext, level, newEntry);
+            currentContext.get().insert(newEntry);
+            return newEntry;
+//            Node node = new HashNode<>(currentContext);
+//            return node.assocInternal(currentContext, level, newEntry);
         }
     };
     
@@ -328,6 +316,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             return "" + key + ": " + value;
         }
 
+        @SuppressWarnings("unchecked")
         public Node<K, V> assocInternal(final ContextReference<K, V>  currentContext, final int level, final Entry<K, V> newEntry) {
             if (equal(newEntry.key, key)) {
                 if (equal(newEntry.value, value)) {
@@ -341,8 +330,10 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
                 return new CollisionNode<K, V>(this, newEntry);
             }
             else {
-                return new HashNode<K, V>(currentContext, 4)
-                        .assocInternal(currentContext, level, this)
+                @SuppressWarnings("rawtypes")
+                Node[] newChildren = new Node[HashNode.newSizeForInsert(currentContext, 1)];
+                newChildren[0] = this;
+                return new HashNode<K, V>(currentContext, bit(this.hash, level), newChildren)
                         .assocInternal(currentContext, level, newEntry);
             }
         }
@@ -469,7 +460,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             if (editInPlace && childCount < children.length) {
                 newChildren = this.children;
             } else {
-                newChildren = new Node[newSize(currentContext, childCount)];
+                newChildren = new Node[newSizeForInsert(currentContext, childCount)];
                 if (index > 0) {
                     arraycopy(children, 0, newChildren, 0, index);
                 }
@@ -528,11 +519,11 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             return editInPlace;
         }
         
-        private int newSize(ContextReference<K, V>  currentContext, int childCount) {
+        static int newSizeForInsert(ContextReference<?, ?>  currentContext, int currentChildCount) {
             if (currentContext.get().expectedUpdates == 1) {
-                return childCount + 1;
+                return currentChildCount + 1;
             } else {
-                return childCount < 16 ? 2*(childCount + 1) : 32;
+                return currentChildCount < 16 ? 2*(currentChildCount + 1) : 32;
             }
         }
         

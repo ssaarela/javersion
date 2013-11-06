@@ -70,7 +70,7 @@ public final class Merge<K, V> {
 
             // One version
             if (!iter.hasNext()) {
-                mergedProperties = versionNode.allProperties.asImmutableMap();
+                mergedProperties = versionNode.allProperties.asMap();
                 revisions = ImmutableSet.of(versionNode.getRevision());
                 conflicts = ImmutableMultimap.of();
             } 
@@ -120,13 +120,13 @@ public final class Merge<K, V> {
                     // Version already merged?
                     if (!mergedRevisions.contains(versionNode.getRevision())) {
                         mergedProperties = mergedProperties.mergeAll(versionNode.allProperties, merger);
-                        mergedRevisions.addAll(versionNode.allRevisions.asImmutableSet());
-                        heads.removeAll(versionNode.allRevisions.asImmutableSet());
+                        mergedRevisions.addAll(versionNode.allRevisions.asSet());
+                        heads.removeAll(versionNode.allRevisions.asSet());
                         heads.add(versionNode.getRevision());
                     }
                 } while (iter.hasNext());
 
-                this.mergedProperties = mergedProperties.asImmutableMap();
+                this.mergedProperties = mergedProperties.asMap();
                 this.revisions = unmodifiableSet(heads);
                 this.conflicts = conflicts.build();
             }

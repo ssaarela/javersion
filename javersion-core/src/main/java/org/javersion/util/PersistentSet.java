@@ -31,8 +31,8 @@ public class PersistentSet<E> extends AbstractTrieSet<E, PersistentMap<E, Object
         return new MutableSet<E>(map.toMutableMap());
     }
     
-    public ImmutableSet<E> asImmutableSet() {
-        return new ImmutableSet<E>(this);
+    public ImmutableTrieSet<E> asSet() {
+        return new ImmutableTrieSet<E>(this);
     }
 
     @Override
