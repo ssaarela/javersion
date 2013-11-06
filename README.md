@@ -17,7 +17,7 @@ Some use cases for Javersion are:
   * Undo(!)
   * Fix errors.
   * Optimize active history by merging or removing unnecessary intermediate saves (e.g. all versions from workspace).
-  * This is achieved in purely immutable way by defining a new root for the following versions.
+  * This is achieved in purely immutable way by defining a new root for the modified/following versions.
 
 It's designed to be extensible at all levels, e.g. 
 
