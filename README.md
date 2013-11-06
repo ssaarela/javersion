@@ -9,23 +9,23 @@ Some use cases for Javersion are:
 * Tracking who did, what exactly and when.
 * Maintaining entity on multiple branches, e.g. workspace + public.
 * Easy merging, e.g. always merge latest from public to workspace - but merge workspace into public only on demand.
-** Customizable merge strategy.
+  * Customizable merge strategy.
 * Revert to older version.
 * Safe concurrent editing, no matter how long it takes.
-** Conflicts are detected and may be resolved consciously.
+  * Conflicts are detected and may be resolved consciously.
 * "Modify" active history while retaining all earlier verions:
-** Undo(!)
-** Fix errors.
-** Optimize active history by merging or removing unnecessary intermediate saves (e.g. all versions from workspace).
-** This is achieved in purely immutable way by defining a new root for the following versions.
+  * Undo(!)
+  * Fix errors.
+  * Optimize active history by merging or removing unnecessary intermediate saves (e.g. all versions from workspace).
+  * This is achieved in purely immutable way by defining a new root for the following versions.
 
 It's designed to be extensible at all levels, e.g. 
 
 * Core makes no assumptions about what metadata versions shuold contain, it only knows of functional properties of versios 
 (e.g. revision number, parents, diff of properties).
 * Core algorithm works on Map making no assumptions about key or value type other than that
-** key needs to be immutable and implement equals/hashCode correctly and
-** value needs to be immutable - i.e. mutable structures need to be decomposed into immutable key/value-pairs.
+  * key needs to be immutable and implement equals/hashCode correctly and
+  * value needs to be immutable - i.e. mutable structures need to be decomposed into immutable key/value-pairs.
 
 On top of core, Javersion is going to provide Object versioning library that maps Java Objects to
 path/value maps and then versions those. Similar path/value maps can easily be made from e.g. XML or JSON. 
