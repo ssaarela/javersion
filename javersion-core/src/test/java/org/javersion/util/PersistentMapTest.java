@@ -1,8 +1,8 @@
 package org.javersion.util;
 
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.isA;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
@@ -178,10 +178,10 @@ public class PersistentMapTest {
         assertThat(map.get(new HashKey(1)), nullValue());
 
         Map<HashKey, HashKey> hashMap = ImmutableMap.of(k1, k1, k2, k2, k3, k3);
-        assertThat(map.toAtomicMap(), equalTo(hashMap));
+        assertThat(map.asImmutableMap(), equalTo(hashMap));
 
         map = map.assocAll(hashMap);
-        assertThat(map.toAtomicMap(), equalTo(hashMap));
+        assertThat(map.asImmutableMap(), equalTo(hashMap));
         
         map = map.dissoc(k1);
         assertThat(map.containsKey(k1), equalTo(false));
@@ -222,34 +222,6 @@ public class PersistentMapTest {
     }
     
     @Test
-    public void As_Map() {
-        Random random = new Random(78);
-        Map<Integer, Integer> hashMap = Maps.newHashMap();
-        AtomicMap<Integer, Integer> map = new AtomicMap<Integer, Integer>();
-        
-        for (int i=1; i <= 257; i++) {
-            Integer kv = random.nextInt();
-            assertThat(map.put(kv, kv), equalTo(hashMap.put(kv, kv)));
-        }
-        hashMap.put(null, null);
-        assertThat(map.put(null, null), nullValue());
- 
-        PersistentMap<Integer, Integer> persistentMap = map.getPersistentMap();
-        
-        assertThat(map, equalTo(hashMap));
-        for (Integer key : map.keySet()) {
-            assertThat(map.remove(key), equalTo(hashMap.remove(key)));
-        }
-        assertThat(map, equalTo(hashMap));
-        
-        assertThat(persistentMap.size(), equalTo(258)); // PersitentMap not modified
-        
-        map = persistentMap.toAtomicMap();
-        map.clear();
-        assertThat(map, equalTo(hashMap)); // empty
-    }
-    
-    @Test
     public void Bulk() {
         Random random = new Random(87);
         Map<Integer, Integer> hashMap = Maps.newHashMap();
@@ -259,22 +231,26 @@ public class PersistentMapTest {
         }
         hashMap.put(null, null);
         PersistentMap<Integer, Integer> map = PersistentMap.copyOf(hashMap);
-        assertThat(map.toAtomicMap(), equalTo(hashMap));
+        assertThat(map.asImmutableMap(), equalTo(hashMap));
     }
     
-    @Test(expected=IllegalStateException.class)
-    public void Edit_MutableMap_After_Committed() {
+    @Test
+    public void Editing_MutableMap_After_Committed_Doesnt_Affect_PersistedMap() {
         PersistentMap<Integer, Integer> map = PersistentMap.empty();
         final AtomicReference<MutableMap<Integer, Integer>> mutableMapRef = new AtomicReference<>();
-        map.update(new MapUpdate<Integer, Integer>() {
+        map = map.update(new MapUpdate<Integer, Integer>() {
             
             @Override
             public void apply(MutableMap<Integer, Integer> map) {
+                map.assoc(1, 1);
                 mutableMapRef.set(map);
             }
         });
-        // This should throw IllegalStateException!
-        mutableMapRef.get().assoc(1, 1);
+        assertThat(map.get(1), equalTo(1));
+        // Editing 
+        mutableMapRef.get().assoc(2, 2);
+        assertThat(map.containsKey(2), equalTo(false));
+        assertThat(mutableMapRef.get().containsKey(2), equalTo(true));
     }
     
     @Test(expected=IllegalStateException.class)

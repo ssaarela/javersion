@@ -15,97 +15,49 @@
  */
 package org.javersion.util;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
-
-
-public class PersistentSet<E> implements Iterable<E> {
+public class PersistentSet<E> extends AbstractTrieSet<E, PersistentMap<E, Object>, PersistentSet<E>> {
     
     private final PersistentMap<E, Object> map;
-    
-    private static final Object PRESENT = new Object(); 
-    
+
     public PersistentSet() {
         this(PersistentMap.<E, Object>empty());
     }
     
-    private PersistentSet(PersistentMap<E, Object> map) {
-        this.map = map;
+    public PersistentSet(PersistentMap<E, Object> map) {
+        this.map = Check.notNull(map, "map");
     }
 
     public MutableSet<E> toMutableSet() {
-        return new MutableSet<>(this);
+        return new MutableSet<E>(map.toMutableMap());
     }
     
-    public AtomicSet<E> toAtomicSet() {
-        return new AtomicSet<>(this);
+    public ImmutableSet<E> asImmutableSet() {
+        return new ImmutableSet<E>(this);
     }
-    
-    public ImmutableSet<E> toImmutableSet() {
-        return new ImmutableSet<>(this);
-    }
-    
-    public PersistentSet<E> conj(E element) {
-        return doReturn(map.assoc(element, PRESENT));
-    }
-    
-    private PersistentSet<E> doReturn(PersistentMap<E, Object> newMap) {
-        if (newMap == map) {
+
+    @Override
+    PersistentSet<E> doReturn(PersistentMap<E, Object> newMap) {
+        if (map == newMap) {
             return this;
+        } else {
+            return new PersistentSet<E>(newMap);
+        }            
+    }
+
+    @Override
+    PersistentMap<E, Object> getMap() {
+        return map;
+    }
+
+    @Override
+    public PersistentSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
+        MutableSet<E> mutableSet = toMutableSet();
+        updateFunction.apply(mutableSet);
+        MutableMap<E, Object> newMap = mutableSet.getMap();
+        if (newMap.getRoot() == map.getRoot()) {
+            return this;
+        } else {
+            return new PersistentSet<>(newMap.toPersistentMap());
         }
-        return new PersistentSet<>(newMap);
-    }
-
-    public PersistentSet<E> conjAll(final Collection<? extends E> elements) {
-        return conjAll(elements, elements.size());
-    }
-
-    public PersistentSet<E> conjAll(PersistentSet<? extends E> elements) {
-        return conjAll(elements, elements.size());
-    }
-
-    private PersistentSet<E> conjAll(final Iterable<? extends E> elements, int size) {
-        PersistentMap<E, Object> newMap = map.update(
-                size, 
-                new MapUpdate<E, Object>() {
-                    @Override
-                    public void apply(MutableMap<E, Object> map) {
-                        for (E e : elements) {
-                            map.assoc(e, PRESENT);
-                        }
-                    }
-                });
-        return doReturn(newMap);
-    }
-    
-    public PersistentSet<E> disjoin(Object element) {
-        return doReturn(map.dissoc(element));
-    }
-    
-    public int size() {
-        return map.size();
-    }
-    
-    public Iterator<E> iterator() {
-        return Iterators.transform(map.iterator(), new Function<Map.Entry<E, Object>, E>() {
-
-            @Override
-            public E apply(java.util.Map.Entry<E, Object> input) {
-                return input.getKey();
-            }
-            
-        });
-    }
-
-    public boolean contains(Object o) {
-        return map.containsKey(o);
-    }
-    
-    public AtomicSet<E> asSet() {
-        return new AtomicSet<E>(this);
     }
 }

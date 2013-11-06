@@ -15,8 +15,8 @@
  */
 package org.javersion.util;
 
-public interface MapUpdate<K, V> {
+public interface SetUpdate<E> {
 
-    public void apply(MutableMap<K, V> map);
+    public void apply(MutableSet<E> set);
 
 }

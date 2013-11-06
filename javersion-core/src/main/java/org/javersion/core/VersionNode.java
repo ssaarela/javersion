@@ -20,10 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.javersion.util.AbstractTrieMap.Entry;
-import org.javersion.util.Check;
-import org.javersion.util.Merger;
-import org.javersion.util.PersistentMap;
-import org.javersion.util.PersistentSet;
+import org.javersion.util.*;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -85,7 +82,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
             VersionNode<K, V, T> parent = iter.next();
             this.merger = parent.merger;
             PersistentSet<Long> revisions = parent.allRevisions;
-            PersistentMap<K, VersionProperty<V>> properties = parent.allProperties;
+            MutableMap<K, VersionProperty<V>> properties = parent.allProperties.toMutableMap();
             
             while (iter.hasNext()) {
                 parent = iter.next();
@@ -93,7 +90,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
                 properties = properties.mergeAll(parent.allProperties, merger);
             }
             this.allRevisions = revisions.conj(version.revision);
-            this.allProperties = properties.assocAll(version.getVersionProperties());
+            this.allProperties = properties.assocAll(version.getVersionProperties()).toPersistentMap();
         }
         
         

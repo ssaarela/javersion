@@ -15,76 +15,40 @@
  */
 package org.javersion.util;
 
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Iterator;
 
-public class MutableSet<E> extends AbstractSet<E> {
-
-    private PersistentSet<E> set;
+public class MutableSet<E> extends AbstractTrieSet<E, MutableMap<E,Object>, MutableSet<E>> {
     
-    public MutableSet() {
-        this(new PersistentSet<E>());
-    }
+    private final MutableMap<E, Object> map;
     
     public MutableSet(PersistentSet<E> set) {
-        this.set = set;
+        this(set.getMap().toMutableMap());
     }
     
-    public PersistentSet<E> persistentValue() {
-        return set;
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-        return set.iterator();
-    }
-
-    @Override
-    public int size() {
-        return set.size();
-    }
-
-    @Override
-    public boolean contains(Object o) {
-        return set.contains(o);
-    }
-
-    @Override
-    public boolean add(final E e) {
-        PersistentSet<E> newSet = set.conj(e);
-        try {
-            return set != newSet;
-        } finally {
-            this.set = newSet;
-        }
-    }
-
-    @Override
-    public boolean remove(final Object o) {
-        PersistentSet<E> newSet = set.disjoin(o);
-        try {
-            return set != newSet;
-        } finally {
-            this.set = newSet;
-        }
-    }
-
-    @Override
-    public boolean addAll(final Collection<? extends E> c) {
-        PersistentSet<E> newSet = set.conjAll(c);
-        try {
-            return set != newSet;
-        } finally {
-            this.set = newSet;
-        }
-    }
-
-    @Override
-    public void clear() {
-        for (E e : set) {
-            this.set = set.disjoin(e);
-        }
+    MutableSet(MutableMap<E,Object> map) {
+        this.map = map;
     }
     
+    public PersistentSet<E> toPersistentSet() {
+        return new PersistentSet<>(map.toPersistentMap());
+    }
+
+    @Override
+    MutableSet<E> doReturn(MutableMap<E, Object> newMap) {
+        if (newMap != map) {
+            throw new IllegalArgumentException("Mutable map is edit in place!");
+        }
+        return this;
+    }
+
+    @Override
+    MutableMap<E, Object> getMap() {
+        return map;
+    }
+
+    @Override
+    public MutableSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
+        updateFunction.apply(this);
+        return this;
+    }
+
 }

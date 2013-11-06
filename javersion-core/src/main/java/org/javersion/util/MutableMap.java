@@ -15,23 +15,34 @@
  */
 package org.javersion.util;
 
-
 public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     
-    private final ContextHolder<K, V>  updateContext;
+    private final Thread owner = Thread.currentThread();
+    
+    private ContextReference<K, V>  contextReference;
     
     private Node<K, V> root;
     
     private int size;
     
-    MutableMap(ContextHolder<K, V>  context, Node<K, V> root, int size) {
-        this.updateContext = context;
+    @SuppressWarnings("unchecked")
+    public MutableMap() {
+        this(EMPTY_NODE, 0);
+    }
+
+    MutableMap(Node<K, V> root, int size) {
+        this(new ContextReference<K, V>(new UpdateContext<K, V>(32, null)), root, size);
+    }
+
+    MutableMap(ContextReference<K, V>  context, Node<K, V> root, int size) {
+        this.contextReference = context;
         this.root = root;
         this.size = size;
     }
 
     @Override
-    protected Node<K, V> getRoot() {
+    Node<K, V> getRoot() {
+        verifyThread();
         return root;
     }
 
@@ -39,22 +50,48 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     protected MutableMap<K, V> self() {
         return this;
     }
+    
+    public PersistentMap<K, V> toPersistentMap() {
+        verifyThread();
+        contextReference.commit();
+        return new PersistentMap<K, V>(root, size);
+    }
+    
+    private void verifyThread() {
+        if (owner != Thread.currentThread()) {
+            throw new IllegalStateException("MutableMap should only be accessed form the thread it was created in.");
+        }
+    }
 
     @Override
-    protected ContextHolder<K, V>  updateContext(int expectedUpdates, Merger<K, V> merger) {
-        updateContext.validate();
-        updateContext.get().merger = merger;
-        return updateContext;
+    protected ContextReference<K, V>  contextReference(int expectedUpdates, Merger<K, V> merger) {
+        verifyThread();
+        if (contextReference.isCommitted()) {
+            contextReference = new ContextReference<K, V>(new UpdateContext<K, V>(expectedUpdates, merger));
+        } else {
+            contextReference.validate();
+            UpdateContext<K, V> context = contextReference.get();
+            context.merger = merger;
+        }
+        return contextReference;
     }
 
     @Override
     public int size() {
+        verifyThread();
         return size;
+    }
+
+    @Override
+    public MutableMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<K, V> merger) {
+        verifyThread();
+        updateFunction.apply(this);
+        return this;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    protected MutableMap<K, V> doReturn(ContextHolder<K, V> context, Node<K, V> newRoot, int newSize) {
+    protected MutableMap<K, V> doReturn(ContextReference<K, V> context, Node<K, V> newRoot, int newSize) {
         this.root = (Node<K, V>) (newRoot == null ? EMPTY_NODE : newRoot);
         this.size = newSize;
         return this;
