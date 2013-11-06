@@ -39,11 +39,17 @@ For persistence alternatives, at least SQL-based is on the list.
 Non-Blocking Persistent Data Structures for Java
 ------
 
-Efficient versioning calls for persistent data structures (as in Purely Functional Data Structures), but I was unable to find suitable from existing Java libraries - and I love to code - so I implemented my own. I suspect that these may be handy also on their own...
+Efficient versioning calls for persistent data structures (as in Purely Functional Data Structures), 
+but I was unable to find suitable from existing Java libraries - and I love to code - so I implemented my own. 
+I suspect that these may be handy also on their own...
 
 Inspired by Clojure's (i.e. Phil Bagwell's) persistent Hash Array Mapped Trie, here's some goodies for Java apps:
 
 * [PeristentMap](https://github.com/ssaarela/javersion/blob/master/javersion-core/src/main/java/org/javersion/util/PersistentMap.java) - persistent hash trie map 
 * [PersistentSet](https://github.com/ssaarela/javersion/blob/master/javersion-core/src/main/java/org/javersion/util/PersistentSet.java) - PersistentMap based set
 
-Compared to Clojure's PersistentHashMap (v. 1.5.1), PersistentMap is idiomatic Java code, simpler implementation and faster - at least on my Mac. But I encourage you not to trust my word but see for your self. - And if you do, I'd very much like to hear what you think of these (e.g. Twitter: @ssaarela or bug reports in Github).
+Compared to Clojure's PersistentHashMap (v. 1.5.1), PersistentMap is idiomatic Java code, simpler implementation 
+and faster - at least on my Mac. But I encourage you not to take my word for it, but see for your self.
+- And if you do, I'd very much like to hear what you think of these (e.g. Twitter: @ssaarela or bug reports in Github).
+Also if you're interested in using these without other versioning stuff, please, let me known - that's on the road map,
+but until there's actual need for it, it's just early optimization.
