@@ -194,63 +194,6 @@ public class PersistentSortedMap<K, V> {
         }
         return clone;
     }
-    
-    public String toString() {
-        return root == null ? "NIL" : root.toString();
-    }
-    
-    static enum NodeTranslator {
-        LEFT,
-        /**
-         * Inverse of LEFT
-         */
-        RIGHT {
-            public <K, V> Node<K, V> right(Node<K, V> node) {
-                return node == null ? null : node.left;
-            }
-            public <K, V> Node<K, V> left(Node<K, V> node) {
-                return node == null ? null : node.right;
-            }
-            public <K, V> void setRight(Node<K, V> node, Node<K, V> newRight) {
-                if (node != null) {
-                    node.left = newRight;
-                }
-            }
-            public <K, V> void setLeft(Node<K, V> node, Node<K, V> newLeft) {
-                if (node != null) {
-                    node.right = newLeft;
-                }
-            }
-            public NodeTranslator rotateLeft() {
-                return RIGHT;
-            }
-            public NodeTranslator rotateRight() {
-                return LEFT;
-            }
-        };
-        public <K, V> Node<K, V> right(Node<K, V> node) {
-            return node == null ? null : node.right;
-        }
-        public <K, V> Node<K, V> left(Node<K, V> node) {
-            return node == null ? null : node.left;
-        }
-        public <K, V> void setRight(Node<K, V> node, Node<K, V> newRight) {
-            if (node != null) {
-                node.right = newRight;
-            }
-        }
-        public <K, V> void setLeft(Node<K, V> node, Node<K, V> newLeft) {
-            if (node != null) {
-                node.left = newLeft;
-            }
-        }
-        public NodeTranslator rotateLeft() {
-            return LEFT;
-        }
-        public NodeTranslator rotateRight() {
-            return RIGHT;
-        }
-    }
 
     private PersistentSortedMap<K, V> postInsert(Path<K, V> path, Node<K, V> newNode) {
         Node<K, V> x = newNode;
@@ -310,6 +253,67 @@ public class PersistentSortedMap<K, V> {
 
     private boolean isRed(Node<K, V> node) {
         return node != null && node.color == RED;
+    }
+    
+    Node<K, V> root() {
+        return root;
+    }
+    
+    public String toString() {
+        return root == null ? "NIL" : root.toString();
+    }
+    
+    static enum NodeTranslator {
+        LEFT,
+        /**
+         * Inverse of LEFT
+         */
+        RIGHT {
+            public <K, V> Node<K, V> right(Node<K, V> node) {
+                return node == null ? null : node.left;
+            }
+            public <K, V> Node<K, V> left(Node<K, V> node) {
+                return node == null ? null : node.right;
+            }
+            public <K, V> void setRight(Node<K, V> node, Node<K, V> newRight) {
+                if (node != null) {
+                    node.left = newRight;
+                }
+            }
+            public <K, V> void setLeft(Node<K, V> node, Node<K, V> newLeft) {
+                if (node != null) {
+                    node.right = newLeft;
+                }
+            }
+            public NodeTranslator rotateLeft() {
+                return RIGHT;
+            }
+            public NodeTranslator rotateRight() {
+                return LEFT;
+            }
+        };
+        public <K, V> Node<K, V> right(Node<K, V> node) {
+            return node == null ? null : node.right;
+        }
+        public <K, V> Node<K, V> left(Node<K, V> node) {
+            return node == null ? null : node.left;
+        }
+        public <K, V> void setRight(Node<K, V> node, Node<K, V> newRight) {
+            if (node != null) {
+                node.right = newRight;
+            }
+        }
+        public <K, V> void setLeft(Node<K, V> node, Node<K, V> newLeft) {
+            if (node != null) {
+                node.left = newLeft;
+            }
+        }
+        public NodeTranslator rotateLeft() {
+            return LEFT;
+        }
+        public NodeTranslator rotateRight() {
+            return RIGHT;
+        }
     }
     
     static enum Color {

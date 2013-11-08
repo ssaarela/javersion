@@ -1,77 +1,72 @@
 package org.javersion.util;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.sameInstance;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
+import org.javersion.util.PersistentSortedMap.Color;
+import org.javersion.util.PersistentSortedMap.Node;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 
 public class PersistentSortedMapTest {
     
-    @Test
-    public void One_Entry_Immutability() {
-        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
-        PersistentSortedMap<Integer, Integer> newMap = map.assoc(5, 5);
-        
-        assertThat(newMap, not(sameInstance(map)));
-        
-        assertThat(map.size(), equalTo(0));
-        assertThat(newMap.size(), equalTo(1));
-        
-        assertThat(map.get(5), nullValue());
-        assertThat(newMap.get(5), equalTo(5));
-        
-        map = newMap;
-        newMap = map.assoc(5, 6);
-        
-        assertThat(newMap, not(sameInstance(map)));
-        
-        assertThat(map.size(), equalTo(1));
-        assertThat(newMap.size(), equalTo(1));
-        
-        assertThat(map.get(5), equalTo(5));
-        assertThat(newMap.get(5), equalTo(6));
-    }
-    
-    @Test
-    public void Insert_On_Both_Sides() {
-        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
-        map = assoc(map, 5);
-        map = assoc(map, 7);
-        map = assoc(map, 3);
-        map = assoc(map, 1);
-        map = assoc(map, 4);
-        map = assoc(map, 2);
-        map = assoc(map, 8);
-        map = assoc(map, 6);
+    private static final Random RANDOM = new Random();
 
-        for (int i=1; i <= 8; i++) {
-            assertThat(map.get(i), equalTo(i));
+    @Test
+    public void Ascending_Inserts() {
+        int size = 100;
+        List<Integer> ints = new ArrayList<>(size);
+        for (int i=0; i < size; i++) {
+            ints.add(i);
         }
+        assertInsert(ints);
+    }
+
+    @Test
+    public void Descending_Inserts() {
+        int size = 100;
+        List<Integer> ints = new ArrayList<>(size);
+        for (int i=size; i > 0; i--) {
+            ints.add(i);
+        }
+        assertInsert(ints);
     }
     
     @Test
-    public void Decreasing_Inserts() {
-        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
-        for (int i=16; i > 0; i--) {
-            map = assoc(map, i);
+    public void Random_Inserts() {
+        int size = 300;
+        Set<Integer> ints = Sets.newLinkedHashSetWithExpectedSize(size);
+        for (int i=0; i < size; i++) {
+            ints.add(RANDOM.nextInt());
         }
-        for (int i=16; i > 0; i--) {
-            assertThat(map.get(i), equalTo(i));
-        }
-        System.out.println(map);
+        assertInsert(new ArrayList<>(ints));
     }
     
     @Test
     public void CLR_P269() {
-        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
-        List<Integer> ints = ImmutableList.of(
+        // Example tree
+        assertInsert(
+                11,
+                2,
+                14,
+                1,
+                7,
+                15,
+                5,
+                8,
+                4
+                );
+        // Same nodes in ascending order
+        assertInsert(
                 1,
                 2,
                 4,
@@ -82,19 +77,75 @@ public class PersistentSortedMapTest {
                 14,
                 15
                 );
+    }
+    
+    private void assertInsert(Integer... ints) {
+        assertInsert(Arrays.asList(ints));
+    }
+    
+    private void assertInsert(List<Integer> ints) {
+        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
+        List<PersistentSortedMap<Integer, Integer>> maps = new ArrayList<>(ints.size());
         for (Integer i : ints) {
             map = assoc(map, i);
+            maps.add(map);
         }
-        
-        assertThat(map.size(), equalTo(ints.size()));
 
-        for (Integer i : ints) {
-            assertEntry(map, i);
+        assertRBProperties(map.root(), 0);
+
+        assertImmutabilityAndValues(maps, ints);
+    }
+    
+    private void assertImmutabilityAndValues(
+            List<PersistentSortedMap<Integer, Integer>> maps,
+            List<Integer> ints) {
+        for (int i=0; i < ints.size(); i++) {
+            PersistentSortedMap<Integer, Integer> map = maps.get(i);
+            assertThat(map.size(), equalTo(i+1));
+            for (int j=0; j < ints.size(); j++) {
+                Integer key = ints.get(j);
+                // Contains all values of previous maps
+                if (j <= i) {
+                    assertThat(map.get(key), equalTo(key));
+                } 
+                // But none of the later values
+                else {
+                    assertThat(map.get(key), nullValue());
+                }
+            }
+        }
+    }
+
+    private Integer blacksOnPath = null;
+    
+    private void assertRBProperties(Node<Integer, Integer> node, int blacks) {
+        assertThat(node.color, not(nullValue()));
+        if (node.color == Color.RED) {
+            assertBlack(node.left);
+            assertBlack(node.right);
+        } else {
+            blacks++;
+        }
+        boolean leaf = true;
+        if (node.left != null){
+            assertRBProperties(node.left, blacks);
+            leaf = false;
+        }
+        if (node.right != null) {
+            assertRBProperties(node.right, blacks);
+            leaf = false;
+        }
+        if (leaf) {
+            if (blacksOnPath == null) {
+                blacksOnPath = blacks;
+            } else {
+                assertThat(blacks, equalTo(blacksOnPath.intValue()));
+            }
         }
     }
     
-    private void assertEntry(PersistentSortedMap<Integer, Integer> map, Integer i) {
-        assertThat(map.get(i), equalTo(i));
+    private void assertBlack(Node<?, ?> node) {
+        assertTrue(node == null || node.color == Color.BLACK);
     }
     
     private PersistentSortedMap<Integer, Integer> assoc(PersistentSortedMap<Integer, Integer> map, Integer i) {
