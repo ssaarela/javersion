@@ -5,10 +5,12 @@ import java.util.Random;
 import org.javersion.util.MapUpdate;
 import org.javersion.util.MutableMap;
 import org.javersion.util.PersistentMap;
+import org.javersion.util.PersistentSortedMap;
 
 import clojure.lang.IPersistentMap;
 import clojure.lang.ITransientMap;
 import clojure.lang.PersistentHashMap;
+import clojure.lang.PersistentTreeMap;
 
 /*
  * Copyright 2013 Samppa Saarela
@@ -141,6 +143,20 @@ public class TestPersistentMapPerformance {
             bulkDeleteJaversion(javersionMap);
         end("bulkDelete", "Javersion");
         javersionMap = null;
+        
+        
+        PersistentTreeMap clojureSortedMap;
+        start();
+        for (int i=0; i < times; i++)
+            clojureSortedMap = sortedMapIncrementalInsertClojure();
+        end("sortedMapInsert", "Clojure");
+        
+        
+        PersistentSortedMap<Object, Object> javersionSortedMap;
+        start();
+        for (int i=0; i < times; i++)
+            javersionSortedMap = sortedMapIncrementalInsertJaversion();
+        end("sortedMapInsert", "Javersion");
     }
 
     private void iterateAllJaversion(PersistentMap<Object, Object> javersionMap) {
@@ -189,6 +205,20 @@ public class TestPersistentMapPerformance {
     }
     private PersistentMap<Object, Object> incrementalInsertJaversion() {
         PersistentMap<Object, Object> map = PersistentMap.empty();
+        for (int i=0; i < data.length; i++) {
+            map = map.assoc(data[i], data[i]);
+        }
+        return map;
+    }
+    private PersistentSortedMap<Object, Object> sortedMapIncrementalInsertJaversion() {
+        PersistentSortedMap<Object, Object> map = PersistentSortedMap.empty();
+        for (int i=0; i < data.length; i++) {
+            map = map.assoc(data[i], data[i]);
+        }
+        return map;
+    }
+    private PersistentTreeMap sortedMapIncrementalInsertClojure() {
+        PersistentTreeMap map = new PersistentTreeMap();
         for (int i=0; i < data.length; i++) {
             map = map.assoc(data[i], data[i]);
         }

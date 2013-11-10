@@ -18,7 +18,7 @@ import com.google.common.collect.Sets;
 
 public class PersistentSortedMapTest {
     
-    private static final int RANDOM_SEED = 769335732; //new Random().nextInt();
+    private static final int RANDOM_SEED = new Random().nextInt();
     
     private static final Random RANDOM = new Random(RANDOM_SEED);
 
@@ -26,16 +26,15 @@ public class PersistentSortedMapTest {
     
     @Test
     public void Ascending_Inserts() {
-        assertInsert(ascending());
+        assertInsert(ascending(300));
     }
     
     @Test
     public void Ascending_Deletes() {
-        assertInsert(ascending());
+        assertDelete(ascending(300));
     }
 
-    private List<Integer> ascending() {
-        int size = 100;
+    private List<Integer> ascending(int size) {
         List<Integer> ints = new ArrayList<>(size);
         for (int i=0; i < size; i++) {
             ints.add(i);
@@ -45,11 +44,10 @@ public class PersistentSortedMapTest {
 
     @Test
     public void Descending_Inserts() {
-        assertInsert(descending());
+        assertInsert(descending(300));
     }
 
-    private List<Integer> descending() {
-        int size = 100;
+    private List<Integer> descending(int size) {
         List<Integer> ints = new ArrayList<>(size);
         for (int i=size; i > 0; i--) {
             ints.add(i);
@@ -59,29 +57,28 @@ public class PersistentSortedMapTest {
 
     @Test
     public void Descending_Deletes() {
-        assertDelete(descending());
+        assertDelete(descending(300));
     }
     
     @Test
     public void Random_Inserts() {
         try {
-            assertInsert(randoms());
+            assertInsert(randoms(300));
         } catch (AssertionError e) {
-            throw new AssertionError(DESC + "->" + e.getMessage(), e);
+            throw new AssertionError(DESC + ": " + e.getMessage(), e);
         }
     }
     
     @Test
     public void Random_Deletes() {
         try {
-            assertDelete(randoms());
+            assertDelete(randoms(300));
         } catch (AssertionError e) {
-            throw new AssertionError(DESC + "->" + e.getMessage(), e);
+            throw new AssertionError(DESC + ": " + e.getMessage(), e);
         }
     }
 
-    private List<Integer> randoms() {
-        int size = 300;
+    private List<Integer> randoms(int size) {
         Set<Integer> ints = Sets.newLinkedHashSetWithExpectedSize(size);
         for (int i=0; i < size; i++) {
             ints.add(RANDOM.nextInt());
@@ -129,7 +126,7 @@ public class PersistentSortedMapTest {
             maps.add(map);
         }
 
-        assertRBMap(maps, ints);
+        assertRBMaps(maps, ints);
     }
 
     private void assertDelete(List<Integer> ints) {
@@ -140,17 +137,21 @@ public class PersistentSortedMapTest {
             maps.add(map);
         }
         for (int i = ints.size() - 1; i > 0; i--) {
-            map = maps.get(i);
-            maps.set(i-1, map.dissoc(i));
+            Integer key = ints.get(i);
+            map = map.dissoc(key);
+            blacksOnPath = null;
+            assertRBProperties(map.root(), 0);
+            maps.set(i-1, map);
         }
-        assertRBMap(maps, ints);
+        assertRBMaps(maps, ints);
     }
     
-    private void assertRBMap(
+    private void assertRBMaps(
             List<PersistentSortedMap<Integer, Integer>> maps,
             List<Integer> ints) {
         for (int i=0; i < ints.size(); i++) {
             PersistentSortedMap<Integer, Integer> map = maps.get(i);
+            blacksOnPath = null;
             assertRBProperties(map.root(), 0);
             assertThat(map.size(), equalTo(i+1));
             for (int j=0; j < ints.size(); j++) {

@@ -5,108 +5,186 @@ import static org.javersion.util.PersistentSortedMap.Color.RED;
 import static org.javersion.util.PersistentSortedMap.NodeTranslator.LEFT;
 import static org.javersion.util.PersistentSortedMap.NodeTranslator.RIGHT;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.google.common.base.Objects;
 
 public class PersistentSortedMap<K, V> {
-    
-    static class Path<K, V> implements Iterable<Node<K, V>> {
-        
-        private final ArrayList<Node<K, V>> path;
-        
-        public Path() {
-            path = new ArrayList<Node<K, V>>();
-        }
-        
-        public Path(int size) {
-            path = new ArrayList<>(size);
-        }
-        
-        public int size() {
-            return path.size();
-        }
-        
-        public void push(Node<K, V> node) {
-            path.add(node);
-        }
-        
-        public Node<K, V> root() {
-            return path.isEmpty() ? null : path.get(0);
-        }
-        
-        public Node<K, V> parent() {
-            return path.isEmpty() ? null : path.get(path.size() - 1);
-        }
-        
-        public Node<K, V> grandParent() {
-            return path.size() < 2 ? null : path.get(path.size() - 2);
-        }
-        
-        public Node<K, V> get(int i) {
-            i = (i < 0 ? path.size() + i : i);
-            if (0 <= i && i < path.size()) {
-                return path.get(i);
-            } else {
+
+    private static class UpdateContext<K, V>{
+
+        private MutableNode<K, V> root;
+
+        private final Map<Node<K, V>, MutableNode<K, V>> nodes;
+
+        private final MutableNode<K, V> nil = new MutableNode<K, V>(this, new Node<K, V>(null, null, BLACK)) {
+            @Override
+            public boolean isNil() {
+                return true;
+            }
+            @Override
+            public Color color() {
+                return BLACK;
+            }
+
+            public Node<K, V> getNode() {
                 return null;
+            }
+
+        };
+
+        UpdateContext() {
+            this.nodes = new LinkedHashMap<Node<K, V>, MutableNode<K, V>>();
+        }
+        MutableNode<K, V> put(Node<K, V> node) {
+            MutableNode<K, V> mutable = new MutableNode<>(this, node);
+            nodes.put(node, mutable);
+            return mutable;
+        }
+        MutableNode<K, V> root(Node<K, V> node) {
+            MutableNode<K, V> mutable = nodes.get(node);
+            if (mutable == null) {
+                node = node.clone();
+                mutable = new MutableNode<>(this, node);
+                nodes.put(node, mutable);
+            }
+            root = mutable;
+            return mutable;
+        }
+        //        MutableNode<K, V> nil() {
+            //            return nil;
+        //        }
+        MutableNode<K, V> get(final MutableNode<K, V> parent, final Node<K, V> node) {
+            Check.notNull(parent, "parent");
+            if (node == null) {
+                nil.parent(parent);
+                return nil;
+            }
+            MutableNode<K, V> mutable = nodes.get(node);
+            if (mutable == null) {
+                Node<K, V> clone = node.clone();
+                mutable = new MutableNode<>(this, clone);
+                nodes.put(clone, mutable);
+
+                if (node == parent.node.left) {
+                    parent.left(mutable);
+                } else {
+                    parent.right(mutable);
+                }
+                mutable.parent(parent);
+            }
+            return mutable;
+        }
+        void root(MutableNode<K, V> root) {
+            this.root = root;
+        }
+        public String toString() {
+            if (root == null) {
+                return "null";
+            } else {
+                return root.toString();
+            }
+        }
+    }
+
+    private static class MutableNode<K, V> {
+
+        private final UpdateContext<K, V> context;
+
+        private final Node<K, V> node;
+
+        private MutableNode<K, V> parent;
+
+        public MutableNode(UpdateContext<K, V> context, Node<K, V> node) {
+            this.context = context;
+            this.node = node;
+            this.parent = context.nil;
+        }
+
+        public boolean isNil() {
+            return false;
+        }
+
+        public Node<K, V> getNode() {
+            return node;
+        }
+
+        public K key() {
+            return node.key;
+        }
+        public void key(K key) {
+            this.node.key = key;
+        }
+
+        public V value() {
+            return node.value;
+        }
+        public void value(V value) {
+            this.node.value = value;
+        }
+
+        public void parent(MutableNode<K, V> mutable) {
+            this.parent = mutable;
+        }
+        public boolean hasLeft() {
+            return node.left != null;
+        }
+        public boolean hasRight() {
+            return node.right != null;
+        }
+        public boolean leftIs(Color color) {
+            return color == BLACK 
+                    ? node.left == null || node.left.color == BLACK
+                    : node.left != null && node.left.color == RED;
+        }
+        public boolean rightIs(Color color) {
+            return color == BLACK 
+                    ? node.right == null || node.right.color == BLACK
+                    : node.right != null && node.right.color == RED;
+        }
+        public MutableNode<K, V> left() {
+            return context.get(this, node.left);
+        }
+        public boolean isLeft() {
+            return !parent.isNil() && (isNil() ? parent.node.left == null : node == parent.node.left);
+        }
+        public boolean isRight() {
+            return !parent.isNil() && isNil() ? parent.node.right == null : node == parent.node.right;
+        }
+        public void left(MutableNode<K, V> mutable) {
+            if (mutable.isNil()) {
+                this.node.left = null;
+            } else {
+                this.node.left = mutable.node;
             }
         }
 
-        @Override
-        public Iterator<Node<K, V>> iterator() {
-            return path.iterator();
+        public MutableNode<K, V> right() {
+            return context.get(this, node.right);
         }
-        
-        public Node<K, V> pop() {
-            return pop(1);
-        }
-        
-        public Node<K, V> pop(int count) {
-            Node<K, V> result = null;
-            while (count-- > 0) {
-                result = path.remove(path.size() - 1);
+
+        public void right(MutableNode<K, V> mutable) {
+            if (mutable.isNil()) {
+                this.node.right = null;
+            } else {
+                this.node.right = mutable.node;
             }
-            return result;
         }
-        
-        public Path<K, V> clone() {
-            Path<K, V> clone = new Path<>(path.size());
-            Node<K, V> origParent = null;
-            Node<K, V> newParent = null;
-            for (Node<K, V> origNode : path) {
-                Node<K, V> newNode = origNode.clone();
-                clone.push(newNode);
-                // Connect to cloned parent
-                if (origParent != null) {
-                    if (origNode == origParent.left) {
-                        newParent.left = newNode;
-                    } else {
-                        newParent.right = newNode;
-                    }
-                }
-                origParent = origNode;
-                newParent = newNode;
-            }
-            return clone;
+
+        public Color color() {
+            return node.color;
         }
-        
+        public void color(Color color) {
+            node.color = color;
+        }
+
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append('/');
-            for (Node<K, V> n : path) {
-                if (sb.length() > 1) {
-                    sb.append(" > ");
-                }
-                sb.append(n.label());
-            }
-            sb.append('\n').append(root());
-            return sb.toString();
+            return node.toString(new StringBuilder(), 0).toString();
         }
     }
-    
+
     @SuppressWarnings("rawtypes")
     private final static Comparator<Comparable> NATURAL = new Comparator<Comparable>() {
         @SuppressWarnings("unchecked")
@@ -117,36 +195,36 @@ public class PersistentSortedMap<K, V> {
             return left.compareTo(right);
         }
     };
-    
+
     public static <K, V> PersistentSortedMap<K, V> empty() {
         return new PersistentSortedMap<K, V>();
     }
-    
+
     private final Comparator<? super K> comparator;
-    
+
     private Node<K, V> root;
-    
+
     private int size;
-    
+
     @SuppressWarnings("unchecked")
     public PersistentSortedMap() {
         this((Comparator<K>) NATURAL);
     }
-    
+
     public PersistentSortedMap(Comparator<? super K> comparator) {
         this.comparator = Check.notNull(comparator, "comparator");
     }
-    
+
     private PersistentSortedMap(Comparator<? super K> comparator, Node<K, V> root, int size) {
         this(comparator);
         this.root = root;
         this.size = size;
     }
-    
+
     public int size() {
         return size;
     }
-    
+
     public V get(K key) {
         if (root == null) {
             return null;
@@ -166,7 +244,7 @@ public class PersistentSortedMap<K, V> {
             return null;
         }
     }
-    
+
     public PersistentSortedMap<K, V> assoc(K key, V value) {
         if (root == null) {
             // Null and type check
@@ -175,288 +253,317 @@ public class PersistentSortedMap<K, V> {
                     comparator,
                     new Node<K, V>(key, value, BLACK),
                     1);
-        } else {
-            Path<K, V> path = new Path<>();
-            int cmpr = findPathTo(key, path);
-            Node<K, V> x;
-            
-            // Existing key
-            if (cmpr == 0) {
-                x = path.parent();
-                if (Objects.equal(value, x.value)) {
+        }
+        UpdateContext<K, V> context = new UpdateContext<>();
+        MutableNode<K, V> root = context.root(this.root);
+        MutableNode<K, V> y = null;
+        MutableNode<K, V> x = root;
+        int cmpr = 0;
+        while (!x.isNil()) {
+            y = x;
+            cmpr = comparator.compare(key, x.key());
+            if (cmpr < 0) {
+                x = x.left();
+            } else if (cmpr > 0) {
+                x = x.right();
+            } else {
+                if (Objects.equal(value, x.value())) {
                     return this;
                 } else {
-                    path = path.clone();
-                    path.parent().value = value;
-                    return new PersistentSortedMap<K, V>(comparator, path.root(), size);
+                    x.value(value);
+                    return new PersistentSortedMap<K, V>(comparator, root.getNode(), size);
                 }
             }
-            
-            // New key
-            path = path.clone();
-            x = path.parent();
-            Node<K, V> newNode = new Node<K, V>(key, value, RED);
-            if (cmpr < 0) {
-                x.left = newNode;
-            } else {
-                x.right = newNode;
-            }
-            return postInsert(path, newNode);
         }
-    }
-    
-    private int findPathTo(K key, Path<K, V> path) {
-        Node<K, V> x = root;
-        int cmpr = 0;
-        while (x != null) {
-            path.push(x);
-            cmpr = comparator.compare(key, x.key);
-            if (cmpr < 0) {
-                x = x.left;
-            } else if (cmpr > 0) {
-                x = x.right;
-            } else {
-                return cmpr;
-            }
+
+        MutableNode<K, V> z = context.put(new Node<K, V>(key, value, RED));
+        z.parent(y);
+        if (y.isNil()) {
+            return new PersistentSortedMap<K, V>(comparator, z.getNode(), size + 1);
         }
-        return cmpr;
-    }
-    
-    public PersistentSortedMap<K, V> dissoc(Object keyObj) {
-        @SuppressWarnings("unchecked")
-        K key = (K) keyObj;
-        Path<K, V> path = new Path<>();
-        int cmpr = findPathTo(key, path);
-        if (cmpr != 0) {
-            return this;
-        }
-        path = path.clone();
-        Node<K, V> z = path.pop(1);
-        Node<K, V> y;
-        Node<K, V> x;
-        
-        if (z.left == null || z.right == null) {
-            y = z;
+        if (cmpr < 0) {
+            y.left(z);
         } else {
-            y = successor(path, z);
+            y.right(z);
         }
-        if (y.left != null) {
-            x = y.left;
-        } else {
-            x = y.right;
-        }
-        Node<K, V> py = path.parent();
-        if (py == null) {
-            path.push(x);
-        } else {
-            if (y == py.left) {
-                py.left = x;
-            } else {
-                py.right = x;
-            }
-        }
-        if (y != z) {
-            z.key = y.key;
-            z.value = y.value;
-        }
-        if (y.color == BLACK) {
-            deleteFixup(path, x);
-        }
-        if (path.size() > 0) {
-            y = path.root();
-        }
-        return new PersistentSortedMap<>(comparator, y, size - 1);
+        return postInsert(z);
     }
-    
-    private void deleteFixup(Path<K, V> path, Node<K, V> x) {
-        Node<K, V> px = path.parent();
-        Node<K, V> w;
-        while (px != null && x.color == BLACK) {
+
+    private PersistentSortedMap<K, V> postInsert(MutableNode<K, V> x) {
+        MutableNode<K, V> y;
+
+        while (!x.parent.isNil() && isRed(x.parent)) {
             NodeTranslator translator;
-            if (x == px.left) {
+            if (x.parent.isLeft()) {
                 translator = LEFT;
             } else {
                 translator = RIGHT;
             }
-            w = translator.right(px);
-            if (w.color == RED) {
-                w.color = BLACK;
-                px.color = RED;
-                path.pop();
-                rotate(translator.left(), path, px);
-                w = px.right;
-            }
-            if (translator.left(w).color == BLACK && translator.right(w).color == BLACK) {
-                w.color = RED;
-                x = px;
-            } else {
-                if (translator.right(w).color == BLACK) {
-                    translator.left(w).color = BLACK;
-                    w.color = RED;
-                    rotate(translator.right(), path, w);
-                    w = translator.right(px);
-                }
-                w.color = px.color;
-                px.color = BLACK;
-                translator.right(w).color = BLACK;
-                path.pop();
-                rotate(translator.left(), path, px);
-                x = path.root();
-                px = null;
-            }
-        }
-    }
-
-    private Node<K, V> successor(Path<K, V> path, Node<K, V> x) {
-        if (x.right != null) {
-            return minimum(path, x);
-        }
-        Node<K, V> y = path.pop();
-        while (y != null && x == y.right) {
-            x = y;
-            y = path.pop();
-        }
-        return y;
-    }
-    
-    private Node<K, V> minimum(Path<K, V> path, Node<K, V> x) {
-        while (x.left != null) {
-            path.push(x);
-            x = x.left;
-        }
-        return x;
-    }
-    
-    private Node<K, V> maximum(Node<K, V> x) {
-        while (x.right != null) {
-            x = x.right;
-        }
-        return x;
-    }
-
-    private PersistentSortedMap<K, V> postInsert(Path<K, V> path, Node<K, V> newNode) {
-        Node<K, V> x = newNode;
-        Node<K, V> y;
-        Node<K, V> px = path.parent();
-        Node<K, V> ppx = path.grandParent();
-        
-        while (px != null && isRed(px)) {
-            NodeTranslator translator;
-            if (px == ppx.left) {
-                translator = LEFT;
-            } else {
-                translator = RIGHT;
-            }
-            y = translator.right(ppx);
+            y = translator.right(x.parent.parent);
             if (isRed(y)) {
-                y = y.clone();
-                translator.setRight(ppx, y);
-                px.color = BLACK;
-                y.color = BLACK;
-                ppx.color = RED;
-                x = ppx;
-                path.pop(2);
-                px = path.parent();
-                ppx = path.grandParent();
+                x.parent.color(BLACK);
+                y.color(BLACK);
+                x.parent.parent.color(RED);
+                x = x.parent.parent;
             } else {
-                if (x == translator.right(px)) {
-                    x = px;
-                    path.pop();
-                    rotate(translator.left(), path, x);
-                    px = path.parent();
-                    ppx = path.grandParent();
+                if (translator.isRight(x)) {
+                    x = x.parent;
+                    rotate(translator.toLeft(), x);
                 }
-                px.color = BLACK;
-                ppx.color = RED;
-                path.pop(2);
-                rotate(translator.right(), path, ppx);
+                x.parent.color(BLACK);
+                x.parent.parent.color(RED);
+                rotate(translator.toRight(), x.parent.parent);
             }
         }
-        if (path.size() > 0) {
-            x = path.root();
-        }
-        x.color = BLACK;
-        return new PersistentSortedMap<K, V>(comparator, x, size + 1);
-    }
-    
-    private void rotate(NodeTranslator translator, Path<K, V> path, Node<K, V> x) {
-        Node<K, V> y = translator.right(x);
-        translator.setRight(x, translator.left(y));
-        Node<K, V> px = path.parent();
-        path.push(y);
-        if (x == translator.left(px)) {
-            translator.setLeft(px, y);
-        } else {
-            translator.setRight(px, y);
-        }
-        translator.setLeft(y, x);
+        MutableNode<K, V> root = x.context.root;
+        root.color(BLACK);
+        return new PersistentSortedMap<K, V>(comparator, root.node, size + 1);
     }
 
-    private boolean isRed(Node<K, V> node) {
-        return node != null && node.color == RED;
+    private void rotate(NodeTranslator translator, MutableNode<K, V> x) {
+        MutableNode<K, V> y = translator.right(x);
+        translator.right(x, translator.left(y));
+        if (translator.hasLeft(y)) {
+            translator.left(y).parent(x);
+        }
+        y.parent(x.parent);
+
+        MutableNode<K, V> px = x.parent;
+        if (px.isNil()) {
+            y.context.root(y);
+        } else if (translator.isLeft(x)) {
+            translator.left(px, y);
+        } else {
+            translator.right(px, y);
+        }
+        translator.left(y, x);
+        x.parent(y);
     }
-    
+
+    private boolean isRed(MutableNode<K, V> node) {
+        return node.color() == RED;
+    }
+
     Node<K, V> root() {
         return root;
     }
-    
-    public String toString() {
-        return root == null ? "NIL" : root.toString();
+
+    public PersistentSortedMap<K, V> dissoc(Object keyObj) {
+        if (root == null) {
+            return this;
+        }
+        @SuppressWarnings("unchecked")
+        K key = (K) keyObj;
+
+        UpdateContext<K, V> context = new UpdateContext<>();
+        MutableNode<K, V> root = context.root(this.root);
+        MutableNode<K, V> z = null;
+        MutableNode<K, V> x = root;
+        int cmpr = -1;
+        while (!x.isNil() && cmpr != 0) {
+            z = x;
+            cmpr = comparator.compare(key, x.key());
+            if (cmpr < 0) {
+                x = x.left();
+            } else if (cmpr > 0) {
+                x = x.right();
+            }
+        }
+        if (cmpr != 0) {
+            return this;
+        }
+        MutableNode<K, V> y;
+        if (!z.hasLeft() || !z.hasRight()) {
+            y = z;
+        } else {
+            y = successor(z);
+        }
+        if (y.hasLeft()) {
+            x = y.left();
+        } else {
+            x = y.right();
+        }
+        x.parent(y.parent);
+        if (y.parent.isNil()) {
+            context.root(x);
+        } else {
+            if (y.isLeft()) {
+                y.parent.left(x);
+            } else {
+                y.parent.right(x);
+            }
+        }
+        if (y != z) {
+            z.key(y.key());
+            z.value(y.value());
+        }
+        if (y.color() == BLACK) {
+            deleteFixup(x);
+        }
+        root = y.context.root;
+        return new PersistentSortedMap<K, V>(comparator, root.getNode(), size - 1);
     }
-    
+
+    private void deleteFixup(MutableNode<K, V> x) {
+        MutableNode<K, V> w;
+        while (!x.parent.isNil() && x.color() == BLACK) {
+            NodeTranslator translator;
+            if (x.isLeft()) {
+                translator = LEFT;
+            } else {
+                translator = RIGHT;
+            }
+            w = translator.right(x.parent);
+            if (w.color() == RED) {
+                w.color(BLACK);
+                x.parent.color(RED);
+                rotate(translator.toLeft(), x.parent);
+                w = translator.right(x.parent);
+            }
+            if (translator.leftIs(w, BLACK) && translator.rightIs(w, BLACK)) {
+                w.color(RED);
+                x = x.parent;
+            } else {
+                MutableNode<K, V> px = x.parent;
+                if (translator.rightIs(w, BLACK)) {
+                    translator.left(w).color(BLACK);
+                    w.color(RED);
+                    rotate(translator.toRight(), w);
+                    w = translator.right(px);
+                }
+                w.color(px.color());
+                px.color(BLACK);
+                translator.right(w).color(BLACK);
+                rotate(translator.toLeft(), px);
+                x = x.context.root;
+            }
+        }
+        x.color(BLACK);
+    }
+
+    private MutableNode<K, V> successor(MutableNode<K, V> x) {
+        if (x.hasRight()) {
+            return minimum(x.right());
+        }
+        MutableNode<K, V> y = x.parent;
+        while (!y.isNil() && x.isRight()) {
+            x = y;
+            y = x.parent;
+        }
+        return y;
+    }
+
+    private MutableNode<K, V> minimum(MutableNode<K, V> x) {
+        while (x.hasLeft()) {
+            x = x.left();
+        }
+        return x;
+    }
+
+    //  private Node<K, V> maximum(Node<K, V> x) {
+    //      while (x.right != null) {
+    //          x = x.right;
+    //      }
+    //      return x;
+    //  }
+
+    public String toString() {
+        return root == null ? "null" : root.toString();
+    }
+
     static enum NodeTranslator {
         LEFT,
         /**
          * Inverse of LEFT
          */
         RIGHT {
-            public <K, V> Node<K, V> right(Node<K, V> node) {
-                return node == null ? null : node.left;
+            @Override
+            public <K, V> MutableNode<K, V> right(MutableNode<K, V> node) {
+                return node.left();
             }
-            public <K, V> Node<K, V> left(Node<K, V> node) {
-                return node == null ? null : node.right;
+            @Override
+            public <K, V> MutableNode<K, V> left(MutableNode<K, V> node) {
+                return node.right();
             }
-            public <K, V> void setRight(Node<K, V> node, Node<K, V> newRight) {
-                if (node != null) {
-                    node.left = newRight;
-                }
+            @Override
+            public <K, V> void right(MutableNode<K, V> node, MutableNode<K, V> newRight) {
+                node.left(newRight);
             }
-            public <K, V> void setLeft(Node<K, V> node, Node<K, V> newLeft) {
-                if (node != null) {
-                    node.right = newLeft;
-                }
+            @Override
+            public <K, V> void left(MutableNode<K, V> node, MutableNode<K, V> newLeft) {
+                node.right(newLeft);
             }
-            public NodeTranslator left() {
+            @Override
+            public NodeTranslator toLeft() {
                 return RIGHT;
             }
-            public NodeTranslator right() {
+            @Override
+            public NodeTranslator toRight() {
                 return LEFT;
             }
+            @Override
+            public boolean isLeft(MutableNode<?, ?> node) {
+                return node.isRight();
+            }
+            @Override
+            public boolean isRight(MutableNode<?, ?> node) {
+                return node.isLeft();
+            }
+            @Override
+            public boolean leftIs(MutableNode<?, ?> node, Color color) {
+                return node.rightIs(color);
+            }
+            @Override
+            public boolean rightIs(MutableNode<?, ?> node, Color color) {
+                return node.leftIs(color);
+            }
+            @Override
+            public <K, V> boolean hasLeft(MutableNode<K, V> node) {
+                return node.hasRight();
+            }
+            @Override
+            public <K, V> boolean hasRight(MutableNode<K, V> node) {
+                return node.hasLeft();
+            }
         };
-        public <K, V> Node<K, V> right(Node<K, V> node) {
-            return node == null ? null : node.right;
+        public boolean leftIs(MutableNode<?, ?> node, Color color) {
+            return node.leftIs(color);
         }
-        public <K, V> Node<K, V> left(Node<K, V> node) {
-            return node == null ? null : node.left;
+        public boolean rightIs(MutableNode<?, ?> node, Color color) {
+            return node.rightIs(color);
         }
-        public <K, V> void setRight(Node<K, V> node, Node<K, V> newRight) {
-            if (node != null) {
-                node.right = newRight;
-            }
+        public boolean isLeft(MutableNode<?, ?> node) {
+            return node.isLeft();
         }
-        public <K, V> void setLeft(Node<K, V> node, Node<K, V> newLeft) {
-            if (node != null) {
-                node.left = newLeft;
-            }
+        public boolean isRight(MutableNode<?, ?> node) {
+            return node.isRight();
         }
-        public NodeTranslator left() {
+        public <K, V> MutableNode<K, V> right(MutableNode<K, V> node) {
+            return node.right();
+        }
+        public <K, V> MutableNode<K, V> left(MutableNode<K, V> node) {
+            return node.left();
+        }
+        public <K, V> boolean hasLeft(MutableNode<K, V> node) {
+            return node.hasLeft();
+        }
+        public <K, V> boolean hasRight(MutableNode<K, V> node) {
+            return node.hasRight();
+        }
+        public <K, V> void right(MutableNode<K, V> node, MutableNode<K, V> newRight) {
+            node.right(newRight);
+        }
+        public <K, V> void left(MutableNode<K, V> node, MutableNode<K, V> newLeft) {
+            node.left(newLeft);
+        }
+        public NodeTranslator toLeft() {
             return LEFT;
         }
-        public NodeTranslator right() {
+        public NodeTranslator toRight() {
             return RIGHT;
         }
     }
-    
+
     static enum Color {
         RED,
         BLACK
@@ -506,7 +613,7 @@ public class PersistentSortedMap<K, V> {
         }
         private StringBuilder toString(StringBuilder sb, int level) {
             label(sb);
-            
+
             indent(sb, level+1).append("left:");
             if (left != null) {
                 left.toString(sb, level+1);
@@ -530,6 +637,6 @@ public class PersistentSortedMap<K, V> {
             return sb;
         }
     }
-    
-    
+
+
 }
