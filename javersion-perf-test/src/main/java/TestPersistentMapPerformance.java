@@ -250,7 +250,7 @@ public class TestPersistentMapPerformance {
         return map;
     }
     public static void main(String[] args) {
-        new TestPersistentMapPerformance("sequential", sequentialData(1<<22), 1).warmup().run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<21), 2).warmup().run();
         new TestPersistentMapPerformance("sequential", sequentialData(1<<19), 1<<4).run();
         new TestPersistentMapPerformance("sequential", sequentialData(1<<16), 1<<7).run();
         new TestPersistentMapPerformance("sequential", sequentialData(1<<13), 1<<10).run();
@@ -260,7 +260,7 @@ public class TestPersistentMapPerformance {
 
         new TestPersistentMapPerformance("sequential", sequentialData(1<<5),  1<<22).run();
 
-        new TestPersistentMapPerformance("random", randomData(1<<22), 1).run();
+        new TestPersistentMapPerformance("random", randomData(1<<21), 2).run();
         new TestPersistentMapPerformance("random", randomData(1<<19), 1<<4).run();
         new TestPersistentMapPerformance("random", randomData(1<<16), 1<<7).run();
         new TestPersistentMapPerformance("random", randomData(1<<13), 1<<10).run();

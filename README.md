@@ -56,3 +56,19 @@ and faster - at least on my Mac. But I encourage you not to take my word for it,
 - And if you do, I'd very much like to hear what you think of these (e.g. Twitter: @ssaarela or bug reports in Github).
 Also if you're interested in using these without other versioning stuff, please, let me known - that's on the road map,
 but until there's actual need for it, it's just early optimization.
+
+
+TODO
+----
+* Efficient persistent Map/Set and SortedMap/SortedSet for VersionGraph 
+  * Optimize PersitentSet via abstract HAMT base class for Map and Set that doesn't require Entry.value.
+  * Try 64-bit mode for PersistentMap and if it's good, sniff JVM bitness or make it configurable
+  * ArrayNode-optimization
+  * Efficient PersistedSortedSet
+* Object/version binding 
+  * Read (possibly cyclic) objects form VersionGraph
+  * Support for Sets, Maps, Lists etc
+  * ...
+* MAC-verified token for parent revs for easier updating
+* JSON versioning
+* ...
