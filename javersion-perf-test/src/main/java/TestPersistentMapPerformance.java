@@ -68,15 +68,15 @@ public class TestPersistentMapPerformance {
         this.times = times;
     }
     public TestPersistentMapPerformance warmup() {
-        bulkInsertJaversion(data.length);
+        bulkInsertJaversion();
         bulkInsertClojure();
         return this;
     }
     
     public void run() {
-        PersistentMap<Object, Object> javersionMap = null;
         PersistentHashMap clojureMap = null;
         
+        /**** CLOJURE ****/
         start();
         for (int i=0; i < times; i++)
             clojureMap = incrementalInsertClojure();
@@ -97,8 +97,24 @@ public class TestPersistentMapPerformance {
             incrementalDeleteClojure(clojureMap);
         end("incrementalDelete", "Clojure");
         clojureMap = null;
-        
 
+        
+        start();
+        for (int i=0; i < times; i++)
+            clojureMap = bulkInsertClojure();
+        end("bulkInsert", "Clojure");
+
+        start();
+        for (int i=0; i < times; i++)
+            bulkDeleteClojure(clojureMap);
+        end("bulkDelete", "Clojure");
+        clojureMap = null;
+
+        
+        
+        /**** JAVERSION ****/
+
+        PersistentMap<Object, Object> javersionMap = null;
         start();
         for (int i=0; i < times; i++)
             javersionMap = incrementalInsertJaversion();
@@ -119,23 +135,10 @@ public class TestPersistentMapPerformance {
             incrementalDeleteJaversion(javersionMap);
         end("incrementalDelete", "Javersion");
         javersionMap = null;
-
         
         start();
         for (int i=0; i < times; i++)
-            clojureMap = bulkInsertClojure();
-        end("bulkInsert", "Clojure");
-
-        start();
-        for (int i=0; i < times; i++)
-            bulkDeleteClojure(clojureMap);
-        end("bulkDelete", "Clojure");
-        int expectedSize = clojureMap.size();
-        clojureMap = null;
-        
-        start();
-        for (int i=0; i < times; i++)
-            javersionMap = bulkInsertJaversion(expectedSize);
+            javersionMap = bulkInsertJaversion();
         end("bulkInsert", "Javersion");
         
         start();
@@ -239,9 +242,8 @@ public class TestPersistentMapPerformance {
         }
         return (PersistentHashMap) map.persistent();
     }
-    private PersistentMap<Object, Object> bulkInsertJaversion(int expectedSize) {
+    private PersistentMap<Object, Object> bulkInsertJaversion() {
         PersistentMap<Object, Object> map = PersistentMap.empty().update(
-                expectedSize,
                 new MapUpdate<Object, Object>() {
                     @Override
                     public void apply(MutableMap<Object, Object> map) {
@@ -250,9 +252,6 @@ public class TestPersistentMapPerformance {
                         }
                     }
                 });
-        if (map.size() != expectedSize) {
-            throw new AssertionError();
-        }
         return map;
     }
     public static void main(String[] args) {
