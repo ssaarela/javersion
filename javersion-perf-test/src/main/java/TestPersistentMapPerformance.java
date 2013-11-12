@@ -6,6 +6,8 @@ import org.javersion.util.MapUpdate;
 import org.javersion.util.MutableMap;
 import org.javersion.util.PersistentMap;
 
+import clojure.lang.AFn;
+import clojure.lang.IFn;
 import clojure.lang.IPersistentMap;
 import clojure.lang.ITransientMap;
 import clojure.lang.PersistentHashMap;
@@ -66,8 +68,8 @@ public class TestPersistentMapPerformance {
         this.times = times;
     }
     public TestPersistentMapPerformance warmup() {
-        iterateAllJaversion(bulkInsertJaversion(data.length));
-        iterateAllClojure(bulkInsertClojure());
+        bulkInsertJaversion(data.length);
+        bulkInsertClojure();
         return this;
     }
     
@@ -80,10 +82,10 @@ public class TestPersistentMapPerformance {
             clojureMap = incrementalInsertClojure();
         end("incrementalInsert", "Clojure");
         
-        start();
-        for (int i=0; i < times; i++)
-            iterateAllClojure(clojureMap);
-        end("iterateAll", "Clojure");
+//        start();
+//        for (int i=0; i < times; i++)
+//            iterateAllClojure(clojureMap);
+//        end("iterateAll", "Clojure");
         
         start();
         for (int i=0; i < times; i++)
@@ -102,10 +104,10 @@ public class TestPersistentMapPerformance {
             javersionMap = incrementalInsertJaversion();
         end("incrementalInsert", "Javersion");
         
-        start();
-        for (int i=0; i < times; i++)
-            iterateAllJaversion(javersionMap);
-        end("iterateAll", "Javersion");
+//        start();
+//        for (int i=0; i < times; i++)
+//            iterateAllJaversion(javersionMap);
+//        end("iterateAll", "Javersion");
         
         start();
         for (int i=0; i < times; i++)
@@ -143,12 +145,12 @@ public class TestPersistentMapPerformance {
         javersionMap = null;
     }
 
-    private void iterateAllJaversion(PersistentMap<Object, Object> javersionMap) {
-        Iterator<Map.Entry<Object, Object>> iter = javersionMap.iterator();
-        while(iter.hasNext()) {
-            iter.next();
-        }
-    }
+//    private void iterateAllJaversion(PersistentMap<Object, Object> javersionMap) {
+//        Iterator<Map.Entry<Object, Object>> iter = javersionMap.iterator();
+//        while(iter.hasNext()) {
+//            iter.next();
+//        }
+//    }
     private void getAllByKeysJaversion(PersistentMap<Object, Object> javersionMap) {
         for (int i=0; i < data.length; i++) {
             Object value = javersionMap.get(data[i]);
@@ -157,13 +159,17 @@ public class TestPersistentMapPerformance {
             }
         }
     }
-    private void iterateAllClojure(PersistentHashMap clojureMap) {
-        @SuppressWarnings("rawtypes")
-        Iterator iter = clojureMap.iterator();
-        while (iter.hasNext()) {
-            iter.next();
-        }
-    }
+
+//    private final IFn clojureReduce = new AFn() {
+//        @Override
+//        public Object invoke(Object arg1, Object arg2, Object arg3) {
+//            return null;
+//        }
+//    };
+//    private void iterateAllClojure(PersistentHashMap clojureMap) {
+//        clojureMap.kvreduce(clojureReduce, null);
+//    }
+    
     private void getAllByKeysClojure(PersistentHashMap clojureMap) {
         for (int i=0; i < data.length; i++) {
             Object value = clojureMap.get(data[i]);

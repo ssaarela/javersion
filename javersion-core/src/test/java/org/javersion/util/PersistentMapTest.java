@@ -11,6 +11,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -367,6 +369,58 @@ public class PersistentMapTest {
         
         verify(merger).insert(entry1.capture());
         assertEntry(entry1,3, 3);
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void Immutability() {
+        final int seed = new Random().nextInt();
+        final Random random = new Random(seed);
+        
+        Integer[] ints = new Integer[3000];
+        for (int i=0; i < ints.length; i++) {
+            ints[i] = random.nextInt();
+        }
+
+        List<Map<Integer, Integer>> expectedMaps = new ArrayList<>(ints.length + 1);
+        List<PersistentMap<Integer, Integer>> persistentMaps = new ArrayList<>(ints.length + 1);
+        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        PersistentMap<Integer, Integer> persistentMap = PersistentMap.of();
+        expectedMaps.add(map);
+        persistentMaps.add(persistentMap);
+        
+        for (Integer i : ints) {
+            map = (Map<Integer, Integer>) ((HashMap<Integer, Integer>) map).clone();
+
+            map.put(i, i);
+            persistentMap = persistentMap.assoc(i, i);
+            
+            expectedMaps.add(map);
+            persistentMaps.add(persistentMap);
+        }
+
+        assertEqualityOfMaps(seed, ints, expectedMaps, persistentMaps);
+
+        for (int i=ints.length-1; i >= 0; i--) {
+            persistentMap = persistentMap.dissoc(ints[i]);
+            persistentMaps.set(i, persistentMap);
+        }
+        
+        assertEqualityOfMaps(seed, ints, expectedMaps, persistentMaps);
+    }
+
+    private void assertEqualityOfMaps(final int seed, Integer[] ints,
+            List<Map<Integer, Integer>> expectedMaps,
+            List<PersistentMap<Integer, Integer>> persistentMaps)
+            throws AssertionError {
+        assertThat(persistentMaps.get(0).asMap(), equalTo(expectedMaps.get(0)));
+        try {
+            for (int i=0; i < ints.length; i++) {
+                assertThat(persistentMaps.get(i+1).asMap(), equalTo(expectedMaps.get(i+1)));
+            }
+        } catch (Throwable e) {
+            throw new AssertionError("Random(" + seed + "): " + e.getMessage(), e);
+        }
     }
     
     @Test
