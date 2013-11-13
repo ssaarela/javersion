@@ -467,7 +467,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             
             newChildren[index] = newEntry;
 
-            if (childCount + 1 == 32) {
+            if (childCount == 31) {
                 // Convert to ArrayNode as it can be done here practically with no extra cost
                 return new ArrayNode<K, V>(currentContext, newChildren, childCount + 1);
             }
