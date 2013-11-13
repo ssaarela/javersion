@@ -7,6 +7,8 @@ import org.javersion.util.MutableMap;
 import org.javersion.util.PersistentMap;
 import org.javersion.util.PersistentSortedMap;
 
+import clojure.lang.AFn;
+import clojure.lang.IFn;
 import clojure.lang.IPersistentMap;
 import clojure.lang.ITransientMap;
 import clojure.lang.PersistentHashMap;
@@ -68,24 +70,24 @@ public class TestPersistentMapPerformance {
         this.times = times;
     }
     public TestPersistentMapPerformance warmup() {
-        iterateAllJaversion(bulkInsertJaversion(data.length));
-        iterateAllClojure(bulkInsertClojure());
+        bulkInsertJaversion();
+        bulkInsertClojure();
         return this;
     }
     
     public void run() {
-        PersistentMap<Object, Object> javersionMap = null;
         PersistentHashMap clojureMap = null;
         
+        /**** CLOJURE ****/
         start();
         for (int i=0; i < times; i++)
             clojureMap = incrementalInsertClojure();
         end("incrementalInsert", "Clojure");
         
-        start();
-        for (int i=0; i < times; i++)
-            iterateAllClojure(clojureMap);
-        end("iterateAll", "Clojure");
+//        start();
+//        for (int i=0; i < times; i++)
+//            iterateAllClojure(clojureMap);
+//        end("iterateAll", "Clojure");
         
         start();
         for (int i=0; i < times; i++)
@@ -97,28 +99,6 @@ public class TestPersistentMapPerformance {
             incrementalDeleteClojure(clojureMap);
         end("incrementalDelete", "Clojure");
         clojureMap = null;
-        
-
-        start();
-        for (int i=0; i < times; i++)
-            javersionMap = incrementalInsertJaversion();
-        end("incrementalInsert", "Javersion");
-        
-        start();
-        for (int i=0; i < times; i++)
-            iterateAllJaversion(javersionMap);
-        end("iterateAll", "Javersion");
-        
-        start();
-        for (int i=0; i < times; i++)
-            getAllByKeysJaversion(javersionMap);
-        end("getAllByKeys", "Javersion");
-        
-        start();
-        for (int i=0; i < times; i++)
-            incrementalDeleteJaversion(javersionMap);
-        end("incrementalDelete", "Javersion");
-        javersionMap = null;
 
         
         start();
@@ -130,12 +110,37 @@ public class TestPersistentMapPerformance {
         for (int i=0; i < times; i++)
             bulkDeleteClojure(clojureMap);
         end("bulkDelete", "Clojure");
-        int expectedSize = clojureMap.size();
         clojureMap = null;
+
+        
+        
+        /**** JAVERSION ****/
+
+        PersistentMap<Object, Object> javersionMap = null;
+        start();
+        for (int i=0; i < times; i++)
+            javersionMap = incrementalInsertJaversion();
+        end("incrementalInsert", "Javersion");
+        
+//        start();
+//        for (int i=0; i < times; i++)
+//            iterateAllJaversion(javersionMap);
+//        end("iterateAll", "Javersion");
         
         start();
         for (int i=0; i < times; i++)
-            javersionMap = bulkInsertJaversion(expectedSize);
+            getAllByKeysJaversion(javersionMap);
+        end("getAllByKeys", "Javersion");
+        
+        start();
+        for (int i=0; i < times; i++)
+            incrementalDeleteJaversion(javersionMap);
+        end("incrementalDelete", "Javersion");
+        javersionMap = null;
+        
+        start();
+        for (int i=0; i < times; i++)
+            javersionMap = bulkInsertJaversion();
         end("bulkInsert", "Javersion");
         
         start();
@@ -159,12 +164,12 @@ public class TestPersistentMapPerformance {
         end("sortedMapInsert", "Javersion");
     }
 
-    private void iterateAllJaversion(PersistentMap<Object, Object> javersionMap) {
-        Iterator<Map.Entry<Object, Object>> iter = javersionMap.iterator();
-        while(iter.hasNext()) {
-            iter.next();
-        }
-    }
+//    private void iterateAllJaversion(PersistentMap<Object, Object> javersionMap) {
+//        Iterator<Map.Entry<Object, Object>> iter = javersionMap.iterator();
+//        while(iter.hasNext()) {
+//            iter.next();
+//        }
+//    }
     private void getAllByKeysJaversion(PersistentMap<Object, Object> javersionMap) {
         for (int i=0; i < data.length; i++) {
             Object value = javersionMap.get(data[i]);
@@ -173,13 +178,17 @@ public class TestPersistentMapPerformance {
             }
         }
     }
-    private void iterateAllClojure(PersistentHashMap clojureMap) {
-        @SuppressWarnings("rawtypes")
-        Iterator iter = clojureMap.iterator();
-        while (iter.hasNext()) {
-            iter.next();
-        }
-    }
+
+//    private final IFn clojureReduce = new AFn() {
+//        @Override
+//        public Object invoke(Object arg1, Object arg2, Object arg3) {
+//            return null;
+//        }
+//    };
+//    private void iterateAllClojure(PersistentHashMap clojureMap) {
+//        clojureMap.kvreduce(clojureReduce, null);
+//    }
+    
     private void getAllByKeysClojure(PersistentHashMap clojureMap) {
         for (int i=0; i < data.length; i++) {
             Object value = clojureMap.get(data[i]);
@@ -263,9 +272,8 @@ public class TestPersistentMapPerformance {
         }
         return (PersistentHashMap) map.persistent();
     }
-    private PersistentMap<Object, Object> bulkInsertJaversion(int expectedSize) {
+    private PersistentMap<Object, Object> bulkInsertJaversion() {
         PersistentMap<Object, Object> map = PersistentMap.empty().update(
-                expectedSize,
                 new MapUpdate<Object, Object>() {
                     @Override
                     public void apply(MutableMap<Object, Object> map) {
@@ -274,13 +282,10 @@ public class TestPersistentMapPerformance {
                         }
                     }
                 });
-        if (map.size() != expectedSize) {
-            throw new AssertionError();
-        }
         return map;
     }
     public static void main(String[] args) {
-        new TestPersistentMapPerformance("sequential", sequentialData(1<<22), 1).warmup().run();
+        new TestPersistentMapPerformance("sequential", sequentialData(1<<21), 2).warmup().run();
         new TestPersistentMapPerformance("sequential", sequentialData(1<<19), 1<<4).run();
         new TestPersistentMapPerformance("sequential", sequentialData(1<<16), 1<<7).run();
         new TestPersistentMapPerformance("sequential", sequentialData(1<<13), 1<<10).run();
@@ -290,7 +295,7 @@ public class TestPersistentMapPerformance {
 
         new TestPersistentMapPerformance("sequential", sequentialData(1<<5),  1<<22).run();
 
-        new TestPersistentMapPerformance("random", randomData(1<<22), 1).run();
+        new TestPersistentMapPerformance("random", randomData(1<<21), 2).run();
         new TestPersistentMapPerformance("random", randomData(1<<19), 1<<4).run();
         new TestPersistentMapPerformance("random", randomData(1<<16), 1<<7).run();
         new TestPersistentMapPerformance("random", randomData(1<<13), 1<<10).run();
