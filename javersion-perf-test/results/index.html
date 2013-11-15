@@ -172,6 +172,7 @@ $(document).ready(function() {
 ];
  
     var cmpr = {};
+    var sum = {};
     for (var i=0; i < data.length; i++) {
         var d = data[i];
         var key = d.version + "/" + d.test + "/" + d.nature + "/" + d.size + "/" + d.repetitions;
@@ -183,6 +184,11 @@ $(document).ready(function() {
             c.size = d.size;
             c.version = d.version;
             c.repetitions = d.repetitions;
+        }
+        if (sum[d.impl]) {
+            sum[d.impl] = sum[d.impl] + d.time;
+        } else {
+            sum[d.impl] = d.time;
         }
         var avg = d.time / d.repetitions;
         c[d.impl] = avg;
@@ -199,6 +205,8 @@ $(document).ready(function() {
     }
     $("#results tbody").html(table.join(""));
     $('#results').dataTable();
+    
+    $('#fullTimeDiff').html(Math.round( ((sum.Clojure + (sum.Javersion - sum.Clojure)) / sum.Clojure) * 100 ));
 });
     </script>
     <style type="text/css">
@@ -209,6 +217,7 @@ $(document).ready(function() {
   </head>
 
   <body>
+  <div>Full time diff: <span id="fullTimeDiff"></span></div>
   <table id="results">
     <thead>
       <tr>

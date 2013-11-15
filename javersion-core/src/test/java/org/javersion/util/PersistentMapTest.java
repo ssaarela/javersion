@@ -245,7 +245,7 @@ public class PersistentMapTest {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void Merger_Gets_Called() {
-        Merger<Integer, Integer> merger = mock(Merger.class); 
+        Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
         doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
 
         PersistentMap<Integer, Integer> map = PersistentMap.empty();
@@ -302,7 +302,7 @@ public class PersistentMapTest {
         Map<Integer, Integer> ints = ImmutableMap.of(1, 2, 3, 3);
         Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
 
-        Merger<Integer, Integer> merger = mock(Merger.class); 
+        Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
         doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
         
         map = map.mergeAll(ints, merger);
@@ -327,7 +327,7 @@ public class PersistentMapTest {
         PersistentMap<Integer, Integer> ints = PersistentMap.of(1, 2, 3, 3);
         Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
 
-        Merger<Integer, Integer> merger = mock(Merger.class); 
+        Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
         doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
         
         map = map.mergeAll(ints, merger);
@@ -354,7 +354,7 @@ public class PersistentMapTest {
 
         ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
         ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
-        Merger<Integer, Integer> merger = mock(Merger.class); 
+        Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
         doReturn(new Entry(1, 1)).when(merger).merge(any(Entry.class), any(Entry.class));
         
         map = map.mergeAll(ints, merger);

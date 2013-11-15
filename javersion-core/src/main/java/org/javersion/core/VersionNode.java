@@ -26,10 +26,10 @@ import com.google.common.collect.ImmutableSet;
 
 public final class VersionNode<K, V, T extends Version<K, V>> implements Comparable<VersionNode<K, V, T>> {
 
-    private final Merger<K, VersionProperty<V>> merger;
+    private final Merger<Entry<K, VersionProperty<V>>> merger;
     
-    private static <K, V> Merger<K, VersionProperty<V>> newMerger() {
-        return new Merger<K, VersionProperty<V>>() {
+    private static <K, V> Merger<Entry<K, VersionProperty<V>>> newMerger() {
+        return new Merger<Entry<K, VersionProperty<V>>>() {
 
             @Override
             public void insert(Entry<K, VersionProperty<V>> newEntry) {

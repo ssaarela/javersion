@@ -16,12 +16,26 @@
 package org.javersion.util;
 
 
-public interface Merger<T> {
-
-    public void insert(T newEntry);
-    
-    public T merge(T oldEntry, T newEntry);
-
-    public void delete(T oldEntry);
-    
+public class ContextReference<T> {
+    private UpdateContext<T> context;
+    ContextReference(UpdateContext<T> context) {
+        this.context = context;
+    }
+    void commit() {
+        this.context = null;
+    }
+    UpdateContext<T> get() {
+        return context;
+    }
+    boolean isCommitted() {
+        return context == null;
+    }
+    boolean isSameAs(ContextReference<T> other) {
+        return this.context != null && this.context == other.context;
+    }
+    void validate() {
+        if (isCommitted()) {
+            throw new IllegalStateException("This update is already committed");
+        }
+    }
 }

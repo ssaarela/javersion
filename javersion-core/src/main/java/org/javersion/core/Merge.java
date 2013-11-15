@@ -84,7 +84,7 @@ public final class Merge<K, V> {
                 
                 final Set<Long> mergedRevisions = Sets.newHashSet(versionNode.allRevisions);
 
-                Merger<K, VersionProperty<V>> merger = new Merger<K, VersionProperty<V>>() {
+                Merger<Entry<K, VersionProperty<V>>> merger = new Merger<Entry<K, VersionProperty<V>>>() {
 
                     @Override
                     public void insert(Entry<K, VersionProperty<V>> newEntry) {

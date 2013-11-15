@@ -19,7 +19,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     
     private final Thread owner = Thread.currentThread();
     
-    private ContextReference<K, V>  contextReference;
+    private ContextReference<Entry<K, V>>  contextReference;
     
     private Node<K, V> root;
     
@@ -31,10 +31,10 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     MutableMap(Node<K, V> root, int size) {
-        this(new ContextReference<K, V>(new UpdateContext<K, V>(32, null)), root, size);
+        this(new ContextReference<Entry<K, V>>(new UpdateContext<Entry<K, V>>(32, null)), root, size);
     }
 
-    MutableMap(ContextReference<K, V>  context, Node<K, V> root, int size) {
+    MutableMap(ContextReference<Entry<K, V>>  context, Node<K, V> root, int size) {
         this.contextReference = context;
         this.root = root;
         this.size = size;
@@ -64,13 +64,13 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     @Override
-    protected ContextReference<K, V>  contextReference(int expectedUpdates, Merger<K, V> merger) {
+    protected ContextReference<Entry<K, V>>  contextReference(int expectedUpdates, Merger<Entry<K, V>> merger) {
         verifyThread();
         if (contextReference.isCommitted()) {
-            contextReference = new ContextReference<K, V>(new UpdateContext<K, V>(expectedUpdates, merger));
+            contextReference = new ContextReference<Entry<K, V>>(new UpdateContext<Entry<K, V>>(expectedUpdates, merger));
         } else {
             contextReference.validate();
-            UpdateContext<K, V> context = contextReference.get();
+            UpdateContext<Entry<K, V>> context = contextReference.get();
             context.merger = merger;
         }
         return contextReference;
@@ -83,7 +83,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     @Override
-    public MutableMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<K, V> merger) {
+    public MutableMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger) {
         verifyThread();
         updateFunction.apply(this);
         return this;
@@ -91,7 +91,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected MutableMap<K, V> doReturn(ContextReference<K, V> context, Node<K, V> newRoot, int newSize) {
+    protected MutableMap<K, V> doReturn(ContextReference<Entry<K, V>> context, Node<K, V> newRoot, int newSize) {
         this.root = (Node<K, V>) (newRoot == null ? EMPTY_NODE : newRoot);
         this.size = newSize;
         return this;
