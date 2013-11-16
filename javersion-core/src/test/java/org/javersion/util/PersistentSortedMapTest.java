@@ -18,8 +18,6 @@ import com.google.common.collect.Sets;
 public class PersistentSortedMapTest {
     
     private static final int RANDOM_SEED = new Random().nextInt();
-    
-    private static final Random RANDOM = new Random(RANDOM_SEED);
 
     private static final String DESC = "Random(" + RANDOM_SEED + ")";
     
@@ -98,6 +96,23 @@ public class PersistentSortedMapTest {
     }
     
     @Test
+    public void Re_Insertions() {
+        List<Integer> ints = randoms(10);
+        PersistentSortedMap<Integer, Integer> sortedMap = new PersistentSortedMap<>();
+        for (int i=0; i < 3; i++) {
+            for (Integer kv : ints) {
+                sortedMap = sortedMap.assoc(kv, kv);
+            }
+        }
+        assertThat(sortedMap.size(), equalTo(10));
+        for (Integer kv : ints) {
+            assertThat(sortedMap.get(kv), equalTo(kv));
+        }
+        blacksOnPath = null;
+        assertRBProperties(sortedMap.root(), 0);
+    }
+    
+    @Test
     public void Random_Bulk_Insert() {
         try {
             assertBulkInsert(randoms(300));
@@ -116,9 +131,10 @@ public class PersistentSortedMapTest {
     }
 
     private List<Integer> randoms(int size) {
+        Random random = new Random(RANDOM_SEED);
         Set<Integer> ints = Sets.newLinkedHashSetWithExpectedSize(size);
         for (int i=0; i < size; i++) {
-            ints.add(RANDOM.nextInt());
+            ints.add(random.nextInt());
         }
         return new ArrayList<>(ints);
     }
