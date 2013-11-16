@@ -1,19 +1,18 @@
 package org.javersion.util;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import org.javersion.util.PersistentSortedMap.Color;
 import org.javersion.util.PersistentSortedMap.Node;
 import org.junit.Test;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class PersistentSortedMapTest {
@@ -30,6 +29,30 @@ public class PersistentSortedMapTest {
     }
     
     @Test
+    public void Ascending_Bulk_Insert() {
+        assertBulkInsert(ascending(345));
+    }
+    
+    private void assertBulkInsert(List<Integer> ints) {
+        Map<Integer, Integer> map = Maps.newHashMapWithExpectedSize(ints.size());
+        for (Integer kv : ints) {
+            map.put(kv, kv);
+        }
+        PersistentSortedMap<Integer, Integer> empty = PersistentSortedMap.empty();
+        PersistentSortedMap<Integer, Integer> sortedMap = empty.assocAll(map);
+        
+        assertThat(empty.size(), equalTo(0));
+        assertThat(empty.root(), nullValue());
+        assertThat(sortedMap.size(), equalTo(map.size()));
+        
+        for (Integer kv : ints) {
+            assertThat(sortedMap.get(kv), equalTo(kv));
+        }
+        blacksOnPath = null;
+        assertRBProperties(sortedMap.root(), 0);
+    }
+    
+    @Test
     public void Ascending_Deletes() {
         assertDelete(ascending(300));
     }
@@ -40,6 +63,11 @@ public class PersistentSortedMapTest {
             ints.add(i);
         }
         return ints;
+    }
+
+    @Test
+    public void Descending_Bulk_Insert() {
+        assertBulkInsert(descending(300));
     }
 
     @Test
@@ -65,7 +93,16 @@ public class PersistentSortedMapTest {
         try {
             assertInsert(randoms(300));
         } catch (AssertionError e) {
-            throw new AssertionError(DESC + ": " + e.getMessage(), e);
+            throw new AssertionError(DESC, e);
+        }
+    }
+    
+    @Test
+    public void Random_Bulk_Insert() {
+        try {
+            assertBulkInsert(randoms(300));
+        } catch (AssertionError e) {
+            throw new AssertionError(DESC, e);
         }
     }
     
@@ -197,7 +234,7 @@ public class PersistentSortedMapTest {
     }
     
     private void assertBlack(Node<?, ?> node) {
-        assertTrue(node == null || node.color == Color.BLACK);
+        assertTrue("Expected black node (or null)", node == null || node.color == Color.BLACK);
     }
     
     private PersistentSortedMap<Integer, Integer> assoc(PersistentSortedMap<Integer, Integer> map, Integer i) {

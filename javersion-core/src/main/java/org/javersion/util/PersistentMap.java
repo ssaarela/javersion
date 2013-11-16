@@ -73,8 +73,8 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
     }
 
     @Override
-    protected ContextReference<Entry<K, V>> contextReference(int expectedUpdates, Merger<Entry<K, V>> merger) {
-        return new ContextReference<Entry<K, V>>(new UpdateContext<Entry<K, V>>(expectedUpdates, merger));
+    protected UpdateContext<Entry<K, V>> updateContext(int expectedUpdates, Merger<Entry<K, V>> merger) {
+        return new UpdateContext<Entry<K, V>>(expectedUpdates, merger);
     }
 
     @Override
@@ -89,14 +89,14 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
 
     @Override
     public PersistentMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger) {
-        ContextReference<Entry<K, V>> context = contextReference(expectedUpdates, merger);
+        UpdateContext<Entry<K, V>> context = updateContext(expectedUpdates, merger);
         MutableMap<K, V> mutableMap = new MutableMap<>(context, root, size);
         updateFunction.apply(mutableMap);
         return doReturn(context, mutableMap.getRoot(), mutableMap.size());
     }
 
     @Override
-    protected PersistentMap<K, V> doReturn(ContextReference<Entry<K, V>> context, Node<K, V> newRoot, int newSize) {
+    protected PersistentMap<K, V> doReturn(UpdateContext<Entry<K, V>> context, Node<K, V> newRoot, int newSize) {
         context.commit();
         if (newRoot == root) {
             return this;

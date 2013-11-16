@@ -78,12 +78,38 @@ public class PersistentSortedMap<K, V> {
     }
 
     public PersistentSortedMap<K, V> assoc(K key, V value) {
-        ContextReference<Node<K, V>> context = new ContextReference<Node<K, V>>(new UpdateContext<Node<K, V>>(1));
+        UpdateContext<Node<K, V>> context = new UpdateContext<Node<K, V>>(1);
         if (root == null) {
             return new PersistentSortedMap<K, V>(comparator, new Node<K, V>(context, key, value, BLACK), 1);
         } else {
             Node<K, V> newRoot = root.add(context, new Node<K, V>(context, key, value, RED), comparator);
-            return new PersistentSortedMap<K, V>(comparator, newRoot, size + context.get().getChangeAndReset());
+            if (newRoot == root) {
+                return this;
+            } else {
+                return new PersistentSortedMap<K, V>(comparator, newRoot.blacken(context), size + context.getChangeAndReset());
+            }
+        }
+    }
+
+    public PersistentSortedMap<K, V> assocAll(Map<K, V> map) {
+        UpdateContext<Node<K, V>> context = new UpdateContext<Node<K, V>>(map.size());
+        Node<K, V> newRoot = root;
+        int newSize = size;
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            if (newRoot == null) {
+                newSize++;
+                newRoot = new Node<K, V>(context, entry.getKey(), entry.getValue(), BLACK);
+            } else {
+                newRoot = newRoot.add(context, new Node<K, V>(context, entry.getKey(), entry.getValue(), RED), comparator);
+            }
+            newRoot = newRoot.blacken(context);
+            newSize += context.getChangeAndReset();
+        }
+        if (newRoot == root) {
+            size = newSize;
+            return this;
+        } else {
+            return new PersistentSortedMap<K, V>(comparator, newRoot.blacken(context), newSize);
         }
     }
 
@@ -93,36 +119,59 @@ public class PersistentSortedMap<K, V> {
 
     static enum Color {
         RED {
-            <K, V> Node<K, V> balanceInsert(ContextReference<Node<K, V>> currentContext, Node<K, V> parent, Node<K, V> child, Mirror mirror) {
-                Node<K, V> result = new Node<K, V>(currentContext, parent.key, parent.value, RED);
-                mirror.setLeftOf(result, child);
-                mirror.setRigthOf(result, mirror.rightOf(parent));
+            <K, V> Node<K, V> balanceInsert(UpdateContext<Node<K, V>> currentContext, Node<K, V> parent, Node<K, V> child, Mirror mirror) {
+                Node<K, V> result;
+                Node<K, V> left = mirror.leftOf(child);
+                Node<K, V> right = mirror.rightOf(child);
+                if (left != null && left.color == RED) {
+                    Node<K, V> newRight = parent.toEditable(currentContext);
+                    newRight.color = BLACK;
+                    mirror.children(newRight, right, mirror.rightOf(parent));
+                    
+                    result = child.toEditable(currentContext);
+                    result.color = RED;
+                    mirror.children(result, left.blacken(currentContext), newRight);
+                } else if (right != null && right.color == RED) {
+                    Node<K, V> newLeft = child.toEditable(currentContext);
+                    newLeft.color = BLACK;
+                    mirror.children(newLeft, left, mirror.leftOf(right));
+
+                    Node<K, V> newRight = parent.toEditable(currentContext);
+                    newRight.color = BLACK;
+                    mirror.children(newRight, mirror.rightOf(right), mirror.rightOf(parent));
+                    
+                    result = right.toEditable(currentContext);
+                    result.color = RED;
+                    mirror.children(result, newLeft, newRight);
+                } else {
+                    result = BLACK.balanceInsert(currentContext, parent, child, mirror);
+                }
                 return result;
             }
         },
         BLACK {
-            <K, V> Node<K, V> balanceInsert(ContextReference<Node<K, V>> currentContext, Node<K, V> child, Node<K, V> parent, Mirror mirror) {
-                Node<K, V> result = new Node<K, V>(currentContext, parent.key, parent.value, BLACK);
-                mirror.setLeftOf(result, child);
-                mirror.setRigthOf(result, mirror.rightOf(parent));
+            <K, V> Node<K, V> balanceInsert(UpdateContext<Node<K, V>> currentContext, Node<K, V> parent, Node<K, V> child, Mirror mirror) {
+                Node<K, V> result = parent.toEditable(currentContext);
+                result.color = BLACK;
+                mirror.children(result, child, mirror.rightOf(parent));
                 return result;
             }
         };
-        abstract <K, V> Node<K, V> balanceInsert(ContextReference<Node<K, V>> currentContext, Node<K, V> oldNode, Node<K, V> newNode, Mirror mirror);
+        abstract <K, V> Node<K, V> balanceInsert(UpdateContext<Node<K, V>> currentContext, Node<K, V> parent, Node<K, V> child, Mirror mirror);
     }
 
     static class Node<K, V> implements Map.Entry<K, V>, Cloneable {
-        final ContextReference<Node<K, V>> context;
+        final UpdateContext<Node<K, V>> context;
         final K key;
         V value;
         Color color;
         Node<K, V> left;
         Node<K, V> right;
         
-        public Node(ContextReference<Node<K, V>> context, K key, V value, Color color) {
+        public Node(UpdateContext<Node<K, V>> context, K key, V value, Color color) {
             this(context, key, value, color, null, null);
         }
-        public Node(ContextReference<Node<K, V>> context, K key, V value, Color color, Node<K, V> left, Node<K, V> right) {
+        public Node(UpdateContext<Node<K, V>> context, K key, V value, Color color, Node<K, V> left, Node<K, V> right) {
             this.context = context;
             this.key = key;
             this.value = value;
@@ -138,6 +187,16 @@ public class PersistentSortedMap<K, V> {
         public V getValue() {
             return value;
         }
+        public Node<K, V> blacken(UpdateContext<Node<K, V>> currentContext) {
+            if (color == BLACK) {
+                return this;
+            } else if (context.isSameAs(currentContext)) {
+                color = BLACK;
+                return this;
+            } else {
+                return new Node<K, V>(currentContext, key, value, BLACK, left, right);
+            }
+        }
         @Override
         public V setValue(V value) {
             throw new UnsupportedOperationException();
@@ -152,7 +211,7 @@ public class PersistentSortedMap<K, V> {
         public String toString() {
             return toString(new StringBuilder(), 0).toString();
         }
-        public Node<K, V> add(ContextReference<Node<K, V>> currentContext, final Node<K, V> node, Comparator<? super K> comparator) {
+        public Node<K, V> add(UpdateContext<Node<K, V>> currentContext, final Node<K, V> node, Comparator<? super K> comparator) {
             int cmpr = comparator.compare(node.key, this.key);
             Mirror mirror;
             if (cmpr == 0) {
@@ -165,26 +224,32 @@ public class PersistentSortedMap<K, V> {
             Node<K, V> left = mirror.leftOf(this);
             Node<K, V> newChild;
             if (left == null) {
-                currentContext.get().insert(node);
+                currentContext.insert(node);
                 newChild = node;
             } else {
                 newChild = left.add(currentContext, node, comparator);
             }
             Node<K, V> editable = toEditable(currentContext);
             mirror.setLeftOf(editable, newChild);
-            return color.balanceInsert(currentContext, this, newChild, mirror);
+
+            if (color == BLACK) {
+                return newChild.color.balanceInsert(currentContext, editable, newChild, mirror);
+            } else {
+                editable.color = RED;
+                return editable;
+            }
         }
-        private Node<K, V> toEditable(ContextReference<Node<K, V>> currentContext) {
+        private Node<K, V> toEditable(UpdateContext<Node<K, V>> currentContext) {
             if (this.context.isSameAs(currentContext)) {
                 return this;
             } else {
                 return cloneWith(currentContext);
             }
         }
-        public Node<K, V> cloneWith(ContextReference<Node<K, V>> currentContext) {
+        private Node<K, V> cloneWith(UpdateContext<Node<K, V>> currentContext) {
             return new Node<K, V>(currentContext, key, value, color, left, right);
         }
-        private Node<K, V> replaceWith(ContextReference<Node<K, V>> currentContext, Node<K, V> node) {
+        private Node<K, V> replaceWith(UpdateContext<Node<K, V>> currentContext, Node<K, V> node) {
             if (this.context.isSameAs(currentContext)) {
                 this.value = node.value;
                 return this;
@@ -250,7 +315,7 @@ public class PersistentSortedMap<K, V> {
             return node.left;
         }
         <K, V> Node<K, V> rightOf(Node<K, V> node) {
-            return node.left;
+            return node.right;
         }
         <K, V> void setLeftOf(Node<K, V> node, Node<K, V> left) {
             node.left = left;
@@ -258,5 +323,10 @@ public class PersistentSortedMap<K, V> {
         <K, V> void setRigthOf(Node<K, V> node, Node<K, V> right) {
             node.right = right;
         }
+        <K, V> void children(Node<K, V> node, Node<K, V> left, Node<K, V> right) {
+            setLeftOf(node, left);
+            setRigthOf(node, right);
+        }
     }
+
 }
