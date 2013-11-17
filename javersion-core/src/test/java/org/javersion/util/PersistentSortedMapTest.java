@@ -89,9 +89,33 @@ public class PersistentSortedMapTest {
     @Test
     public void Random_Inserts() {
         try {
-            assertInsert(randoms(300));
+            assertInsert(randoms(500));
         } catch (AssertionError e) {
             throw new AssertionError(DESC, e);
+        }
+    }
+    
+    @Test
+    public void Removes() {
+        assertRemoves(randoms(300));
+    }
+    
+    private void assertRemoves(List<Integer> ints) {
+        PersistentSortedMap<Integer, Integer> sortedMap = new PersistentSortedMap<>();
+        for (Integer kv : ints) {
+            sortedMap = sortedMap.assoc(kv, kv);
+        }
+        PersistentSortedMap<Integer, Integer> afterRemove;
+        for (Integer kv : ints) {
+            afterRemove = sortedMap.dissoc(kv);
+            assertThat(afterRemove.size(), equalTo(sortedMap.size() - 1));
+            for (Integer kv2 : ints) {
+                if (kv2 == kv) {
+                    assertThat(afterRemove.get(kv2), nullValue());
+                } else {
+                    assertThat(afterRemove.get(kv2), equalTo(kv2));
+                }
+            }
         }
     }
     
@@ -124,7 +148,7 @@ public class PersistentSortedMapTest {
     @Test
     public void Random_Deletes() {
         try {
-            assertDelete(randoms(300));
+            assertDelete(randoms(500));
         } catch (AssertionError e) {
             throw new AssertionError(DESC + ": " + e.getMessage(), e);
         }

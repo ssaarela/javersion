@@ -195,6 +195,7 @@ public class PersistentSortedMap<K, V> {
         public Node(UpdateContext<Node<K, V>> context, K key, V value, Color color) {
             this(context, key, value, color, null, null);
         }
+        
         public Node(UpdateContext<Node<K, V>> context, K key, V value, Color color, Node<K, V> left, Node<K, V> right) {
             this.context = context;
             this.key = key;
@@ -203,34 +204,43 @@ public class PersistentSortedMap<K, V> {
             this.left = left;
             this.right = right;
         }
+        
         @Override
         public K getKey() {
             return key;
         }
+        
         @Override
         public V getValue() {
             return value;
         }
+        
         public Node<K, V> blacken(UpdateContext<Node<K, V>> currentContext) {
             return changeColor(currentContext, BLACK);
         }
+        
         public Node<K, V> redden(UpdateContext<Node<K, V>> currentContext) {
             return changeColor(currentContext, RED);
         }
+        
         @Override
         public V setValue(V value) {
             throw new UnsupportedOperationException();
         }
+        
         public String label() {
             return label(new StringBuilder()).toString();
         }
+        
         private StringBuilder label(StringBuilder sb) {
             sb.append(color).append('(').append(key).append(':').append(value).append(')');
             return sb;
         }
+        
         public String toString() {
             return toString(new StringBuilder(), 0).toString();
         }
+        
         public Node<K, V> add(UpdateContext<Node<K, V>> currentContext, final Node<K, V> node, Comparator<? super K> comparator) {
             int cmpr = comparator.compare(node.key, this.key);
             Mirror mirror;
@@ -262,6 +272,7 @@ public class PersistentSortedMap<K, V> {
                 return editable;
             }
         }
+        
         public Node<K, V> remove(UpdateContext<Node<K, V>> currentContext, final K key, Comparator<? super K> comparator) {
             int cmpr = comparator.compare(key, this.key);
             Mirror mirror;
@@ -285,13 +296,13 @@ public class PersistentSortedMap<K, V> {
             }
             if (mirror == LEFT) {
                 if (isBlack(left)) {
-                    return LEFT.balanceDel(currentContext, this, newChild, right);
+                    return balanceLeftDel(currentContext, this, newChild, right);
                 } else {
                     return edit(currentContext, RED, newChild, right);
                 }
             } else {
                 if (isBlack(right)) {
-                    return RIGHT.balanceDel(currentContext, this, left, newChild);
+                    return balanceRightDel(currentContext, this, left, newChild);
                 } else {
                     return edit(currentContext, RED, left, newChild);
                 }
@@ -301,36 +312,111 @@ public class PersistentSortedMap<K, V> {
         private Node<K, V> append(UpdateContext<Node<K, V>> currentContext, Node<K, V> left, Node<K, V> right) {
             if (left == null) {
                 return right;
-            } else if (right == null) {
+            } 
+            else if (right == null) {
                 return left;
-            } else if (left.color == RED) {
-                if (right.color == RED) {
+            } 
+            else if (isRed(left)) {
+                if (isRed(right)) {
                     Node<K, V> app = append(currentContext, left.right, right.left);
-                    if (app != null && app.color == RED) {
+                    if (isRed(app)) {
                         Node<K, V> newLeft = left.edit(currentContext, RED, left.left, app.left);
                         Node<K, V> newRight = right.edit(currentContext, RED, app.right, right.right);
                         return app.edit(currentContext, RED, newLeft, newRight);
-                    } else {
+                    } 
+                    else {
                         Node<K, V> newRight = right.edit(currentContext, RED, app, right.right);
                         return left.edit(currentContext, RED, left.left, newRight);
                     }
-                } else {
-                    Node<K, V> app = append(currentContext, left.right, right);
-                    return left.edit(currentContext, RED, left.left, app);
                 }
-            } else if (right.color == RED) {
-                Node<K, V> app = append(currentContext, left, right.left);
-                return right.edit(currentContext, RED, app, right.right);
-            } else { // black/black
+                else {
+                    Node<K, V> newRight = append(currentContext, left.right, right);
+                    return left.edit(currentContext, RED, left.left, newRight);
+                }
+            } 
+            else if (isRed(right)) {
+                Node<K, V> newLeft = append(currentContext, left, right.left);
+                return right.edit(currentContext, RED, newLeft, right.right);
+            } 
+            else { // black/black
                 Node<K, V> app = append(currentContext, left.right, right.left);
-                if (app != null && app.color == RED) {
+                if (isRed(app)) {
                     Node<K, V> newLeft = left.edit(currentContext, BLACK, left.left, app.left);
                     Node<K, V> newRight = right.edit(currentContext, BLACK, app.right, right.right);
                     return app.edit(currentContext, RED, newLeft, newRight);
-                } else {
+                } 
+                else {
                     Node<K, V> newRight = right.edit(currentContext, BLACK, app, right.right);
-                    return LEFT.balanceDel(currentContext, left, left.left, newRight);
+                    return balanceLeftDel(currentContext, left, left.left, newRight);
                 }
+            }
+        }
+        
+        private Node<K, V> balanceLeftDel(UpdateContext<Node<K, V>> currentContext, Node<K, V> node, Node<K, V> left, Node<K, V> right) {
+            if (isRed(left)) {
+                return node.edit(currentContext, RED, left.blacken(currentContext), right);
+            } 
+            else if (isBlack(right)) {
+                return balanceRight(currentContext, node, left, right.redden(currentContext));
+            } 
+            else if (isRed(right) && isBlack(right.left)) {
+                Node<K, V> rightLeft = right.left;
+                Node<K, V> newLeft = node.edit(currentContext, BLACK, left, rightLeft.left);
+                Node<K, V> newRight = balanceRight(currentContext, right, rightLeft.right, right.right.redden(currentContext));
+                return rightLeft.edit(currentContext, RED, newLeft, newRight);
+            }
+            else {
+                throw new IllegalStateException("Illegal invariant");
+            }
+        }
+        
+        private Node<K, V> balanceRightDel(UpdateContext<Node<K, V>> currentContext, Node<K, V> node, Node<K, V> left, Node<K, V> right) {
+            if (isRed(right)) {
+                return node.edit(currentContext, RED, left, right.blacken(currentContext));
+            } 
+            else if (isBlack(left)) {
+                return balanceLeft(currentContext, node, left.redden(currentContext), right);
+            } 
+            else if (isRed(left) && isBlack(left.right)) {
+                Node<K, V> leftRight = left.right;
+                Node<K, V> newLeft = balanceLeft(currentContext, left, left.left.redden(currentContext), leftRight.left);
+                Node<K, V> newRight = node.edit(currentContext, BLACK, leftRight.right, right);
+                return leftRight.edit(currentContext, RED, newLeft, newRight);
+            }
+            else {
+                throw new IllegalStateException("Illegal invariant");
+            }
+        }
+
+        private Node<K, V> balanceLeft(UpdateContext<Node<K, V>> currentContext, Node<K, V> node, Node<K, V> left, Node<K, V> right) {
+            if (isRed(left) && isRed(left.left)) {
+                Node<K, V> newRight = node.edit(currentContext, BLACK, left.right, right);
+                return left.edit(currentContext, RED, left.left.blacken(currentContext), newRight);
+            } 
+            else if (isRed(left) && isRed(left.right)) {
+                Node<K, V> leftRight = left.right;
+                Node<K, V> newLeft = left.edit(currentContext, BLACK, left.left, leftRight.left);
+                Node<K, V> newRight = node.edit(currentContext, BLACK, leftRight.right, right);
+                return leftRight.edit(currentContext, RED, newLeft, newRight);
+            }
+            else {
+                return node.edit(currentContext, BLACK, left, right);
+            }
+        }
+
+        private Node<K, V> balanceRight(UpdateContext<Node<K, V>> currentContext, Node<K, V> node, Node<K, V> left, Node<K, V> right) {
+            if (isRed(right) && isRed(right.right)) {
+                Node<K, V> newLeft= node.edit(currentContext, BLACK, left, right.left);
+                return right.edit(currentContext, RED, newLeft, right.right.blacken(currentContext));
+            } 
+            else if (isRed(right) && isRed(right.left)) {
+                Node<K, V> rightLeft = right.left;
+                Node<K, V> newLeft = node.edit(currentContext, BLACK, left, rightLeft.left);
+                Node<K, V> newRight = right.edit(currentContext, BLACK, rightLeft.right, right.right);
+                return rightLeft.edit(currentContext, RED, newLeft, newRight);
+            } 
+            else {
+                return node.edit(currentContext, BLACK, left, right);
             }
         }
         
@@ -428,38 +514,6 @@ public class PersistentSortedMap<K, V> {
             <K, V> void setRigthOf(Node<K, V> node, Node<K, V> right) {
                 node.left = right;
             }
-            @Override
-            <K, V> Node<K, V> balanceDel(UpdateContext<Node<K, V>> currentContext, Node<K, V> node, Node<K, V> left, Node<K, V> right) {
-                if (isRed(right)) {
-                    return node.edit(currentContext, RED, left, right.blacken(currentContext));
-                } 
-                else if (isBlack(left)) {
-                    return LEFT.balance(currentContext, node, left.redden(currentContext), right);
-                } 
-                else if (isRed(left) && isBlack(left.right)) {
-                    Node<K, V> newLeft = LEFT.balance(currentContext, left, left.left.redden(currentContext), left.right.left);
-                    Node<K, V> newRight = node.edit(currentContext, BLACK, left.right.right, right);
-                    return left.right.edit(currentContext, RED, newLeft, newRight);
-                }
-                else {
-                    throw new IllegalStateException("Illegal invariant");
-                }
-            }
-            @Override
-            <K, V> Node<K, V> balance(UpdateContext<Node<K, V>> currentContext, Node<K, V> node, Node<K, V> left, Node<K, V> right) {
-                if (isRed(right) && isRed(right.right)) {
-                    Node<K, V> newLeft= node.edit(currentContext, BLACK, left, right.left);
-                    return left.edit(currentContext, RED, newLeft, right.right.blacken(currentContext));
-                } 
-                else if (isRed(right) && isRed(right.left)) {
-                    Node<K, V> newLeft = node.edit(currentContext, BLACK, left, right.left.left);
-                    Node<K, V> newRight = right.edit(currentContext, BLACK, right.left.right, right.right);
-                    return right.left.edit(currentContext, RED, newLeft, newRight);
-                } 
-                else {
-                    return node.edit(currentContext, BLACK, left, right);
-                }
-            }
         },
         LEFT;
         <K, V> Node<K, V> leftOf(Node<K, V> node) {
@@ -477,36 +531,6 @@ public class PersistentSortedMap<K, V> {
         <K, V> void children(Node<K, V> node, Node<K, V> left, Node<K, V> right) {
             setLeftOf(node, left);
             setRigthOf(node, right);
-        }
-        <K, V> Node<K, V> balanceDel(UpdateContext<Node<K, V>> currentContext, Node<K, V> node, Node<K, V> left, Node<K, V> right) {
-            if (isRed(left)) {
-                return node.edit(currentContext, RED, left.blacken(currentContext), right);
-            } 
-            else if (isBlack(right)) {
-                return RIGHT.balance(currentContext, node, left, right.redden(currentContext));
-            } 
-            else if (isRed(right) && isBlack(right.left)) {
-                Node<K, V> newLeft = node.edit(currentContext, BLACK, left, right.left.left);
-                Node<K, V> newRight = RIGHT.balance(currentContext, right, right.left.right, right.right.redden(currentContext));
-                return right.left.edit(currentContext, RED, newLeft, newRight);
-            }
-            else {
-                throw new IllegalStateException("Illegal invariant");
-            }
-        }
-        <K, V> Node<K, V> balance(UpdateContext<Node<K, V>> currentContext, Node<K, V> node, Node<K, V> left, Node<K, V> right) {
-            if (isRed(left) && isRed(left.left)) {
-                Node<K, V> newRight = node.edit(currentContext, BLACK, left.right, right);
-                return left.edit(currentContext, RED, left.left.blacken(currentContext), newRight);
-            } 
-            else if (isRed(left) && isRed(left.right)) {
-                Node<K, V> newLeft = left.edit(currentContext, BLACK, left.left, left.right.left);
-                Node<K, V> newRight = node.edit(currentContext, BLACK, left.right.right, right);
-                return left.right.edit(currentContext, RED, newLeft, newRight);
-            }
-            else {
-                return node.edit(currentContext, BLACK, left, right);
-            }
         }
     }
 
