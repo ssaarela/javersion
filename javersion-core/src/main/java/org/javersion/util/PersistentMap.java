@@ -78,7 +78,7 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
     }
 
     @Override
-    Node<K, V> getRoot() {
+    Node<K, V> root() {
         return root;
     }
 
@@ -92,7 +92,7 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
         UpdateContext<Entry<K, V>> context = updateContext(expectedUpdates, merger);
         MutableMap<K, V> mutableMap = new MutableMap<>(context, root, size);
         updateFunction.apply(mutableMap);
-        return doReturn(context, mutableMap.getRoot(), mutableMap.size());
+        return doReturn(context, mutableMap.root(), mutableMap.size());
     }
 
     @Override

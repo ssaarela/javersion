@@ -6,9 +6,14 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
-import org.javersion.util.PersistentSortedMap.Color;
+import org.javersion.util.AbstractSortedTree.Color;
 import org.javersion.util.PersistentSortedMap.Node;
 import org.junit.Test;
 
@@ -101,7 +106,7 @@ public class PersistentSortedMapTest {
     }
     
     private void assertRemoves(List<Integer> ints) {
-        PersistentSortedMap<Integer, Integer> sortedMap = new PersistentSortedMap<>();
+        PersistentSortedMap<Integer, Integer> sortedMap = PersistentSortedMap.empty();
         for (Integer kv : ints) {
             sortedMap = sortedMap.assoc(kv, kv);
         }
@@ -122,7 +127,7 @@ public class PersistentSortedMapTest {
     @Test
     public void Re_Insertions() {
         List<Integer> ints = randoms(10);
-        PersistentSortedMap<Integer, Integer> sortedMap = new PersistentSortedMap<>();
+        PersistentSortedMap<Integer, Integer> sortedMap = PersistentSortedMap.empty();
         for (int i=0; i < 3; i++) {
             for (Integer kv : ints) {
                 sortedMap = sortedMap.assoc(kv, kv);

@@ -1,3 +1,4 @@
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -39,6 +40,13 @@ public class TestPersistentMapPerformance {
 
     private final Object[] data;// = new String[length];
     
+    private static final Comparator COMPARATOR = new Comparator() {
+        @Override
+        public int compare(Object o1, Object o2) {
+            return ((String) o1).compareTo((String) o2);
+        }
+    };
+    
     private static final Random RANDOM = new Random();
     
     private static Object[] sequentialData(int length) {
@@ -72,6 +80,8 @@ public class TestPersistentMapPerformance {
     public TestPersistentMapPerformance warmup() {
         bulkInsertJaversion();
         bulkInsertClojure();
+        sortedMapIncrementalInsertClojure();
+        sortedMapIncrementalInsertJaversion();
         return this;
     }
     
@@ -111,6 +121,13 @@ public class TestPersistentMapPerformance {
             bulkDeleteClojure(clojureMap);
         end("bulkDelete", "Clojure");
         clojureMap = null;
+        
+        
+        PersistentTreeMap clojureSortedMap;
+        start();
+        for (int i=0; i < times; i++)
+            clojureSortedMap = sortedMapIncrementalInsertClojure();
+        end("sortedMapInsert", "Clojure");
 
         
         
@@ -148,13 +165,6 @@ public class TestPersistentMapPerformance {
             bulkDeleteJaversion(javersionMap);
         end("bulkDelete", "Javersion");
         javersionMap = null;
-        
-        
-        PersistentTreeMap clojureSortedMap;
-        start();
-        for (int i=0; i < times; i++)
-            clojureSortedMap = sortedMapIncrementalInsertClojure();
-        end("sortedMapInsert", "Clojure");
         
         
         PersistentSortedMap<Object, Object> javersionSortedMap;
@@ -220,14 +230,14 @@ public class TestPersistentMapPerformance {
         return map;
     }
     private PersistentSortedMap<Object, Object> sortedMapIncrementalInsertJaversion() {
-        PersistentSortedMap<Object, Object> map = PersistentSortedMap.empty();
+        PersistentSortedMap<Object, Object> map = PersistentSortedMap.empty(COMPARATOR);
         for (int i=0; i < data.length; i++) {
             map = map.assoc(data[i], data[i]);
         }
         return map;
     }
     private PersistentTreeMap sortedMapIncrementalInsertClojure() {
-        PersistentTreeMap map = new PersistentTreeMap();
+        PersistentTreeMap map = new PersistentTreeMap(null, COMPARATOR);
         for (int i=0; i < data.length; i++) {
             map = map.assoc(data[i], data[i]);
         }

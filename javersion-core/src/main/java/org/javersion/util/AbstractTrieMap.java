@@ -87,16 +87,16 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     
     
     public V get(Object key) {
-        Entry<K, V> entry = getRoot().find(key);
+        Entry<K, V> entry = root().find(key);
         return entry != null ? entry.getValue() : null;
     }
     
     public boolean containsKey(Object key) {
-        return getRoot().find(key) != null;
+        return root().find(key) != null;
     }
 
     public Iterator<Map.Entry<K, V>> iterator() {
-        return getRoot().iterator();
+        return root().iterator();
     }
     
     
@@ -111,13 +111,13 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
 
     
     private final M doAssoc(UpdateContext<Entry<K, V>> contextReference, Map.Entry<? extends K, ? extends V> entry) {
-        Node<K, V> newRoot = getRoot().assoc(contextReference, toEntry(entry));
+        Node<K, V> newRoot = root().assoc(contextReference, toEntry(entry));
         return doReturn(contextReference, newRoot, size() + contextReference.getChangeAndReset());
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private final M doAssocAll(UpdateContext<Entry<K, V>> contextReference, Iterable entries) {
-        Node<K, V> newRoot = getRoot();
+        Node<K, V> newRoot = root();
         int size = size();
         for (Map.Entry<K, V> entry : (Iterable<Map.Entry<K, V>>) entries) {
             newRoot = newRoot.assoc(contextReference, toEntry(entry));
@@ -128,7 +128,7 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     }
         
     private M doDissoc(UpdateContext<Entry<K, V>> contextReference, Object key) {
-        Node<K, V> newRoot = getRoot().dissoc(contextReference, key);
+        Node<K, V> newRoot = root().dissoc(contextReference, key);
         return doReturn(contextReference, newRoot, size() + contextReference.getChangeAndReset());
     }
     
@@ -762,5 +762,5 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
     
     protected abstract M doReturn(UpdateContext<Entry<K, V>> context, Node<K, V> newRoot, int newSize);
     
-    abstract Node<K, V> getRoot();
+    abstract Node<K, V> root();
 }

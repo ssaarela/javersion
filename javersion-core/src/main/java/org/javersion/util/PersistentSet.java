@@ -54,7 +54,7 @@ public class PersistentSet<E> extends AbstractTrieSet<E, PersistentMap<E, Object
         MutableSet<E> mutableSet = toMutableSet();
         updateFunction.apply(mutableSet);
         MutableMap<E, Object> newMap = mutableSet.getMap();
-        if (newMap.getRoot() == map.getRoot()) {
+        if (newMap.root() == map.root()) {
             return this;
         } else {
             return new PersistentSet<>(newMap.toPersistentMap());

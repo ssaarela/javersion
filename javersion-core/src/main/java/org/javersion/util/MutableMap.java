@@ -41,7 +41,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     @Override
-    Node<K, V> getRoot() {
+    Node<K, V> root() {
         verifyThread();
         return root;
     }
