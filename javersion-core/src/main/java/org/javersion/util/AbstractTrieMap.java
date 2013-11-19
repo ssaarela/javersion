@@ -248,7 +248,10 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         @SuppressWarnings("unchecked")
         @Override
         public Node<K, V> assocInternal(final UpdateContext<Entry<K, V>>  currentContext, final int shift, final int hash, final Entry<K, V> newEntry) {
-            if (equal(newEntry.key, key)) {
+            if (newEntry == this) {
+                return this;
+            }
+            else if (equal(newEntry.key, key)) {
                 if (equal(newEntry.value, value)) {
                     return this;
                 } else {
