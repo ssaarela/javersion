@@ -1,5 +1,6 @@
 package org.javersion.util;
 
+import static com.google.common.collect.Iterables.transform;
 import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 
 import java.util.Comparator;
@@ -10,7 +11,6 @@ import org.javersion.util.PersistentSortedMap.Node;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
-import com.google.common.collect.Iterables;
 
 public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V>, PersistentSortedMap<K, V>> {
     
@@ -54,42 +54,26 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
     }
 
     public V get(K key) {
-        Node<K, V> node = find(key);
+        Node<K, V> node = find(root, key);
         return node != null ? node.value : null;
     }
     
-    @Override
-    protected Node<K, V> root() {
+    Node<K, V> root() {
         return root;
     }
 
     public PersistentSortedMap<K, V> assoc(K key, V value) {
         UpdateContext<Node<K, V>> context = new UpdateContext<Node<K, V>>(1);
-        return doAdd(context, new Node<K, V>(context, key, value, RED));
+        return doAdd(context, root, new Node<K, V>(context, key, value, RED));
     }
 
     public PersistentSortedMap<K, V> assocAll(Map<K, V> map) {
         final UpdateContext<Node<K, V>> context = new UpdateContext<Node<K, V>>(map.size());
-        return doAddAll(context, Iterables.transform(map.entrySet(), 
-                new Function<Entry<K, V>, Node<K, V>>() {
-                    @Override
-                    public Node<K, V> apply(Entry<K, V> input) {
-                        if (input instanceof Node) {
-                            return (Node<K, V>) input;
-                        } else {
-                            return new Node<K, V>(context, input.getKey(), input.getValue(), RED);
-                        }
-                    }
-                }));
+        return doAddAll(context, root, transform(map.entrySet(), new EntryToNode<K, V>(context)));
     }
 
     public PersistentSortedMap<K, V> dissoc(Object keyObj) {
-        return doRemove(new UpdateContext<Node<K, V>>(1), keyObj);
-    }
-
-    @Override
-    protected PersistentSortedMap<K, V> self() {
-        return this;
+        return doRemove(new UpdateContext<Node<K, V>>(1), root, keyObj);
     }
 
     @SuppressWarnings("unchecked")
@@ -107,6 +91,23 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
     
     public String toString() {
         return root == null ? "NIL" : root.toString();
+    }
+
+    private static final class EntryToNode<K, V> implements Function<Entry<K, V>, Node<K, V>> {
+        private final UpdateContext<Node<K, V>> context;
+
+        private EntryToNode(UpdateContext<Node<K, V>> context) {
+            this.context = context;
+        }
+
+        @Override
+        public Node<K, V> apply(Entry<K, V> input) {
+            if (input instanceof Node) {
+                return (Node<K, V>) input;
+            } else {
+                return new Node<K, V>(context, input.getKey(), input.getValue(), RED);
+            }
+        }
     }
 
     static class Node<K, V> extends AbstractRedBlackTree.Node<K, Node<K,V>> implements Map.Entry<K, V>{

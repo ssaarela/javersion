@@ -34,17 +34,13 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T> {
     }
 
     public abstract int size();
-
-    protected abstract N root();
-    
-    protected abstract T self();
     
     protected abstract T doReturn(UpdateContext<N> context, Comparator<? super K> comparator, N newRoot, int newSize);
     
-    protected final N find(Object keyObj) {
+    protected final N find(N root, Object keyObj) {
         @SuppressWarnings("unchecked")
         K key = (K) keyObj;
-        N node = root();
+        N node = root;
         while (node != null) {
             int cmpr;
             cmpr = comparator.compare(key, node.key);
@@ -59,12 +55,11 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T> {
         return null;
     }
 
-    protected final T doAdd(UpdateContext<N> context, N node) {
-        N root = root();
+    protected final T doAdd(UpdateContext<N> context, N root, N node) {
         if (root == null) {
-            return doReturn(context, comparator, node.changeColor(context, BLACK), 1);
+            return doReturn(context, comparator, node.edit(context, BLACK, null, null), 1);
         } else {
-            N newRoot = root.add(context, node.changeColor(context, RED), comparator);
+            N newRoot = root.add(context, node.edit(context, RED, null, null), comparator);
             if (newRoot == null) {
                 return self();
             } else {
@@ -73,35 +68,38 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T> {
         }
     }
 
-    protected final T doAddAll(UpdateContext<N> context, Iterable<N> nodes) {
-        N newRoot = root();
-        N addedRoot = null;
+    protected final T doAddAll(UpdateContext<N> context, N root, Iterable<N> nodes) {
+        N newRoot = null;
         int newSize = size();
         for (N node : nodes) {
-            if (newRoot == null) {
+            if (root == null) {
                 newSize++;
-                addedRoot = node.changeColor(context, BLACK);
+                newRoot = node.edit(context, BLACK, null, null);
             } else {
-                addedRoot = newRoot.add(context, node.changeColor(context, RED), comparator);
+                newRoot = newRoot.add(context, node.edit(context, RED, null, null), comparator);
             }
-            if (addedRoot != null) {
-                newRoot = addedRoot.blacken(context);
+            if (newRoot != null) {
+                root = newRoot.blacken(context);
                 newSize += context.getChangeAndReset();
             }
         }
-        return doReturn(context, comparator, newRoot, newSize);
+        return doReturn(context, comparator, root, newSize);
     }
 
-    protected final T doRemove(UpdateContext<N> context, Object keyObj) {
+    protected final T doRemove(UpdateContext<N> context, N root, Object keyObj) {
         @SuppressWarnings("unchecked")
         K key = (K) keyObj;
-        N root = root();
         if (root == null) {
             return self();
         } else {
             N newRoot = root.remove(context, key, comparator);
             return doReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
         }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private T self() {
+        return (T) this;
     }
     
     static abstract class Node<K, N extends Node<K, N>> implements Cloneable {
