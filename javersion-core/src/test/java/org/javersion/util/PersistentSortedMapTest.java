@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.javersion.util.AbstractSortedTree.Color;
+import org.javersion.util.AbstractRedBlackTree.Color;
 import org.javersion.util.PersistentSortedMap.Node;
 import org.junit.Test;
 

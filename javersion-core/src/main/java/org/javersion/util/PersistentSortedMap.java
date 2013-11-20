@@ -1,6 +1,6 @@
 package org.javersion.util;
 
-import static org.javersion.util.AbstractSortedTree.Color.RED;
+import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 
 import java.util.Comparator;
 import java.util.Map;
@@ -12,7 +12,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.Iterables;
 
-public class PersistentSortedMap<K, V> extends AbstractSortedTree<K, Node<K, V>, PersistentSortedMap<K, V>> {
+public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V>, PersistentSortedMap<K, V>> {
     
     @SuppressWarnings("rawtypes")
     private static final PersistentSortedMap EMPTY = new PersistentSortedMap();
@@ -109,7 +109,7 @@ public class PersistentSortedMap<K, V> extends AbstractSortedTree<K, Node<K, V>,
         return root == null ? "NIL" : root.toString();
     }
 
-    static class Node<K, V> extends AbstractSortedTree.Node<K, Node<K,V>> implements Map.Entry<K, V>{
+    static class Node<K, V> extends AbstractRedBlackTree.Node<K, Node<K,V>> implements Map.Entry<K, V>{
         V value;
         
         public Node(UpdateContext<Node<K, V>> context, K key, V value, Color color) {

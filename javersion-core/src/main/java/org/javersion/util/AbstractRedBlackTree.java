@@ -1,15 +1,15 @@
 package org.javersion.util;
 
-import static org.javersion.util.AbstractSortedTree.Color.BLACK;
-import static org.javersion.util.AbstractSortedTree.Color.RED;
-import static org.javersion.util.AbstractSortedTree.Mirror.LEFT;
-import static org.javersion.util.AbstractSortedTree.Mirror.RIGHT;
+import static org.javersion.util.AbstractRedBlackTree.Color.BLACK;
+import static org.javersion.util.AbstractRedBlackTree.Color.RED;
+import static org.javersion.util.AbstractRedBlackTree.Mirror.LEFT;
+import static org.javersion.util.AbstractRedBlackTree.Mirror.RIGHT;
 
 import java.util.Comparator;
 
-import org.javersion.util.AbstractSortedTree.Node;
+import org.javersion.util.AbstractRedBlackTree.Node;
 
-public abstract class AbstractSortedTree<K, N extends Node<K, N>, T> {
+public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T> {
 
     @SuppressWarnings("rawtypes")
     private final static Comparator<Comparable> NATURAL = new Comparator<Comparable>() {
@@ -25,11 +25,11 @@ public abstract class AbstractSortedTree<K, N extends Node<K, N>, T> {
     private final Comparator<? super K> comparator;
 
     @SuppressWarnings("unchecked")
-    public AbstractSortedTree() {
+    public AbstractRedBlackTree() {
         this((Comparator<K>) NATURAL);
     }
 
-    public AbstractSortedTree(Comparator<? super K> comparator) {
+    public AbstractRedBlackTree(Comparator<? super K> comparator) {
         this.comparator = Check.notNull(comparator, "comparator");
     }
 
