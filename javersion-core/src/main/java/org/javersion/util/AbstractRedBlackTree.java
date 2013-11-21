@@ -119,7 +119,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T> {
     
     static abstract class Node<K, N extends Node<K, N>> implements Cloneable {
         final UpdateContext<N> context;
-        K key;
+        final K key;
         Color color;
         N left;
         N right;
@@ -132,7 +132,10 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T> {
             this.right = right;
         }
         
-        abstract N self();
+        @SuppressWarnings("unchecked")
+        protected N self() {
+            return (N) this;
+        }
 
         N blacken(UpdateContext<N> currentContext) {
             return changeColor(currentContext, BLACK);
@@ -259,6 +262,43 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T> {
                 return cloneWith(currentContext);
             }
         }
+        
+        public String toString() {
+            return toString(new StringBuilder(), 0).toString();
+        }
+        
+        protected StringBuilder toString(StringBuilder sb, int level) {
+            label(sb);
+
+            indent(sb, level+1).append("left:");
+            if (left != null) {
+                left.toString(sb, level+1);
+            } else {
+                sb.append("NIL");
+            }
+
+            indent(sb, level+1).append("right:");
+            if (right != null) {
+                right.toString(sb, level+1);
+            } else {
+                sb.append("NIL");
+            }
+            return sb;
+        }
+        
+        protected StringBuilder label(StringBuilder sb) {
+            sb.append(color).append('(').append(key).append(')');
+            return sb;
+        }
+
+        private StringBuilder indent(StringBuilder sb, int level) {
+            sb.append('\n');
+            for (int i=0; i < level; i++) {
+                sb.append("   ");
+            }
+            return sb;
+        }
+
         abstract N cloneWith(UpdateContext<N> currentContext);
         
         abstract N replaceWith(UpdateContext<N> currentContext, N node);

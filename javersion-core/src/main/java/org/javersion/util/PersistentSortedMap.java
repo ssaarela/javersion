@@ -126,7 +126,7 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
     }
 
     static class Node<K, V> extends AbstractRedBlackTree.Node<K, Node<K,V>> implements Map.Entry<K, V>{
-        V value;
+        final V value;
         
         public Node(UpdateContext<Node<K, V>> context, K key, V value, Color color) {
             this(context, key, value, color, null, null);
@@ -167,51 +167,20 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
             if (Objects.equal(this.value, node.value)) {
                 return null;
             }
-            if (this.context.isSameAs(currentContext)) {
-                this.value = node.value;
-                return this;
-            } else if (node.context.isSameAs(currentContext)) {
+            else if (node.context.isSameAs(currentContext)) {
                 node.color = this.color;
                 node.left = this.left;
                 node.right = this.right;
                 return node;
-            } else {
+            } 
+            else {
                 return new Node<K, V>(currentContext, key, node.value, this.color, left, right);
             }
         }
         
-        private StringBuilder label(StringBuilder sb) {
+        @Override
+        protected StringBuilder label(StringBuilder sb) {
             sb.append(color).append('(').append(key).append(':').append(value).append(')');
-            return sb;
-        }
-        
-        public String toString() {
-            return toString(new StringBuilder(), 0).toString();
-        }
-        
-        private StringBuilder toString(StringBuilder sb, int level) {
-            label(sb);
-
-            indent(sb, level+1).append("left:");
-            if (left != null) {
-                left.toString(sb, level+1);
-            } else {
-                sb.append("NIL");
-            }
-
-            indent(sb, level+1).append("right:");
-            if (right != null) {
-                right.toString(sb, level+1);
-            } else {
-                sb.append("NIL");
-            }
-            return sb;
-        }
-        private StringBuilder indent(StringBuilder sb, int level) {
-            sb.append('\n');
-            for (int i=0; i < level; i++) {
-                sb.append("   ");
-            }
             return sb;
         }
     }
