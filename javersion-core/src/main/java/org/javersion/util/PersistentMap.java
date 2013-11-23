@@ -8,7 +8,7 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static final PersistentMap EMPTY_MAP = new PersistentMap(EMPTY_NODE, 0);
     
-    private final Node<K, V> root;
+    private final Node<K, Entry<K, V>> root;
     
     private final int size;
 
@@ -49,13 +49,12 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
 
     
     @SuppressWarnings("unchecked")
-    static <K, V> PersistentMap<K, V> create(Node<? extends K, ? extends V> newRoot, int newSize) {
+    static <K, V> PersistentMap<K, V> create(Node<K, Entry<K, V>> newRoot, int newSize) {
         return newRoot == null ? (PersistentMap<K, V>) EMPTY_MAP : new PersistentMap<K, V>(newRoot, newSize);
     }
     
-    @SuppressWarnings("unchecked")
-    private PersistentMap(Node<? extends K, ? extends V> newRoot, int newSize) {
-        this.root = (Node<K, V>) newRoot;
+    private PersistentMap(Node<K, Entry<K, V>> newRoot, int newSize) {
+        this.root = newRoot;
         this.size = newSize;
     }
     
@@ -73,12 +72,7 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
     }
 
     @Override
-    protected UpdateContext<Entry<K, V>> updateContext(int expectedUpdates, Merger<Entry<K, V>> merger) {
-        return new UpdateContext<Entry<K, V>>(expectedUpdates, merger);
-    }
-
-    @Override
-    Node<K, V> root() {
+    protected Node<K, Entry<K, V>> root() {
         return root;
     }
 
@@ -89,15 +83,18 @@ public class PersistentMap<K, V> extends AbstractTrieMap<K, V, PersistentMap<K, 
 
     @Override
     public PersistentMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger) {
-        UpdateContext<Entry<K, V>> context = updateContext(expectedUpdates, merger);
-        MutableMap<K, V> mutableMap = new MutableMap<>(context, root, size);
-        updateFunction.apply(mutableMap);
-        return doReturn(context, mutableMap.root(), mutableMap.size());
+        final UpdateContext<Entry<K, V>> context = updateContext(expectedUpdates, merger);
+        try {
+            MutableMap<K, V> mutableMap = new MutableMap<>(context, root, size);
+            updateFunction.apply(mutableMap);
+            return doReturn(mutableMap.root(), mutableMap.size());
+        } finally {
+            context.commit();
+        }
     }
 
     @Override
-    protected PersistentMap<K, V> doReturn(UpdateContext<Entry<K, V>> context, Node<K, V> newRoot, int newSize) {
-        context.commit();
+    protected PersistentMap<K, V> doReturn(Node<K, Entry<K, V>> newRoot, int newSize) {
         if (newRoot == root) {
             return this;
         } else {

@@ -16,62 +16,103 @@
 package org.javersion.util;
 
 import static com.google.common.base.Objects.equal;
-import static java.lang.System.arraycopy;
+import static com.google.common.collect.Iterators.transform;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
-import com.google.common.collect.Iterators;
-import com.google.common.collect.UnmodifiableIterator;
+import org.javersion.util.AbstractTrieMap.Entry;
 
-public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> implements Iterable<Map.Entry<K, V>>{
+import com.google.common.base.Function;
 
-    public abstract int size();
-
+public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> extends AbstractHashTrie<K, Entry<K,V>, AbstractTrieMap<K, V, M>> implements Iterable<Map.Entry<K, V>>{
+    
+    @SuppressWarnings("rawtypes")
+    private static final Function TO_ENTRY = new Function() {
+        @SuppressWarnings("unchecked")
+        @Override
+        public Object apply(Object input) {
+            return toEntry((Map.Entry) input);
+        }
+    };
     
     public M assoc(K key, V value) {
         return assoc(new Entry<K, V>(key, value));
     }
     
-    public final M assoc(java.util.Map.Entry<? extends K, ? extends V> entry) {
-        return doAssoc(updateContext(1, null), entry);
+    public M assoc(java.util.Map.Entry<? extends K, ? extends V> entry) {
+        return merge(entry, null);
     }
 
-    
-    public final M assocAll(Map<? extends K, ? extends V> map) {
-        return doAssocAll(updateContext(map.size(), null), map.entrySet());
+    public M assocAll(Map<? extends K, ? extends V> map) {
+        return mergeAll(map, null);
     }
     
-    public final M assocAll(PersistentMap<? extends K, ? extends V> map) {
-        return doAssocAll(updateContext(map.size(), null), map);
+    public M assocAll(Iterable<Map.Entry<K, V>> entries) {
+        return mergeAll(entries, null);
     }
 
     
     public M merge(K key, V value, Merger<Entry<K, V>> merger) {
-        return merge(new Entry<K, V>(key, value), merger);
+        return doMerge(new Entry<K, V>(key, value), merger);
     }
     
-    public final M merge(java.util.Map.Entry<? extends K, ? extends V> entry, Merger<Entry<K, V>> merger) {
-        return doAssoc(updateContext(1, merger), entry);
+    public M merge(Map.Entry<? extends K, ? extends V> entry, Merger<Entry<K, V>> merger) {
+        return doMerge(toEntry(entry), merger);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected M doMerge(Entry<K, V> entry, Merger<Entry<K, V>> merger) {
+        final UpdateContext<Entry<K, V>> updateContext = updateContext(1, merger);
+        try {
+            return (M) doAdd(updateContext, toEntry(entry));
+        } finally {
+            commit(updateContext);
+        }
     }
 
     
-    public final M mergeAll(Map<? extends K, ? extends V> map, Merger<Entry<K, V>> merger) {
-        return doAssocAll(updateContext(map.size(), merger), map.entrySet());
+    @SuppressWarnings("unchecked")
+    public M mergeAll(Map<? extends K, ? extends V> map, Merger<Entry<K, V>> merger) {
+        final UpdateContext<Entry<K, V>> updateContext = updateContext(map.size(), merger);
+        try {
+            return (M) doAddAll(updateContext, transform(map.entrySet().iterator(), TO_ENTRY));
+        } finally {
+            commit(updateContext);
+        }
     }
 
-    public final M mergeAll(PersistentMap<K, V> map, Merger<Entry<K, V>> merger) {
-        return doAssocAll(updateContext(map.size(), merger), map);
+    @SuppressWarnings("unchecked")
+    public M mergeAll(Iterable<Map.Entry<K, V>> entries, Merger<Entry<K, V>> merger) {
+        final UpdateContext<Entry<K, V>> updateContext = updateContext(32, merger);
+        try {
+            return (M) doAddAll(updateContext, transform(entries.iterator(), TO_ENTRY));
+        } finally {
+            commit(updateContext);
+        }
+    }
+    
+    protected UpdateContext<Entry<K, V>> updateContext(int expectedSize, Merger<Entry<K, V>> merger) {
+        return new UpdateContext<>(expectedSize, merger);
+    }
+    
+    protected void commit(UpdateContext<Entry<K, V>> updateContext) {
+        updateContext.commit();
     }
 
     
-    public final M dissoc(Object key) {
-        return doDissoc(updateContext(1, null), key);
+    public M dissoc(Object key) {
+        return dissoc(key, null);
     }
 
-    public final M dissoc(Object key, Merger<Entry<K, V>> merger) {
-        return doDissoc(updateContext(1, merger), key);
+    @SuppressWarnings("unchecked")
+    public M dissoc(Object key, Merger<Entry<K, V>> merger) {
+        final UpdateContext<Entry<K, V>> updateContext = updateContext(1, merger);
+        try {
+            return (M) doRemove(updateContext, key);
+        } finally {
+            commit(updateContext);
+        }
     }
 
 
@@ -95,8 +136,9 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         return root().find(key) != null;
     }
 
-    public Iterator<Map.Entry<K, V>> iterator() {
-        return root().iterator();
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public Iterator iterator() {
+        return doIterator();
     }
     
     
@@ -108,124 +150,15 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
             return new Entry<K, V>(entry.getKey(), entry.getValue());
         }
     }
-
     
-    private final M doAssoc(UpdateContext<Entry<K, V>> contextReference, Map.Entry<? extends K, ? extends V> entry) {
-        Node<K, V> newRoot = root().assoc(contextReference, toEntry(entry));
-        return doReturn(contextReference, newRoot, size() + contextReference.getChangeAndReset());
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private final M doAssocAll(UpdateContext<Entry<K, V>> contextReference, Iterable entries) {
-        Node<K, V> newRoot = root();
-        int size = size();
-        for (Map.Entry<K, V> entry : (Iterable<Map.Entry<K, V>>) entries) {
-            newRoot = newRoot.assoc(contextReference, toEntry(entry));
-            size += contextReference.getChangeAndReset();
-        }
-        
-        return doReturn(contextReference, newRoot, size);
-    }
-        
-    private M doDissoc(UpdateContext<Entry<K, V>> contextReference, Object key) {
-        Node<K, V> newRoot = root().dissoc(contextReference, key);
-        return doReturn(contextReference, newRoot, size() + contextReference.getChangeAndReset());
-    }
-    
-    
-    static abstract class Node<K, V> implements Iterable<Map.Entry<K, V>> {
-        
-        static final int SHIFT_INCREMENT = 5;
-
-        Entry<K, V> find(Object key) {
-            return findInternal(0, hash(key), key);
-        }
-
-        Node<K, V> assoc(UpdateContext<Entry<K, V>>  currentContext, Entry<K, V> newEntry) {
-            return assocInternal(currentContext, 0, newEntry.getHash(), newEntry);
-        }
-
-        Node<K, V> dissoc(UpdateContext<Entry<K, V>>  currentContext, Object key) {
-            return dissocInternal(currentContext, 0, hash(key), key);
-        }
-        
-        static int hash(Object key) {
-            return key == null ? 0 : key.hashCode();
-        }
-
-        final int index(int bitmap, int bit){
-            return Integer.bitCount(bitmap & (bit - 1));
-        }
-
-        int bit(int hash, int shift) {
-            return 1 << bitIndex(hash, shift);
-        }
-        
-        int bitIndex(int hash, int shift) {
-            // xx xxxxx xxxxx xxxxx xxxxx NNNNN xxxxx   >>> 5
-            // 00 00000 00000 00000 00000 00000 NNNNN   & 0x01f
-            // return number (NNNNN) between 0..31
-            return (hash >>> shift) & 0x01f;
-        }
-        
-        
-        abstract Entry<K, V> findInternal(int shift, int hash, Object key);
-
-        abstract Node<K, V> assocInternal(UpdateContext<Entry<K, V>>  currentContext, int shift, int hash, Entry<K, V> newEntry);
-
-        abstract Node<K, V> dissocInternal(UpdateContext<Entry<K, V>>  currentContext, int shift, int hash, Object key);
-        
-    }
-    
-    @SuppressWarnings("rawtypes")
-    private static final Iterator<Map.Entry> EMTPY_ITER = Iterators.emptyIterator();
-    
-    @SuppressWarnings("rawtypes")
-    static final Node EMPTY_NODE = new Node() {
-        
-        @Override
-        public Iterator<Map.Entry> iterator() {
-            return EMTPY_ITER;
-        }
-        
-        @Override
-        Entry findInternal(int shift, int hash, Object key) {
-            return null;
-        }
-        
-        @Override
-        Node dissocInternal(UpdateContext  currentContext, int shift, int hash, Object key) {
-            return this;
-        }
-        
-        @SuppressWarnings("unchecked")
-        @Override
-        Node assocInternal(UpdateContext  currentContext, int shift, int hash, Entry newEntry) {
-            currentContext.insert(newEntry);
-            if (currentContext.expectedUpdates() == 1) {
-                return newEntry;
-            } else {
-                Node node = new HashNode<>(currentContext);
-                return node.assocInternal(currentContext, shift, hash, newEntry);
-            }
-        }
-    };
-    
-    public static final class Entry<K, V> extends Node<K, V> implements Map.Entry<K, V> {
-        
-        final K key; 
+    public static final class Entry<K, V> extends AbstractHashTrie.Entry<K, Entry<K, V>> implements Map.Entry<K, V> {
         
         final V value;
         
         public Entry(K key, V value) {
-            this.key = key; 
+            super(key);
             this.value = value;
         }
-        
-        public int getHash() {
-            return hash(key);
-        }
-
         @Override
         public K getKey() {
             return key;
@@ -244,523 +177,20 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         public String toString() {
             return "" + key + ": " + value;
         }
-
-        @SuppressWarnings("unchecked")
+        
         @Override
-        public Node<K, V> assocInternal(final UpdateContext<Entry<K, V>>  currentContext, final int shift, final int hash, final Entry<K, V> newEntry) {
-            if (newEntry == this) {
-                return this;
-            }
-            else if (equal(newEntry.key, key)) {
-                if (equal(newEntry.value, value)) {
-                    return this;
+        public EntryEquality equals(Entry<K, V> other) {
+            if (other == this) {
+                return EntryEquality.EQUAL;
+            } else if (equal(key, other.key)) {
+                if (equal(value, other.value)) {
+                    return EntryEquality.EQUAL;
                 } else {
-                    return currentContext.merge(this, newEntry);
-                }
-            }
-            else if (hash == getHash()) {
-                currentContext.insert(newEntry);
-                return new CollisionNode<K, V>(this, newEntry);
-            }
-            else {
-                @SuppressWarnings("rawtypes")
-                Node[] newChildren = new Node[HashNode.newSizeForInsert(currentContext, 1)];
-                newChildren[0] = this;
-                return new HashNode<K, V>(currentContext, bit(getHash(), shift), newChildren)
-                        .assocInternal(currentContext, shift, hash, newEntry);
-            }
-        }
-
-        @Override
-        Node<K, V> dissocInternal(UpdateContext<Entry<K, V>>  currentContext, int shift, int hash, Object key) {
-            if (equal(key, this.key)) {
-                currentContext.delete(this);
-                return null;
-            }
-            return this;
-        }
-        
-        @Override
-        public Entry<K, V> findInternal(int shift, int hash, Object key) {
-            if (equal(this.key, key)) {
-                return this;
-            }
-            return null;
-        }
-
-        @Override
-        public Iterator<Map.Entry<K, V>> iterator() {
-            return Iterators.<Map.Entry<K, V>>singletonIterator(this);
-        }
-    }
-    
-    
-    static final class HashNode<K, V> extends Node<K, V> {
-        
-        private final UpdateContext<Entry<K, V>>  updateContext;
-        
-        private int bitmap; 
-        
-        private Node<K, V>[] children;
-
-        HashNode(UpdateContext<Entry<K, V>>  contextReference) {
-            this(contextReference, contextReference.expectedUpdates());
-        }
-
-        @SuppressWarnings("unchecked")
-        HashNode(UpdateContext<Entry<K, V>>  contextReference, int expectedSize) {
-            this(contextReference, 0, new Node[expectedSize < 32 ? expectedSize : 32]);
-        }
-        
-        HashNode(UpdateContext<Entry<K, V>>  contextReference, int bitmap, Node<K, V>[] children) {
-            this.updateContext = contextReference;
-            this.bitmap = bitmap;
-            this.children = children;
-        }
-
-        @Override
-        Node<K, V> assocInternal(final UpdateContext<Entry<K, V>>  currentContext, final int shift, int hash, final Entry<K, V> newEntry) {
-            int bit = bit(hash, shift);
-            int index = index(bitmap, bit);
-            if ((bitmap & bit) != 0) {
-                Node<K, V> oldNode = children[index];
-                Node<K, V> newNode = oldNode.assocInternal(currentContext, shift + SHIFT_INCREMENT, hash, newEntry);
-                if (newNode == oldNode) {
-                    return this;
-                } else {
-                    HashNode<K, V> editable = cloneForReplace(currentContext);
-                    editable.children[index] = newNode;
-
-                    return editable;
+                    return EntryEquality.KEY;
                 }
             } else {
-                currentContext.insert(newEntry);
-                return insert(currentContext, index, newEntry, bit);
-            }
-        }
-
-        @Override
-        Node<K, V> dissocInternal(UpdateContext<Entry<K, V>>  currentContext, int shift, int hash, Object key) {
-            int bit = bit(hash, shift);
-            if ((bitmap & bit) == 0) {
-                return this;
-            }
-            int index = index(bitmap, bit);
-            Node<K, V> oldNode = children[index];
-            Node<K, V> newNode = oldNode.dissocInternal(currentContext, shift + SHIFT_INCREMENT, hash, key);
-
-            if (newNode == oldNode) {
-                return this;
-            } else if (newNode == null) {
-                if (bitmap == bit) {
-                    return null;
-                } else {
-                    return cloneForDelete(currentContext, index, bit);
-                }
-            } else {
-                HashNode<K, V> editable = cloneForReplace(currentContext);
-                editable.children[index] = newNode;
-
-                return editable;
-            }
-        }
-        
-        @Override
-        public Entry<K, V> findInternal(int shift, int hash, Object key) {
-            int bit = bit(hash, shift);
-            if ((bitmap & bit) == 0) {
-                return null;
-            }
-            int index = index(bitmap, bit);
-            Node<K, V> nodeOrEntry = children[index];
-            return nodeOrEntry.findInternal(shift + SHIFT_INCREMENT, hash, key);
-        }
-        
-
-        @SuppressWarnings("unchecked")
-        private Node<K, V> insert(UpdateContext<Entry<K, V>>  currentContext, int index, Entry<K, V> newEntry, int bit) {
-            int childCount = childCount();
-            boolean editInPlace = updateContext.isSameAs(currentContext);
-
-            Node<K, V>[] newChildren;
-            if (editInPlace && childCount < children.length) {
-                newChildren = this.children;
-            } else {
-                newChildren = new Node[newSizeForInsert(currentContext, childCount)];
-                if (index > 0) {
-                    arraycopy(children, 0, newChildren, 0, index);
-                }
-            }
-
-            // make room for insertion
-            if (index < childCount) {
-                arraycopy(children, index, newChildren, index + 1, childCount - index);
-            }
-            
-            newChildren[index] = newEntry;
-
-            if (childCount == 31) {
-                // Convert to ArrayNode as it can be done here practically with no extra cost
-                return new ArrayNode<K, V>(currentContext, newChildren, childCount + 1);
-            }
-            else if (editInPlace) {
-                this.bitmap |= bit;
-                this.children = newChildren;
-                return this;
-            } 
-            else {
-                return new HashNode<K, V>(currentContext, bitmap | bit, newChildren);
-            }
-        }
-
-        private int childCount() {
-            return Integer.bitCount(bitmap);
-        }
-
-        @SuppressWarnings("unchecked")
-        private Node<K, V> cloneForDelete(UpdateContext<Entry<K, V>>  currentContext, int index, int bit) {
-            int childCount = childCount();
-            boolean editInPlace = updateContext.isSameAs(currentContext);
-
-            Node<K, V>[] newChildren;
-            if (editInPlace) {
-                newChildren = this.children;
-            } else {
-                newChildren = new Node[childCount - 1];
-                if (index > 0) {
-                    arraycopy(children, 0, newChildren, 0, index);
-                }
-            }
-
-            // Delete given node
-            if (index + 1 < childCount) {
-                arraycopy(children, index + 1, newChildren, index, childCount - index - 1);
-                if (newChildren.length >= childCount) {
-                    newChildren[childCount - 1] = null;
-                }
-            }
-            
-            if (editInPlace) {
-                this.bitmap = bitmap ^ bit;
-                return this;
-            } 
-            else {
-                return new HashNode<K, V>(currentContext, bitmap ^ bit, newChildren);
-            }
-        }
-        
-        static int newSizeForInsert(UpdateContext<?>  currentContext, int currentChildCount) {
-            if (currentContext.expectedUpdates() == 1) {
-                return currentChildCount + 1;
-            } else {
-                return currentChildCount < 16 ? 2*(currentChildCount + 1) : 32;
-            }
-        }
-        
-        private HashNode<K, V> cloneForReplace(UpdateContext<Entry<K, V>>  currentContext) {
-            if (this.updateContext.isSameAs(currentContext)) {
-                return this;
-            } else {
-                return new HashNode<>(currentContext, bitmap, children.clone());
-            }
-        }
-
-        @Override
-        public Iterator<Map.Entry<K, V>> iterator() {
-            return new ArrayIterator<>(children, childCount());
-        }
-        
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("#{");
-            boolean first = true;
-            for (Node<K, V> child : children) {
-                if (child != null) {
-                    if (!first) {
-                        sb.append(", ");
-                    }
-                    first = false;
-                    sb.append(child);
-                }
-            }
-            sb.append("}");
-            return sb.toString();
-        }
-    }
-
-    static final class ArrayNode<K, V> extends Node<K, V> {
-        
-        private final UpdateContext<Entry<K, V>>  updateContext;
-        
-        private Node<K, V>[] children;
-        
-        private int childCount;
-
-        ArrayNode(UpdateContext<Entry<K, V>>  contextReference, Node<K, V>[] children, int childCount) {
-            this.updateContext = contextReference;
-            this.children = children;
-            this.childCount = childCount;
-        }
-
-        @Override
-        Node<K, V> assocInternal(final UpdateContext<Entry<K, V>>  currentContext, final int shift, int hash, final Entry<K, V> newEntry) {
-            int index = bitIndex(hash, shift);
-            Node<K, V> node = children[index];
-            int newChildCount = childCount;
-            Node<K, V> newChild;
-            if (node != null) {
-                newChild = node.assocInternal(currentContext, shift + SHIFT_INCREMENT, hash, newEntry);
-                if (newChild == node) {
-                    return this;
-                }
-            } else {
-                currentContext.insert(newEntry);
-                newChildCount++;
-                newChild = newEntry;
-            }
-            if (isEditInPlace(currentContext)) {
-                this.children[index] = newChild;
-                this.childCount = newChildCount;
-                return this;
-            } else {
-                Node<K, V>[] newChildren = this.children.clone();
-                newChildren[index] = newChild;
-                return new ArrayNode<K, V>(currentContext, newChildren, newChildCount);
-            }
-        }
-
-        @Override
-        Node<K, V> dissocInternal(UpdateContext<Entry<K, V>>  currentContext, int shift, int hash, Object key) {
-            int index = bitIndex(hash, shift);
-            Node<K, V> node = children[index];
-            if (node == null) {
-                return this;
-            }
-            int newChildCount = childCount;
-            Node<K, V> newChild = node.dissocInternal(currentContext, shift + SHIFT_INCREMENT, hash, key);
-            if (newChild == node) {
-                return this;
-            } else if (newChild == null) {
-                newChildCount--;
-                if (newChildCount < 16) {
-                    return toBitmapNode(currentContext, newChildCount, index);
-                }
-            }
-            if (isEditInPlace(currentContext)) {
-                this.children[index] = newChild;
-                this.childCount = newChildCount;
-                return this;
-            } else {
-                Node<K, V>[] newChildren = this.children.clone();
-                newChildren[index] = newChild;
-                return new ArrayNode<K, V>(currentContext, newChildren, newChildCount);
-            }
-        }
-        
-        private Node<K, V> toBitmapNode(UpdateContext<Entry<K, V>>  currentContext, int newChildCount, int removedIndex) {
-            @SuppressWarnings("unchecked")
-            Node<K, V>[] newChildren = new Node[newChildCount];
-            int bitmap = 0;
-            for (int i=0, j=0; i < children.length; i++) {
-                if (children[i] != null && i != removedIndex) {
-                    newChildren[j] = children[i];
-                    bitmap |= 1 << i;
-                    j++;
-                }
-            }
-            return new HashNode<K, V>(currentContext, bitmap, newChildren);
-        }
-
-        @Override
-        public Entry<K, V> findInternal(int shift, int hash, Object key) {
-            int index = bitIndex(hash, shift);
-            Node<K, V> node = children[index];
-            if (node != null) {
-                return node.findInternal(shift + SHIFT_INCREMENT, hash, key);
-            } else {
-                return null;
-            }
-        }
-
-        private boolean isEditInPlace(UpdateContext<Entry<K, V>>  currentContext) {
-            return this.updateContext.isSameAs(currentContext);
-        }
-
-        @Override
-        public Iterator<java.util.Map.Entry<K, V>> iterator() {
-            return new ArrayIterator<>(children);
-        }
-    }
-    
-    static final class CollisionNode<K, V> extends Node<K, V> {
-        
-        final int hash;
-        
-        private Entry<K, V>[] entries;
-
-        @SuppressWarnings("unchecked")
-        public CollisionNode(Entry<K, V> first, Entry<K, V> second) {
-            this.hash = first.getHash();
-            this.entries = new Entry[] { first, second };
-        }
-        @SuppressWarnings("unchecked")
-        private CollisionNode(Entry<? extends K, ? extends V>[] entries) {
-            this.hash = entries[0].getHash();
-            this.entries = (Entry<K, V>[]) entries;
-        }
-
-        @Override
-        public Entry<K, V> findInternal(int shift, int hash, Object key) {
-            for (Entry<K, V> entry : entries) {
-                if (equal(entry.key, key)) {
-                    return entry;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public Node<K, V> assocInternal(final UpdateContext<Entry<K, V>>  currentContext, final int shift, int hash, final Entry<K, V> newEntry) {
-            if (hash == this.hash) {
-                for (int i=0; i < entries.length; i++) {
-                    if (equal(entries[i].key, newEntry.key)) {
-                        if (equal(entries[i].value, newEntry.value)) {
-                            return this;
-                        }
-                        Entry<K, V>[] newEntries = entries.clone();
-                        newEntries[i] = currentContext.merge(entries[i], newEntry);
-                        return new CollisionNode<K, V>(newEntries);
-                    }
-                }
-                
-                currentContext.insert(newEntry);
-
-                Entry<K, V>[] newEntries = new Entry[entries.length + 1];
-                arraycopy(entries, 0, newEntries, 0, entries.length);
-                newEntries[entries.length] = newEntry;
-                return new CollisionNode<K, V>(newEntries);
-            }
-            
-            
-            Node<K, V>[] newChildren = (currentContext.expectedUpdates() == 1 
-                    ? new Node[] { this, null } : new Node[] { this, null, null, null });
-
-            Node<K, V> newNode = new HashNode<K, V>(currentContext, bit(this.hash, shift), newChildren);
-            return newNode.assocInternal(currentContext, shift, hash, newEntry);
-        }
-
-        @Override
-        Node<K, V> dissocInternal(UpdateContext<Entry<K, V>>  currentContext, int shift, int hash, Object key) {
-            if (hash == this.hash) {
-                for (int i=0; i < entries.length; i++) {
-                    if (equal(entries[i].key, key)) {
-                        currentContext.delete(entries[i]);
-    
-                        if (entries.length == 2) {
-                            if (i == 1) {
-                                return entries[0];
-                            } else {
-                                return entries[1];
-                            }
-                        }
-                        @SuppressWarnings("unchecked")
-                        Entry<K, V>[] newEntries = new Entry[entries.length - 1];
-                        arraycopy(entries, 0, newEntries, 0, i);
-                        if (i + 1 < entries.length) {
-                            arraycopy(entries, i + 1, newEntries, i, entries.length - i - 1);
-                        }
-                        return new CollisionNode<K, V>(newEntries);
-                    }
-                }
-            }
-            return this;
-        }
-        
-        @Override
-        public Iterator<Map.Entry<K, V>> iterator() {
-            return new ArrayIterator<>(entries);
-        }
-        
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("[");
-            boolean first = true;
-            for (Entry<K, V> entry : entries) {
-                if (entry != null) {
-                    if (!first) {
-                        sb.append(", ");
-                    }
-                    first = false;
-                    sb.append(entry);
-                }
-            }
-            sb.append("]");
-            return sb.toString();
-        }
-    }
-    
-    static class ArrayIterator<K, V, T extends Node<K, V>> extends UnmodifiableIterator<Map.Entry<K, V>> {
-        
-        private final T[] array;
-        
-        private final int limit;
-        
-        private Iterator<Map.Entry<K, V>> subIterator;
-        
-        private int pos = 0;
-        
-        public ArrayIterator(T[] array) {
-            this(array, array.length);
-        }
-        
-        public ArrayIterator(T[] array, int limit) {
-            this.array = array;
-            this.limit = limit;
-        }
-        
-        @Override
-        public boolean hasNext() {
-            if (subIterator != null) {
-                if (subIterator.hasNext()) {
-                    return true;
-                } else {
-                    pos++;
-                }
-            }
-            while (pos < limit && array[pos] == null) {
-                pos++;
-            }
-            if (pos < limit) {
-                if (array[pos] instanceof Entry) {
-                    subIterator = null;
-                } else {
-                    subIterator = array[pos].iterator();
-                }
-                return true;
-            }
-            subIterator = null;
-            return false;
-        }
-
-        @Override
-        public Map.Entry<K, V> next() {
-            if (!hasNext()) {
-                throw new NoSuchElementException();
-            }
-            if (subIterator != null) {
-                return subIterator.next();
-            } else {
-                return (Entry<K, V>) array[pos++];
+                return EntryEquality.NONE;
             }
         }
     }
-
-    protected abstract UpdateContext<Entry<K, V>> updateContext(int expectedUpdates, Merger<Entry<K, V>> merger);
-    
-    protected abstract M self();
-    
-    protected abstract M doReturn(UpdateContext<Entry<K, V>> context, Node<K, V> newRoot, int newSize);
-    
-    abstract Node<K, V> root();
 }

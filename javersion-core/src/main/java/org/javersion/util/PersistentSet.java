@@ -15,20 +15,25 @@
  */
 package org.javersion.util;
 
-public class PersistentSet<E> extends AbstractTrieSet<E, PersistentMap<E, Object>, PersistentSet<E>> {
+
+public class PersistentSet<E> extends AbstractTrieSet<E, PersistentSet<E>> {
     
-    private final PersistentMap<E, Object> map;
+    private final Node<E, Entry<E>> root;
+    
+    private final int size;
 
     public PersistentSet() {
-        this(PersistentMap.<E, Object>empty());
+        this(null, 0);
     }
     
-    public PersistentSet(PersistentMap<E, Object> map) {
-        this.map = Check.notNull(map, "map");
+    @SuppressWarnings("unchecked")
+    PersistentSet(Node<E, Entry<E>> root, int size) {
+        this.root = root != null ? root : EMPTY_NODE;
+        this.size = size;
     }
 
     public MutableSet<E> toMutableSet() {
-        return new MutableSet<E>(map.toMutableMap());
+        return new MutableSet<E>(root, size);
     }
     
     public ImmutableTrieSet<E> asSet() {
@@ -36,28 +41,31 @@ public class PersistentSet<E> extends AbstractTrieSet<E, PersistentMap<E, Object
     }
 
     @Override
-    PersistentSet<E> doReturn(PersistentMap<E, Object> newMap) {
-        if (map == newMap) {
-            return this;
-        } else {
-            return new PersistentSet<E>(newMap);
-        }            
-    }
-
-    @Override
-    PersistentMap<E, Object> getMap() {
-        return map;
-    }
-
-    @Override
     public PersistentSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
         MutableSet<E> mutableSet = toMutableSet();
         updateFunction.apply(mutableSet);
-        MutableMap<E, Object> newMap = mutableSet.getMap();
-        if (newMap.root() == map.root()) {
+        if (root == mutableSet.root()) {
             return this;
         } else {
-            return new PersistentSet<>(newMap.toPersistentMap());
+            return new PersistentSet<>(mutableSet.root(), mutableSet.size());
         }
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    protected PersistentSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
+        if (newRoot == root) {
+            return this;
+        }
+        return new PersistentSet<>(newRoot, newSize);
+    }
+
+    @Override
+    protected Node<E, Entry<E>> root() {
+        return root;
     }
 }

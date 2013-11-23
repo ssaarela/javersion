@@ -15,13 +15,14 @@
  */
 package org.javersion.util;
 
+
 public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     
     private final Thread owner = Thread.currentThread();
     
     private UpdateContext<Entry<K, V>>  updateContext;
     
-    private Node<K, V> root;
+    private Node<K, Entry<K, V>> root;
     
     private int size;
     
@@ -30,18 +31,18 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
         this(EMPTY_NODE, 0);
     }
 
-    MutableMap(Node<K, V> root, int size) {
+    MutableMap(Node<K, Entry<K, V>> root, int size) {
         this(new UpdateContext<Entry<K, V>>(32, null), root, size);
     }
 
-    MutableMap(UpdateContext<Entry<K, V>>  context, Node<K, V> root, int size) {
+    MutableMap(UpdateContext<Entry<K, V>>  context, Node<K, Entry<K, V>> root, int size) {
         this.updateContext = context;
         this.root = root;
         this.size = size;
     }
 
     @Override
-    Node<K, V> root() {
+    protected Node<K, Entry<K, V>> root() {
         verifyThread();
         return root;
     }
@@ -64,18 +65,6 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     @Override
-    protected UpdateContext<Entry<K, V>>  updateContext(int expectedUpdates, Merger<Entry<K, V>> merger) {
-        verifyThread();
-        if (updateContext.isCommitted()) {
-            updateContext = new UpdateContext<Entry<K, V>>(expectedUpdates, merger);
-        } else {
-            updateContext.validate();
-            updateContext.merger(merger);
-        }
-        return updateContext;
-    }
-
-    @Override
     public int size() {
         verifyThread();
         return size;
@@ -90,10 +79,27 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected MutableMap<K, V> doReturn(UpdateContext<Entry<K, V>> context, Node<K, V> newRoot, int newSize) {
-        this.root = (Node<K, V>) (newRoot == null ? EMPTY_NODE : newRoot);
+    protected MutableMap<K, V> doReturn(Node<K, Entry<K, V>> newRoot, int newSize) {
+        this.root = (Node<K, Entry<K, V>>) (newRoot == null ? EMPTY_NODE : newRoot);
         this.size = newSize;
         return this;
+    }
+    
+    @Override
+    protected UpdateContext<Entry<K, V>> updateContext(int expectedUpdates, Merger<Entry<K, V>> merger) {
+        verifyThread();
+        if (updateContext.isCommitted()) {
+            updateContext = new UpdateContext<Entry<K, V>>(expectedUpdates, merger);
+        } else {
+            updateContext.validate();
+            updateContext.merger(merger);
+        }
+        return updateContext;
+    }
+    
+    @Override
+    protected void commit(UpdateContext<Entry<K, V>> updateContext) {
+        // Nothing to do here
     }
 
 }

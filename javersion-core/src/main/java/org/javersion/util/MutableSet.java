@@ -16,39 +16,79 @@
 package org.javersion.util;
 
 
-public class MutableSet<E> extends AbstractTrieSet<E, MutableMap<E,Object>, MutableSet<E>> {
+
+public class MutableSet<E> extends AbstractTrieSet<E, MutableSet<E>> {
     
-    private final MutableMap<E, Object> map;
+    private final Thread owner = Thread.currentThread();
     
-    public MutableSet(PersistentSet<E> set) {
-        this(set.getMap().toMutableMap());
+    private UpdateContext<Entry<E>> updateContext = new UpdateContext<>(32);
+    
+    private Node<E, Entry<E>> root;
+    
+    private int size;
+
+    public MutableSet() {
+        this(null, 0);
     }
     
-    MutableSet(MutableMap<E,Object> map) {
-        this.map = map;
+    MutableSet(Node<E, Entry<E>> root, int size) {
+        this.root = root;
+        this.size = size;
     }
     
     public PersistentSet<E> toPersistentSet() {
-        return new PersistentSet<>(map.toPersistentMap());
+        verifyThread();
+        updateContext.commit();
+        return new PersistentSet<>(root, size);
     }
 
-    @Override
-    MutableSet<E> doReturn(MutableMap<E, Object> newMap) {
-        if (newMap != map) {
-            throw new IllegalArgumentException("Mutable map is edit in place!");
+    private void verifyThread() {
+        if (owner != Thread.currentThread()) {
+            throw new IllegalStateException("MutableMap should only be accessed form the thread it was created in.");
         }
-        return this;
-    }
-
-    @Override
-    MutableMap<E, Object> getMap() {
-        return map;
     }
 
     @Override
     public MutableSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
+        verifyThread();
         updateFunction.apply(this);
         return this;
+    }
+
+    @Override
+    public int size() {
+        verifyThread();
+        return size;
+    }
+
+    @Override
+    protected MutableSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
+        verifyThread();
+        root = newRoot;
+        size = newSize;
+        return null;
+    }
+
+    @Override
+    protected Node<E, Entry<E>> root() {
+        return root;
+    }
+    
+    @Override
+    protected UpdateContext<Entry<E>> updateContext(int expectedUpdates, Merger<Entry<E>> merger) {
+        verifyThread();
+        if (updateContext.isCommitted()) {
+            updateContext = new UpdateContext<Entry<E>>(expectedUpdates, merger);
+        } else {
+            updateContext.validate();
+            updateContext.merger(merger);
+        }
+        return updateContext;
+    }
+    
+    @Override
+    protected void commit(UpdateContext<Entry<E>> updateContext) {
+        // Nothing to do here
     }
 
 }

@@ -24,7 +24,7 @@ import java.util.Comparator;
 
 import org.javersion.util.AbstractRedBlackTree.Node;
 
-public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T> {
+public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends AbstractRedBlackTree<K, N, T>> {
 
     @SuppressWarnings("rawtypes")
     private final static Comparator<Comparable> NATURAL = new Comparator<Comparable>() {

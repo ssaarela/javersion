@@ -15,69 +15,88 @@
  */
 package org.javersion.util;
 
+import static com.google.common.base.Objects.equal;
+import static com.google.common.collect.Iterators.transform;
+
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
+
+import org.javersion.util.AbstractTrieSet.Entry;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
 
-public abstract class AbstractTrieSet<E, M extends AbstractTrieMap<E, Object, M>, S extends AbstractTrieSet<E, M, S>> implements Iterable<E> {
+public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extends AbstractHashTrie<E, Entry<E>, S> implements Iterable<E> {
     
-    static final Object PRESENT = new Object(); 
-    
+    @SuppressWarnings("rawtypes")
+    private static final Function ELEMENT_TO_ENTRY = new Function() {
+        @SuppressWarnings("unchecked")
+        @Override
+        public Entry apply(Object input) {
+            return new Entry(input);
+        }
+    };
+
+    @SuppressWarnings("rawtypes")
+    private static final Function ENTRY_TO_ELEMENT = new Function() {
+        @Override
+        public Object apply(Object input) {
+            return ((Entry) input).element();
+        }
+    };
+
     public S conj(E element) {
-        return doReturn(getMap().assoc(element, PRESENT));
+        final UpdateContext<Entry<E>> updateContext = updateContext(1, null);
+        try {
+            return doAdd(updateContext, new Entry<E>(element));
+        } finally {
+            commit(updateContext);
+        }
     }
     
-    abstract M getMap();
-    
-    abstract S doReturn(M newMap);
-
     public S conjAll(final Collection<? extends E> elements) {
         return conjAll(elements, elements.size());
     }
 
-    public S conjAll(AbstractTrieSet<? extends E, ?, ?> elements) {
+    public S conjAll(AbstractTrieSet<? extends E, ?> elements) {
         return conjAll(elements, elements.size());
     }
 
+    @SuppressWarnings("unchecked")
     private S conjAll(final Iterable<? extends E> elements, int size) {
-        M newMap = getMap().update(
-                size, 
-                new MapUpdate<E, Object>() {
-                    @Override
-                    public void apply(MutableMap<E, Object> map) {
-                        for (E e : elements) {
-                            map.assoc(e, PRESENT);
-                        }
-                    }
-                });
-        return doReturn(newMap);
+        final UpdateContext<Entry<E>> updateContext = updateContext(size, null);
+        try {
+            return (S) doAddAll(updateContext, transform(elements.iterator(), ELEMENT_TO_ENTRY));
+        } finally {
+            commit(updateContext);
+        }
     }
     
     public S disjoin(Object element) {
-        return doReturn(getMap().dissoc(element));
+        final UpdateContext<Entry<E>> updateContext = updateContext(1, null);
+        try {
+            return doRemove(updateContext, element);
+        } finally {
+            commit(updateContext);
+        }
     }
     
-    public int size() {
-        return getMap().size();
-    }
-    
+    @SuppressWarnings("unchecked")
     public Iterator<E> iterator() {
-        return Iterators.transform(getMap().iterator(), new Function<Map.Entry<E, Object>, E>() {
-
-            @Override
-            public E apply(java.util.Map.Entry<E, Object> input) {
-                return input.getKey();
-            }
-            
-        });
+        return Iterators.transform(doIterator(), ENTRY_TO_ELEMENT);
+    }
+    
+    protected UpdateContext<Entry<E>> updateContext(int expectedSize, Merger<Entry<E>> merger) {
+        return new UpdateContext<>(expectedSize, merger);
+    }
+    
+    protected void commit(UpdateContext<Entry<E>> updateContext) {
+        updateContext.commit();
     }
 
     public boolean contains(Object o) {
-        return getMap().containsKey(o);
+        return containsKey(o);
     }
 
     public S update(SetUpdate<E> updateFunction) {
@@ -85,5 +104,25 @@ public abstract class AbstractTrieSet<E, M extends AbstractTrieMap<E, Object, M>
     }
     
     public abstract S update(int expectedUpdates, SetUpdate<E> updateFunction);
-    
+
+    public static final class Entry<E> extends AbstractHashTrie.Entry<E, Entry<E>> {
+        
+        public Entry(E element) {
+            super(element);
+        }
+        
+        public E element() {
+            return key;
+        }
+
+        @Override
+        public org.javersion.util.AbstractHashTrie.EntryEquality equals(Entry<E> other) {
+            if (other == this || equal(this.key, other.key)) {
+                return EntryEquality.EQUAL;
+            }
+            return EntryEquality.NONE;
+        }
+        
+    }
+
 }
