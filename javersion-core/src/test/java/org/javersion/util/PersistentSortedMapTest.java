@@ -1,17 +1,29 @@
+/*
+ * Copyright 2013 Samppa Saarela
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.javersion.util;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import org.javersion.util.AbstractRedBlackTree.Color;
 import org.javersion.util.PersistentSortedMap.Node;
@@ -46,6 +58,7 @@ public class PersistentSortedMapTest {
         
         assertThat(empty.size(), equalTo(0));
         assertThat(empty.root(), nullValue());
+        
         assertThat(sortedMap.size(), equalTo(map.size()));
         
         for (Integer kv : ints) {
@@ -158,6 +171,36 @@ public class PersistentSortedMapTest {
             throw new AssertionError(DESC + ": " + e.getMessage(), e);
         }
     }
+    
+    @Test(expected=NoSuchElementException.class)
+    public void Iterate_Empty() {
+        Iterator<Map.Entry<Integer, Integer>> iter = PersistentSortedMap.<Integer, Integer>empty().iterator();
+        assertThat(iter.hasNext(), equalTo(false));
+        iter.next();
+    }
+    
+    @Test
+    public void Iterate_Random() {
+        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
+        for (Integer kv : randoms(1234)) {
+            map = map.assoc(kv, kv);
+        }
+        Iterator<Map.Entry<Integer, Integer>> iter = map.iterator();
+        int count = 0;
+        Integer prev = null;
+        Integer next;
+        while (iter.hasNext()) {
+            count++;
+            if (prev == null) {
+                prev = iter.next().getKey();
+            } else {
+                next = iter.next().getKey();
+                assertThat(prev, lessThan(next));
+                prev = next;
+            }
+        }
+        assertThat(count, equalTo(1234));
+    }
 
     private List<Integer> randoms(int size) {
         Random random = new Random(RANDOM_SEED);
@@ -262,10 +305,12 @@ public class PersistentSortedMapTest {
         }
         boolean leaf = true;
         if (node.left != null){
+            assertThat(node.left.key, lessThan(node.key));
             assertRBProperties(node.left, blacks);
             leaf = false;
         }
         if (node.right != null) {
+            assertThat(node.right.key, greaterThan(node.key));
             assertRBProperties(node.right, blacks);
             leaf = false;
         }

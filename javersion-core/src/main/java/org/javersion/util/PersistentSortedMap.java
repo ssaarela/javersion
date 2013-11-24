@@ -19,6 +19,7 @@ import static com.google.common.collect.Iterables.transform;
 import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -26,11 +27,20 @@ import org.javersion.util.PersistentSortedMap.Node;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.collect.Iterators;
 
-public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V>, PersistentSortedMap<K, V>> {
+public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V>, PersistentSortedMap<K, V>> implements Iterable<Map.Entry<K, V>> {
     
     @SuppressWarnings("rawtypes")
     private static final PersistentSortedMap EMPTY = new PersistentSortedMap();
+    
+    @SuppressWarnings("rawtypes")
+    private static final Function TO_MAP_ENTRY = new Function() {
+        @Override
+        public Object apply(Object input) {
+            return (Map.Entry) input;
+        }
+    };
 
     @SuppressWarnings("unchecked")
     public static <K, V> PersistentSortedMap<K, V> empty() {
@@ -93,6 +103,12 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
 
     @SuppressWarnings("unchecked")
     @Override
+    public Iterator<Map.Entry<K, V>> iterator() {
+        return Iterators.transform(doIterator(root, true), TO_MAP_ENTRY);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
     protected PersistentSortedMap<K, V> doReturn(UpdateContext<Node<K, V>> context, Comparator<? super K> comparator, Node<K, V> newRoot, int newSize) {
         context.commit();
         if (newRoot == root) {
@@ -103,7 +119,6 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
         return new PersistentSortedMap<K, V>(comparator, newRoot, newSize);
     }
 
-    
     public String toString() {
         return root == null ? "NIL" : root.toString();
     }
@@ -184,4 +199,5 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
             return sb;
         }
     }
+
 }

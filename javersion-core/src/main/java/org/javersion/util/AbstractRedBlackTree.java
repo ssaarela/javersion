@@ -20,9 +20,11 @@ import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 import static org.javersion.util.AbstractRedBlackTree.Mirror.LEFT;
 import static org.javersion.util.AbstractRedBlackTree.Mirror.RIGHT;
 
-import java.util.Comparator;
+import java.util.*;
 
 import org.javersion.util.AbstractRedBlackTree.Node;
+
+import com.google.common.collect.UnmodifiableIterator;
 
 public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends AbstractRedBlackTree<K, N, T>> {
 
@@ -69,6 +71,28 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
         }
         return null;
     }
+    
+    protected final N findMin(N node) {
+        while (node != null) {
+            if (node.left == null) {
+                return node;
+            } else {
+                node = node.left;
+            }
+        }
+        return null;
+    }
+    
+    protected final N findMax(N node) {
+        while (node != null) {
+            if (node.right == null) {
+                return node;
+            } else {
+                node = node.right;
+            }
+        }
+        return null;
+    }
 
     protected final T doAdd(UpdateContext<N> context, N root, N node) {
         if (root == null) {
@@ -100,6 +124,10 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
         }
         return doReturn(context, comparator, root, newSize);
     }
+    
+    protected Iterator<N> doIterator(N root, boolean asc) {
+        return new RBIterator<K, N>(root, asc);
+    }
 
     protected final T doRemove(UpdateContext<N> context, N root, Object keyObj) {
         @SuppressWarnings("unchecked")
@@ -108,7 +136,11 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
             return self();
         } else {
             N newRoot = root.remove(context, key, comparator);
-            return doReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
+            if (newRoot != null) {
+                return doReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
+            } else {
+                return doReturn(context, comparator, null, 0);
+            }
         }
     }
     
@@ -490,4 +522,37 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
         }
     }
 
+    static final class RBIterator<K, N extends Node<K, N>> extends UnmodifiableIterator<N> {
+
+        private final Deque<N> stack = new ArrayDeque<N>();
+
+        private final boolean asc;
+        
+        public RBIterator(N root, boolean asc) {
+            this.asc = asc;
+            push(root);
+        }
+        
+        private void push(N node) {
+            while (node != null) {
+                stack.addLast(node);
+                node = (asc ? node.left : node.right);
+            }
+        }
+        
+        @Override
+        public boolean hasNext() {
+            return !stack.isEmpty();
+        }
+
+        @Override
+        public N next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            N result = stack.removeLast();
+            push(asc ? result.right : result.left);
+            return result;
+        }
+    }
 }
