@@ -36,6 +36,14 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         }
     };
     
+    @SuppressWarnings("rawtypes")
+    private static final Function TO_MAP_ENTRY = new Function() {
+        @Override
+        public Object apply(Object input) {
+            return (Map.Entry) input;
+        }
+    };
+    
     public M assoc(K key, V value) {
         return assoc(new Entry<K, V>(key, value));
     }
@@ -136,9 +144,9 @@ public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> 
         return root().find(key) != null;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public Iterator iterator() {
-        return doIterator();
+    @SuppressWarnings("unchecked")
+    public Iterator<Map.Entry<K, V>> iterator() {
+        return transform(doIterator(), TO_MAP_ENTRY);
     }
     
     
