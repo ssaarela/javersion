@@ -61,10 +61,17 @@ but until there's actual need for it, it's just early optimization.
 TODO
 ----
 * Efficient persistent Map/Set and SortedMap/SortedSet for VersionGraph 
-  * Optimize PersitentSet via abstract HAMT base class for Map and Set that doesn't require Entry.value.
-  * Try 64-bit mode for PersistentMap and if it's good, sniff JVM bitness or make it configurable
-  * ArrayNode-optimization
-  * Efficient PersistedSortedSet
+  * ~~Optimize PersitentSet via abstract HAMT base class for Map and Set that doesn't require Entry.value.~~ DONE
+  * ~~Try 64-bit mode for PersistentMap and if it's good, sniff JVM bitness or make it configurable~~
+    * Didn't seem to provide any improvement
+  * ~~ArrayNode-optimization~~ DONE
+    * Bitmapped node is converted to ArrayNode when it's full (32) - there's no need to remap anything then.
+  * ~~Efficient PersistedSortedSet~~ DONE
+    * AbstractRedBlackTree implements persistent red black tree algorithm with PersistentSortedMap/Set sub classes for Map/Set
+    * Uses UpdateContext mechanism for efficient bulk updates. Bulk updates (e.g. addAll) are done reusing same nodes. 
+  * Interfaces for persistent and mutable, hash and sorted Sets and Maps
+  * Improve tests by common base class for maps and sets
+  * Improve test (and mutation) coverage
 * Object/version binding 
   * Read (possibly cyclic) objects form VersionGraph
   * Support for Sets, Maps, Lists etc
