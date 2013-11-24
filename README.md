@@ -43,7 +43,7 @@ Non-Blocking Persistent Data Structures for Java
 ------
 
 Efficient versioning calls for persistent data structures (as in Purely Functional Data Structures), 
-but I was unable to find suitable from existing Java libraries - and I love to code - so I implemented my own. 
+but I was unable to find suitable from existing Java libraries, so I implemented my own. 
 I suspect that these may be handy also on their own...
 
 Inspired by Clojure's (i.e. Phil Bagwell's) persistent Hash Array Mapped Trie, here's some goodies for Java apps:
