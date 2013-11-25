@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.*;
 
 import org.junit.Test;
 
-public class PersitentSortedSetTest {
+public class PersitentTreeSetTest {
     
     private static final Random RANDOM = new Random(2007);
     
@@ -40,9 +40,9 @@ public class PersitentSortedSetTest {
     
     @Test
     public void Immutability_On_Conj_And_Disj() {
-        List<PersistentSortedSet<Integer>> sets = new ArrayList<>();
+        List<PersistentTreeSet<Integer>> sets = new ArrayList<>();
         Set<Integer> ints = randoms(1234);
-        PersistentSortedSet<Integer> set = PersistentSortedSet.empty();
+        PersistentTreeSet<Integer> set = PersistentTreeSet.empty();
         sets.add(set);
         for (Integer e : ints) {
             set = set.conj(e);
@@ -58,9 +58,9 @@ public class PersitentSortedSetTest {
         assertSets(sets, ints);
     }
 
-    private void assertSets(List<PersistentSortedSet<Integer>> sets,
+    private void assertSets(List<PersistentTreeSet<Integer>> sets,
             Set<Integer> ints) {
-        PersistentSortedSet<Integer> set;
+        PersistentTreeSet<Integer> set;
         assertThat(sets.get(0).size(), equalTo(0));
         assertThat(sets.get(0).root(), nullValue());
         for (int i=1; i <= ints.size(); i++) {

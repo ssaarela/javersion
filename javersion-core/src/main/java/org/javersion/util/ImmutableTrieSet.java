@@ -21,13 +21,13 @@ import java.util.Iterator;
 
 class ImmutableTrieSet<E> extends AbstractSet<E> {
 
-    private PersistentSet<E> set;
+    private PersistentHashSet<E> set;
     
-    ImmutableTrieSet(PersistentSet<E> set) {
+    ImmutableTrieSet(PersistentHashSet<E> set) {
         this.set = Check.notNull(set, "set");
     }
     
-    public PersistentSet<E> toPersistentSet() {
+    public PersistentHashSet<E> toPersistentSet() {
         return set;
     }
 

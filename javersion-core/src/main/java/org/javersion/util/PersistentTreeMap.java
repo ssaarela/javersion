@@ -23,16 +23,16 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.javersion.util.PersistentSortedMap.Node;
+import org.javersion.util.PersistentTreeMap.Node;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 
-public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V>, PersistentSortedMap<K, V>> implements Iterable<Map.Entry<K, V>> {
+public class PersistentTreeMap<K, V> extends AbstractRedBlackTree<K, Node<K, V>, PersistentTreeMap<K, V>> implements Iterable<Map.Entry<K, V>> {
     
     @SuppressWarnings("rawtypes")
-    private static final PersistentSortedMap EMPTY = new PersistentSortedMap();
+    private static final PersistentTreeMap EMPTY = new PersistentTreeMap();
     
     @SuppressWarnings("rawtypes")
     private static final Function TO_MAP_ENTRY = new Function() {
@@ -43,12 +43,12 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
     };
 
     @SuppressWarnings("unchecked")
-    public static <K, V> PersistentSortedMap<K, V> empty() {
+    public static <K, V> PersistentTreeMap<K, V> empty() {
         return EMPTY;
     }
     
-    public static <K, V> PersistentSortedMap<K, V> empty(Comparator<? super K> comparator) {
-        return new PersistentSortedMap<K, V>(comparator);
+    public static <K, V> PersistentTreeMap<K, V> empty(Comparator<? super K> comparator) {
+        return new PersistentTreeMap<K, V>(comparator);
     }
     
     
@@ -56,19 +56,19 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
 
     private final int size;
     
-    private PersistentSortedMap() {
+    private PersistentTreeMap() {
         super();
         root = null;
         size = 0;
     }
 
-    private PersistentSortedMap(Comparator<? super K> comparator) {
+    private PersistentTreeMap(Comparator<? super K> comparator) {
         super(comparator);
         root = null;
         size = 0;
     }
 
-    private PersistentSortedMap(Comparator<? super K> comparator, Node<K, V> root, int size) {
+    private PersistentTreeMap(Comparator<? super K> comparator, Node<K, V> root, int size) {
         super(comparator);
         this.root = root;
         this.size = size;
@@ -87,17 +87,17 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
         return root;
     }
 
-    public PersistentSortedMap<K, V> assoc(K key, V value) {
+    public PersistentTreeMap<K, V> assoc(K key, V value) {
         UpdateContext<Node<K, V>> context = new UpdateContext<Node<K, V>>(1);
         return doAdd(context, root, new Node<K, V>(context, key, value, RED));
     }
 
-    public PersistentSortedMap<K, V> assocAll(Map<K, V> map) {
+    public PersistentTreeMap<K, V> assocAll(Map<K, V> map) {
         final UpdateContext<Node<K, V>> context = new UpdateContext<Node<K, V>>(map.size());
         return doAddAll(context, root, transform(map.entrySet(), new EntryToNode<K, V>(context)));
     }
 
-    public PersistentSortedMap<K, V> dissoc(Object keyObj) {
+    public PersistentTreeMap<K, V> dissoc(Object keyObj) {
         return doRemove(new UpdateContext<Node<K, V>>(1), root, keyObj);
     }
 
@@ -109,14 +109,14 @@ public class PersistentSortedMap<K, V> extends AbstractRedBlackTree<K, Node<K, V
 
     @SuppressWarnings("unchecked")
     @Override
-    protected PersistentSortedMap<K, V> doReturn(UpdateContext<Node<K, V>> context, Comparator<? super K> comparator, Node<K, V> newRoot, int newSize) {
+    protected PersistentTreeMap<K, V> doReturn(UpdateContext<Node<K, V>> context, Comparator<? super K> comparator, Node<K, V> newRoot, int newSize) {
         context.commit();
         if (newRoot == root) {
             return this;
         } else if (newRoot == null) {
             return EMPTY;
         }
-        return new PersistentSortedMap<K, V>(comparator, newRoot, newSize);
+        return new PersistentTreeMap<K, V>(comparator, newRoot, newSize);
     }
 
     public String toString() {

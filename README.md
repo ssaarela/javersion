@@ -21,7 +21,7 @@ Some use cases for Javersion are:
 
 It's designed to be extensible at all levels, e.g. 
 
-* Core makes no assumptions about what metadata versions shuold contain, it only knows of functional properties of versios 
+* Core makes no assumptions about what metadata versions should contain, it only knows of functional properties of versions 
 (e.g. revision number, parents, diff of properties).
 * Core algorithm works on Map making no assumptions about key or value type other than that
   * key needs to be immutable and implement equals/hashCode correctly and
@@ -42,18 +42,21 @@ VersionGraphs are trivial and efficient to cache even in a cluster.
 Non-Blocking Persistent Data Structures for Java
 ------
 
-Efficient versioning calls for persistent data structures (as in Purely Functional Data Structures), 
-but I was unable to find suitable from existing Java libraries, so I implemented my own. 
+Efficient versioning requires persistent data structures (i.e. Purely Functional Data Structures). 
 I suspect that these may be handy also on their own...
 
-Inspired by Clojure's (i.e. Phil Bagwell's) persistent Hash Array Mapped Trie, here's some goodies for Java apps:
+Inspired by Clojure's (i.e. Phil Bagwell's) persistent Hash Array Mapped Trie, here's HAMT for Java world:
 
-* [PeristentMap](https://github.com/ssaarela/javersion/blob/master/javersion-core/src/main/java/org/javersion/util/PersistentMap.java) - persistent hash trie map 
-* [PersistentSet](https://github.com/ssaarela/javersion/blob/master/javersion-core/src/main/java/org/javersion/util/PersistentSet.java) - PersistentMap based set
+* [PeristentHashMap](https://github.com/ssaarela/javersion/blob/master/javersion-core/src/main/java/org/javersion/util/PersistentHashMap.java) 
+* [PersistentHashSet](https://github.com/ssaarela/javersion/blob/master/javersion-core/src/main/java/org/javersion/util/PersistentHashSet.java)
 
-Compared to Clojure's PersistentHashMap (v. 1.5.1), PersistentMap is idiomatic Java code, simpler implementation 
-and faster - at least on my Mac. But I encourage you not to take my word for it, but see for your self.
-- And if you do, I'd very much like to hear what you think of these (e.g. Twitter: @ssaarela or bug reports in Github).
+Compared to Clojure's PersistentHashMap (v. 1.5.1), Javersion's hash map is idiomatic Java code with
+full generics support, simpler implementation (a matter of opinion) 
+and somewhat faster (at least on my Macs). One of the biggest performance factor is Clojure's hash implementation.
+Using standard hash reduces the gap. Bigger architectural differences include that Javersion's 
+PersistentHashSet doesn't require dummy values for Map.Entry. 
+
+If you should try these out, I'd very much like to hear what you think of them (e.g. Twitter: @ssaarela or bug reports in Github).
 Also if you're interested in using these without other versioning stuff, please, let me known - that's on the road map,
 but until there's actual need for it, it's just early optimization.
 

@@ -23,13 +23,13 @@ import java.util.Set;
 
 class ImmutableTrieMap<K, V> extends AbstractMap<K, V> {
     
-    private final PersistentMap<K, V> map;
+    private final PersistentHashMap<K, V> map;
     
-    ImmutableTrieMap(PersistentMap<K, V> map) {
+    ImmutableTrieMap(PersistentHashMap<K, V> map) {
         this.map = Check.notNull(map, "map");
     }
     
-    public PersistentMap<K, V> getPersistentMap() {
+    public PersistentHashMap<K, V> getPersistentMap() {
         return map;
     }
 

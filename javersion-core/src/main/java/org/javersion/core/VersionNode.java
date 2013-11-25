@@ -19,7 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.javersion.util.AbstractTrieMap.Entry;
+import org.javersion.util.AbstractHashMap.Entry;
 import org.javersion.util.*;
 
 import com.google.common.collect.ImmutableSet;
@@ -56,9 +56,9 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
     
     public final VersionNode<K, V, T> previous;
 
-    public final PersistentMap<K, VersionProperty<V>> allProperties;
+    public final PersistentHashMap<K, VersionProperty<V>> allProperties;
     
-    public final PersistentSet<Long> allRevisions;
+    public final PersistentHashSet<Long> allRevisions;
 
     public VersionNode(VersionNode<K, V, T> previous, T version, Set<VersionNode<K, V, T>> parents) {
         Check.notNull(version, "version");
@@ -75,14 +75,14 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
         Iterator<VersionNode<K, V, T>> iter = parents.iterator();
         
         if (!iter.hasNext()) {
-            this.allRevisions = new PersistentSet<Long>().conj(version.revision);
-            this.allProperties = PersistentMap.copyOf(version.getVersionProperties());
+            this.allRevisions = new PersistentHashSet<Long>().conj(version.revision);
+            this.allProperties = PersistentHashMap.copyOf(version.getVersionProperties());
             this.merger = newMerger();
         } else {
             VersionNode<K, V, T> parent = iter.next();
             this.merger = parent.merger;
-            PersistentSet<Long> revisions = parent.allRevisions;
-            MutableMap<K, VersionProperty<V>> properties = parent.allProperties.toMutableMap();
+            PersistentHashSet<Long> revisions = parent.allRevisions;
+            MutableHashMap<K, VersionProperty<V>> properties = parent.allProperties.toMutableMap();
             
             while (iter.hasNext()) {
                 parent = iter.next();

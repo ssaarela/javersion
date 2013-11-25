@@ -21,11 +21,11 @@ import static com.google.common.collect.Iterators.transform;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.javersion.util.AbstractTrieMap.Entry;
+import org.javersion.util.AbstractHashMap.Entry;
 
 import com.google.common.base.Function;
 
-public abstract class AbstractTrieMap<K, V, M extends AbstractTrieMap<K, V, M>> extends AbstractHashTrie<K, Entry<K,V>, AbstractTrieMap<K, V, M>> implements Iterable<Map.Entry<K, V>> {
+public abstract class AbstractHashMap<K, V, M extends AbstractHashMap<K, V, M>> extends AbstractHashTrie<K, Entry<K,V>, AbstractHashMap<K, V, M>> implements Iterable<Map.Entry<K, V>> {
     
     @SuppressWarnings("rawtypes")
     private static final Function TO_ENTRY = new Function() {

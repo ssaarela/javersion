@@ -17,7 +17,7 @@ package org.javersion.util;
 
 
 
-public class MutableSet<E> extends AbstractTrieSet<E, MutableSet<E>> {
+public class MutableHashSet<E> extends AbstractTrieSet<E, MutableHashSet<E>> {
     
     private final Thread owner = Thread.currentThread();
     
@@ -27,19 +27,19 @@ public class MutableSet<E> extends AbstractTrieSet<E, MutableSet<E>> {
     
     private int size;
 
-    public MutableSet() {
+    public MutableHashSet() {
         this(null, 0);
     }
     
-    MutableSet(Node<E, Entry<E>> root, int size) {
+    MutableHashSet(Node<E, Entry<E>> root, int size) {
         this.root = root;
         this.size = size;
     }
     
-    public PersistentSet<E> toPersistentSet() {
+    public PersistentHashSet<E> toPersistentSet() {
         verifyThread();
         updateContext.commit();
-        return new PersistentSet<>(root, size);
+        return new PersistentHashSet<>(root, size);
     }
 
     private void verifyThread() {
@@ -49,7 +49,7 @@ public class MutableSet<E> extends AbstractTrieSet<E, MutableSet<E>> {
     }
 
     @Override
-    public MutableSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
+    public MutableHashSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
         verifyThread();
         updateFunction.apply(this);
         return this;
@@ -62,7 +62,7 @@ public class MutableSet<E> extends AbstractTrieSet<E, MutableSet<E>> {
     }
 
     @Override
-    protected MutableSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
+    protected MutableHashSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
         verifyThread();
         root = newRoot;
         size = newSize;

@@ -1,16 +1,16 @@
 import java.util.Comparator;
 
 import org.javersion.util.MapUpdate;
-import org.javersion.util.MutableMap;
-import org.javersion.util.PersistentMap;
-import org.javersion.util.PersistentSortedMap;
+import org.javersion.util.MutableHashMap;
+import org.javersion.util.PersistentHashMap;
+import org.javersion.util.PersistentTreeMap;
 
 
-public class JaversionPerfTests implements PerfTests<PersistentMap<Integer, Integer>, PersistentSortedMap<Integer, Integer>> {
+public class JaversionPerfTests implements PerfTests<PersistentHashMap<Integer, Integer>, PersistentTreeMap<Integer, Integer>> {
 
     @Override
-    public PersistentMap<Integer, Integer> incrementalInsert(Integer[] data) {
-        PersistentMap<Integer, Integer> map = PersistentMap.empty();
+    public PersistentHashMap<Integer, Integer> incrementalInsert(Integer[] data) {
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.empty();
         for (int i=0; i < data.length; i++) {
             map = map.assoc(data[i], data[i]);
         }
@@ -18,7 +18,7 @@ public class JaversionPerfTests implements PerfTests<PersistentMap<Integer, Inte
     }
 
     @Override
-    public void getAllByKeys(Integer[] data, PersistentMap<Integer, Integer> persistentMap) {
+    public void getAllByKeys(Integer[] data, PersistentHashMap<Integer, Integer> persistentMap) {
         for (int i=0; i < data.length; i++) {
             Object value = persistentMap.get(data[i]);
             if (!data[i].equals(value)) {
@@ -28,18 +28,18 @@ public class JaversionPerfTests implements PerfTests<PersistentMap<Integer, Inte
     }
 
     @Override
-    public void incrementalDelete(Integer[] data, PersistentMap<Integer, Integer> persistentMap) {
+    public void incrementalDelete(Integer[] data, PersistentHashMap<Integer, Integer> persistentMap) {
         for (int i=0; i < data.length; i++) {
             persistentMap = persistentMap.dissoc(data[i]);
         }
     }
 
     @Override
-    public PersistentMap<Integer, Integer> bulkInsert(final Integer[] data) {
-        PersistentMap<Integer, Integer> map = PersistentMap.<Integer, Integer>empty().update(
+    public PersistentHashMap<Integer, Integer> bulkInsert(final Integer[] data) {
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.<Integer, Integer>empty().update(
                 new MapUpdate<Integer, Integer>() {
                     @Override
-                    public void apply(MutableMap<Integer, Integer> map) {
+                    public void apply(MutableHashMap<Integer, Integer> map) {
                         for (int i=0; i < data.length; i++) {
                             map.assoc(data[i], data[i]);
                         }
@@ -49,12 +49,12 @@ public class JaversionPerfTests implements PerfTests<PersistentMap<Integer, Inte
     }
 
     @Override
-    public void bulkDelete(final Integer[] data, final PersistentMap<Integer, Integer> persistentMap) {
+    public void bulkDelete(final Integer[] data, final PersistentHashMap<Integer, Integer> persistentMap) {
         int sizeAfterDelete = persistentMap.update(
                 persistentMap.size(),
                         new MapUpdate<Integer, Integer>() {
                     @Override
-                    public void apply(MutableMap<Integer, Integer> map) {
+                    public void apply(MutableHashMap<Integer, Integer> map) {
                         for (int i=0; i < data.length; i++) {
                             map.dissoc(data[i]);
                         }
@@ -66,8 +66,8 @@ public class JaversionPerfTests implements PerfTests<PersistentMap<Integer, Inte
     }
 
     @Override
-    public PersistentSortedMap<Integer, Integer> sortedMapIncrementalInsert(Comparator<Integer> comparator, Integer[] data) {
-        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty(comparator);
+    public PersistentTreeMap<Integer, Integer> sortedMapIncrementalInsert(Comparator<Integer> comparator, Integer[] data) {
+        PersistentTreeMap<Integer, Integer> map = PersistentTreeMap.empty(comparator);
         for (int i=0; i < data.length; i++) {
             map = map.assoc(data[i], data[i]);
         }
@@ -75,7 +75,7 @@ public class JaversionPerfTests implements PerfTests<PersistentMap<Integer, Inte
     }
 
     @Override
-    public void sortedMapIncrementalDelete(Integer[] data, PersistentSortedMap<Integer, Integer> sortedMap) {
+    public void sortedMapIncrementalDelete(Integer[] data, PersistentTreeMap<Integer, Integer> sortedMap) {
         for (int i=0; i < data.length; i++) {
             sortedMap = sortedMap.dissoc(data[i]);
         }

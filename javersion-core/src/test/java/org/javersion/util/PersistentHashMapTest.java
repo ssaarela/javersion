@@ -34,7 +34,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.javersion.util.AbstractTrieMap.Entry;
+import org.javersion.util.AbstractHashMap.Entry;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -42,7 +42,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-public class PersistentMapTest {
+public class PersistentHashMapTest {
     
     private static class HashKey {
         final int hash;
@@ -60,7 +60,7 @@ public class PersistentMapTest {
     
     @Test
     public void Empty_Map() {
-        PersistentMap<String, String> map = PersistentMap.empty();
+        PersistentHashMap<String, String> map = PersistentHashMap.empty();
         assertThat(map.size(), equalTo(0));
         assertThat(map.containsKey("key"), equalTo(false));
         assertThat(map.iterator(), not(nullValue()));
@@ -69,8 +69,8 @@ public class PersistentMapTest {
 
     @Test
     public void Add_Values() {
-        PersistentMap<String, String> map = PersistentMap.empty();
-        PersistentMap<String, String> otherMap = map.assoc("key", "value");
+        PersistentHashMap<String, String> map = PersistentHashMap.empty();
+        PersistentHashMap<String, String> otherMap = map.assoc("key", "value");
         assertThat(otherMap.get("key"), equalTo("value"));
         assertThat(map.get("key"), nullValue());
 
@@ -97,7 +97,7 @@ public class PersistentMapTest {
         HashKey k2 = new HashKey(1);
         HashKey k3 = new HashKey(1);
         
-        PersistentMap<Object, Object> map = PersistentMap.empty();
+        PersistentHashMap<Object, Object> map = PersistentHashMap.empty();
         assertThat(map.size(), equalTo(0));
 
         map = map.assoc(k1, k1);
@@ -134,7 +134,7 @@ public class PersistentMapTest {
         HashKey k0 = new HashKey(0);
         HashKey k1 = new HashKey(0);
         
-        PersistentMap<Object, Object> map = PersistentMap.empty();
+        PersistentHashMap<Object, Object> map = PersistentHashMap.empty();
         map = map.assoc(k0, k0);
         map = map.assoc(k1, k1);
         assertThat(map.size(), equalTo(2));
@@ -154,7 +154,7 @@ public class PersistentMapTest {
         HashKey k1 = new HashKey(0);
         HashKey k2 = new HashKey(0);
 
-        PersistentMap<Object, Object> map = PersistentMap.empty();
+        PersistentHashMap<Object, Object> map = PersistentHashMap.empty();
         map = map.assoc(k0, k0);
         map = map.assoc(k1, k1);
 
@@ -188,7 +188,7 @@ public class PersistentMapTest {
         HashKey k2 = new HashKey(1);
         HashKey k3 = new HashKey(1);
 
-        PersistentMap<HashKey, HashKey> map = PersistentMap.empty();
+        PersistentHashMap<HashKey, HashKey> map = PersistentHashMap.empty();
         map = map.assoc(k1, k1);
         map = map.assoc(k2, k1);
         map = map.assoc(k2, k2);
@@ -228,7 +228,7 @@ public class PersistentMapTest {
             keys.add(new HashKey(i));
             keys.add(new HashKey(i));
         }
-        PersistentMap<HashKey, HashKey> map = incremental(keys);
+        PersistentHashMap<HashKey, HashKey> map = incremental(keys);
         assertThat(map.size(), equalTo(keys.size()));
         for (HashKey key : keys) {
             assertThat(map.get(key), equalTo(key));
@@ -253,7 +253,7 @@ public class PersistentMapTest {
             hashMap.put(kv, kv);
         }
         hashMap.put(null, null);
-        PersistentMap<Integer, Integer> map = PersistentMap.copyOf(hashMap);
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.copyOf(hashMap);
         assertThat(map.asMap(), equalTo(hashMap));
     }
     
@@ -263,7 +263,7 @@ public class PersistentMapTest {
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
         doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
 
-        PersistentMap<Integer, Integer> map = PersistentMap.empty();
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.empty();
         
         map = map.merge(1, 1, merger);
         assertThat(map.get(1), equalTo(1));
@@ -297,14 +297,14 @@ public class PersistentMapTest {
     @Test
     public void Assoc_All_Map() {
         Map<Integer, Integer> ints = ImmutableMap.of(1, 1, 2, 2);
-        Map<Integer, Integer> map = PersistentMap.copyOf(ints).asMap();
+        Map<Integer, Integer> map = PersistentHashMap.copyOf(ints).asMap();
         assertThat(map, equalTo(ints));
     }
     
     @Test
     public void Assoc_All_PersistentMap() {
-        PersistentMap<Integer, Integer> map = PersistentMap.of(1, 1);
-        PersistentMap<Integer, Integer> ints = PersistentMap.of(2, 2, 3, 3);
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.of(1, 1);
+        PersistentHashMap<Integer, Integer> ints = PersistentHashMap.of(2, 2, 3, 3);
         Map<Integer, Integer> expected = ImmutableMap.of(1, 1, 2, 2, 3, 3);
 
         assertThat(map.assocAll(ints).asMap(), equalTo(expected));
@@ -313,7 +313,7 @@ public class PersistentMapTest {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void Merge_All_Map() {
-        PersistentMap<Integer, Integer> map = PersistentMap.of(1, 1);
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.of(1, 1);
         Map<Integer, Integer> ints = ImmutableMap.of(1, 2, 3, 3);
         Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
 
@@ -338,8 +338,8 @@ public class PersistentMapTest {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void Merge_All_PersistentMap() {
-        PersistentMap<Integer, Integer> map = PersistentMap.of(1, 1);
-        PersistentMap<Integer, Integer> ints = PersistentMap.of(1, 2, 3, 3);
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.of(1, 1);
+        PersistentHashMap<Integer, Integer> ints = PersistentHashMap.of(1, 2, 3, 3);
         Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
 
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
@@ -363,8 +363,8 @@ public class PersistentMapTest {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void Merge_And_Keep_Old_Entry() {
-        PersistentMap<Integer, Integer> map = PersistentMap.of(1, 1);
-        PersistentMap<Integer, Integer> ints = PersistentMap.of(1, 2, 3, 3);
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.of(1, 1);
+        PersistentHashMap<Integer, Integer> ints = PersistentHashMap.of(1, 2, 3, 3);
         Map<Integer, Integer> expected = ImmutableMap.of(1, 1, 3, 3);
 
         ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
@@ -398,9 +398,9 @@ public class PersistentMapTest {
         }
 
         List<Map<Integer, Integer>> expectedMaps = new ArrayList<>(ints.length + 1);
-        List<PersistentMap<Integer, Integer>> persistentMaps = new ArrayList<>(ints.length + 1);
+        List<PersistentHashMap<Integer, Integer>> persistentMaps = new ArrayList<>(ints.length + 1);
         Map<Integer, Integer> map = new HashMap<Integer, Integer>();
-        PersistentMap<Integer, Integer> persistentMap = PersistentMap.of();
+        PersistentHashMap<Integer, Integer> persistentMap = PersistentHashMap.of();
         expectedMaps.add(map);
         persistentMaps.add(persistentMap);
         
@@ -426,7 +426,7 @@ public class PersistentMapTest {
 
     private void assertEqualityOfMaps(final int seed, Integer[] ints,
             List<Map<Integer, Integer>> expectedMaps,
-            List<PersistentMap<Integer, Integer>> persistentMaps)
+            List<PersistentHashMap<Integer, Integer>> persistentMaps)
             throws AssertionError {
         assertThat(persistentMaps.get(0).asMap(), equalTo(expectedMaps.get(0)));
         try {
@@ -440,12 +440,12 @@ public class PersistentMapTest {
     
     @Test
     public void Editing_MutableMap_After_Committed_Doesnt_Affect_PersistedMap() {
-        PersistentMap<Integer, Integer> map = PersistentMap.empty();
-        final AtomicReference<MutableMap<Integer, Integer>> mutableMapRef = new AtomicReference<>();
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.empty();
+        final AtomicReference<MutableHashMap<Integer, Integer>> mutableMapRef = new AtomicReference<>();
         map = map.update(new MapUpdate<Integer, Integer>() {
             
             @Override
-            public void apply(MutableMap<Integer, Integer> map) {
+            public void apply(MutableHashMap<Integer, Integer> map) {
                 map.assoc(1, 1);
                 mutableMapRef.set(map);
             }
@@ -459,11 +459,11 @@ public class PersistentMapTest {
     
     @Test(expected=IllegalStateException.class)
     public void Edit_MutableMap_From_Another_Thread() throws Throwable {
-        PersistentMap<Integer, Integer> map = PersistentMap.empty();
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.empty();
         final AtomicReference<Throwable> exception = new AtomicReference<>();
         map.update(new MapUpdate<Integer, Integer>() {
             @Override
-            public void apply(final MutableMap<Integer, Integer> map) {
+            public void apply(final MutableHashMap<Integer, Integer> map) {
                 final CountDownLatch countDown = new CountDownLatch(1);
                 new Thread() {
                     public void run() {
@@ -488,8 +488,8 @@ public class PersistentMapTest {
         throw exception.get();
     }
     
-    private static <KV> PersistentMap<KV, KV> incremental(List<KV> keys) {
-        PersistentMap<KV, KV> persistentMap = PersistentMap.empty();
+    private static <KV> PersistentHashMap<KV, KV> incremental(List<KV> keys) {
+        PersistentHashMap<KV, KV> persistentMap = PersistentHashMap.empty();
         for (KV key : keys) {
             persistentMap = persistentMap.assoc(key, key);
         }

@@ -16,7 +16,7 @@
 package org.javersion.util;
 
 
-public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
+public class MutableHashMap<K, V> extends AbstractHashMap<K, V, MutableHashMap<K, V>> {
     
     private final Thread owner = Thread.currentThread();
     
@@ -27,15 +27,15 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     private int size;
     
     @SuppressWarnings("unchecked")
-    public MutableMap() {
+    public MutableHashMap() {
         this(EMPTY_NODE, 0);
     }
 
-    MutableMap(Node<K, Entry<K, V>> root, int size) {
+    MutableHashMap(Node<K, Entry<K, V>> root, int size) {
         this(new UpdateContext<Entry<K, V>>(32, null), root, size);
     }
 
-    MutableMap(UpdateContext<Entry<K, V>>  context, Node<K, Entry<K, V>> root, int size) {
+    MutableHashMap(UpdateContext<Entry<K, V>>  context, Node<K, Entry<K, V>> root, int size) {
         this.updateContext = context;
         this.root = root;
         this.size = size;
@@ -48,14 +48,14 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     @Override
-    protected MutableMap<K, V> self() {
+    protected MutableHashMap<K, V> self() {
         return this;
     }
     
-    public PersistentMap<K, V> toPersistentMap() {
+    public PersistentHashMap<K, V> toPersistentMap() {
         verifyThread();
         updateContext.commit();
-        return PersistentMap.create(root, size);
+        return PersistentHashMap.create(root, size);
     }
     
     private void verifyThread() {
@@ -71,7 +71,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
     }
 
     @Override
-    public MutableMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger) {
+    public MutableHashMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger) {
         verifyThread();
         updateFunction.apply(this);
         return this;
@@ -79,7 +79,7 @@ public class MutableMap<K, V> extends AbstractTrieMap<K, V, MutableMap<K, V>> {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected MutableMap<K, V> doReturn(Node<K, Entry<K, V>> newRoot, int newSize) {
+    protected MutableHashMap<K, V> doReturn(Node<K, Entry<K, V>> newRoot, int newSize) {
         this.root = (Node<K, Entry<K, V>>) (newRoot == null ? EMPTY_NODE : newRoot);
         this.size = newSize;
         return this;

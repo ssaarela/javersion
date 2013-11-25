@@ -26,13 +26,13 @@ import static org.junit.Assert.assertTrue;
 import java.util.*;
 
 import org.javersion.util.AbstractRedBlackTree.Color;
-import org.javersion.util.PersistentSortedMap.Node;
+import org.javersion.util.PersistentTreeMap.Node;
 import org.junit.Test;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public class PersistentSortedMapTest {
+public class PersistentTreeMapTest {
     
     private static final int RANDOM_SEED = new Random().nextInt();
 
@@ -53,8 +53,8 @@ public class PersistentSortedMapTest {
         for (Integer kv : ints) {
             map.put(kv, kv);
         }
-        PersistentSortedMap<Integer, Integer> empty = PersistentSortedMap.empty();
-        PersistentSortedMap<Integer, Integer> sortedMap = empty.assocAll(map);
+        PersistentTreeMap<Integer, Integer> empty = PersistentTreeMap.empty();
+        PersistentTreeMap<Integer, Integer> sortedMap = empty.assocAll(map);
         
         assertThat(empty.size(), equalTo(0));
         assertThat(empty.root(), nullValue());
@@ -119,11 +119,11 @@ public class PersistentSortedMapTest {
     }
     
     private void assertRemoves(List<Integer> ints) {
-        PersistentSortedMap<Integer, Integer> sortedMap = PersistentSortedMap.empty();
+        PersistentTreeMap<Integer, Integer> sortedMap = PersistentTreeMap.empty();
         for (Integer kv : ints) {
             sortedMap = sortedMap.assoc(kv, kv);
         }
-        PersistentSortedMap<Integer, Integer> afterRemove;
+        PersistentTreeMap<Integer, Integer> afterRemove;
         for (Integer kv : ints) {
             afterRemove = sortedMap.dissoc(kv);
             assertThat(afterRemove.size(), equalTo(sortedMap.size() - 1));
@@ -140,7 +140,7 @@ public class PersistentSortedMapTest {
     @Test
     public void Re_Insertions() {
         List<Integer> ints = randoms(10);
-        PersistentSortedMap<Integer, Integer> sortedMap = PersistentSortedMap.empty();
+        PersistentTreeMap<Integer, Integer> sortedMap = PersistentTreeMap.empty();
         for (int i=0; i < 3; i++) {
             for (Integer kv : ints) {
                 sortedMap = sortedMap.assoc(kv, kv);
@@ -174,14 +174,14 @@ public class PersistentSortedMapTest {
     
     @Test(expected=NoSuchElementException.class)
     public void Iterate_Empty() {
-        Iterator<Map.Entry<Integer, Integer>> iter = PersistentSortedMap.<Integer, Integer>empty().iterator();
+        Iterator<Map.Entry<Integer, Integer>> iter = PersistentTreeMap.<Integer, Integer>empty().iterator();
         assertThat(iter.hasNext(), equalTo(false));
         iter.next();
     }
     
     @Test
     public void Iterate_Random() {
-        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
+        PersistentTreeMap<Integer, Integer> map = PersistentTreeMap.empty();
         for (Integer kv : randoms(1234)) {
             map = map.assoc(kv, kv);
         }
@@ -244,8 +244,8 @@ public class PersistentSortedMapTest {
     }
     
     private void assertInsert(List<Integer> ints) {
-        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
-        List<PersistentSortedMap<Integer, Integer>> maps = new ArrayList<>(ints.size());
+        PersistentTreeMap<Integer, Integer> map = PersistentTreeMap.empty();
+        List<PersistentTreeMap<Integer, Integer>> maps = new ArrayList<>(ints.size());
         for (Integer i : ints) {
             map = assoc(map, i);
             maps.add(map);
@@ -255,8 +255,8 @@ public class PersistentSortedMapTest {
     }
 
     private void assertDelete(List<Integer> ints) {
-        PersistentSortedMap<Integer, Integer> map = PersistentSortedMap.empty();
-        List<PersistentSortedMap<Integer, Integer>> maps = new ArrayList<>(ints.size());
+        PersistentTreeMap<Integer, Integer> map = PersistentTreeMap.empty();
+        List<PersistentTreeMap<Integer, Integer>> maps = new ArrayList<>(ints.size());
         for (Integer i : ints) {
             map = assoc(map, i);
             maps.add(map);
@@ -272,10 +272,10 @@ public class PersistentSortedMapTest {
     }
     
     private void assertRBMaps(
-            List<PersistentSortedMap<Integer, Integer>> maps,
+            List<PersistentTreeMap<Integer, Integer>> maps,
             List<Integer> ints) {
         for (int i=0; i < ints.size(); i++) {
-            PersistentSortedMap<Integer, Integer> map = maps.get(i);
+            PersistentTreeMap<Integer, Integer> map = maps.get(i);
             blacksOnPath = null;
             assertRBProperties(map.root(), 0);
             assertThat(map.size(), equalTo(i+1));
@@ -327,7 +327,7 @@ public class PersistentSortedMapTest {
         assertTrue("Expected black node (or null)", node == null || node.color == Color.BLACK);
     }
     
-    private PersistentSortedMap<Integer, Integer> assoc(PersistentSortedMap<Integer, Integer> map, Integer i) {
+    private PersistentTreeMap<Integer, Integer> assoc(PersistentTreeMap<Integer, Integer> map, Integer i) {
         return map.assoc(i, i);
     }
 }

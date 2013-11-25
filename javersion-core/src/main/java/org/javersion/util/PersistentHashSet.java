@@ -16,24 +16,24 @@
 package org.javersion.util;
 
 
-public class PersistentSet<E> extends AbstractTrieSet<E, PersistentSet<E>> {
+public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E>> {
     
     private final Node<E, Entry<E>> root;
     
     private final int size;
 
-    public PersistentSet() {
+    public PersistentHashSet() {
         this(null, 0);
     }
     
     @SuppressWarnings("unchecked")
-    PersistentSet(Node<E, Entry<E>> root, int size) {
+    PersistentHashSet(Node<E, Entry<E>> root, int size) {
         this.root = root != null ? root : EMPTY_NODE;
         this.size = size;
     }
 
-    public MutableSet<E> toMutableSet() {
-        return new MutableSet<E>(root, size);
+    public MutableHashSet<E> toMutableSet() {
+        return new MutableHashSet<E>(root, size);
     }
     
     public ImmutableTrieSet<E> asSet() {
@@ -41,13 +41,13 @@ public class PersistentSet<E> extends AbstractTrieSet<E, PersistentSet<E>> {
     }
 
     @Override
-    public PersistentSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
-        MutableSet<E> mutableSet = toMutableSet();
+    public PersistentHashSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
+        MutableHashSet<E> mutableSet = toMutableSet();
         updateFunction.apply(mutableSet);
         if (root == mutableSet.root()) {
             return this;
         } else {
-            return new PersistentSet<>(mutableSet.root(), mutableSet.size());
+            return new PersistentHashSet<>(mutableSet.root(), mutableSet.size());
         }
     }
 
@@ -57,11 +57,11 @@ public class PersistentSet<E> extends AbstractTrieSet<E, PersistentSet<E>> {
     }
 
     @Override
-    protected PersistentSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
+    protected PersistentHashSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
         if (newRoot == root) {
             return this;
         }
-        return new PersistentSet<>(newRoot, newSize);
+        return new PersistentHashSet<>(newRoot, newSize);
     }
 
     @Override

@@ -21,15 +21,15 @@ import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 import java.util.Comparator;
 import java.util.Iterator;
 
-import org.javersion.util.PersistentSortedSet.Node;
+import org.javersion.util.PersistentTreeSet.Node;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
-public class PersistentSortedSet<E> extends AbstractRedBlackTree<E, Node<E>, PersistentSortedSet<E>> {
+public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, PersistentTreeSet<E>> {
     
     @SuppressWarnings("rawtypes")
-    private static final PersistentSortedSet EMPTY = new PersistentSortedSet();
+    private static final PersistentTreeSet EMPTY = new PersistentTreeSet();
     
     @SuppressWarnings("rawtypes")
     private static final Function GET_ELEMENT = new Function() {
@@ -40,12 +40,12 @@ public class PersistentSortedSet<E> extends AbstractRedBlackTree<E, Node<E>, Per
     };
 
     @SuppressWarnings("unchecked")
-    public static <E> PersistentSortedSet<E> empty() {
+    public static <E> PersistentTreeSet<E> empty() {
         return EMPTY;
     }
     
-    public static <E> PersistentSortedSet<E> empty(Comparator<? super E> comparator) {
-        return new PersistentSortedSet<E>(comparator);
+    public static <E> PersistentTreeSet<E> empty(Comparator<? super E> comparator) {
+        return new PersistentTreeSet<E>(comparator);
     }
     
     
@@ -53,19 +53,19 @@ public class PersistentSortedSet<E> extends AbstractRedBlackTree<E, Node<E>, Per
 
     private final int size;
     
-    private PersistentSortedSet() {
+    private PersistentTreeSet() {
         super();
         root = null;
         size = 0;
     }
 
-    private PersistentSortedSet(Comparator<? super E> comparator) {
+    private PersistentTreeSet(Comparator<? super E> comparator) {
         super(comparator);
         root = null;
         size = 0;
     }
 
-    private PersistentSortedSet(Comparator<? super E> comparator, Node<E> root, int size) {
+    private PersistentTreeSet(Comparator<? super E> comparator, Node<E> root, int size) {
         super(comparator);
         this.root = root;
         this.size = size;
@@ -83,17 +83,17 @@ public class PersistentSortedSet<E> extends AbstractRedBlackTree<E, Node<E>, Per
         return root;
     }
 
-    public PersistentSortedSet<E> conj(E value) {
+    public PersistentTreeSet<E> conj(E value) {
         UpdateContext<Node<E>> context = new UpdateContext<Node<E>>(1);
         return doAdd(context, root, new Node<E>(context, value, RED));
     }
 
-    public PersistentSortedSet<E> conjAll(Iterable<E> coll) {
+    public PersistentTreeSet<E> conjAll(Iterable<E> coll) {
         final UpdateContext<Node<E>> context = new UpdateContext<Node<E>>(32);
         return doAddAll(context, root, transform(coll, new EntryToNode<E>(context)));
     }
 
-    public PersistentSortedSet<E> disj(Object keyObj) {
+    public PersistentTreeSet<E> disj(Object keyObj) {
         return doRemove(new UpdateContext<Node<E>>(1), root, keyObj);
     }
 
@@ -104,14 +104,14 @@ public class PersistentSortedSet<E> extends AbstractRedBlackTree<E, Node<E>, Per
 
     @SuppressWarnings("unchecked")
     @Override
-    protected PersistentSortedSet<E> doReturn(UpdateContext<Node<E>> context, Comparator<? super E> comparator, Node<E> newRoot, int newSize) {
+    protected PersistentTreeSet<E> doReturn(UpdateContext<Node<E>> context, Comparator<? super E> comparator, Node<E> newRoot, int newSize) {
         context.commit();
         if (newRoot == root) {
             return this;
         } else if (newRoot == null) {
             return EMPTY;
         }
-        return new PersistentSortedSet<E>(comparator, newRoot, newSize);
+        return new PersistentTreeSet<E>(comparator, newRoot, newSize);
     }
 
     

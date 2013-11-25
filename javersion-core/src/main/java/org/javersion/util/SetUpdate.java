@@ -17,6 +17,6 @@ package org.javersion.util;
 
 public interface SetUpdate<E> {
 
-    public void apply(MutableSet<E> set);
+    public void apply(MutableHashSet<E> set);
 
 }

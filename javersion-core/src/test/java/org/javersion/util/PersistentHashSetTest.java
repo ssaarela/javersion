@@ -26,12 +26,12 @@ import org.junit.Test;
 
 import com.google.common.collect.Sets;
 
-public class PersistentSetTest {
+public class PersistentHashSetTest {
 
-    public static final PersistentSet<Integer> SET;
+    public static final PersistentHashSet<Integer> SET;
     
     static {
-        SET = new PersistentSet<Integer>().conjAll(integers());
+        SET = new PersistentHashSet<Integer>().conjAll(integers());
     }
     
     static Set<Integer> integers() {
@@ -50,7 +50,7 @@ public class PersistentSetTest {
     
     @Test
     public void Removal() {
-        MutableSet<Integer> set = SET.toMutableSet();
+        MutableHashSet<Integer> set = SET.toMutableSet();
         for (Integer e : set) {
             set.disjoin(e);
         }
@@ -64,7 +64,7 @@ public class PersistentSetTest {
     
     @Test
     public void Add_All() {
-        PersistentSet<Integer> set = new PersistentSet<Integer>();
+        PersistentHashSet<Integer> set = new PersistentHashSet<Integer>();
         Set<Integer> ints = integers();
         set = set.conjAll(ints);
         assertThat(set.asSet(), equalTo(ints));
@@ -72,7 +72,7 @@ public class PersistentSetTest {
     
     @Test
     public void Add_Incremental() {
-        PersistentSet<Integer> set = new PersistentSet<Integer>();
+        PersistentHashSet<Integer> set = new PersistentHashSet<Integer>();
         Set<Integer> ints = integers();
         for (Integer integer : ints) {
             set = set.conj(integer);

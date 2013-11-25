@@ -25,10 +25,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import org.javersion.util.AbstractTrieMap.Entry;
+import org.javersion.util.AbstractHashMap.Entry;
 import org.javersion.util.Check;
 import org.javersion.util.Merger;
-import org.javersion.util.PersistentMap;
+import org.javersion.util.PersistentHashMap;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -76,7 +76,7 @@ public final class Merge<K, V> {
             } 
             // More than one version -> merge!
             else {
-                PersistentMap<K, VersionProperty<V>> mergedProperties = versionNode.allProperties;
+                PersistentHashMap<K, VersionProperty<V>> mergedProperties = versionNode.allProperties;
 
                 Set<Long> heads = Sets.newHashSet(versionNode.getRevision());
                 
