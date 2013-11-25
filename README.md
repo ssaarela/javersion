@@ -35,7 +35,7 @@ and then using object-to-version mapper to convert it back to object.
 
 For persistence alternatives, at least SQL-based is on the list.
 
-Implementation utilizes immutability and non-blocking data structures / algorithms to the max, so 
+Implementation utilizes immutability and non-blocking data structures / algorithms as much as possible, so 
 VersionGraphs are trivial and efficient to cache even in a cluster.
 
 
