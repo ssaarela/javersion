@@ -1,6 +1,3 @@
-import java.util.Comparator;
-import java.util.Random;
-
 /*
  * Copyright 2013 Samppa Saarela
  *
@@ -16,6 +13,8 @@ import java.util.Random;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.util.Comparator;
+import java.util.Random;
 
 public class TestPerformance {
 
