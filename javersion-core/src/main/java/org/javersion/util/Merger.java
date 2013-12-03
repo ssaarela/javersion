@@ -20,7 +20,14 @@ public interface Merger<T> {
 
     public void insert(T newEntry);
     
-    public T merge(T oldEntry, T newEntry);
+    /**
+     * Return true if newEntry should replace oldEntry, otherwise false.
+     * 
+     * @param oldEntry
+     * @param newEntry
+     * @return true if newEntry replaces oldEntry.
+     */
+    public boolean merge(T oldEntry, T newEntry);
 
     public void delete(T oldEntry);
     

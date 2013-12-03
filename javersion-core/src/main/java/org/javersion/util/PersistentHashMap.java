@@ -18,7 +18,7 @@ package org.javersion.util;
 import java.util.Map;
 
 
-public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHashMap<K, V>> {
+public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHashMap<K, V>> implements PersistentMap<K, V> {
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static final PersistentHashMap EMPTY_MAP = new PersistentHashMap(EMPTY_NODE, 0);
@@ -77,6 +77,7 @@ public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHas
         return new MutableHashMap<K, V>(root, size);
     }
     
+    @Override
     public Map<K, V> asMap() {
         return new ImmutableTrieMap<>(this);
     }
@@ -96,9 +97,8 @@ public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHas
         return size;
     }
 
-    @Override
-    public PersistentHashMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger) {
-        final UpdateContext<Entry<K, V>> context = updateContext(expectedUpdates, merger);
+    public PersistentHashMap<K, V> update(int expectedSize, MapUpdate<K, V> updateFunction, Merger<Map.Entry<K, V>> merger) {
+        final UpdateContext<Map.Entry<K, V>> context = updateContext(expectedSize, merger);
         try {
             MutableHashMap<K, V> mutableMap = new MutableHashMap<>(context, root, size);
             updateFunction.apply(mutableMap);

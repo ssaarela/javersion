@@ -17,10 +17,14 @@ package org.javersion.core;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import org.javersion.util.AbstractHashMap.Entry;
-import org.javersion.util.*;
+import org.javersion.util.Check;
+import org.javersion.util.Merger;
+import org.javersion.util.MutableHashMap;
+import org.javersion.util.PersistentHashMap;
+import org.javersion.util.PersistentHashSet;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -36,10 +40,10 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
             }
 
             @Override
-            public Entry<K, VersionProperty<V>> merge(
+            public boolean merge(
                     Entry<K, VersionProperty<V>> oldEntry,
                     Entry<K, VersionProperty<V>> newEntry) {
-                return oldEntry.getValue().revision < newEntry.getValue().revision ? newEntry : oldEntry;
+                return oldEntry.getValue().revision < newEntry.getValue().revision ? true : false;
             }
 
             @Override

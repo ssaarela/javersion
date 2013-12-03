@@ -53,13 +53,13 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
     }
     
     
-    protected final This doAdd(UpdateContext<E> updateContext, E newEntry) {
+    protected final This doAdd(UpdateContext<? super E> updateContext, E newEntry) {
         Node<K, E> newRoot = root().assoc(updateContext, newEntry);
         return doReturn(newRoot, size() + updateContext.getChangeAndReset());
     }
 
     @SuppressWarnings("rawtypes") 
-    protected final This doAddAll(UpdateContext<E> updateContext, Iterator entries) {
+    protected final This doAddAll(UpdateContext<? super E> updateContext, Iterator entries) {
         Node<K, E> newRoot = root();
         int size = size();
         while (entries.hasNext()) {
@@ -72,7 +72,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         return doReturn(newRoot, size);
     }
         
-    protected final This doRemove(UpdateContext<E> contextReference, Object key) {
+    protected final This doRemove(UpdateContext<? super E> contextReference, Object key) {
         Node<K, E> newRoot = root().dissoc(contextReference, key);
         return doReturn(newRoot, size() + contextReference.getChangeAndReset());
     }
@@ -86,11 +86,11 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             return findInternal(0, hash(key), key);
         }
 
-        Node<K, E> assoc(UpdateContext<E>  currentContext, E newEntry) {
+        Node<K, E> assoc(UpdateContext<? super E>  currentContext, E newEntry) {
             return assocInternal(currentContext, 0, newEntry.getHash(), newEntry);
         }
 
-        Node<K, E> dissoc(UpdateContext<E>  currentContext, Object key) {
+        Node<K, E> dissoc(UpdateContext<? super E>  currentContext, Object key) {
             return dissocInternal(currentContext, 0, hash(key), key);
         }
         
@@ -116,9 +116,9 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         
         abstract E findInternal(int shift, int hash, Object key);
 
-        abstract Node<K, E> assocInternal(UpdateContext<E>  currentContext, int shift, int hash, E newEntry);
+        abstract Node<K, E> assocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, E newEntry);
 
-        abstract Node<K, E> dissocInternal(UpdateContext<E>  currentContext, int shift, int hash, Object key);
+        abstract Node<K, E> dissocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, Object key);
         
     }
     
@@ -187,10 +187,10 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
 
         @SuppressWarnings("unchecked")
         @Override
-        public Node<K, E> assocInternal(final UpdateContext<E>  currentContext, final int shift, final int hash, final E newEntry) {
+        public Node<K, E> assocInternal(final UpdateContext<? super E>  currentContext, final int shift, final int hash, final E newEntry) {
             switch (this.equals(newEntry)) {
             case EQUAL: return this;
-            case KEY: return currentContext.merge((E) this, newEntry);
+            case KEY: return currentContext.merge((E) this, newEntry) ? newEntry : this;
             default: // continue
             }
             if (hash == getHash()) {
@@ -207,7 +207,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         }
 
         @Override
-        Node<K, E> dissocInternal(UpdateContext<E>  currentContext, int shift, int hash, Object key) {
+        Node<K, E> dissocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, Object key) {
             if (Objects.equal(key, this.key)) {
                 currentContext.delete(self());
                 return null;
@@ -232,29 +232,29 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
     
     static final class HashNode<K, E extends Entry<K, E>> extends Node<K, E> {
         
-        private final UpdateContext<E>  updateContext;
+        private final UpdateContext<? super E>  updateContext;
         
         private int bitmap; 
         
         private Node<K, E>[] children;
 
-        HashNode(UpdateContext<E>  contextReference) {
+        HashNode(UpdateContext<? super E>  contextReference) {
             this(contextReference, contextReference.expectedUpdates());
         }
 
         @SuppressWarnings("unchecked")
-        HashNode(UpdateContext<E>  contextReference, int expectedSize) {
+        HashNode(UpdateContext<? super E>  contextReference, int expectedSize) {
             this(contextReference, 0, new Node[expectedSize < 32 ? expectedSize : 32]);
         }
         
-        HashNode(UpdateContext<E>  contextReference, int bitmap, Node<K, E>[] children) {
+        HashNode(UpdateContext<? super E>  contextReference, int bitmap, Node<K, E>[] children) {
             this.updateContext = contextReference;
             this.bitmap = bitmap;
             this.children = children;
         }
 
         @Override
-        Node<K, E> assocInternal(final UpdateContext<E>  currentContext, final int shift, int hash, final E newEntry) {
+        Node<K, E> assocInternal(final UpdateContext<? super E>  currentContext, final int shift, int hash, final E newEntry) {
             int bit = bit(hash, shift);
             int index = index(bitmap, bit);
             if ((bitmap & bit) != 0) {
@@ -275,7 +275,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         }
 
         @Override
-        Node<K, E> dissocInternal(UpdateContext<E>  currentContext, int shift, int hash, Object key) {
+        Node<K, E> dissocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, Object key) {
             int bit = bit(hash, shift);
             if ((bitmap & bit) == 0) {
                 return this;
@@ -313,7 +313,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         
 
         @SuppressWarnings("unchecked")
-        private Node<K, E> insert(UpdateContext<E>  currentContext, int index, E newEntry, int bit) {
+        private Node<K, E> insert(UpdateContext<? super E>  currentContext, int index, E newEntry, int bit) {
             int childCount = childCount();
             boolean editInPlace = updateContext.isSameAs(currentContext);
 
@@ -353,7 +353,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         }
 
         @SuppressWarnings("unchecked")
-        private Node<K, E> cloneForDelete(UpdateContext<E>  currentContext, int index, int bit) {
+        private Node<K, E> cloneForDelete(UpdateContext<? super E>  currentContext, int index, int bit) {
             int childCount = childCount();
             boolean editInPlace = updateContext.isSameAs(currentContext);
 
@@ -392,7 +392,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             }
         }
         
-        private HashNode<K, E> cloneForReplace(UpdateContext<E>  currentContext) {
+        private HashNode<K, E> cloneForReplace(UpdateContext<? super E>  currentContext) {
             if (this.updateContext.isSameAs(currentContext)) {
                 return this;
             } else {
@@ -425,20 +425,20 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
 
     static final class ArrayNode<K, E extends Entry<K, E>> extends Node<K, E> {
         
-        private final UpdateContext<E>  updateContext;
+        private final UpdateContext<? super E>  updateContext;
         
         private Node<K, E>[] children;
         
         private int childCount;
 
-        ArrayNode(UpdateContext<E>  contextReference, Node<K, E>[] children, int childCount) {
+        ArrayNode(UpdateContext<? super E>  contextReference, Node<K, E>[] children, int childCount) {
             this.updateContext = contextReference;
             this.children = children;
             this.childCount = childCount;
         }
 
         @Override
-        Node<K, E> assocInternal(final UpdateContext<E>  currentContext, final int shift, int hash, final E newEntry) {
+        Node<K, E> assocInternal(final UpdateContext<? super E>  currentContext, final int shift, int hash, final E newEntry) {
             int index = bitIndex(hash, shift);
             Node<K, E> node = children[index];
             int newChildCount = childCount;
@@ -465,7 +465,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         }
 
         @Override
-        Node<K, E> dissocInternal(UpdateContext<E>  currentContext, int shift, int hash, Object key) {
+        Node<K, E> dissocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, Object key) {
             int index = bitIndex(hash, shift);
             Node<K, E> node = children[index];
             if (node == null) {
@@ -492,7 +492,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             }
         }
         
-        private Node<K, E> toBitmapNode(UpdateContext<E>  currentContext, int newChildCount, int removedIndex) {
+        private Node<K, E> toBitmapNode(UpdateContext<? super E>  currentContext, int newChildCount, int removedIndex) {
             @SuppressWarnings("unchecked")
             Node<K, E>[] newChildren = new Node[newChildCount];
             int bitmap = 0;
@@ -517,7 +517,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             }
         }
 
-        private boolean isEditInPlace(UpdateContext<E>  currentContext) {
+        private boolean isEditInPlace(UpdateContext<? super E>  currentContext) {
             return this.updateContext.isSameAs(currentContext);
         }
 
@@ -556,7 +556,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
 
         @Override
         @SuppressWarnings("unchecked")
-        public Node<K, E> assocInternal(final UpdateContext<E>  currentContext, final int shift, int hash, final E newEntry) {
+        public Node<K, E> assocInternal(final UpdateContext<? super E>  currentContext, final int shift, int hash, final E newEntry) {
             if (hash == this.hash) {
                 for (int i=0; i < entries.length; i++) {
                     if (equal(entries[i], newEntry)) {
@@ -564,7 +564,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                     }
                     else if (equal(entries[i].key, newEntry.key)) {
                         E[] newEntries = entries.clone();
-                        newEntries[i] = currentContext.merge(entries[i], newEntry);
+                        newEntries[i] = currentContext.merge(entries[i], newEntry) ? newEntry : entries[i];
                         return new CollisionNode<K, E>(newEntries);
                     }
                 }
@@ -586,7 +586,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         }
 
         @Override
-        Node<K, E> dissocInternal(UpdateContext<E>  currentContext, int shift, int hash, Object key) {
+        Node<K, E> dissocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, Object key) {
             if (hash == this.hash) {
                 for (int i=0; i < entries.length; i++) {
                     if (equal(entries[i].key, key)) {

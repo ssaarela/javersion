@@ -15,12 +15,14 @@
  */
 package org.javersion.util;
 
+import java.util.Map;
+
 
 public class MutableHashMap<K, V> extends AbstractHashMap<K, V, MutableHashMap<K, V>> {
     
     private final Thread owner = Thread.currentThread();
     
-    private UpdateContext<Entry<K, V>>  updateContext;
+    private UpdateContext<Map.Entry<K, V>>  updateContext;
     
     private Node<K, Entry<K, V>> root;
     
@@ -32,10 +34,10 @@ public class MutableHashMap<K, V> extends AbstractHashMap<K, V, MutableHashMap<K
     }
 
     MutableHashMap(Node<K, Entry<K, V>> root, int size) {
-        this(new UpdateContext<Entry<K, V>>(32, null), root, size);
+        this(new UpdateContext<Map.Entry<K, V>>(32, null), root, size);
     }
 
-    MutableHashMap(UpdateContext<Entry<K, V>>  context, Node<K, Entry<K, V>> root, int size) {
+    MutableHashMap(UpdateContext<Map.Entry<K, V>>  context, Node<K, Entry<K, V>> root, int size) {
         this.updateContext = context;
         this.root = root;
         this.size = size;
@@ -71,7 +73,7 @@ public class MutableHashMap<K, V> extends AbstractHashMap<K, V, MutableHashMap<K
     }
 
     @Override
-    public MutableHashMap<K, V> update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger) {
+    public MutableHashMap<K, V> update(int expectedSize, MapUpdate<K, V> updateFunction, Merger<Map.Entry<K, V>> merger) {
         verifyThread();
         updateFunction.apply(this);
         return this;
@@ -86,10 +88,10 @@ public class MutableHashMap<K, V> extends AbstractHashMap<K, V, MutableHashMap<K
     }
     
     @Override
-    protected UpdateContext<Entry<K, V>> updateContext(int expectedUpdates, Merger<Entry<K, V>> merger) {
+    protected UpdateContext<Map.Entry<K, V>> updateContext(int expectedUpdates, Merger<Map.Entry<K, V>> merger) {
         verifyThread();
         if (updateContext.isCommitted()) {
-            updateContext = new UpdateContext<Entry<K, V>>(expectedUpdates, merger);
+            updateContext = new UpdateContext<Map.Entry<K, V>>(expectedUpdates, merger);
         } else {
             updateContext.validate();
             updateContext.merger(merger);
@@ -98,7 +100,7 @@ public class MutableHashMap<K, V> extends AbstractHashMap<K, V, MutableHashMap<K
     }
     
     @Override
-    protected void commit(UpdateContext<Entry<K, V>> updateContext) {
+    protected void commit(UpdateContext<Map.Entry<K, V>> updateContext) {
         // Nothing to do here
     }
 

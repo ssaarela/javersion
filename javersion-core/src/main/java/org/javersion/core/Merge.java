@@ -23,9 +23,9 @@ import static java.util.Collections.unmodifiableSet;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import org.javersion.util.AbstractHashMap.Entry;
 import org.javersion.util.Check;
 import org.javersion.util.Merger;
 import org.javersion.util.PersistentHashMap;
@@ -91,21 +91,21 @@ public final class Merge<K, V> {
                     }
 
                     @Override
-                    public Entry<K, VersionProperty<V>> merge(
+                    public boolean merge(
                             Entry<K, VersionProperty<V>> oldEntry,
                             Entry<K, VersionProperty<V>> newEntry) {
                         // newEntry derives from a common ancestor?
                         if (mergedRevisions.contains(newEntry.getValue().revision)) {
-                            return oldEntry;
+                            return false;
                         } 
                         // Conflicting value?
                         else if (!equal(oldEntry.getValue().value, newEntry.getValue().value)) {
                             conflicts.put(newEntry);
-                            return oldEntry;
+                            return false;
                         } 
                         // New property
                         else {
-                            return newEntry;
+                            return true;
                         }
                     }
 

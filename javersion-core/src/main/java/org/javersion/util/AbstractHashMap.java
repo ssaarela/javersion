@@ -25,7 +25,7 @@ import org.javersion.util.AbstractHashMap.Entry;
 
 import com.google.common.base.Function;
 
-public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, This>> extends AbstractHashTrie<K, Entry<K,V>, AbstractHashMap<K, V, This>> implements Iterable<Map.Entry<K, V>> {
+public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, This>> extends AbstractHashTrie<K, Entry<K,V>, AbstractHashMap<K, V, This>> {
     
     @SuppressWarnings("rawtypes")
     private static final Function TO_ENTRY = new Function() {
@@ -48,7 +48,7 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
         return assoc(new Entry<K, V>(key, value));
     }
     
-    public This assoc(java.util.Map.Entry<? extends K, ? extends V> entry) {
+    private This assoc(java.util.Map.Entry<? extends K, ? extends V> entry) {
         return merge(entry, null);
     }
 
@@ -61,17 +61,17 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     }
 
     
-    public This merge(K key, V value, Merger<Entry<K, V>> merger) {
+    public This merge(K key, V value, Merger<Map.Entry<K, V>> merger) {
         return doMerge(new Entry<K, V>(key, value), merger);
     }
     
-    public This merge(Map.Entry<? extends K, ? extends V> entry, Merger<Entry<K, V>> merger) {
+    public This merge(Map.Entry<? extends K, ? extends V> entry, Merger<Map.Entry<K, V>> merger) {
         return doMerge(toEntry(entry), merger);
     }
 
     @SuppressWarnings("unchecked")
-    protected This doMerge(Entry<K, V> entry, Merger<Entry<K, V>> merger) {
-        final UpdateContext<Entry<K, V>> updateContext = updateContext(1, merger);
+    protected This doMerge(Entry<K, V> entry, Merger<Map.Entry<K, V>> merger) {
+        final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(1, merger);
         try {
             return (This) doAdd(updateContext, toEntry(entry));
         } finally {
@@ -81,8 +81,8 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
 
     
     @SuppressWarnings("unchecked")
-    public This mergeAll(Map<? extends K, ? extends V> map, Merger<Entry<K, V>> merger) {
-        final UpdateContext<Entry<K, V>> updateContext = updateContext(map.size(), merger);
+    public This mergeAll(Map<? extends K, ? extends V> map, Merger<Map.Entry<K, V>> merger) {
+        final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(map.size(), merger);
         try {
             return (This) doAddAll(updateContext, transform(map.entrySet().iterator(), TO_ENTRY));
         } finally {
@@ -91,8 +91,8 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     }
 
     @SuppressWarnings("unchecked")
-    public This mergeAll(Iterable<Map.Entry<K, V>> entries, Merger<Entry<K, V>> merger) {
-        final UpdateContext<Entry<K, V>> updateContext = updateContext(32, merger);
+    public This mergeAll(Iterable<Map.Entry<K, V>> entries, Merger<Map.Entry<K, V>> merger) {
+        final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(32, merger);
         try {
             return (This) doAddAll(updateContext, transform(entries.iterator(), TO_ENTRY));
         } finally {
@@ -100,11 +100,11 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
         }
     }
     
-    protected UpdateContext<Entry<K, V>> updateContext(int expectedSize, Merger<Entry<K, V>> merger) {
+    protected UpdateContext<Map.Entry<K, V>> updateContext(int expectedSize, Merger<Map.Entry<K, V>> merger) {
         return new UpdateContext<>(expectedSize, merger);
     }
     
-    protected void commit(UpdateContext<Entry<K, V>> updateContext) {
+    protected void commit(UpdateContext<Map.Entry<K, V>> updateContext) {
         updateContext.commit();
     }
 
@@ -114,8 +114,8 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     }
 
     @SuppressWarnings("unchecked")
-    public This dissoc(Object key, Merger<Entry<K, V>> merger) {
-        final UpdateContext<Entry<K, V>> updateContext = updateContext(1, merger);
+    public This dissoc(Object key, Merger<Map.Entry<K, V>> merger) {
+        final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(1, merger);
         try {
             return (This) doRemove(updateContext, key);
         } finally {
@@ -128,11 +128,15 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
         return update(32, updateFunction);
     }
 
+    public This update(MapUpdate<K, V> updateFunction, Merger<Map.Entry<K, V>> merger) {
+        return update(32, updateFunction, merger);
+    }
+
     public This update(int expectedUpdates, MapUpdate<K, V> updateFunction) {
         return update(expectedUpdates, updateFunction, null);
     }
 
-    public abstract This update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger);
+    public abstract This update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Map.Entry<K, V>> merger);
     
     
     public V get(Object key) {

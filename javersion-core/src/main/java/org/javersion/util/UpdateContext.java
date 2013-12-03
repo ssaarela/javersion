@@ -46,8 +46,8 @@ public final class UpdateContext<T> implements Merger<T> {
             }
         }
 
-        T merge(T oldEntry, T newEntry) {
-            return merger == null ? newEntry : merger.merge(oldEntry, newEntry);
+        boolean merge(T oldEntry, T newEntry) {
+            return merger == null ? true : merger.merge(oldEntry, newEntry);
         }
         
         void delete(T oldEntry) {
@@ -82,7 +82,7 @@ public final class UpdateContext<T> implements Merger<T> {
     public boolean isCommitted() {
         return context == null;
     }
-    public boolean isSameAs(UpdateContext<T> other) {
+    public boolean isSameAs(UpdateContext<?> other) {
         return this.context != null && this.context == other.context;
     }
     public void validate() {
@@ -98,7 +98,7 @@ public final class UpdateContext<T> implements Merger<T> {
         context.insert(newEntry);
     }
     @Override
-    public T merge(T oldEntry, T newEntry) {
+    public boolean merge(T oldEntry, T newEntry) {
         return context.merge(oldEntry, newEntry);
     }
     @Override

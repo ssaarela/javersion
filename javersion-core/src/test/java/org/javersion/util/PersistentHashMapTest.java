@@ -30,11 +30,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.javersion.util.AbstractHashMap.Entry;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -261,7 +261,7 @@ public class PersistentHashMapTest {
     @Test
     public void Merger_Gets_Called() {
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
-        doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
+        doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
 
         PersistentHashMap<Integer, Integer> map = PersistentHashMap.empty();
         
@@ -318,7 +318,7 @@ public class PersistentHashMapTest {
         Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
 
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
-        doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
+        doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
         
         map = map.mergeAll(ints, merger);
         
@@ -343,7 +343,7 @@ public class PersistentHashMapTest {
         Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
 
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
-        doReturn(new Entry(1, 2)).when(merger).merge(any(Entry.class), any(Entry.class));
+        doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
         
         map = map.mergeAll(ints, merger);
         
@@ -370,7 +370,7 @@ public class PersistentHashMapTest {
         ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
         ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
-        doReturn(new Entry(1, 1)).when(merger).merge(any(Entry.class), any(Entry.class));
+        doReturn(false).when(merger).merge(any(Entry.class), any(Entry.class));
         
         map = map.mergeAll(ints, merger);
         
