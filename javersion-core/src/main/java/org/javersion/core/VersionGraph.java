@@ -22,20 +22,20 @@ import com.google.common.collect.Iterables;
 
 public abstract class VersionGraph<K, V, 
                           T extends Version<K, V>,
-                          G extends VersionGraph<K, V, T, G, B>,
-                          B extends VersionGraphBuilder<K, V, T, G, B>> 
-       extends VersionGraphBase<K, V, T, G, B> {
+                          This extends VersionGraph<K, V, T, This, B>,
+                          B extends VersionGraphBuilder<K, V, T, This, B>> 
+       extends VersionGraphBase<K, V, T, This, B> {
 
     public final VersionNode<K, V, T> tip;
     
-    protected VersionGraph(VersionGraphBuilder<K, V, T, G, B> builder) {
+    protected VersionGraph(VersionGraphBuilder<K, V, T, This, B> builder) {
         super(builder.lock, builder.parentGraph, Collections.unmodifiableMap(builder.versionNodes));
         this.tip = builder.tip;
     }
     
-    public abstract G commit(T version);
+    public abstract This commit(T version);
     
-    public abstract G commit(Iterable<T> versions);
+    public abstract This commit(Iterable<T> versions);
     
     public final Merge<K, V> merge(Set<Long> revisions) {
         return new Merge<K, V>(Iterables.transform(revisions, this));

@@ -26,13 +26,13 @@ import com.google.common.collect.Iterables;
 
 public abstract class VersionGraphBase<K, V, 
                                        T extends Version<K, V>,
-                                       G extends VersionGraph<K, V, T, G, B>,
-                                       B extends VersionGraphBuilder<K, V, T, G, B>> 
+                                       This extends VersionGraph<K, V, T, This, B>,
+                                       B extends VersionGraphBuilder<K, V, T, This, B>> 
                 implements Function<Long, VersionNode<K, V, T>>{
     
     public final Lock lock;
 
-    public final G parentGraph;
+    public final This parentGraph;
     
     public final Map<Long, VersionNode<K, V, T>> versionNodes;
     
@@ -47,7 +47,7 @@ public abstract class VersionGraphBase<K, V,
         
     }
 
-    VersionGraphBase(Lock lock, G parentGraph, Map<Long, VersionNode<K, V, T>> versionNodes) {
+    VersionGraphBase(Lock lock, This parentGraph, Map<Long, VersionNode<K, V, T>> versionNodes) {
         this.parentGraph = parentGraph;
         if (parentGraph != null) {
             this.lock = parentGraph.lock;

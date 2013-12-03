@@ -27,16 +27,16 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 
-public abstract class AbstractHashTrie<K, E extends Entry<K, E>, T extends AbstractHashTrie<K, E, T>> {
+public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends AbstractHashTrie<K, E, This>> {
 
     public abstract int size();
     
     @SuppressWarnings("unchecked")
-    protected T self() {
-        return (T) this;
+    protected This self() {
+        return (This) this;
     }
     
-    protected abstract T doReturn(Node<K, E> newRoot, int newSize);
+    protected abstract This doReturn(Node<K, E> newRoot, int newSize);
     
     protected abstract Node<K, E> root();
 
@@ -53,13 +53,13 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, T extends Abstr
     }
     
     
-    protected final T doAdd(UpdateContext<E> updateContext, E newEntry) {
+    protected final This doAdd(UpdateContext<E> updateContext, E newEntry) {
         Node<K, E> newRoot = root().assoc(updateContext, newEntry);
         return doReturn(newRoot, size() + updateContext.getChangeAndReset());
     }
 
     @SuppressWarnings("rawtypes") 
-    protected final T doAddAll(UpdateContext<E> updateContext, Iterator entries) {
+    protected final This doAddAll(UpdateContext<E> updateContext, Iterator entries) {
         Node<K, E> newRoot = root();
         int size = size();
         while (entries.hasNext()) {
@@ -72,7 +72,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, T extends Abstr
         return doReturn(newRoot, size);
     }
         
-    protected final T doRemove(UpdateContext<E> contextReference, Object key) {
+    protected final This doRemove(UpdateContext<E> contextReference, Object key) {
         Node<K, E> newRoot = root().dissoc(contextReference, key);
         return doReturn(newRoot, size() + contextReference.getChangeAndReset());
     }

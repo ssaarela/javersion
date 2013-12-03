@@ -26,7 +26,7 @@ import org.javersion.util.AbstractRedBlackTree.Node;
 
 import com.google.common.collect.UnmodifiableIterator;
 
-public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends AbstractRedBlackTree<K, N, T>> {
+public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends AbstractRedBlackTree<K, N, This>> {
 
     @SuppressWarnings("rawtypes")
     private final static Comparator<Comparable> NATURAL = new Comparator<Comparable>() {
@@ -52,7 +52,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
 
     public abstract int size();
     
-    protected abstract T doReturn(UpdateContext<N> context, Comparator<? super K> comparator, N newRoot, int newSize);
+    protected abstract This doReturn(UpdateContext<N> context, Comparator<? super K> comparator, N newRoot, int newSize);
     
     protected final N find(N root, Object keyObj) {
         @SuppressWarnings("unchecked")
@@ -94,7 +94,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
         return null;
     }
 
-    protected final T doAdd(UpdateContext<N> context, N root, N node) {
+    protected final This doAdd(UpdateContext<N> context, N root, N node) {
         if (root == null) {
             return doReturn(context, comparator, node.edit(context, BLACK, null, null), 1);
         } else {
@@ -107,7 +107,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
         }
     }
 
-    protected final T doAddAll(UpdateContext<N> context, N root, Iterable<N> nodes) {
+    protected final This doAddAll(UpdateContext<N> context, N root, Iterable<N> nodes) {
         N newRoot = null;
         int newSize = size();
         for (N node : nodes) {
@@ -129,7 +129,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
         return new RBIterator<K, N>(root, asc);
     }
 
-    protected final T doRemove(UpdateContext<N> context, N root, Object keyObj) {
+    protected final This doRemove(UpdateContext<N> context, N root, Object keyObj) {
         @SuppressWarnings("unchecked")
         K key = (K) keyObj;
         if (root == null) {
@@ -145,18 +145,18 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
     }
     
     @SuppressWarnings("unchecked")
-    private T self() {
-        return (T) this;
+    private This self() {
+        return (This) this;
     }
     
-    static abstract class Node<K, N extends Node<K, N>> implements Cloneable {
-        final UpdateContext<N> context;
+    static abstract class Node<K, This extends Node<K, This>> implements Cloneable {
+        final UpdateContext<This> context;
         final K key;
         Color color;
-        N left;
-        N right;
+        This left;
+        This right;
         
-        public Node(UpdateContext<N> context, K key, Color color, N left, N right) {
+        public Node(UpdateContext<This> context, K key, Color color, This left, This right) {
             this.context = context;
             this.key = key;
             this.color = color;
@@ -165,23 +165,23 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
         }
         
         @SuppressWarnings("unchecked")
-        protected N self() {
-            return (N) this;
+        protected This self() {
+            return (This) this;
         }
 
-        N blacken(UpdateContext<N> currentContext) {
+        This blacken(UpdateContext<This> currentContext) {
             return changeColor(currentContext, BLACK);
         }
         
-        N redden(UpdateContext<N> currentContext) {
+        This redden(UpdateContext<This> currentContext) {
             return changeColor(currentContext, RED);
         }
         
-        public N add(UpdateContext<N> currentContext, final N node, Comparator<? super K> comparator) {
+        public This add(UpdateContext<This> currentContext, final This node, Comparator<? super K> comparator) {
             if (node == this) {
                 return null;
             }
-            N self = self();
+            This self = self();
             int cmpr = comparator.compare(node.key, key);
             Mirror mirror;
             if (cmpr == 0) {
@@ -191,8 +191,8 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
             } else {
                 mirror = RIGHT;
             }
-            N left = mirror.leftOf(self());
-            N newChild;
+            This left = mirror.leftOf(self());
+            This newChild;
             if (left == null) {
                 currentContext.insert(node);
                 newChild = node;
@@ -205,8 +205,8 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
             return color.add(currentContext, self, newChild, mirror);
         }
         
-        public N remove(UpdateContext<N> currentContext, final K key, Comparator<? super K> comparator) {
-            N self = self();
+        public This remove(UpdateContext<This> currentContext, final K key, Comparator<? super K> comparator) {
+            This self = self();
             int cmpr = comparator.compare(key, self.key);
             Mirror mirror;
             if (cmpr == 0) {
@@ -217,12 +217,12 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
             } else {
                 mirror = RIGHT;
             }
-            N child = mirror.leftOf(self);
+            This child = mirror.leftOf(self);
             if (child == null) {
                 // key not found
                 return self;
             }
-            N newChild = child.remove(currentContext, key, comparator);
+            This newChild = child.remove(currentContext, key, comparator);
             if (newChild == child) {
                 // key not found
                 return self;
@@ -230,7 +230,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
             return mirror.remove(currentContext, self, newChild);
         }
 
-        private N append(UpdateContext<N> currentContext, N left, N right) {
+        private This append(UpdateContext<This> currentContext, This left, This right) {
             if (left == null) {
                 return right;
             } 
@@ -239,55 +239,55 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
             } 
             else if (isRed(left)) {
                 if (isRed(right)) {
-                    N app = append(currentContext, left.right, right.left);
+                    This app = append(currentContext, left.right, right.left);
                     if (isRed(app)) {
-                        N newLeft = left.edit(currentContext, RED, left.left, app.left);
-                        N newRight = right.edit(currentContext, RED, app.right, right.right);
+                        This newLeft = left.edit(currentContext, RED, left.left, app.left);
+                        This newRight = right.edit(currentContext, RED, app.right, right.right);
                         return app.edit(currentContext, RED, newLeft, newRight);
                     } 
                     else {
-                        N newRight = right.edit(currentContext, RED, app, right.right);
+                        This newRight = right.edit(currentContext, RED, app, right.right);
                         return left.edit(currentContext, RED, left.left, newRight);
                     }
                 }
                 else {
-                    N newRight = append(currentContext, left.right, right);
+                    This newRight = append(currentContext, left.right, right);
                     return left.edit(currentContext, RED, left.left, newRight);
                 }
             } 
             else if (isRed(right)) {
-                N newLeft = append(currentContext, left, right.left);
+                This newLeft = append(currentContext, left, right.left);
                 return right.edit(currentContext, RED, newLeft, right.right);
             } 
             else { // black/black
-                N app = append(currentContext, left.right, right.left);
+                This app = append(currentContext, left.right, right.left);
                 if (isRed(app)) {
-                    N newLeft = left.edit(currentContext, BLACK, left.left, app.left);
-                    N newRight = right.edit(currentContext, BLACK, app.right, right.right);
+                    This newLeft = left.edit(currentContext, BLACK, left.left, app.left);
+                    This newRight = right.edit(currentContext, BLACK, app.right, right.right);
                     return app.edit(currentContext, RED, newLeft, newRight);
                 } 
                 else {
-                    N newRight = right.edit(currentContext, BLACK, app, right.right);
+                    This newRight = right.edit(currentContext, BLACK, app, right.right);
                     return balanceLeftDel(currentContext, left, left.left, newRight);
                 }
             }
         }
         
-        N changeColor(UpdateContext<N> currentContext, Color newColor) {
-            N node = toEditable(currentContext);
+        This changeColor(UpdateContext<This> currentContext, Color newColor) {
+            This node = toEditable(currentContext);
             node.color = newColor;
             return node;
         }
         
-        N edit(UpdateContext<N> currentContext, Color newColor, N newLeft, N newRight) {
-            N node = toEditable(currentContext);
+        This edit(UpdateContext<This> currentContext, Color newColor, This newLeft, This newRight) {
+            This node = toEditable(currentContext);
             node.color = newColor;
             node.left = newLeft;
             node.right = newRight;
             return node;
         }
         
-        N toEditable(UpdateContext<N> currentContext) {
+        This toEditable(UpdateContext<This> currentContext) {
             if (this.context.isSameAs(currentContext)) {
                 return self();
             } else {
@@ -331,9 +331,9 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, T extends Ab
             return sb;
         }
 
-        abstract N cloneWith(UpdateContext<N> currentContext);
+        abstract This cloneWith(UpdateContext<This> currentContext);
         
-        abstract N replaceWith(UpdateContext<N> currentContext, N node);
+        abstract This replaceWith(UpdateContext<This> currentContext, This node);
 
     }
     
