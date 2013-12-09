@@ -440,50 +440,41 @@ public class PersistentHashMapTest {
     
     @Test
     public void Editing_MutableMap_After_Committed_Doesnt_Affect_PersistedMap() {
-        PersistentHashMap<Integer, Integer> map = PersistentHashMap.empty();
-        final AtomicReference<MutableHashMap<Integer, Integer>> mutableMapRef = new AtomicReference<>();
-        map = map.update(new MapUpdate<Integer, Integer>() {
-            
-            @Override
-            public void apply(MutableHashMap<Integer, Integer> map) {
-                map.assoc(1, 1);
-                mutableMapRef.set(map);
-            }
-        });
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.of(1, 1);
+        
+        MutableHashMap<Integer, Integer> mutableMap = map.toMutableMap();
         assertThat(map.get(1), equalTo(1));
+        
         // Editing 
-        mutableMapRef.get().assoc(2, 2);
+        mutableMap.assoc(2, 2);
         assertThat(map.containsKey(2), equalTo(false));
-        assertThat(mutableMapRef.get().containsKey(2), equalTo(true));
+        assertThat(mutableMap.containsKey(2), equalTo(true));
     }
     
     @Test(expected=IllegalStateException.class)
     public void Edit_MutableMap_From_Another_Thread() throws Throwable {
-        PersistentHashMap<Integer, Integer> map = PersistentHashMap.empty();
+        final MutableHashMap<Integer, Integer> map = new MutableHashMap<>();
         final AtomicReference<Throwable> exception = new AtomicReference<>();
-        map.update(new MapUpdate<Integer, Integer>() {
-            @Override
-            public void apply(final MutableHashMap<Integer, Integer> map) {
-                final CountDownLatch countDown = new CountDownLatch(1);
-                new Thread() {
-                    public void run() {
-                        // This should throw IllegalStateException!
-                        try {
-                            map.assoc(1, 2);
-                        } catch (Throwable t) {
-                            exception.set(t);
-                        } finally {
-                            countDown.countDown();
-                        }
-                    }
-                }.start();
+
+        final CountDownLatch countDown = new CountDownLatch(1);
+        new Thread() {
+            public void run() {
+                // This should throw IllegalStateException!
                 try {
-                    countDown.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                    map.assoc(1, 2);
+                } catch (Throwable t) {
+                    exception.set(t);
+                } finally {
+                    countDown.countDown();
                 }
             }
-        });
+        }.start();
+
+        try {
+            countDown.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         assertThat(exception.get(), notNullValue());
         throw exception.get();
     }

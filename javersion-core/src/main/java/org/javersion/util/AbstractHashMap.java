@@ -122,22 +122,6 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
             commit(updateContext);
         }
     }
-
-
-    public This update(MapUpdate<K, V> updateFunction) {
-        return update(32, updateFunction);
-    }
-
-    public This update(MapUpdate<K, V> updateFunction, Merger<Map.Entry<K, V>> merger) {
-        return update(32, updateFunction, merger);
-    }
-
-    public This update(int expectedUpdates, MapUpdate<K, V> updateFunction) {
-        return update(expectedUpdates, updateFunction, null);
-    }
-
-    public abstract This update(int expectedUpdates, MapUpdate<K, V> updateFunction, Merger<Map.Entry<K, V>> merger);
-    
     
     public V get(Object key) {
         Entry<K, V> entry = root().find(key);

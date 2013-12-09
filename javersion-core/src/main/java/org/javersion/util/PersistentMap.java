@@ -19,10 +19,6 @@ public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
 
     PersistentMap<K, V> dissoc(Object key, Merger<Entry<K, V>> merger);
 
-    PersistentMap<K, V> update(MapUpdate<K, V> updateFunction);
-
-    PersistentMap<K, V> update(MapUpdate<K, V> updateFunction, Merger<Entry<K, V>> merger);
-
     V get(Object key);
 
     boolean containsKey(Object key);

@@ -49,13 +49,6 @@ public class MutableHashSet<E> extends AbstractTrieSet<E, MutableHashSet<E>> {
     }
 
     @Override
-    public MutableHashSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
-        verifyThread();
-        updateFunction.apply(this);
-        return this;
-    }
-
-    @Override
     public int size() {
         verifyThread();
         return size;

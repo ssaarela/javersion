@@ -99,12 +99,6 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
         return containsKey(o);
     }
 
-    public S update(SetUpdate<E> updateFunction) {
-        return update(32, updateFunction);
-    }
-    
-    public abstract S update(int expectedUpdates, SetUpdate<E> updateFunction);
-
     public static final class Entry<E> extends AbstractHashTrie.Entry<E, Entry<E>> {
         
         public Entry(E element) {

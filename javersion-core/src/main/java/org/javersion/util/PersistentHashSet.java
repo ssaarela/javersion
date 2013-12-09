@@ -41,17 +41,6 @@ public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E
     }
 
     @Override
-    public PersistentHashSet<E> update(int expectedUpdates, SetUpdate<E> updateFunction) {
-        MutableHashSet<E> mutableSet = toMutableSet();
-        updateFunction.apply(mutableSet);
-        if (root == mutableSet.root()) {
-            return this;
-        } else {
-            return new PersistentHashSet<>(mutableSet.root(), mutableSet.size());
-        }
-    }
-
-    @Override
     public int size() {
         return size;
     }

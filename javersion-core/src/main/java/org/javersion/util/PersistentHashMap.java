@@ -97,17 +97,6 @@ public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHas
         return size;
     }
 
-    public PersistentHashMap<K, V> update(int expectedSize, MapUpdate<K, V> updateFunction, Merger<Map.Entry<K, V>> merger) {
-        final UpdateContext<Map.Entry<K, V>> context = updateContext(expectedSize, merger);
-        try {
-            MutableHashMap<K, V> mutableMap = new MutableHashMap<>(context, root, size);
-            updateFunction.apply(mutableMap);
-            return doReturn(mutableMap.root(), mutableMap.size());
-        } finally {
-            context.commit();
-        }
-    }
-
     @Override
     protected PersistentHashMap<K, V> doReturn(Node<K, Entry<K, V>> newRoot, int newSize) {
         if (newRoot == root) {

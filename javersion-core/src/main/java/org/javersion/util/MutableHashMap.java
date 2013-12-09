@@ -72,13 +72,6 @@ public class MutableHashMap<K, V> extends AbstractHashMap<K, V, MutableHashMap<K
         return size;
     }
 
-    @Override
-    public MutableHashMap<K, V> update(int expectedSize, MapUpdate<K, V> updateFunction, Merger<Map.Entry<K, V>> merger) {
-        verifyThread();
-        updateFunction.apply(this);
-        return this;
-    }
-
     @SuppressWarnings("unchecked")
     @Override
     protected MutableHashMap<K, V> doReturn(Node<K, Entry<K, V>> newRoot, int newSize) {
