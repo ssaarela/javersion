@@ -91,13 +91,13 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
             while (iter.hasNext()) {
                 parent = iter.next();
                 revisions = revisions.conjAll(parent.allRevisions);
-                properties = properties.mergeAll(parent.allProperties, merger);
+                properties.mergeAll(parent.allProperties, merger);
             }
+            properties.putAll(version.getVersionProperties());
+
             this.allRevisions = revisions.conj(version.revision);
-            this.allProperties = properties.assocAll(version.getVersionProperties()).toPersistentMap();
+            this.allProperties = properties.toPersistentMap();
         }
-        
-        
     }
     
     public long getRevision() {

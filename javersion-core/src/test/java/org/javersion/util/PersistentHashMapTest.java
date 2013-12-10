@@ -446,7 +446,7 @@ public class PersistentHashMapTest {
         assertThat(map.get(1), equalTo(1));
         
         // Editing 
-        mutableMap.assoc(2, 2);
+        mutableMap.put(2, 2);
         assertThat(map.containsKey(2), equalTo(false));
         assertThat(mutableMap.containsKey(2), equalTo(true));
     }
@@ -461,7 +461,7 @@ public class PersistentHashMapTest {
             public void run() {
                 // This should throw IllegalStateException!
                 try {
-                    map.assoc(1, 2);
+                    map.put(1, 2);
                 } catch (Throwable t) {
                     exception.set(t);
                 } finally {

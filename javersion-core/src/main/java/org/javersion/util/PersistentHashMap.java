@@ -41,25 +41,24 @@ public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHas
         return empty();
     }
     
+    @SuppressWarnings("unchecked")
     public static <K, V> PersistentHashMap<K, V> of(K k1, V v1) {
-        return new MutableHashMap<K, V>()
-                .assoc(k1, v1)
-                .toPersistentMap();
+        return (PersistentHashMap<K, V>) EMPTY_MAP.assoc(k1, v1);
     }
     
     public static <K, V> PersistentHashMap<K, V> of(K k1, V v1, K k2, V v2) {
-        return new MutableHashMap<K, V>()
-                .assoc(k1, v1)
-                .assoc(k2, v2)
-                .toPersistentMap();
+        MutableHashMap<K, V> map = new MutableHashMap<K, V>(2);
+        map.put(k1, v1);
+        map.put(k2, v2);
+        return map.toPersistentMap();
     }
     
     public static <K, V> PersistentHashMap<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
-        return new MutableHashMap<K, V>()
-                .assoc(k1, v1)
-                .assoc(k2, v2)
-                .assoc(k3, v3)
-                .toPersistentMap();
+        MutableHashMap<K, V> map = new MutableHashMap<K, V>(3);
+        map.put(k1, v1);
+        map.put(k2, v2);
+        map.put(k3, v3);
+        return map.toPersistentMap();
     }
 
     

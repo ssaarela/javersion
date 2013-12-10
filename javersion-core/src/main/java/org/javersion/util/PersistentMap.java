@@ -11,6 +11,8 @@ public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
 
     PersistentMap<K, V> assocAll(Iterable<Map.Entry<K, V>> entries);
 
+    PersistentMap<K, V> merge(K key, V value, Merger<Map.Entry<K, V>> merger);
+    
     PersistentMap<K, V> mergeAll(Map<? extends K, ? extends V> map, Merger<Entry<K, V>> merger);
 
     PersistentMap<K, V> mergeAll(Iterable<Entry<K, V>> entries, Merger<Entry<K, V>> merger);
@@ -25,7 +27,7 @@ public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
 
     int size();
     
-//    MutableHashMap<K, V> toMutableMap();
+    MutableMap<K, V> toMutableMap();
     
     Map<K, V> asMap();
 }
