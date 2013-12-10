@@ -26,7 +26,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.*;
 
 import org.javersion.util.AbstractRedBlackTree.Color;
-import org.javersion.util.PersistentTreeMap.Node;
+import org.javersion.util.AbstractTreeMap.Node;
 import org.junit.Test;
 
 import com.google.common.collect.Maps;

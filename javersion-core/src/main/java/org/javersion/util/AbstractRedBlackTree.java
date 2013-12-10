@@ -156,7 +156,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         This left;
         This right;
         
-        public Node(UpdateContext<This> context, K key, Color color, This left, This right) {
+        protected Node(UpdateContext<This> context, K key, Color color, This left, This right) {
             this.context = context;
             this.key = key;
             this.color = color;
@@ -177,15 +177,16 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return changeColor(currentContext, RED);
         }
         
-        public This add(UpdateContext<This> currentContext, final This node, Comparator<? super K> comparator) {
-            if (node == this) {
-                return null;
-            }
+        protected This add(UpdateContext<This> currentContext, final This node, Comparator<? super K> comparator) {
             This self = self();
             int cmpr = comparator.compare(node.key, key);
             Mirror mirror;
             if (cmpr == 0) {
-                return replaceWith(currentContext, node);
+                if (currentContext.merge(self, node)) {
+                    return replaceWith(currentContext, node);
+                } else {
+                    return null;
+                }
             } else if (cmpr < 0) {
                 mirror = LEFT;
             } else {
@@ -205,7 +206,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return color.add(currentContext, self, newChild, mirror);
         }
         
-        public This remove(UpdateContext<This> currentContext, final K key, Comparator<? super K> comparator) {
+        protected This remove(UpdateContext<This> currentContext, final K key, Comparator<? super K> comparator) {
             This self = self();
             int cmpr = comparator.compare(key, self.key);
             Mirror mirror;
