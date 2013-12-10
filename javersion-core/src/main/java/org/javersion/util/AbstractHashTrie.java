@@ -189,8 +189,11 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         @Override
         public Node<K, E> assocInternal(final UpdateContext<? super E>  currentContext, final int shift, final int hash, final E newEntry) {
             switch (this.equals(newEntry)) {
-            case EQUAL: return this;
-            case KEY: return currentContext.merge((E) this, newEntry) ? newEntry : this;
+            case EQUAL: // Notify currentContext even though entries are equal
+                currentContext.merge((E) this, newEntry); 
+                return this;
+            case KEY: 
+                return currentContext.merge((E) this, newEntry) ? newEntry : this;
             default: // continue
             }
             if (hash == getHash()) {

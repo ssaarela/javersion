@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -262,28 +262,31 @@ public class PersistentHashMapTest {
     public void Merger_Gets_Called() {
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
         doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
+        ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
+        ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
 
         PersistentHashMap<Integer, Integer> map = PersistentHashMap.empty();
         
         map = map.merge(1, 1, merger);
         assertThat(map.get(1), equalTo(1));
+        verify(merger).insert(entry1.capture());
+        assertEntry(entry1, 1, 1);
         
         map = map.merge(1, 2, merger);
         assertThat(map.get(1), equalTo(2));
-
-        map = map.dissoc(1, merger);
-        assertThat(map.get(1), nullValue());
-
-        ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
-        ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
-
-        verify(merger).insert(entry1.capture());
-        assertEntry(entry1, 1, 1);
-
         verify(merger).merge(entry1.capture(), entry2.capture());
         assertEntry(entry1, 1, 1);
         assertEntry(entry2, 1, 2);
+        
+        reset(merger);
+        doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
+        map = map.merge(1, 2, merger);
+        verify(merger).merge(entry1.capture(), entry2.capture());
+        assertEntry(entry1, 1, 2);
+        assertEntry(entry2, 1, 2);
 
+        map = map.dissoc(1, merger);
+        assertThat(map.get(1), nullValue());
         verify(merger).delete(entry2.capture());
         assertEntry(entry2, 1, 2);
     }
