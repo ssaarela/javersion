@@ -75,12 +75,22 @@ public class ClojurePerfTests implements PerfTests<IPersistentMap, PersistentTre
         }
         return map;
     }
-
+    public PersistentTreeMap sortedMapBulkInsert(Comparator<Integer> comparator, Integer[] data) {
+        // NOTE: Not optimized in Clojure
+        return sortedMapIncrementalInsert(comparator, data);
+    }
+        
     @Override
     public void sortedMapIncrementalDelete(Integer[] data, PersistentTreeMap sortedMap) {
         for (int i=0; i < data.length; i++) {
             sortedMap = sortedMap.without(data[i]);
         }
+    }
+    
+    @Override
+    public void sortedMapBulkDelete(Integer[] data, PersistentTreeMap sortedMap) {
+        // NOTE: Not optimized in Clojure
+        sortedMapIncrementalDelete(data, sortedMap);
     }
 
     @Override

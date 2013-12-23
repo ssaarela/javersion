@@ -201,18 +201,18 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                 return this;
             case KEY: 
                 return currentContext.merge((E) this, newEntry) ? newEntry : this;
-            default: // continue
-            }
-            if (hash == getHash()) {
-                currentContext.insert(newEntry);
-                return new CollisionNode<K, E>((E) this, newEntry);
-            }
-            else {
-                @SuppressWarnings("rawtypes")
-                Node[] newChildren = new Node[HashNode.newSizeForInsert(currentContext, 1)];
-                newChildren[0] = this;
-                return new HashNode<K, E>(currentContext, bit(getHash(), shift), newChildren)
-                        .assocInternal(currentContext, shift, hash, newEntry);
+            default: 
+                if (hash == getHash()) {
+                    currentContext.insert(newEntry);
+                    return new CollisionNode<K, E>((E) this, newEntry);
+                }
+                else {
+                    @SuppressWarnings("rawtypes")
+                    Node[] newChildren = new Node[HashNode.newSizeForInsert(currentContext, 1)];
+                    newChildren[0] = this;
+                    return new HashNode<K, E>(currentContext, bit(getHash(), shift), newChildren)
+                            .assocInternal(currentContext, shift, hash, newEntry);
+                }
             }
         }
 

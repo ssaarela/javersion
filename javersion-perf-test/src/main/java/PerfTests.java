@@ -30,7 +30,11 @@ public interface PerfTests<PM, SM> {
     
     public SM sortedMapIncrementalInsert(Comparator<Integer> comparator, Integer[] data);
     
+    public SM sortedMapBulkInsert(Comparator<Integer> comparator, Integer[] data);
+    
     public void sortedMapIncrementalDelete(Integer[] data, SM sortedMap);
+    
+    public void sortedMapBulkDelete(Integer[] data, SM sortedMap);
     
     public String getImpl();
     

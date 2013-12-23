@@ -94,6 +94,17 @@ public class TestPerformance {
         for (int i=0; i < times; i++)
             test.sortedMapIncrementalDelete(data, sortedMap);
         end("sortedMapIncrementalDelete", test.getImpl(), nature, data.length, times);
+        
+        
+        start();
+        for (int i=0; i < times; i++)
+            sortedMap = test.sortedMapBulkInsert(COMPARATOR, data);
+        end("sortedMapBulkInsert", test.getImpl(), nature, data.length, times);
+
+        start();
+        for (int i=0; i < times; i++)
+            test.sortedMapBulkDelete(data, sortedMap);
+        end("sortedMapBulkDelete", test.getImpl(), nature, data.length, times);
     }
 
     public static void runTests(String nature, final Integer[] data, final int times, PerfTests<?, ?>... allTests) {
@@ -117,8 +128,9 @@ public class TestPerformance {
         
     public static <PM, SM> void runTests(PerfTests<?, ?>... allTests) {
         
-        runTests("sequential", sequentialData(1<<21), 2, allTests);
+        warmup(allTests);
         
+        runTests("sequential", sequentialData(1<<21), 2, allTests);
         runTests("sequential", sequentialData(1<<19), 1<<4, allTests);
         runTests("sequential", sequentialData(1<<16), 1<<7, allTests);
         runTests("sequential", sequentialData(1<<13), 1<<10, allTests);

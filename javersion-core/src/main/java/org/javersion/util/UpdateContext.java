@@ -90,6 +90,9 @@ public final class UpdateContext<T> implements Merger<T> {
             throw new IllegalStateException("This update is already committed");
         }
     }
+    public boolean hasChanged() {
+        return context.change != 0;
+    }
     public int getChangeAndReset() {
         return context.getChangeAndReset();
     }

@@ -33,7 +33,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
-public class PersistentHashMapTest extends AbstractMapTest<PersistentHashMap<Integer,Integer>>{
+public class PersistentHashMapTest extends AbstractPersistentMapTest<PersistentHashMap<Integer,Integer>>{
     
     private static class HashKey {
         final int hash;

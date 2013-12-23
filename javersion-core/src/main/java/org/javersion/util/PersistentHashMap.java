@@ -82,11 +82,6 @@ public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHas
     }
 
     @Override
-    protected PersistentHashMap<K, V> self() {
-        return this;
-    }
-
-    @Override
     protected Node<K, Entry<K, V>> root() {
         return root;
     }

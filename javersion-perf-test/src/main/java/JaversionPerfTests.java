@@ -15,11 +15,10 @@
  */
 import java.util.Comparator;
 
-import org.javersion.util.MapUpdate;
 import org.javersion.util.MutableHashMap;
+import org.javersion.util.MutableTreeMap;
 import org.javersion.util.PersistentHashMap;
 import org.javersion.util.PersistentTreeMap;
-
 
 public class JaversionPerfTests implements PerfTests<PersistentHashMap<Integer, Integer>, PersistentTreeMap<Integer, Integer>> {
 
@@ -51,31 +50,20 @@ public class JaversionPerfTests implements PerfTests<PersistentHashMap<Integer, 
 
     @Override
     public PersistentHashMap<Integer, Integer> bulkInsert(final Integer[] data) {
-        PersistentHashMap<Integer, Integer> map = PersistentHashMap.<Integer, Integer>empty().update(
-                new MapUpdate<Integer, Integer>() {
-                    @Override
-                    public void apply(MutableHashMap<Integer, Integer> map) {
-                        for (int i=0; i < data.length; i++) {
-                            map.assoc(data[i], data[i]);
-                        }
-                    }
-                });
-        return map;
+        MutableHashMap<Integer, Integer> mmap = new MutableHashMap<>();
+        for (int i=0; i < data.length; i++) {
+            mmap.put(data[i], data[i]);
+        }
+        return mmap.toPersistentMap();
     }
 
     @Override
     public void bulkDelete(final Integer[] data, final PersistentHashMap<Integer, Integer> persistentMap) {
-        int sizeAfterDelete = persistentMap.update(
-                persistentMap.size(),
-                        new MapUpdate<Integer, Integer>() {
-                    @Override
-                    public void apply(MutableHashMap<Integer, Integer> map) {
-                        for (int i=0; i < data.length; i++) {
-                            map.dissoc(data[i]);
-                        }
-                    }
-                }).size();
-        if (sizeAfterDelete != 0) {
+        MutableHashMap<Integer, Integer> mmap = persistentMap.toMutableMap();
+        for (int i=0; i < data.length; i++) {
+            mmap.remove(data[i]);
+        }
+        if (mmap.size() != 0) {
             throw new AssertionError();
         }
     }
@@ -90,9 +78,26 @@ public class JaversionPerfTests implements PerfTests<PersistentHashMap<Integer, 
     }
 
     @Override
+    public PersistentTreeMap<Integer, Integer> sortedMapBulkInsert(Comparator<Integer> comparator, Integer[] data) {
+        MutableTreeMap<Integer, Integer> map = new MutableTreeMap<>(comparator);
+        for (int i=0; i < data.length; i++) {
+            map.put(data[i], data[i]);
+        }
+        return map.toPersistentMap();
+    }
+
+    @Override
     public void sortedMapIncrementalDelete(Integer[] data, PersistentTreeMap<Integer, Integer> sortedMap) {
         for (int i=0; i < data.length; i++) {
             sortedMap = sortedMap.dissoc(data[i]);
+        }
+    }
+
+    @Override
+    public void sortedMapBulkDelete(Integer[] data, PersistentTreeMap<Integer, Integer> sortedMap) {
+        MutableTreeMap<Integer, Integer> map = sortedMap.toMutableMap();
+        for (int i=0; i < data.length; i++) {
+            map.remove(data[i]);
         }
     }
 

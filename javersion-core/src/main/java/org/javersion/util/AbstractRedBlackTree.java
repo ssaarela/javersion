@@ -150,7 +150,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return self();
         } else {
             N newRoot = root.remove(context, key, comparator);
-            if (newRoot == root) {
+            if (!context.hasChanged()) {
                 return self();
             } else if (newRoot != null) {
                 return commitAndReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
@@ -239,12 +239,15 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
                 // key not found
                 return self;
             }
+            boolean balance = isBlack(mirror.leftOf(self));
             This newChild = child.remove(currentContext, key, comparator);
-            if (newChild == child) {
-                // key not found
+            if (!currentContext.hasChanged()) {
                 return self;
+            } else if (balance) {
+                return mirror.balanceDelete(currentContext, self, newChild);
+            } else {
+                return mirror.delete(currentContext, self, newChild);
             }
-            return mirror.remove(currentContext, self, newChild);
         }
 
         private This append(UpdateContext<? super This> currentContext, This left, This right) {
@@ -429,12 +432,12 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
                 node.left = right;
             }
             @Override
-            <K, N extends Node<K, N>> N remove(UpdateContext<? super N> currentContext, N node, N newChild) {
-                if (isBlack(node.right)) {
-                    return balanceRightDel(currentContext, node, node.left, newChild);
-                } else {
-                    return node.edit(currentContext, RED, node.left, newChild);
-                }
+            <K, N extends Node<K, N>> N balanceDelete(UpdateContext<? super N> currentContext, N node, N newChild) {
+                return balanceRightDel(currentContext, node, node.left, newChild);
+            }
+            @Override
+            <K, N extends Node<K, N>> N delete(UpdateContext<? super N> currentContext, N node, N newChild) {
+                return node.edit(currentContext, RED, node.left, newChild);
             }
         },
         LEFT;
@@ -454,12 +457,12 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             setLeftOf(node, left);
             setRigthOf(node, right);
         }
-        <K, N extends Node<K, N>> N remove(UpdateContext<? super N> currentContext, N node, N newChild) {
-            if (isBlack(node.left)) {
-                return balanceLeftDel(currentContext, node, newChild, node.right);
-            } else {
-                return node.edit(currentContext, RED, newChild, node.right);
-            }
+        <K, N extends Node<K, N>> N balanceDelete(UpdateContext<? super N> currentContext, N node, N newChild) {
+            return balanceLeftDel(currentContext, node, newChild, node.right);
+        }
+        
+        <K, N extends Node<K, N>> N delete(UpdateContext<? super N> currentContext, N node, N newChild) {
+            return node.edit(currentContext, RED, newChild, node.right);
         }
     }
 

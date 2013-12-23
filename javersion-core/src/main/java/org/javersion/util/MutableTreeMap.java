@@ -71,6 +71,11 @@ public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableMa
         return map.get(key);
     }
 
+    Node<K, V> root() {
+        // For tests
+        return map.root;
+    }
+    
     @Override
     public Set<Map.Entry<K, V>> entrySet() {
         return new AbstractSet<Map.Entry<K, V>>() {
@@ -151,6 +156,7 @@ public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableMa
             super();
             this.root = null;
             this.size = 0;
+            updateContext = new UpdateContext<Map.Entry<K, V>>();
         }
         
         private MMap(Comparator<? super K> comparator) {

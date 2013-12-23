@@ -31,7 +31,7 @@ import org.javersion.util.AbstractRedBlackTree.Color;
 import org.javersion.util.AbstractTreeMap.Node;
 import org.junit.Test;
 
-public class PersistentTreeMapTest extends AbstractMapTest<PersistentTreeMap<Integer, Integer>> {
+public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentTreeMap<Integer, Integer>> {
 
     @Test
     public void Iterate_Random() {
@@ -102,9 +102,16 @@ public class PersistentTreeMapTest extends AbstractMapTest<PersistentTreeMap<Int
         assertThat(pmap.min(), nullValue());
     }
 
-    private Integer blacksOnPath = null;
+    private static Integer blacksOnPath = null;
     
-    protected void assertNodeProperties(Node<Integer, Integer> node, int blacks) {
+    static synchronized void assertNodeProperties(Node<Integer, Integer> node) {
+        blacksOnPath = null;
+        if (node != null) {
+            assertNodeProperties(node, 0);
+        }
+    }
+    
+    private static void assertNodeProperties(Node<Integer, Integer> node, int blacks) {
         assertThat(node.color, not(nullValue()));
         if (node.color == Color.RED) {
             assertBlack(node.left);
@@ -131,8 +138,8 @@ public class PersistentTreeMapTest extends AbstractMapTest<PersistentTreeMap<Int
             }
         }
     }
-    
-    private void assertBlack(Node<?, ?> node) {
+
+    static void assertBlack(Node<?, ?> node) {
         assertTrue("Expected black node (or null)", node == null || node.color == Color.BLACK);
     }
 
@@ -143,8 +150,7 @@ public class PersistentTreeMapTest extends AbstractMapTest<PersistentTreeMap<Int
 
     @Override
     protected void assertMapProperties(PersistentMap<Integer, Integer> map) {
-        blacksOnPath = null;
-        assertNodeProperties(((PersistentTreeMap<Integer, Integer>) map).root(), 0);
+        assertNodeProperties(((PersistentTreeMap<Integer, Integer>) map).root());
     }
 
     @Override

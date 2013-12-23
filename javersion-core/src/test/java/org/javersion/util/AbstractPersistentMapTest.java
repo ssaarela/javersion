@@ -22,38 +22,9 @@ import org.mockito.ArgumentCaptor;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
-public abstract class AbstractMapTest<M extends PersistentMap<Integer, Integer>> {
-    
-    protected static final int RANDOM_SEED = new Random().nextInt();
-
-    protected static final String DESC = "Random(" + RANDOM_SEED + ")";
-
-    protected List<Integer> ascending(int size) {
-        List<Integer> ints = new ArrayList<>(size);
-        for (int i=0; i < size; i++) {
-            ints.add(i);
-        }
-        return ints;
-    }
-
-    protected List<Integer> descending(int size) {
-        List<Integer> ints = new ArrayList<>(size);
-        for (int i=size; i > 0; i--) {
-            ints.add(i);
-        }
-        return ints;
-    }
-
-    protected List<Integer> randoms(int size) {
-        Random random = new Random(RANDOM_SEED);
-        Set<Integer> ints = Sets.newLinkedHashSetWithExpectedSize(size);
-        for (int i=0; i < size; i++) {
-            ints.add(random.nextInt());
-        }
-        return new ArrayList<>(ints);
-    }
+public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer, Integer>> 
+    extends AbstractCollectionTest {
     
     @Test
     public void Empty_Map() {
@@ -68,8 +39,8 @@ public abstract class AbstractMapTest<M extends PersistentMap<Integer, Integer>>
     }
     
     @Test
-    public void Ascending_Inserts() {
-        assertInsert(ascending(300));
+    public void Ascending() {
+        assertInsertAndDelete(ascending(10));
     }
     
     @Test
@@ -94,11 +65,6 @@ public abstract class AbstractMapTest<M extends PersistentMap<Integer, Integer>>
         }
         assertMapProperties(pmap);
     }
-    
-    @Test
-    public void Ascending_Deletes() {
-        assertDelete(ascending(300));
-    }
 
     @Test
     public void Descending_Bulk_Insert() {
@@ -106,19 +72,14 @@ public abstract class AbstractMapTest<M extends PersistentMap<Integer, Integer>>
     }
 
     @Test
-    public void Descending_Inserts() {
-        assertInsert(descending(300));
-    }
-
-    @Test
-    public void Descending_Deletes() {
-        assertDelete(descending(300));
+    public void Descending() {
+        assertInsertAndDelete(descending(300));
     }
     
     @Test
-    public void Random_Inserts() {
+    public void Random() {
         try {
-            assertInsert(randoms(500));
+            assertInsertAndDelete(randoms(500));
         } catch (AssertionError e) {
             throw new AssertionError(DESC, e);
         }
@@ -148,15 +109,6 @@ public abstract class AbstractMapTest<M extends PersistentMap<Integer, Integer>>
             assertBulkInsert(randoms(300));
         } catch (AssertionError e) {
             throw new AssertionError(DESC, e);
-        }
-    }
-    
-    @Test
-    public void Random_Deletes() {
-        try {
-            assertDelete(randoms(500));
-        } catch (AssertionError e) {
-            throw new AssertionError(DESC + ": " + e.getMessage(), e);
         }
     }
     
@@ -322,10 +274,10 @@ public abstract class AbstractMapTest<M extends PersistentMap<Integer, Integer>>
     }
     
     protected void assertInsert(Integer... ints) {
-        assertInsert(Arrays.asList(ints));
+        assertInsertAndDelete(Arrays.asList(ints));
     }
     
-    protected void assertInsert(List<Integer> ints) {
+    protected void assertInsertAndDelete(List<Integer> ints) {
         PersistentMap<Integer, Integer> map = emptyMap();
         List<PersistentMap<Integer, Integer>> maps = new ArrayList<>(ints.size());
         for (Integer i : ints) {
@@ -334,19 +286,16 @@ public abstract class AbstractMapTest<M extends PersistentMap<Integer, Integer>>
         }
 
         assertPersistentMaps(maps, ints);
-    }
-
-    protected void assertDelete(List<Integer> ints) {
-        PersistentMap<Integer, Integer> map = emptyMap();
-        List<PersistentMap<Integer, Integer>> maps = new ArrayList<>(ints.size());
+        
+        PersistentMap<Integer, Integer> map2 = map;
         for (Integer i : ints) {
-            map = map.assoc(i, i);
-            maps.add(map);
+            map2 = map2.dissoc(i);
+            assertMapProperties(map2);
         }
+
         for (int i = ints.size() - 1; i > 0; i--) {
             Integer key = ints.get(i);
             map = map.dissoc(key);
-            assertMapProperties(map);
             maps.set(i-1, map);
         }
         assertPersistentMaps(maps, ints);
