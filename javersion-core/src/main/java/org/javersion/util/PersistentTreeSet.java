@@ -104,8 +104,7 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
 
     @SuppressWarnings("unchecked")
     @Override
-    protected PersistentTreeSet<E> doReturn(UpdateContext<Node<E>> context, Comparator<? super E> comparator, Node<E> newRoot, int newSize) {
-        context.commit();
+    protected PersistentTreeSet<E> doReturn(Comparator<? super E> comparator, Node<E> newRoot, int newSize) {
         if (newRoot == root) {
             return this;
         } else if (newRoot == null) {
@@ -134,11 +133,11 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
 
     static class Node<E> extends AbstractRedBlackTree.Node<E, Node<E>> {
 
-        public Node(UpdateContext<Node<E>> context, E key, Color color) {
+        public Node(UpdateContext<? super Node<E>> context, E key, Color color) {
             this(context, key, color, null, null);
         }
         
-        public Node(UpdateContext<Node<E>> context, E key, Color color, Node<E> left, Node<E> right) {
+        public Node(UpdateContext<? super Node<E>> context, E key, Color color, Node<E> left, Node<E> right) {
             super(context, key, color, left, right);
         }
         
@@ -152,12 +151,12 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         }
 
         @Override
-        protected Node<E> cloneWith(UpdateContext<Node<E>> currentContext) {
+        protected Node<E> cloneWith(UpdateContext<? super Node<E>> currentContext) {
             return new Node<E>(currentContext, key, color, left, right);
         }
 
         @Override
-        protected Node<E> replaceWith(UpdateContext<Node<E>> currentContext, Node<E> node) {
+        protected Node<E> replaceWith(UpdateContext<? super Node<E>> currentContext, Node<E> node) {
             return this;
         }
     }

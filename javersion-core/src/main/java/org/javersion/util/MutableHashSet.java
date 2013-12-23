@@ -80,7 +80,7 @@ public class MutableHashSet<E> extends AbstractTrieSet<E, MutableHashSet<E>> {
     }
     
     @Override
-    protected void commit(UpdateContext<Entry<E>> updateContext) {
+    protected void commit(UpdateContext<?> updateContext) {
         // Nothing to do here
     }
 

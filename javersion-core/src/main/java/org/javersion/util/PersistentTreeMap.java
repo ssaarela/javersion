@@ -16,8 +16,9 @@
 package org.javersion.util;
 
 import java.util.Comparator;
+import java.util.Map;
 
-public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> {
+public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> implements PersistentMap<K, V> {
     
     @SuppressWarnings("rawtypes")
     private static final PersistentTreeMap EMPTY = new PersistentTreeMap();
@@ -47,7 +48,7 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
         size = 0;
     }
 
-    private PersistentTreeMap(Comparator<? super K> comparator, Node<K, V> root, int size) {
+    PersistentTreeMap(Comparator<? super K> comparator, Node<K, V> root, int size) {
         super(comparator);
         this.root = root;
         this.size = size;
@@ -61,10 +62,17 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
         return root;
     }
 
+    public MutableMap<K, V> toMutableMap() {
+        return new MutableTreeMap<>(comparator, root, size);
+    }
+
+    public Map<K, V> asMap() {
+        return new ImmutableMap<>(this);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
-    protected PersistentTreeMap<K, V> doReturn(UpdateContext<Node<K, V>> context, Comparator<? super K> comparator, Node<K, V> newRoot, int newSize) {
-        context.commit();
+    protected PersistentTreeMap<K, V> doReturn(Comparator<? super K> comparator, Node<K, V> newRoot, int newSize) {
         if (newRoot == root) {
             return this;
         } else if (newRoot == null) {

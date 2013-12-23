@@ -39,7 +39,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     };
 
-    private final Comparator<? super K> comparator;
+    protected final Comparator<? super K> comparator;
 
     @SuppressWarnings("unchecked")
     public AbstractRedBlackTree() {
@@ -52,7 +52,16 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
 
     public abstract int size();
     
-    protected abstract This doReturn(UpdateContext<N> context, Comparator<? super K> comparator, N newRoot, int newSize);
+    protected abstract This doReturn(Comparator<? super K> comparator, N newRoot, int newSize);
+
+    private final This commitAndReturn(UpdateContext<? super N> context, Comparator<? super K> comparator, N newRoot, int newSize) {
+        commit(context);
+        return doReturn(comparator, newRoot, newSize);
+    }
+    
+    protected void commit(UpdateContext<?> context) {
+        context.commit();
+    }
     
     protected final N find(N root, Object keyObj) {
         @SuppressWarnings("unchecked")
@@ -94,23 +103,26 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         return null;
     }
 
-    protected final This doAdd(UpdateContext<N> context, N root, N node) {
+    protected final This doAdd(UpdateContext<? super N> context, N root, N node) {
         if (root == null) {
-            return doReturn(context, comparator, node.edit(context, BLACK, null, null), 1);
+            return commitAndReturn(context, comparator, node.edit(context, BLACK, null, null), 1);
         } else {
             N newRoot = root.add(context, node.edit(context, RED, null, null), comparator);
             if (newRoot == null) {
                 return self();
             } else {
-                return doReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
+                return commitAndReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
             }
         }
     }
 
-    protected final This doAddAll(UpdateContext<N> context, N root, Iterable<N> nodes) {
+    @SuppressWarnings("rawtypes")
+    protected final This doAddAll(UpdateContext<? super N> context, N root, Iterable nodes) {
         N newRoot = null;
         int newSize = size();
-        for (N node : nodes) {
+        for (Object n : nodes) {
+            @SuppressWarnings("unchecked")
+            N node = (N) n;
             if (root == null) {
                 newSize++;
                 newRoot = node.edit(context, BLACK, null, null);
@@ -122,14 +134,14 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
                 newSize += context.getChangeAndReset();
             }
         }
-        return doReturn(context, comparator, root, newSize);
+        return commitAndReturn(context, comparator, root, newSize);
     }
     
     protected Iterator<N> doIterator(N root, boolean asc) {
         return new RBIterator<K, N>(root, asc);
     }
 
-    protected final This doRemove(UpdateContext<N> context, N root, Object keyObj) {
+    protected final This doRemove(UpdateContext<? super N> context, N root, Object keyObj) {
         @SuppressWarnings("unchecked")
         K key = (K) keyObj;
         if (root == null) {
@@ -137,26 +149,26 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         } else {
             N newRoot = root.remove(context, key, comparator);
             if (newRoot != null) {
-                return doReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
+                return commitAndReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
             } else {
-                return doReturn(context, comparator, null, 0);
+                return commitAndReturn(context, comparator, null, 0);
             }
         }
     }
     
     @SuppressWarnings("unchecked")
-    private This self() {
+    protected This self() {
         return (This) this;
     }
     
     static abstract class Node<K, This extends Node<K, This>> implements Cloneable {
-        final UpdateContext<This> context;
+        final UpdateContext<? super This> context;
         final K key;
         Color color;
         This left;
         This right;
         
-        protected Node(UpdateContext<This> context, K key, Color color, This left, This right) {
+        protected Node(UpdateContext<? super This> context, K key, Color color, This left, This right) {
             this.context = context;
             this.key = key;
             this.color = color;
@@ -169,15 +181,15 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return (This) this;
         }
 
-        This blacken(UpdateContext<This> currentContext) {
+        This blacken(UpdateContext<? super This> currentContext) {
             return changeColor(currentContext, BLACK);
         }
         
-        This redden(UpdateContext<This> currentContext) {
+        This redden(UpdateContext<? super This> currentContext) {
             return changeColor(currentContext, RED);
         }
         
-        protected This add(UpdateContext<This> currentContext, final This node, Comparator<? super K> comparator) {
+        protected This add(UpdateContext<? super This> currentContext, final This node, Comparator<? super K> comparator) {
             This self = self();
             int cmpr = comparator.compare(node.key, key);
             Mirror mirror;
@@ -206,7 +218,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return color.add(currentContext, self, newChild, mirror);
         }
         
-        protected This remove(UpdateContext<This> currentContext, final K key, Comparator<? super K> comparator) {
+        protected This remove(UpdateContext<? super This> currentContext, final K key, Comparator<? super K> comparator) {
             This self = self();
             int cmpr = comparator.compare(key, self.key);
             Mirror mirror;
@@ -231,7 +243,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return mirror.remove(currentContext, self, newChild);
         }
 
-        private This append(UpdateContext<This> currentContext, This left, This right) {
+        private This append(UpdateContext<? super This> currentContext, This left, This right) {
             if (left == null) {
                 return right;
             } 
@@ -274,13 +286,13 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             }
         }
         
-        This changeColor(UpdateContext<This> currentContext, Color newColor) {
+        This changeColor(UpdateContext<? super This> currentContext, Color newColor) {
             This node = toEditable(currentContext);
             node.color = newColor;
             return node;
         }
         
-        This edit(UpdateContext<This> currentContext, Color newColor, This newLeft, This newRight) {
+        This edit(UpdateContext<? super This> currentContext, Color newColor, This newLeft, This newRight) {
             This node = toEditable(currentContext);
             node.color = newColor;
             node.left = newLeft;
@@ -288,7 +300,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return node;
         }
         
-        This toEditable(UpdateContext<This> currentContext) {
+        This toEditable(UpdateContext<? super This> currentContext) {
             if (this.context.isSameAs(currentContext)) {
                 return self();
             } else {
@@ -332,16 +344,16 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return sb;
         }
 
-        abstract This cloneWith(UpdateContext<This> currentContext);
+        abstract This cloneWith(UpdateContext<? super This> currentContext);
         
-        abstract This replaceWith(UpdateContext<This> currentContext, This node);
+        abstract This replaceWith(UpdateContext<? super This> currentContext, This node);
 
     }
     
     static enum Color {
         RED {
             @Override
-            <K, N extends Node<K, N>> N balanceInsert(UpdateContext<N> currentContext, N parent, N child, Mirror mirror) {
+            <K, N extends Node<K, N>> N balanceInsert(UpdateContext<? super N> currentContext, N parent, N child, Mirror mirror) {
                 N result;
                 N left = mirror.leftOf(child);
                 N right = mirror.rightOf(child);
@@ -373,7 +385,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
                 return result;
             }
             @Override
-            <K, N extends Node<K, N>> N add(UpdateContext<N> currentContext, N node, N newChild, Mirror mirror) {
+            <K, N extends Node<K, N>> N add(UpdateContext<? super N> currentContext, N node, N newChild, Mirror mirror) {
                 N editable = node.toEditable(currentContext);
                 mirror.setLeftOf(editable, newChild);
                 editable.color = RED;
@@ -381,13 +393,13 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             }
         },
         BLACK;
-        <K, N extends Node<K, N>> N balanceInsert(UpdateContext<N> currentContext, N parent, N child, Mirror mirror) {
+        <K, N extends Node<K, N>> N balanceInsert(UpdateContext<? super N> currentContext, N parent, N child, Mirror mirror) {
             N result = parent.toEditable(currentContext);
             result.color = BLACK;
             mirror.children(result, child, mirror.rightOf(parent));
             return result;
         }
-        <K, N extends Node<K, N>> N add(UpdateContext<N> currentContext, N node, N newChild, Mirror mirror) {
+        <K, N extends Node<K, N>> N add(UpdateContext<? super N> currentContext, N node, N newChild, Mirror mirror) {
             N editable = node.toEditable(currentContext);
             mirror.setLeftOf(editable, newChild);
             return newChild.color.balanceInsert(currentContext, editable, newChild, mirror);
@@ -413,7 +425,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
                 node.left = right;
             }
             @Override
-            <K, N extends Node<K, N>> N remove(UpdateContext<N> currentContext, N node, N newChild) {
+            <K, N extends Node<K, N>> N remove(UpdateContext<? super N> currentContext, N node, N newChild) {
                 if (isBlack(node.right)) {
                     return balanceRightDel(currentContext, node, node.left, newChild);
                 } else {
@@ -438,7 +450,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             setLeftOf(node, left);
             setRigthOf(node, right);
         }
-        <K, N extends Node<K, N>> N remove(UpdateContext<N> currentContext, N node, N newChild) {
+        <K, N extends Node<K, N>> N remove(UpdateContext<? super N> currentContext, N node, N newChild) {
             if (isBlack(node.left)) {
                 return balanceLeftDel(currentContext, node, newChild, node.right);
             } else {
@@ -455,7 +467,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         return node != null && node.color == RED;
     }
     
-    private static <K, N extends Node<K, N>> N balanceLeftDel(UpdateContext<N> currentContext, N node, N left, N right) {
+    private static <K, N extends Node<K, N>> N balanceLeftDel(UpdateContext<? super N> currentContext, N node, N left, N right) {
         if (isRed(left)) {
             return node.edit(currentContext, RED, left.blacken(currentContext), right);
         } 
@@ -473,7 +485,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     }
     
-    private static <K, N extends Node<K, N>> N balanceRightDel(UpdateContext<N> currentContext, N node, N left, N right) {
+    private static <K, N extends Node<K, N>> N balanceRightDel(UpdateContext<? super N> currentContext, N node, N left, N right) {
         if (isRed(right)) {
             return node.edit(currentContext, RED, left, right.blacken(currentContext));
         } 
@@ -491,7 +503,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     }
 
-    private static <K, N extends Node<K, N>> N balanceLeft(UpdateContext<N> currentContext, N node, N left, N right) {
+    private static <K, N extends Node<K, N>> N balanceLeft(UpdateContext<? super N> currentContext, N node, N left, N right) {
         if (isRed(left) && isRed(left.left)) {
             N newRight = node.edit(currentContext, BLACK, left.right, right);
             return left.edit(currentContext, RED, left.left.blacken(currentContext), newRight);
@@ -507,7 +519,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     }
 
-    private static <K, N extends Node<K, N>> N balanceRight(UpdateContext<N> currentContext, N node, N left, N right) {
+    private static <K, N extends Node<K, N>> N balanceRight(UpdateContext<? super N> currentContext, N node, N left, N right) {
         if (isRed(right) && isRed(right.right)) {
             N newLeft= node.edit(currentContext, BLACK, left, right.left);
             return right.edit(currentContext, RED, newLeft, right.right.blacken(currentContext));

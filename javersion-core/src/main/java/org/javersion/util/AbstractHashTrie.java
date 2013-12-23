@@ -52,10 +52,14 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         return root().iterator();
     }
     
+    private This commitAndReturn(UpdateContext<? super E> updateContext, Node<K, E> newRoot, int newSize) {
+        commit(updateContext);
+        return doReturn(newRoot, newSize);
+    }
     
     protected final This doAdd(UpdateContext<? super E> updateContext, E newEntry) {
         Node<K, E> newRoot = root().assoc(updateContext, newEntry);
-        return doReturn(newRoot, size() + updateContext.getChangeAndReset());
+        return commitAndReturn(updateContext, newRoot, size() + updateContext.getChangeAndReset());
     }
 
     @SuppressWarnings("rawtypes") 
@@ -69,14 +73,17 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             size += updateContext.getChangeAndReset();
         }
         
-        return doReturn(newRoot, size);
+        return commitAndReturn(updateContext, newRoot, size);
     }
         
-    protected final This doRemove(UpdateContext<? super E> contextReference, Object key) {
-        Node<K, E> newRoot = root().dissoc(contextReference, key);
-        return doReturn(newRoot, size() + contextReference.getChangeAndReset());
+    protected final This doRemove(UpdateContext<? super E> updateContext, Object key) {
+        Node<K, E> newRoot = root().dissoc(updateContext, key);
+        return commitAndReturn(updateContext, newRoot, size() + updateContext.getChangeAndReset());
     }
     
+    protected void commit(UpdateContext<?> updateContext) {
+        updateContext.commit();
+    }
     
     static abstract class Node<K, E extends Entry<K, E>> implements Iterable<E> {
         

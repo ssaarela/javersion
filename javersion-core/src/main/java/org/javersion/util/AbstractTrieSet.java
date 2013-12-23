@@ -90,10 +90,6 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
     protected UpdateContext<Entry<E>> updateContext(int expectedSize, Merger<Entry<E>> merger) {
         return new UpdateContext<>(expectedSize, merger);
     }
-    
-    protected void commit(UpdateContext<Entry<E>> updateContext) {
-        updateContext.commit();
-    }
 
     public boolean contains(Object o) {
         return containsKey(o);

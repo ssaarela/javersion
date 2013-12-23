@@ -78,7 +78,7 @@ public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHas
     
     @Override
     public Map<K, V> asMap() {
-        return new ImmutableTrieMap<>(this);
+        return new ImmutableMap<>(this);
     }
 
     @Override

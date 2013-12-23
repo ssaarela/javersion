@@ -52,30 +52,61 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     
     protected abstract Node<K, V> root();
 
-    protected UpdateContext<Node<K, V>> updateContext() {
+    protected UpdateContext<Entry<K, V>> updateContext() {
         return updateContext(null);
     }
-    protected UpdateContext<Node<K, V>> updateContext(Merger<Node<K, V>> merger) {
-        return new UpdateContext<Node<K, V>>(1, merger);
+    protected UpdateContext<Entry<K, V>> updateContext(Merger<Entry<K, V>> merger) {
+        return new UpdateContext<Entry<K, V>>(1, merger);
     }
     
-    public V get(K key) {
+    public V get(Object key) {
         Node<K, V> node = find(root(), key);
         return node != null ? node.value : null;
     }
 
     public This assoc(K key, V value) {
-        UpdateContext<Node<K, V>> context = updateContext();
+        UpdateContext<Entry<K, V>> context = updateContext();
         return doAdd(context, root(), new Node<K, V>(context, key, value, RED));
     }
 
-    public This assocAll(Map<K, V> map) {
-        final UpdateContext<Node<K, V>> context = updateContext();
-        return doAddAll(context, root(), transform(map.entrySet(), new EntryToNode<K, V>(context)));
+    @SuppressWarnings("unchecked")
+    public This assocAll(Map<? extends K, ? extends V> map) {
+        final UpdateContext<Entry<K, V>> context = updateContext();
+        return doAddAll(context, root(), transform(map.entrySet(), new EntryToNode(context)));
     }
 
     public This dissoc(Object keyObj) {
         return doRemove(updateContext(), root(), keyObj);
+    }
+
+    public This assocAll(Iterable<Entry<K, V>> entries) {
+        final UpdateContext<Entry<K, V>> context = updateContext();
+        return doAddAll(context, root(), entries);
+    }
+
+    public This merge(K key, V value, Merger<Entry<K, V>> merger) {
+        final UpdateContext<Entry<K, V>> context = updateContext(merger);
+        return doAdd(context, root(), new Node<K, V>(context, key, value, RED));
+    }
+
+    @SuppressWarnings("unchecked")
+    public This mergeAll(Map<? extends K, ? extends V> map, Merger<Entry<K, V>> merger) {
+        final UpdateContext<Entry<K, V>> context = updateContext(merger);
+        return doAddAll(context, root(), transform(map.entrySet(), new EntryToNode(context)));
+    }
+
+    public This mergeAll(Iterable<Entry<K, V>> entries, Merger<Entry<K, V>> merger) {
+        final UpdateContext<Entry<K, V>> context = updateContext(merger);
+        return doAddAll(context, root(), entries);
+    }
+
+    public This dissoc(Object key, Merger<Entry<K, V>> merger) {
+        final UpdateContext<Entry<K, V>> context = updateContext(merger);
+        return doRemove(context, root(), key);
+    }
+
+    public boolean containsKey(Object key) {
+        return find(root(), key) != null;
     }
 
 
@@ -90,19 +121,22 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         return root == null ? "NIL" : root.toString();
     }
 
-    private static final class EntryToNode<K, V> implements Function<Entry<K, V>, Node<K, V>> {
-        private final UpdateContext<Node<K, V>> context;
+    @SuppressWarnings("rawtypes")
+    private static final class EntryToNode implements Function {
+        private final UpdateContext context;
 
-        private EntryToNode(UpdateContext<Node<K, V>> context) {
+        private EntryToNode(UpdateContext context) {
             this.context = context;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
-        public Node<K, V> apply(Entry<K, V> input) {
+        public Object apply(Object input) {
             if (input instanceof Node) {
-                return (Node<K, V>) input;
+                return (Node) input;
             } else {
-                return new Node<K, V>(context, input.getKey(), input.getValue(), RED);
+                Entry entry = (Entry) input;
+                return new Node(context, entry.getKey(), entry.getValue(), RED);
             }
         }
     }
@@ -110,11 +144,11 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     static class Node<K, V> extends AbstractRedBlackTree.Node<K, Node<K,V>> implements Map.Entry<K, V>{
         V value;
         
-        public Node(UpdateContext<Node<K, V>> context, K key, V value, Color color) {
+        public Node(UpdateContext<? super Node<K, V>> context, K key, V value, Color color) {
             this(context, key, value, color, null, null);
         }
         
-        public Node(UpdateContext<Node<K, V>> context, K key, V value, Color color, Node<K, V> left, Node<K, V> right) {
+        public Node(UpdateContext<? super Node<K, V>> context, K key, V value, Color color, Node<K, V> left, Node<K, V> right) {
             super(context, key, color, left, right);
             this.value = value;
         }
@@ -140,12 +174,12 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         }
 
         @Override
-        protected Node<K, V> cloneWith(UpdateContext<Node<K, V>> currentContext) {
+        protected Node<K, V> cloneWith(UpdateContext<? super Node<K, V>> currentContext) {
             return new Node<K, V>(currentContext, key, value, color, left, right);
         }
 
         @Override
-        protected Node<K, V> replaceWith(UpdateContext<Node<K, V>> currentContext, Node<K, V> node) {
+        protected Node<K, V> replaceWith(UpdateContext<? super Node<K, V>> currentContext, Node<K, V> node) {
             if (node == this || Objects.equal(this.value, node.value)) {
                 return null;
             }

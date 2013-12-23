@@ -21,15 +21,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-class ImmutableTrieMap<K, V> extends AbstractMap<K, V> {
+class ImmutableMap<K, V> extends AbstractMap<K, V> {
     
-    private final PersistentHashMap<K, V> map;
+    private final PersistentMap<K, V> map;
     
-    ImmutableTrieMap(PersistentHashMap<K, V> map) {
+    ImmutableMap(PersistentMap<K, V> map) {
         this.map = Check.notNull(map, "map");
     }
     
-    public PersistentHashMap<K, V> getPersistentMap() {
+    public PersistentMap<K, V> getPersistentMap() {
         return map;
     }
 

@@ -15,16 +15,11 @@
  */
 package org.javersion.util;
 
-import java.util.AbstractMap;
-import java.util.AbstractSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import org.javersion.util.AbstractHashTrie.Node;
+import org.javersion.util.AbstractTreeMap.Node;
 
-
-public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMap<K, V> {
+public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableMap<K, V> {
     
     private MMap<K, V> map;
     
@@ -49,16 +44,16 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
         }
     };
     
-    public MutableHashMap() {
+    public MutableTreeMap() {
         this.map = new MMap<K, V>();
     }
 
-    public MutableHashMap(int expectedSize) {
-        this.map = new MMap<K, V>(expectedSize);
+    public MutableTreeMap(Comparator<? super K> comparator) {
+        this.map = new MMap<K, V>(comparator);
     }
     
-    MutableHashMap(Node<K, AbstractHashMap.Entry<K, V>> root, int size) {
-        this.map = new MMap<K, V>(root, size);
+    MutableTreeMap(Comparator<? super K> comparator, Node<K, V> root, int size) {
+        this.map = new MMap<K, V>(comparator, root, size);
     }
 
     @Override
@@ -111,7 +106,7 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
 
     @Override
     public void clear() {
-        map = new MMap<K, V>();
+        map = new MMap<K, V>(map.comparator);
     }
 
 
@@ -137,43 +132,40 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
     }
 
     @Override
-    public PersistentHashMap<K, V> toPersistentMap() {
+    public PersistentTreeMap<K, V> toPersistentMap() {
         return map.toPersistentMap();
     }
 
     
-    private static class MMap<K, V> extends AbstractHashMap<K, V, MMap<K, V>> {
+    private static class MMap<K, V> extends AbstractTreeMap<K, V, MMap<K, V>> {
         
         private final Thread owner = Thread.currentThread();
         
         private UpdateContext<Map.Entry<K, V>>  updateContext;
         
-        private Node<K, Entry<K, V>> root;
+        private Node<K, V> root;
         
         private int size;
         
-        @SuppressWarnings("unchecked")
-        private MMap(int expectedSize) {
-            this(expectedSize, EMPTY_NODE, 0);
+        private MMap() {
+            super();
+            this.root = null;
+            this.size = 0;
         }
         
-        @SuppressWarnings("unchecked")
-        private MMap() {
-            this(EMPTY_NODE, 0);
+        private MMap(Comparator<? super K> comparator) {
+            this(comparator, null, 0);
         }
     
-        private MMap(Node<K, Entry<K, V>> root, int size) {
-            this(32, root, size);
-        }
-        
-        private MMap(int expectedSize, Node<K, Entry<K, V>> root, int size) {
-            this.updateContext = new UpdateContext<Map.Entry<K, V>>(expectedSize);
+        private MMap(Comparator<? super K> comparator, Node<K, V> root, int size) {
+            super(comparator);
+            this.updateContext = new UpdateContext<Map.Entry<K, V>>();
             this.root = root;
             this.size = size;
         }
     
         @Override
-        protected Node<K, Entry<K, V>> root() {
+        protected Node<K, V> root() {
             verifyThread();
             return root;
         }
@@ -183,10 +175,10 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
             return this;
         }
         
-        public PersistentHashMap<K, V> toPersistentMap() {
+        public PersistentTreeMap<K, V> toPersistentMap() {
             verifyThread();
             updateContext.commit();
-            return PersistentHashMap.create(root, size);
+            return new PersistentTreeMap<K, V>(comparator, root, size);
         }
         
         private void verifyThread() {
@@ -201,19 +193,18 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
             return size;
         }
     
-        @SuppressWarnings("unchecked")
         @Override
-        protected MMap<K, V> doReturn(Node<K, Entry<K, V>> newRoot, int newSize) {
-            this.root = (Node<K, Entry<K, V>>) (newRoot == null ? EMPTY_NODE : newRoot);
+        protected MMap<K, V> doReturn(Comparator<? super K> comparator, Node<K, V> newRoot, int newSize) {
+            this.root = newRoot;
             this.size = newSize;
             return this;
         }
         
         @Override
-        protected UpdateContext<Map.Entry<K, V>> updateContext(int expectedUpdates, Merger<Map.Entry<K, V>> merger) {
+        protected UpdateContext<Map.Entry<K, V>> updateContext(Merger<Map.Entry<K, V>> merger) {
             verifyThread();
             if (updateContext.isCommitted()) {
-                updateContext = new UpdateContext<Map.Entry<K, V>>(expectedUpdates, merger);
+                updateContext = new UpdateContext<Map.Entry<K, V>>(32, merger);
             } else {
                 updateContext.validate();
                 updateContext.merger(merger);

@@ -72,40 +72,24 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     @SuppressWarnings("unchecked")
     protected This doMerge(Entry<K, V> entry, Merger<Map.Entry<K, V>> merger) {
         final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(1, merger);
-        try {
-            return (This) doAdd(updateContext, toEntry(entry));
-        } finally {
-            commit(updateContext);
-        }
+        return (This) doAdd(updateContext, toEntry(entry));
     }
 
     
     @SuppressWarnings("unchecked")
     public This mergeAll(Map<? extends K, ? extends V> map, Merger<Map.Entry<K, V>> merger) {
         final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(map.size(), merger);
-        try {
-            return (This) doAddAll(updateContext, transform(map.entrySet().iterator(), TO_ENTRY));
-        } finally {
-            commit(updateContext);
-        }
+        return (This) doAddAll(updateContext, transform(map.entrySet().iterator(), TO_ENTRY));
     }
 
     @SuppressWarnings("unchecked")
     public This mergeAll(Iterable<Map.Entry<K, V>> entries, Merger<Map.Entry<K, V>> merger) {
         final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(32, merger);
-        try {
-            return (This) doAddAll(updateContext, transform(entries.iterator(), TO_ENTRY));
-        } finally {
-            commit(updateContext);
-        }
+        return (This) doAddAll(updateContext, transform(entries.iterator(), TO_ENTRY));
     }
     
     protected UpdateContext<Map.Entry<K, V>> updateContext(int expectedSize, Merger<Map.Entry<K, V>> merger) {
         return new UpdateContext<>(expectedSize, merger);
-    }
-    
-    protected void commit(UpdateContext<Map.Entry<K, V>> updateContext) {
-        updateContext.commit();
     }
 
     
@@ -116,11 +100,7 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     @SuppressWarnings("unchecked")
     public This dissoc(Object key, Merger<Map.Entry<K, V>> merger) {
         final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(1, merger);
-        try {
-            return (This) doRemove(updateContext, key);
-        } finally {
-            commit(updateContext);
-        }
+        return (This) doRemove(updateContext, key);
     }
     
     public V get(Object key) {
