@@ -63,6 +63,16 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         Node<K, V> node = find(root(), key);
         return node != null ? node.value : null;
     }
+    
+    public V max() {
+        Node<K, V> max = findMax(root());
+        return max != null ? max.value : null;
+    }
+    
+    public V min() {
+        Node<K, V> min = findMin(root());
+        return min != null ? min.value : null;
+    }
 
     public This assoc(K key, V value) {
         UpdateContext<Entry<K, V>> context = updateContext();

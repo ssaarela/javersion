@@ -105,6 +105,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
 
     protected final This doAdd(UpdateContext<? super N> context, N root, N node) {
         if (root == null) {
+            context.insert(node);
             return commitAndReturn(context, comparator, node.edit(context, BLACK, null, null), 1);
         } else {
             N newRoot = root.add(context, node.edit(context, RED, null, null), comparator);
@@ -117,24 +118,25 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
     }
 
     @SuppressWarnings("rawtypes")
-    protected final This doAddAll(UpdateContext<? super N> context, N root, Iterable nodes) {
-        N newRoot = null;
+    protected final This doAddAll(UpdateContext<? super N> context, final N root, Iterable nodes) {
+        N newRoot = root;
+        N rootCandidate = null;
         int newSize = size();
         for (Object n : nodes) {
             @SuppressWarnings("unchecked")
             N node = (N) n;
-            if (root == null) {
+            if (newRoot == null) {
                 newSize++;
-                newRoot = node.edit(context, BLACK, null, null);
+                rootCandidate = node.edit(context, BLACK, null, null);
             } else {
-                newRoot = newRoot.add(context, node.edit(context, RED, null, null), comparator);
+                rootCandidate = newRoot.add(context, node.edit(context, RED, null, null), comparator);
             }
-            if (newRoot != null) {
-                root = newRoot.blacken(context);
+            if (rootCandidate != null) {
+                newRoot = rootCandidate.blacken(context);
                 newSize += context.getChangeAndReset();
             }
         }
-        return commitAndReturn(context, comparator, root, newSize);
+        return commitAndReturn(context, comparator, newRoot, newSize);
     }
     
     protected Iterator<N> doIterator(N root, boolean asc) {
@@ -148,7 +150,9 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return self();
         } else {
             N newRoot = root.remove(context, key, comparator);
-            if (newRoot != null) {
+            if (newRoot == root) {
+                return self();
+            } else if (newRoot != null) {
                 return commitAndReturn(context, comparator, newRoot.blacken(context), size() + context.getChangeAndReset());
             } else {
                 return commitAndReturn(context, comparator, null, 0);

@@ -242,7 +242,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
     
     static final class HashNode<K, E extends Entry<K, E>> extends Node<K, E> {
         
-        private final UpdateContext<? super E>  updateContext;
+        final UpdateContext<? super E>  updateContext;
         
         private int bitmap; 
         
@@ -435,7 +435,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
 
     static final class ArrayNode<K, E extends Entry<K, E>> extends Node<K, E> {
         
-        private final UpdateContext<? super E>  updateContext;
+        final UpdateContext<? super E>  updateContext;
         
         private Node<K, E>[] children;
         
