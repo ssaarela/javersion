@@ -20,7 +20,11 @@ import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 import static org.javersion.util.AbstractRedBlackTree.Mirror.LEFT;
 import static org.javersion.util.AbstractRedBlackTree.Mirror.RIGHT;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.javersion.util.AbstractRedBlackTree.Node;
 
@@ -196,7 +200,6 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         protected This add(UpdateContext<? super This> currentContext, final This node, Comparator<? super K> comparator) {
             This self = self();
             int cmpr = comparator.compare(node.key, key);
-            Mirror mirror;
             if (cmpr == 0) {
                 if (currentContext.merge(self, node)) {
                     return replaceWith(currentContext, node);
@@ -204,49 +207,22 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
                     return null;
                 }
             } else if (cmpr < 0) {
-                mirror = LEFT;
+                return LEFT.add(currentContext, self, node, comparator);
             } else {
-                mirror = RIGHT;
+                return RIGHT.add(currentContext, self, node, comparator);
             }
-            This left = mirror.leftOf(self());
-            This newChild;
-            if (left == null) {
-                currentContext.insert(node);
-                newChild = node;
-            } else {
-                newChild = left.add(currentContext, node, comparator);
-            }
-            if (newChild == null) {
-                return null;
-            }
-            return color.add(currentContext, self, newChild, mirror);
         }
         
         protected This remove(UpdateContext<? super This> currentContext, final K key, Comparator<? super K> comparator) {
             This self = self();
             int cmpr = comparator.compare(key, self.key);
-            Mirror mirror;
             if (cmpr == 0) {
                 currentContext.delete(self());
                 return append(currentContext, left, right);
             } else if (cmpr < 0) {
-                mirror = LEFT;
+                return LEFT.remove(currentContext, self, key, comparator);
             } else {
-                mirror = RIGHT;
-            }
-            This child = mirror.leftOf(self);
-            if (child == null) {
-                // key not found
-                return self;
-            }
-            boolean balance = isBlack(mirror.leftOf(self));
-            This newChild = child.remove(currentContext, key, comparator);
-            if (!currentContext.hasChanged()) {
-                return self;
-            } else if (balance) {
-                return mirror.balanceDelete(currentContext, self, newChild);
-            } else {
-                return mirror.delete(currentContext, self, newChild);
+                return RIGHT.remove(currentContext, self, key, comparator);
             }
         }
 
@@ -457,12 +433,42 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             setLeftOf(node, left);
             setRigthOf(node, right);
         }
+        <K, N extends Node<K, N>> N add(UpdateContext<? super N> currentContext, N self, N node, Comparator<? super K> comparator) {
+            N left = leftOf(self);
+            N newChild;
+            if (left == null) {
+                currentContext.insert(node);
+                newChild = node;
+            } else {
+                newChild = left.add(currentContext, node, comparator);
+            }
+            if (newChild == null) {
+                return null;
+            }
+            return self.color.add(currentContext, self, newChild, this);
+        }
         <K, N extends Node<K, N>> N balanceDelete(UpdateContext<? super N> currentContext, N node, N newChild) {
             return balanceLeftDel(currentContext, node, newChild, node.right);
         }
         
         <K, N extends Node<K, N>> N delete(UpdateContext<? super N> currentContext, N node, N newChild) {
             return node.edit(currentContext, RED, newChild, node.right);
+        }
+        <K, N extends Node<K, N>> N remove(UpdateContext<? super N> currentContext, N self, final K key, Comparator<? super K> comparator) {
+            N child = leftOf(self);
+            if (child == null) {
+                // key not found
+                return self;
+            }
+            boolean balance = isBlack(leftOf(self));
+            N newChild = child.remove(currentContext, key, comparator);
+            if (!currentContext.hasChanged()) {
+                return self;
+            } else if (balance) {
+                return balanceDelete(currentContext, self, newChild);
+            } else {
+                return delete(currentContext, self, newChild);
+            }
         }
     }
 

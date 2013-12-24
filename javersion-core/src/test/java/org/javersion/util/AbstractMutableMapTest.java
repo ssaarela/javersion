@@ -14,18 +14,18 @@ public abstract class AbstractMutableMapTest extends AbstractCollectionTest {
     
     @Test
     public void Ascending_Keys() {
-        assertInsertAndDelete(emptyMap(), ascending(300));
+        assertInsertAndDelete(emptyMap(), ascending(500));
     }
     
     @Test
     public void Descending_Keys() {
-        assertInsertAndDelete(emptyMap(), descending(300));
+        assertInsertAndDelete(emptyMap(), descending(500));
     }
 
     @Test
     public void Random_Keys() {
         try {
-            assertInsertAndDelete(emptyMap(), randoms(15));
+            assertInsertAndDelete(emptyMap(), randoms(500));
         } catch (Exception e) {
             throw new AssertionError(DESC, e);
         }
