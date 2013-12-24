@@ -163,12 +163,6 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         }
     };
     
-    public static enum EntryEquality {
-        NONE, 
-        KEY,
-        EQUAL;
-    }
-    
     protected static abstract class Entry<K, E extends Entry<K, E>> extends Node<K, E> {
         
         final K key; 
@@ -189,30 +183,20 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         protected E self() {
             return (E) this;
         }
-        
-        public abstract EntryEquality equals(E other);
 
         @SuppressWarnings("unchecked")
-        @Override
-        public Node<K, E> assocInternal(final UpdateContext<? super E>  currentContext, final int shift, final int hash, final E newEntry) {
-            switch (this.equals(newEntry)) {
-            case EQUAL: // Notify currentContext even though entries are equal
-                currentContext.merge((E) this, newEntry); 
-                return this;
-            case KEY: 
-                return currentContext.merge((E) this, newEntry) ? newEntry : this;
-            default: 
-                if (hash == getHash()) {
-                    currentContext.insert(newEntry);
-                    return new CollisionNode<K, E>((E) this, newEntry);
-                }
-                else {
-                    @SuppressWarnings("rawtypes")
-                    Node[] newChildren = new Node[HashNode.newSizeForInsert(currentContext, 1)];
-                    newChildren[0] = this;
-                    return new HashNode<K, E>(currentContext, bit(getHash(), shift), newChildren)
-                            .assocInternal(currentContext, shift, hash, newEntry);
-                }
+        protected Node<K, E> split(final UpdateContext<? super E>  currentContext, final int shift, final int hash, final E newEntry) {
+            int thisHash = getHash();
+            if (hash == thisHash) {
+                currentContext.insert(newEntry);
+                return new CollisionNode<K, E>((E) this, newEntry);
+            }
+            else {
+                @SuppressWarnings("rawtypes")
+                Node[] newChildren = new Node[HashNode.newSizeForInsert(currentContext, 1)];
+                newChildren[0] = this;
+                return new HashNode<K, E>(currentContext, bit(thisHash, shift), newChildren)
+                        .assocInternal(currentContext, shift, hash, newEntry);
             }
         }
 

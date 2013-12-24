@@ -104,15 +104,16 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
         public E element() {
             return key;
         }
-
-        @Override
-        public org.javersion.util.AbstractHashTrie.EntryEquality equals(Entry<E> other) {
-            if (other == this || equal(this.key, other.key)) {
-                return EntryEquality.EQUAL;
-            }
-            return EntryEquality.NONE;
-        }
         
+        @Override
+        public Node<E, Entry<E>> assocInternal(final UpdateContext<? super Entry<E>>  currentContext, final int shift, final int hash, final Entry<E> newEntry) {
+            if (equal(this.key, newEntry.key)) {
+                currentContext.merge(this, newEntry); 
+                return this;
+            } else {
+                return split(currentContext, shift, hash, newEntry);
+            }
+        }
     }
 
 }

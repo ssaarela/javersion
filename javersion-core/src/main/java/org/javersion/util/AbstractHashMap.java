@@ -155,17 +155,16 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
         }
         
         @Override
-        public EntryEquality equals(Entry<K, V> other) {
-            if (other == this) {
-                return EntryEquality.EQUAL;
-            } else if (equal(key, other.key)) {
-                if (equal(value, other.value)) {
-                    return EntryEquality.EQUAL;
+        public Node<K, Entry<K, V>> assocInternal(final UpdateContext<? super Entry<K, V>>  currentContext, final int shift, final int hash, final Entry<K, V> newEntry) {
+            if (equal(key, newEntry.key)) {
+                if (equal(value, newEntry.value)) {
+                    currentContext.merge(this, newEntry); 
+                    return this;
                 } else {
-                    return EntryEquality.KEY;
+                    return currentContext.merge(this, newEntry) ? newEntry : this;
                 }
             } else {
-                return EntryEquality.NONE;
+                return split(currentContext, shift, hash, newEntry);
             }
         }
     }
