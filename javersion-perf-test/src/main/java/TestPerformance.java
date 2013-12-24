@@ -115,22 +115,23 @@ public class TestPerformance {
     
     public static <PM, SM> void warmupFor(Integer[] data, PerfTests<PM, SM> test) {
         test.incrementalInsert(data);
-        test.getAllByKeys(data, test.bulkInsert(data));
+        test.bulkInsert(data);
         test.sortedMapIncrementalInsert(COMPARATOR, data);
+        test.sortedMapBulkInsert(COMPARATOR, data);
     }
     
-    public static void warmup(PerfTests<?, ?>... allTests) {
-        Integer[] data = randomData(1234);
+    public static void warmup(Integer[] data, PerfTests<?, ?>... allTests) {
         for (PerfTests<?, ?> test : allTests) {
             warmupFor(data, test);
         }
     }
         
     public static <PM, SM> void runTests(PerfTests<?, ?>... allTests) {
+        Integer[] data = sequentialData(1<<21);
         
-        warmup(allTests);
+        warmup(data, allTests);
         
-        runTests("sequential", sequentialData(1<<21), 2, allTests);
+        runTests("sequential", data, 4, allTests);
         runTests("sequential", sequentialData(1<<19), 1<<4, allTests);
         runTests("sequential", sequentialData(1<<16), 1<<7, allTests);
         runTests("sequential", sequentialData(1<<13), 1<<10, allTests);
@@ -140,7 +141,7 @@ public class TestPerformance {
 
         runTests("sequential", sequentialData(1<<5),  1<<22, allTests);
 
-        runTests("random", randomData(1<<21), 2, allTests);
+        runTests("random", randomData(1<<21), 4, allTests);
         runTests("random", randomData(1<<19), 1<<4, allTests);
         runTests("random", randomData(1<<16), 1<<7, allTests);
         runTests("random", randomData(1<<13), 1<<10, allTests);
