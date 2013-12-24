@@ -105,15 +105,15 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             return key == null ? 0 : key.hashCode();
         }
 
-        final int index(int bitmap, int bit){
+        static int index(int bitmap, int bit){
             return Integer.bitCount(bitmap & (bit - 1));
         }
 
-        int bit(int hash, int shift) {
+        static int bit(int hash, int shift) {
             return 1 << bitIndex(hash, shift);
         }
         
-        int bitIndex(int hash, int shift) {
+        static int bitIndex(int hash, int shift) {
             // xx xxxxx xxxxx xxxxx xxxxx NNNNN xxxxx   >>> 5
             // 00 00000 00000 00000 00000 00000 NNNNN   & 0x01f
             // return number (NNNNN) between 0..31
