@@ -27,14 +27,14 @@ public class TestPerformance {
     
     private static final Random RANDOM = new Random();
     
-    private static Integer[] sequentialData(int length) {
+    public static Integer[] sequentialData(int length) {
         Integer[] data = new Integer[length];
         for (int i=0; i < length; i++) {
             data[i] = i;
         }
         return data;
     }
-    private static Integer[] randomData(int length) {
+    public static Integer[] randomData(int length) {
         Integer[] data = new Integer[length];
         for (int i=0; i < length; i++) {
             data[i] = RANDOM.nextInt(length);

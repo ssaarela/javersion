@@ -345,6 +345,10 @@ $(document).ready(function() {
   </head>
 
   <body>
+  <div>
+    NOTE: Tweek Clojure's <tt>PersistentHashMap.hash(Object)</tt> so that it uses
+    Object.hashCode() directly, for "fair" results.
+  </div>
   <div>Full time diff: <span id="fullTimeDiff"></span></div>
   <table id="results">
     <thead>

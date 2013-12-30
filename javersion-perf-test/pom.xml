@@ -21,6 +21,12 @@
           <artifactId>clojure</artifactId>
           <version>1.5.1</version>
         </dependency>
+        <dependency>
+        <!-- http://openjdk.java.net/projects/code-tools/jol/ -->
+          <groupId>org.openjdk.jol</groupId>
+          <artifactId>jol-core</artifactId>
+          <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
