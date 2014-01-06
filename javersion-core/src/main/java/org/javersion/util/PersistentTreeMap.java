@@ -21,7 +21,7 @@ import java.util.Map;
 public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> implements PersistentMap<K, V> {
     
     @SuppressWarnings("rawtypes")
-    private static final PersistentTreeMap EMPTY = new PersistentTreeMap();
+    public static final PersistentTreeMap EMPTY = new PersistentTreeMap();
 
     @SuppressWarnings("unchecked")
     public static <K, V> PersistentTreeMap<K, V> empty() {
@@ -30,6 +30,35 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
     
     public static <K, V> PersistentTreeMap<K, V> empty(Comparator<? super K> comparator) {
         return new PersistentTreeMap<K, V>(comparator);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static <K, V> PersistentTreeMap<K, V> copyOf(Map<? extends K, ? extends V> map) {
+        return ((PersistentTreeMap<K, V>) EMPTY).assocAll(map);
+    }
+    
+    public static <K, V> PersistentTreeMap<K, V> of() {
+        return empty();
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static <K, V> PersistentTreeMap<K, V> of(K k1, V v1) {
+        return (PersistentTreeMap<K, V>) EMPTY.assoc(k1, v1);
+    }
+    
+    public static <K, V> PersistentTreeMap<K, V> of(K k1, V v1, K k2, V v2) {
+        MutableTreeMap<K, V> map = new MutableTreeMap<K, V>();
+        map.put(k1, v1);
+        map.put(k2, v2);
+        return map.toPersistentMap();
+    }
+    
+    public static <K, V> PersistentTreeMap<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
+        MutableTreeMap<K, V> map = new MutableTreeMap<K, V>();
+        map.put(k1, v1);
+        map.put(k2, v2);
+        map.put(k3, v3);
+        return map.toPersistentMap();
     }
     
     

@@ -2,7 +2,7 @@ import static java.lang.System.out;
 
 import java.io.PrintWriter;
 
-import org.javersion.util.PersistentHashMap;
+import org.javersion.util.PersistentTreeSet;
 import org.openjdk.jol.info.GraphLayout;
 import org.openjdk.jol.util.VMSupport;
 
@@ -12,19 +12,19 @@ public class MemoryFootprint {
     public static void main(String[] args) {
         out.println(VMSupport.vmDetails());
 
-        PersistentHashMap<Integer, Integer> jmap = PersistentHashMap.empty();
-        clojure.lang.PersistentHashMap cmap = clojure.lang.PersistentHashMap.EMPTY;
+        PersistentTreeSet<Integer> jmap = PersistentTreeSet.empty();
+        clojure.lang.PersistentTreeSet cmap = clojure.lang.PersistentTreeSet.EMPTY;
         
-        footprint(TestPerformance.randomData(50000), jmap, cmap);
+        footprint(PerfTest.randomData(50000), jmap, cmap);
     }
     
     private static void footprint(Integer[] data,
-            PersistentHashMap<Integer, Integer> jmap, 
-            clojure.lang.IPersistentMap cmap) {
+            PersistentTreeSet<Integer> jmap, 
+            clojure.lang.IPersistentCollection cmap) {
         int i=0;
         for (Integer kv : data) {
-            jmap = jmap.assoc(kv, kv);
-            cmap = cmap.assoc(kv, kv);
+            jmap = jmap.conj(kv);
+            cmap = cmap.cons(kv);
             i++;
             if (i % 1000 == 0) {
                 out.print(i);
@@ -35,6 +35,13 @@ public class MemoryFootprint {
                 out.println();
             }
         }
+        
+        for (Integer kv : data) {
+            if (cmap.count() != jmap.size()) {
+                throw new AssertionError("Expected " + cmap.count() + " GOT " + jmap.size());
+            }
+        }
+        
         PrintWriter pw = new PrintWriter(out);
         pw.println("Javersion");
         pw.println(GraphLayout.parseInstance(jmap).toFootprint());
