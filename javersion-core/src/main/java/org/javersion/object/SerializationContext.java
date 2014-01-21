@@ -66,8 +66,8 @@ public abstract class SerializationContext<V> {
         while ((currentItem = queue.pollFirst()) != null) {
             ValueMapping<V> mapping = getValueMapping(currentItem.key);
             if (currentItem.hasValue() // not null?
-                    && mapping.hasChildren()  // Scalar value?
-                    && !mapping.isReference() // Multiple References to the same object?
+                    && mapping.hasChildren()  // Composite (not scalar)?
+                    && !mapping.isReference() // Not a reference - multiple references to same object are allowed
                     && objects.put(currentItem.value, currentItem.key) != null) { // First time for this object?
                 illegalReferenceException();
             }
