@@ -30,16 +30,16 @@ import com.google.common.collect.Maps;
 public abstract class SerializationContext<V> {
 
     private final RootMapping<V> rootMapping;
-    
-    private final Map<PropertyPath, V> properties = Maps.newHashMap();
 
     private final Deque<QueueItem<PropertyPath, Object>> queue = new ArrayDeque<>();
     
     private final IdentityHashMap<Object, PropertyPath> objects = Maps.newIdentityHashMap();
     
+    private final Map<PropertyPath, V> properties = Maps.newHashMap();
+    
     private QueueItem<PropertyPath, Object> currentItem;
     
-    public SerializationContext(RootMapping<V> rootMapping) {
+    protected SerializationContext(RootMapping<V> rootMapping) {
         this.rootMapping = rootMapping;
     }
     
@@ -47,22 +47,21 @@ public abstract class SerializationContext<V> {
         return currentItem.key;
     }
     
-    public void serialize(Object root) {
-        if (currentItem == null) {
-            serialize(PropertyPath.ROOT, root);
-            run();
-        } else {
-            throw new IllegalStateException("Serialization already in proggress");
-        }
+    //FIXME: Refactor this method into a separate thread safe Serializer<V>. 
+    // Keep stateful SerializationContext out of user code!
+    public Map<PropertyPath, V> serialize(Object root) {
+        serialize(PropertyPath.ROOT, root);
+        run();
+        return unmodifiableMap(properties);
     }
-    
+
     public void serialize(PropertyPath path, Object object) {
         if (!properties.containsKey(path)) {
             queue.add(new QueueItem<PropertyPath, Object>(path, object));
         }
     }
     
-    public void run() {
+    protected void run() {
         while ((currentItem = queue.pollFirst()) != null) {
             ValueMapping<V> mapping = getValueMapping(currentItem.key);
             if (currentItem.hasValue() // not null?
@@ -101,10 +100,6 @@ public abstract class SerializationContext<V> {
         properties.put(path, value);
     }
     
-    public Map<PropertyPath, V> getProperties() {
-        return unmodifiableMap(properties);
-    }
-
     public RootMapping<V> getRootMapping() {
         return rootMapping;
     }

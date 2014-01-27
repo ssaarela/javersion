@@ -1,6 +1,7 @@
 package org.javersion.object.basic;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.isIn;
 import static org.javersion.object.basic.TestUtil.properties;
 import static org.javersion.object.basic.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
@@ -9,7 +10,6 @@ import static org.junit.Assert.assertThat;
 import java.util.Map;
 
 import org.javersion.object.IdMapper;
-import org.javersion.object.RootMapping;
 import org.javersion.object.ValueTypes;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -40,7 +40,8 @@ public class ReferencesSerializationTest {
             })
             .build();
     
-    private final RootMapping<Object> nodeValueMapping = new BasicDescribeContext(valueTypes).describe(Node.class);
+    private final BasicObjectSerializer<Node> nodeSerializer = 
+            new BasicObjectSerializer<>(Node.class, valueTypes);
     
     @Test
     public void Cycle() {
@@ -48,10 +49,7 @@ public class ReferencesSerializationTest {
         root.node = new Node(2);
         root.node.node = root;
         
-        BasicSerializationContext serializationContext = new BasicSerializationContext(nodeValueMapping);
-        serializationContext.serialize(root);
-        
-        Map<PropertyPath, Object> properties = serializationContext.getProperties();
+        Map<PropertyPath, Object> properties = nodeSerializer.toMap(root);
         
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, "1",

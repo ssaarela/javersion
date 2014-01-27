@@ -7,7 +7,6 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
-import org.javersion.object.RootMapping;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
@@ -47,7 +46,8 @@ public class PrimitiveSerializationTest {
         public char charPrimitive;
     }
     
-    private static final RootMapping<Object> primitivesValueMapping = new BasicDescribeContext().describe(Primitives.class);
+    private static final BasicObjectSerializer<Primitives> primitivesSerializer =
+            new BasicObjectSerializer<>(Primitives.class);
     
     @Test
     public void Primitive_Values() {
@@ -80,10 +80,7 @@ public class PrimitiveSerializationTest {
         primitives.charWrapper = primitives.charPrimitive;
 
         
-        BasicSerializationContext serializationContext = new BasicSerializationContext(primitivesValueMapping);
-        serializationContext.serialize(primitives);
-        
-        Map<PropertyPath, Object> properties = serializationContext.getProperties();
+        Map<PropertyPath, Object> properties = primitivesSerializer.toMap(primitives);
         
         Map<PropertyPath, Object> expectedProperties = getExpectedProperties(primitives);
         
@@ -94,10 +91,7 @@ public class PrimitiveSerializationTest {
     public void Primitive_Defaults() {
         Primitives primitives = new Primitives();
         
-        BasicSerializationContext serializationContext = new BasicSerializationContext(primitivesValueMapping);
-        serializationContext.serialize(primitives);
-        
-        Map<PropertyPath, Object> properties = serializationContext.getProperties();
+        Map<PropertyPath, Object> properties = primitivesSerializer.toMap(primitives);
         
         Map<PropertyPath, Object> expectedProperties = getExpectedProperties(primitives);
         

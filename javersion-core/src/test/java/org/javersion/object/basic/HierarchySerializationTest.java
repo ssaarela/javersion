@@ -6,7 +6,6 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
-import org.javersion.object.RootMapping;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -30,15 +29,12 @@ public class HierarchySerializationTest {
         public Tree second;
     }
     
-    private static final RootMapping<Object> treeValueMapping;
     
-    private static final RootMapping<Object> biTreeValueMapping;
-    
-    static {
-        new BasicDescribeContext().describe(Tree.class);
-        treeValueMapping = new BasicDescribeContext().describe(Tree.class);
-        biTreeValueMapping = new BasicDescribeContext().describe(BiTree.class);
-    }
+    private static final BasicObjectSerializer<Tree> treeSerializer = 
+            new BasicObjectSerializer<>(Tree.class);
+            
+    private static final BasicObjectSerializer<BiTree> biTreeSerializer = 
+            new BasicObjectSerializer<>(BiTree.class);
     
     @Test
     public void Hierarchy() {
@@ -47,10 +43,7 @@ public class HierarchySerializationTest {
         leaf.parent = new Tree("parent");
         leaf.parent.parent = new Tree("grandparent");
         
-        BasicSerializationContext serializationContext = new BasicSerializationContext(treeValueMapping);
-        serializationContext.serialize(leaf);
-        
-        Map<PropertyPath, Object> properties = serializationContext.getProperties();
+        Map<PropertyPath, Object> properties = treeSerializer.toMap(leaf);
         
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, Tree.class,
@@ -74,16 +67,14 @@ public class HierarchySerializationTest {
         root.parent = new Tree("parent");
         root.parent.parent = root;
 
-        BasicSerializationContext serializationContext = new BasicSerializationContext(treeValueMapping);
-        serializationContext.serialize(root);
+        treeSerializer.toMap(root);
     }
 
     @Test
     public void Null_References_Are_Not_Same() {
         BiTree biTree = new BiTree();
 
-        BasicSerializationContext serializationContext = new BasicSerializationContext(biTreeValueMapping);
-        serializationContext.serialize(biTree);
+        biTreeSerializer.toMap(biTree);
     }
     
     public static Map<PropertyPath, Object> properties(Object... keysAndValues) {
