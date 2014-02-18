@@ -28,11 +28,12 @@ public class ObjectType extends AbstractObjectType<Object> {
 
     @Override
     public Object toValue(Object object) {
-        if (object != null) {
-            return object.getClass();
-        } else {
-            return null;
-        }
+        return object.getClass();
+    }
+
+    @Override
+    protected Object fromValue(Object value) throws Exception {
+        return ((Class<?>) value).newInstance();
     }
 
 }

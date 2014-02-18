@@ -16,6 +16,7 @@
 package org.javersion.object.basic;
 
 import org.javersion.object.*;
+import org.javersion.path.PropertyTree;
 import org.javersion.reflect.TypeDescriptor;
 
 public class PrimitivesType implements IndexableType<Object> {
@@ -41,6 +42,15 @@ public class PrimitivesType implements IndexableType<Object> {
     @Override
     public void serialize(Object object, SerializationContext<Object> context) {
         context.put(object);
+    }
+
+    @Override
+    public Object instantiate(PropertyTree propertyTree, Object value, DeserializationContext<Object> context) throws Exception {
+        return value;
+    }
+
+    @Override
+    public void bind(PropertyTree propertyTree, Object object, DeserializationContext<Object> context) throws Exception {
     }
 
     public String toString() {

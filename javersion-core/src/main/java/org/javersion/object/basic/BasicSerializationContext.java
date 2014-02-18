@@ -20,8 +20,8 @@ import org.javersion.object.SerializationContext;
 
 public class BasicSerializationContext extends SerializationContext<Object> {
 
-    public BasicSerializationContext(RootMapping<Object> rootDescriptor) {
-        super(rootDescriptor);
+    public BasicSerializationContext(RootMapping<Object> rootDescriptor, Object object) {
+        super(rootDescriptor, object);
     }
 
 }

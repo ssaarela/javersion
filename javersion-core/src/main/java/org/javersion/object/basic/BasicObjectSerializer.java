@@ -21,7 +21,7 @@ public class BasicObjectSerializer<B> implements ObjectSerializer<B, Object> {
 
     @Override
     public Map<PropertyPath, Object> toMap(B object) {
-        return new BasicSerializationContext(rootMapping).serialize(object);
+        return new BasicSerializationContext(rootMapping, object).toMap();
     }
 
     @Override

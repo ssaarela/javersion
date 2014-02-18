@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyTree;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
@@ -33,6 +34,23 @@ public abstract class AbstractObjectType<V> implements ValueType<V> {
     public AbstractObjectType(Set<TypeDescriptor> types) {
         Check.notNullOrEmpty(types, "types");
         this.types = uniqueIndex(types, TypeDescriptor.getRawType);
+    }
+    
+    public Object instantiate(PropertyTree propertyTree, V value, DeserializationContext<V> context) throws Exception {
+        if (value == null) {
+            return null;
+        } else {
+            return fromValue(value);
+        }
+    }
+    
+    public void bind(PropertyTree propertyTree, Object object, DeserializationContext<V> context) throws Exception {
+        TypeDescriptor typeDescriptor = types.get(object.getClass());
+        for (PropertyTree child : propertyTree.getChildren()) {
+            FieldDescriptor fieldDescriptor = typeDescriptor.getField(child.getName());
+            Object value = context.getObject(child);
+            fieldDescriptor.set(object, value);
+        }
     }
 
     @Override
@@ -52,6 +70,8 @@ public abstract class AbstractObjectType<V> implements ValueType<V> {
     }
 
     protected abstract V toValue(Object object);
+    
+    protected abstract Object fromValue(V value) throws Exception;
     
     public String toString() {
         return "EntityType of " + types.values();

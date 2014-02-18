@@ -20,10 +20,8 @@ import static java.util.Collections.unmodifiableMap;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public class PropertyTree {
@@ -73,14 +71,17 @@ public class PropertyTree {
     public PropertyTree get(String childNode) {
         return children.get(childNode);
     }
-    public List<PropertyTree> postOrder() {
-        List<PropertyTree> postOrder = Lists.newArrayList();
-        postOrder.add(this);
-        for (int i = 0; i < postOrder.size(); i++) {
-            PropertyTree current = postOrder.get(i);
-            postOrder.addAll(current.getChildren());
-        }
-        return Lists.reverse(postOrder);
+//    public List<PropertyTree> postOrder() {
+//        List<PropertyTree> postOrder = Lists.newArrayList();
+//        postOrder.add(this);
+//        for (int i = 0; i < postOrder.size(); i++) {
+//            PropertyTree current = postOrder.get(i);
+//            postOrder.addAll(current.getChildren());
+//        }
+//        return Lists.reverse(postOrder);
+//    }
+    public boolean hasChildren() {
+        return !children.isEmpty();
     }
 
 }

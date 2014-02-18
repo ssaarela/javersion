@@ -29,6 +29,8 @@ import com.google.common.collect.Maps;
 
 public abstract class SerializationContext<V> {
 
+    private final Object root;
+    
     private final RootMapping<V> rootMapping;
 
     private final Deque<QueueItem<PropertyPath, Object>> queue = new ArrayDeque<>();
@@ -39,20 +41,13 @@ public abstract class SerializationContext<V> {
     
     private QueueItem<PropertyPath, Object> currentItem;
     
-    protected SerializationContext(RootMapping<V> rootMapping) {
+    protected SerializationContext(RootMapping<V> rootMapping, Object root) {
+        this.root = root;
         this.rootMapping = rootMapping;
     }
     
     public PropertyPath getCurrentPath() {
         return currentItem.key;
-    }
-    
-    //FIXME: Refactor this method into a separate thread safe Serializer<V>. 
-    // Keep stateful SerializationContext out of user code!
-    public Map<PropertyPath, V> serialize(Object root) {
-        serialize(PropertyPath.ROOT, root);
-        run();
-        return unmodifiableMap(properties);
     }
 
     public void serialize(PropertyPath path, Object object) {
@@ -61,7 +56,8 @@ public abstract class SerializationContext<V> {
         }
     }
     
-    protected void run() {
+    public Map<PropertyPath, V> toMap() {
+        serialize(PropertyPath.ROOT, root);
         while ((currentItem = queue.pollFirst()) != null) {
             ValueMapping<V> mapping = getValueMapping(currentItem.key);
             if (currentItem.hasValue() // not null?
@@ -72,6 +68,7 @@ public abstract class SerializationContext<V> {
             }
             mapping.valueType.serialize(currentItem.value, this);
         }
+        return unmodifiableMap(properties);
     }
     
     private ValueMapping<V> getValueMapping(PropertyPath path) {

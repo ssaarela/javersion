@@ -16,6 +16,7 @@
 package org.javersion.object;
 
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
 
@@ -48,6 +49,18 @@ public final class ReferenceType<V, R> implements IndexableType<V> {
             stringType.serialize(id, context);
             context.serialize(targetRoot.index(id), object);
         }
+    }
+
+    @Override
+    public Object instantiate(PropertyTree propertyTree, V value, DeserializationContext<V> context) throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void bind(PropertyTree propertyTree, Object object, DeserializationContext<V> context) throws Exception {
+        // TODO Auto-generated method stub
+        
     }
 
 }

@@ -15,8 +15,14 @@
  */
 package org.javersion.object;
 
+import org.javersion.path.PropertyTree;
+
 
 public interface ValueType<V> {
+    
+    Object instantiate(PropertyTree propertyTree, V value, DeserializationContext<V> context) throws Exception;
+    
+    void bind(PropertyTree propertyTree, Object object, DeserializationContext<V> context) throws Exception;
     
     void serialize(Object object, SerializationContext<V> context);
 
