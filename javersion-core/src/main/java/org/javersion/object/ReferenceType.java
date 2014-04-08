@@ -59,8 +59,7 @@ public final class ReferenceType<V, R> implements ValueType<V> {
 
     @Override
     public void bind(PropertyTree propertyTree, Object object, DeserializationContext<V> context) throws Exception {
-        // TODO Auto-generated method stub
-        
+        // Nothing to do here
     }
 
 }
