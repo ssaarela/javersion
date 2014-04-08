@@ -49,6 +49,11 @@ public class DeserializationContext<V> {
         }
     }
 
+    public Object getObject(PropertyPath path) {
+        PropertyTree propertyTree = rootNode.get(path);
+        return propertyTree != null ? getObject(propertyTree) : null;
+    }
+
     public Object getObject(PropertyTree propertyTree) {
         if (objects.containsKey(propertyTree.path)) {
             return objects.get(propertyTree.path);

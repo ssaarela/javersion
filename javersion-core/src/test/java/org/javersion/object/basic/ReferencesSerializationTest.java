@@ -1,7 +1,7 @@
 package org.javersion.object.basic;
 
 import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.isIn;
+import static org.hamcrest.Matchers.*;
 import static org.javersion.object.basic.TestUtil.properties;
 import static org.javersion.object.basic.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
@@ -18,13 +18,15 @@ public class ReferencesSerializationTest {
 
     public static class Node {
 
-        public long id;
+        public int id;
         
-        public Node node;
-        
+        public Node left;
+
+        public Node right;
+
         public Node() {}
         
-        public Node(long id) {
+        public Node(int id) {
             this.id = id;
         }
     }
@@ -44,10 +46,12 @@ public class ReferencesSerializationTest {
             new BasicObjectSerializer<>(Node.class, valueTypes);
     
     @Test
-    public void Cycle() {
+    public void Cycles() {
         Node root = new Node(1);
-        root.node = new Node(2);
-        root.node.node = root;
+        root.left = new Node(2);
+        root.right = root;
+        root.left.left = root;
+        root.left.right = root.left;
         
         Map<PropertyPath, Object> properties = nodeSerializer.toMap(root);
         
@@ -55,14 +59,23 @@ public class ReferencesSerializationTest {
                 ROOT, "1",
 
                 property("@REF@.nodes[1]"), Node.class,
-                property("@REF@.nodes[1].id"), 1l,
-                property("@REF@.nodes[1].node"), "2",
+                property("@REF@.nodes[1].id"), 1,
+                property("@REF@.nodes[1].left"), "2",
+                property("@REF@.nodes[1].right"), "1",
         
                 property("@REF@.nodes[2]"), Node.class,
-                property("@REF@.nodes[2].id"), 2l,
-                property("@REF@.nodes[2].node"), "1"
+                property("@REF@.nodes[2].id"), 2,
+                property("@REF@.nodes[2].left"), "1",
+                property("@REF@.nodes[2].right"), "2"
         );
         
         assertThat(properties.entrySet(), everyItem(isIn(expectedProperties.entrySet())));
+        
+        root = nodeSerializer.fromMap(properties);
+        assertThat(root.id, equalTo(1));
+        assertThat(root.left.id, equalTo(2));
+        assertThat(root.right, sameInstance(root));
+        assertThat(root.left.left, sameInstance(root));
+        assertThat(root.left.right, sameInstance(root.left));
     }
 }

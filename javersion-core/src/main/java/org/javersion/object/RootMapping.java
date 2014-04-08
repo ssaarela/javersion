@@ -15,7 +15,6 @@
  */
 package org.javersion.object;
 
-import java.util.List;
 import java.util.Map;
 
 import org.javersion.path.PropertyPath;
@@ -39,8 +38,7 @@ public class RootMapping<V> extends ValueMapping<V> {
     public ValueMapping<V> get(PropertyPath path) {
         Check.notNull(path, "path");
         ValueMapping<V> currentMapping = this;
-        List<PropertyPath> pathElements = path.toSchemaPath().asList();
-        for (PropertyPath currentPath : pathElements.subList(1, pathElements.size())) {
+        for (PropertyPath currentPath : path.toSchemaPath().asList()) {
             currentMapping = currentMapping.getChild(currentPath.getName());
             if (currentMapping == null) {
                 throw new IllegalArgumentException("Path not found: " + currentPath);
@@ -51,8 +49,7 @@ public class RootMapping<V> extends ValueMapping<V> {
 
     ValueMapping<V> addPath(PropertyPath path) {
         ValueMapping<V> currentMapping = this;
-        List<PropertyPath> pathElements = path.toSchemaPath().asList();
-        for (PropertyPath currentPath : pathElements.subList(1, pathElements.size())) {
+        for (PropertyPath currentPath : path.toSchemaPath().asList()) {
             String childName = currentPath.getName();
             if (!currentMapping.hasChild(childName)) {
                 currentMapping = currentMapping.addChild(childName, new ValueMapping<V>());

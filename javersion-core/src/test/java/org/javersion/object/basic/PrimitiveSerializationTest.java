@@ -79,26 +79,25 @@ public class PrimitiveSerializationTest {
         primitives.charPrimitive = '7';
         primitives.charWrapper = primitives.charPrimitive;
 
-        
+        assertPropertiesRoundTrip(primitives);
+    }
+
+    private void assertPropertiesRoundTrip(Primitives primitives) {
         Map<PropertyPath, Object> properties = primitivesSerializer.toMap(primitives);
-        
-        Map<PropertyPath, Object> expectedProperties = getExpectedProperties(primitives);
+        Map<PropertyPath, Object> expectedProperties = getProperties(primitives);
         
         assertThat(properties, equalTo(expectedProperties));
+        primitives = primitivesSerializer.fromMap(properties);
+        assertThat(getProperties(primitives), equalTo(expectedProperties));
     }
+
     
     @Test
     public void Primitive_Defaults() {
-        Primitives primitives = new Primitives();
-        
-        Map<PropertyPath, Object> properties = primitivesSerializer.toMap(primitives);
-        
-        Map<PropertyPath, Object> expectedProperties = getExpectedProperties(primitives);
-        
-        assertThat(properties, equalTo(expectedProperties));
+        assertPropertiesRoundTrip(new Primitives());
     }
     
-    private static Map<PropertyPath, Object> getExpectedProperties(Object object) {
+    private static Map<PropertyPath, Object> getProperties(Object object) {
         Map<PropertyPath, Object> expectedProperties = Maps.newHashMap();
         expectedProperties.put(ROOT, object.getClass());
         

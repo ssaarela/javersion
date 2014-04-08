@@ -26,8 +26,7 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-public abstract class AbstractObjectTypeFactory<V> 
-        implements ValueTypeFactory<V> {
+public abstract class AbstractObjectTypeFactory<V> implements ValueTypeFactory<V> {
 
     private static final String REFERENCES = "@REF@";
     

@@ -19,7 +19,7 @@ import org.javersion.object.*;
 import org.javersion.path.PropertyTree;
 import org.javersion.reflect.TypeDescriptor;
 
-public class PrimitivesType implements IndexableType<Object> {
+public class PrimitivesType implements ValueType<Object> {
     
     private static final PrimitivesType INSTANCE = new PrimitivesType();
     
@@ -57,12 +57,4 @@ public class PrimitivesType implements IndexableType<Object> {
         return getClass().getSimpleName();
     }
 
-    @Override
-    public String toString(Object object, RootMapping<Object> rootMapping) {
-        if (object != null) {
-            return object.toString();
-        } else {
-            return null;
-        }
-    }
 }

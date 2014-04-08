@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
+import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.parser.PropertyPathBaseVisitor;
 import org.javersion.path.parser.PropertyPathLexer;
 import org.javersion.path.parser.PropertyPathParser;
@@ -31,7 +32,7 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-public abstract class PropertyPath implements Iterable<PropertyPath> {
+public abstract class PropertyPath implements Iterable<SubPath> {
     
     private static final ANTLRErrorListener ERROR_LISTERNER = new BaseErrorListener() {
         @Override
@@ -109,11 +110,11 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
         return new Index(this, index);
     }
     
-    public Iterator<PropertyPath> iterator() {
+    public Iterator<SubPath> iterator() {
         return asList().iterator();
     }
     
-    public List<PropertyPath> asList() {
+    public List<SubPath> asList() {
         return fullPath != null ? fullPath : (fullPath = getFullPath());
     }
     
@@ -122,14 +123,20 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
     }
     
     public boolean startsWith(PropertyPath other) {
-        List<PropertyPath> thisPath = asList();
-        List<PropertyPath> otherPath = other.asList();
-        int otherSize = otherPath.size();
-        return thisPath.size() >= otherSize && thisPath.get(otherSize - 1).equals(otherPath.get(otherSize - 1));
+        if (other.isRoot()) {
+            return true;
+        } else if (this.isRoot()) {
+            return false;
+        } else {
+            List<SubPath> otherPath = other.asList();
+            List<SubPath> thisPath = asList();
+            int otherSize = otherPath.size();
+            return thisPath.size() >= otherSize && thisPath.get(otherSize - 1).equals(otherPath.get(otherSize - 1));
+        }
     }
     
     public PropertyPath toSchemaPath() {
-        PropertyPath schemaPath = null;
+        PropertyPath schemaPath = ROOT;
         for (PropertyPath path : this) {
             schemaPath = path.normalize(schemaPath);
         }
@@ -145,22 +152,22 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
     public abstract String getName();
     
 
-    abstract List<PropertyPath> getFullPath();
+    abstract List<SubPath> getFullPath();
     
     abstract PropertyPath normalize(PropertyPath newParent);
 
     
-    private volatile List<PropertyPath> fullPath;
+    private volatile List<SubPath> fullPath;
 
     public static final class Root extends PropertyPath {
 
         private static final Root ROOT = new Root();
         
-        private static final List<PropertyPath> FULL_PATH = ImmutableList.<PropertyPath>of(ROOT);
+        private static final List<SubPath> FULL_PATH = ImmutableList.<SubPath>of();
         
         private Root() {}
         
-        List<PropertyPath> getFullPath() {
+        List<SubPath> getFullPath() {
             return FULL_PATH;
         }
 
@@ -203,9 +210,9 @@ public abstract class PropertyPath implements Iterable<PropertyPath> {
             this.parent = checkNotNull(parent, "parent");
         }
         
-        List<PropertyPath> getFullPath() {
-            List<PropertyPath> parentPath = parent.getFullPath();
-            ImmutableList.Builder<PropertyPath> pathBuilder = ImmutableList.builder();
+        List<SubPath> getFullPath() {
+            List<SubPath> parentPath = parent.getFullPath();
+            ImmutableList.Builder<SubPath> pathBuilder = ImmutableList.builder();
             pathBuilder.addAll(parentPath);
             pathBuilder.add(this);
             return pathBuilder.build();

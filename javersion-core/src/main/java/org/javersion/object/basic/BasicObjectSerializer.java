@@ -25,8 +25,8 @@ public class BasicObjectSerializer<B> implements ObjectSerializer<B, Object> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public B fromMap(Map<PropertyPath, Object> properties) {
-        // TODO Auto-generated method stub
-        return null;
+        return (B) new BasicDeserializationContext(rootMapping, properties).getObject();
     }
 }

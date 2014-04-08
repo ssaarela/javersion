@@ -1,6 +1,6 @@
 package org.javersion.object.basic;
 
-import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.*;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
 
@@ -17,7 +17,8 @@ public class HierarchySerializationTest {
     @Versionable
     public static class Tree {
         public String name;
-        public Tree parent;
+        public Tree child;
+        public Tree() {}
         public Tree(String name) {
             this.name = name;
         }
@@ -38,34 +39,40 @@ public class HierarchySerializationTest {
     
     @Test
     public void Hierarchy() {
-        Tree leaf;
-        leaf = new Tree("leaf");
-        leaf.parent = new Tree("parent");
-        leaf.parent.parent = new Tree("grandparent");
+        Tree root;
+        root = new Tree("root");
+        root.child = new Tree("child");
+        root.child.child = new Tree("grandchild");
         
-        Map<PropertyPath, Object> properties = treeSerializer.toMap(leaf);
+        Map<PropertyPath, Object> properties = treeSerializer.toMap(root);
         
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, Tree.class,
-                property("name"), "leaf",
-                property("parent"), Tree.class,
+                property("name"), "root",
+                property("child"), Tree.class,
         
-                property("parent.name"), "parent",
-                property("parent.parent"), Tree.class,
+                property("child.name"), "child",
+                property("child.child"), Tree.class,
         
-                property("parent.parent.name"), "grandparent",
-                property("parent.parent.parent"), null
+                property("child.child.name"), "grandchild",
+                property("child.child.child"), null
         );
         
         assertThat(properties, equalTo(expectedProperties));
+        
+        root = treeSerializer.fromMap(properties);
+        assertThat(root.name, equalTo("root"));
+        assertThat(root.child.name, equalTo("child"));
+        assertThat(root.child.child.name, equalTo("grandchild"));
+        assertThat(root.child.child.child, nullValue());
     }
     
     @Test(expected=IllegalArgumentException.class)
     public void Illegal_Cycle() {
         Tree root;
-        root = new Tree("leaf");
-        root.parent = new Tree("parent");
-        root.parent.parent = root;
+        root = new Tree("root");
+        root.child = new Tree("child");
+        root.child.child = root;
 
         treeSerializer.toMap(root);
     }

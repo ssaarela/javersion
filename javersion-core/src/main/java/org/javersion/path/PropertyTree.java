@@ -32,13 +32,9 @@ public class PropertyTree {
     public static PropertyTree build(Collection<PropertyPath> paths) {
         Map<PropertyPath, PropertyTree> nodes = Maps.newHashMapWithExpectedSize(paths.size());
         for (PropertyPath path : paths) {
-            PropertyTree parentTree = null;
+            PropertyTree parentTree = getOrCreate(PropertyPath.ROOT, nodes);
             for (PropertyPath subpath : path) {
-                PropertyTree childTree = nodes.get(subpath);
-                if (childTree == null) {
-                    childTree = new PropertyTree(subpath);
-                    nodes.put(subpath, childTree);
-                }
+                PropertyTree childTree = getOrCreate(subpath, nodes);
                 if (parentTree != null) {
                     parentTree.children.put(subpath.getName(), childTree);
                 } 
@@ -46,6 +42,15 @@ public class PropertyTree {
             }
         }
         return nodes.get(PropertyPath.ROOT);
+    }
+    private static PropertyTree getOrCreate(PropertyPath path,
+            Map<PropertyPath, PropertyTree> nodes) {
+        PropertyTree childTree = nodes.get(path);
+        if (childTree == null) {
+            childTree = new PropertyTree(path);
+            nodes.put(path, childTree);
+        }
+        return childTree;
     }
     
     public final PropertyPath path;
@@ -83,5 +88,16 @@ public class PropertyTree {
     public boolean hasChildren() {
         return !children.isEmpty();
     }
+    public PropertyTree get(PropertyPath path) {
+        PropertyTree match = this;
+        for (PropertyPath node : path) {
+            if (match == null) continue;
+            else match = match.get(node.getName());
+        }
+        return match;
+    }
 
+    public String toString() {
+        return path.toString();
+    }
 }

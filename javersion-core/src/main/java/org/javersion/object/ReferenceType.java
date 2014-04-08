@@ -20,7 +20,7 @@ import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
 
-public final class ReferenceType<V, R> implements IndexableType<V> {
+public final class ReferenceType<V, R> implements ValueType<V> {
     
     private final IdMapper<R> idMapper;
     
@@ -33,11 +33,6 @@ public final class ReferenceType<V, R> implements IndexableType<V> {
         this.targetRoot = Check.notNull(targetRoot, "targetRoot");
         this.stringType = Check.notNull(stringType, "stringType");
     }
-
-    @SuppressWarnings("unchecked")
-    public String toString(Object object, RootMapping<V> rootMapping) {
-        return idMapper.getId((R) object);
-    }
     
     @Override
     public void serialize(Object object, SerializationContext<V> context) {
@@ -45,7 +40,8 @@ public final class ReferenceType<V, R> implements IndexableType<V> {
         if (object == null) {
             context.put(path, null);
         } else {
-            String id = toString(object, null);
+            @SuppressWarnings("unchecked")
+            String id = idMapper.getId((R) object);
             stringType.serialize(id, context);
             context.serialize(targetRoot.index(id), object);
         }
@@ -53,8 +49,12 @@ public final class ReferenceType<V, R> implements IndexableType<V> {
 
     @Override
     public Object instantiate(PropertyTree propertyTree, V value, DeserializationContext<V> context) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        if (value == null) {
+            return null;
+        } else {
+            String id = (String) stringType.instantiate(propertyTree, value, context);
+            return context.getObject(targetRoot.index(id));
+        }
     }
 
     @Override
