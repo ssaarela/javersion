@@ -1,7 +1,7 @@
 package org.javersion.object;
 
 
-public interface ValueTypeFactory<V> {
+public interface ValueTypeMapping<V> {
 
     boolean applies(ValueMappingKey mappingKey);
     

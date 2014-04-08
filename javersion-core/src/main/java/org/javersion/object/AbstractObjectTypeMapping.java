@@ -26,7 +26,7 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-public abstract class AbstractObjectTypeFactory<V> implements ValueTypeFactory<V> {
+public abstract class AbstractObjectTypeMapping<V> implements ValueTypeMapping<V> {
 
     private static final String REFERENCES = "@REF@";
     
@@ -38,10 +38,10 @@ public abstract class AbstractObjectTypeFactory<V> implements ValueTypeFactory<V
     
     private final ValueType<V> stringType;
     
-    public AbstractObjectTypeFactory(Iterable<TypeDescriptor> types) {
+    public AbstractObjectTypeMapping(Iterable<TypeDescriptor> types) {
         this(types, null, null, null);
     }
-    public AbstractObjectTypeFactory(
+    public AbstractObjectTypeMapping(
             Iterable<TypeDescriptor> types,
             IdMapper<?> idMapper,
             String alias,

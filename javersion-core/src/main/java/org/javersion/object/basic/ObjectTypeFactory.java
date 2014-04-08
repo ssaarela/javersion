@@ -17,11 +17,11 @@ package org.javersion.object.basic;
 
 import java.util.Set;
 
-import org.javersion.object.AbstractObjectTypeFactory;
+import org.javersion.object.AbstractObjectTypeMapping;
 import org.javersion.object.IdMapper;
 import org.javersion.reflect.TypeDescriptor;
 
-public class ObjectTypeFactory extends AbstractObjectTypeFactory<Object> {
+public class ObjectTypeFactory extends AbstractObjectTypeMapping<Object> {
 
     public ObjectTypeFactory(Iterable<TypeDescriptor> types) {
         super(types);

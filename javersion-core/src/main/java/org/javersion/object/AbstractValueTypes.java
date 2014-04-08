@@ -25,15 +25,15 @@ import com.google.common.collect.Lists;
 
 public abstract class AbstractValueTypes<V> implements ValueTypes<V> {
 
-    private final Iterable<ValueTypeFactory<V>> types;
+    private final Iterable<ValueTypeMapping<V>> types;
     
-    public AbstractValueTypes(Iterable<ValueTypeFactory<V>> types) {
+    public AbstractValueTypes(Iterable<ValueTypeMapping<V>> types) {
         this.types = types;
     }
 
     @Override
-    public ValueTypeFactory<V> getFactory(ValueMappingKey mappingKey) {
-        for (ValueTypeFactory<V> valueType : types) {
+    public ValueTypeMapping<V> getMapping(ValueMappingKey mappingKey) {
+        for (ValueTypeMapping<V> valueType : types) {
             if (valueType.applies(mappingKey)) {
                 return valueType;
             }
@@ -45,13 +45,13 @@ public abstract class AbstractValueTypes<V> implements ValueTypes<V> {
         
         protected final TypeDescriptors typeDescriptors;
         
-        protected final List<ValueTypeFactory<V>> factories = Lists.newArrayList();
+        protected final List<ValueTypeMapping<V>> factories = Lists.newArrayList();
         
         protected Builder(TypeDescriptors typeDescriptors) {
             this.typeDescriptors = typeDescriptors;
         }
         
-        public B withFactory(ValueTypeFactory<V> factory) {
+        public B withFactory(ValueTypeMapping<V> factory) {
             factories.add(factory);
             return self();
         }
@@ -67,12 +67,12 @@ public abstract class AbstractValueTypes<V> implements ValueTypes<V> {
 
         protected abstract B self();
         
-        protected abstract ValueTypeFactory<V> createObjectTypeFactory(
+        protected abstract ValueTypeMapping<V> createObjectTypeFactory(
                 Iterable<TypeDescriptor> types,
                 IdMapper<?> idMapper,
                 String alias);
         
-        protected abstract ValueTypes<V> build(List<ValueTypeFactory<V>> factories);
+        protected abstract ValueTypes<V> build(List<ValueTypeMapping<V>> factories);
 
         
         
@@ -88,7 +88,7 @@ public abstract class AbstractValueTypes<V> implements ValueTypes<V> {
             }
             
 
-            public B withFactory(ValueTypeFactory<V> factory) {
+            public B withFactory(ValueTypeMapping<V> factory) {
                 return register().withFactory(factory);
             }
             public <N> HierarchyBuilder<N> withClass(Class<N> root) {

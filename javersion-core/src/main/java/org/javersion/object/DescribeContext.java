@@ -117,7 +117,7 @@ public class DescribeContext<V> {
     }
     
     public synchronized ValueType<V> createValueType(ValueMappingKey mappingKey) {
-        ValueTypeFactory<V> valueTypeFactory = valueTypes.getFactory(mappingKey);
+        ValueTypeMapping<V> valueTypeFactory = valueTypes.getMapping(mappingKey);
         return valueTypeFactory.describe(this);
     }
    

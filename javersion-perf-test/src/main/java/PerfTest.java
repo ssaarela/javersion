@@ -13,7 +13,7 @@ public class PerfTest {
     
     public static void main(String[] args) {
         Integer[] data = randomData(4000);
-//        runJaversion(data);
+        runJaversion(data);
 //        runJaversionTree(data);
 //        runJaversionMutableTree(data);
 
@@ -24,13 +24,14 @@ public class PerfTest {
     }
     
     private static void runJaversion(Integer[] data) {
+        out.println("Javersion PersistentHashMap");
         PersistentHashMap<Integer, Integer> jmap = PersistentHashMap.empty();
         // warmup
         for (Integer v : data) {
             jmap = jmap.assoc(v, v);
         }
         jmap = null;
-//        System.gc();
+        System.gc();
 
         long begin = System.nanoTime();
         for (int i=1; i <= data.length; i++) {
@@ -44,10 +45,11 @@ public class PerfTest {
             }
             out.println(end());
         }
-        out.println(String.format("Javersion total time: %s", System.nanoTime() - begin));
+        out.println(String.format("\n%s", System.nanoTime() - begin));
     }
     
     private static void runClojure(Integer[] data) {
+        out.println("Clojure PersistentHashMap");
         clojure.lang.PersistentHashMap cmap = clojure.lang.PersistentHashMap.EMPTY;
 
         // warmup
@@ -55,7 +57,7 @@ public class PerfTest {
             cmap = (clojure.lang.PersistentHashMap) cmap.assoc(v, v);
         }
         cmap = null;
-//        System.gc();
+        System.gc();
         
         long begin = System.nanoTime();
         for (int i=1; i <= data.length; i++) {
@@ -69,10 +71,11 @@ public class PerfTest {
             }
             out.println(end());
         }
-        out.println(String.format("Clojure total time: %s", System.nanoTime() - begin));
+        out.println(String.format("\n%s", System.nanoTime() - begin));
     }
     
     private static void runJaversionTree(Integer[] data) {
+        out.println("Javersion PersistentTreeMap");
         @SuppressWarnings("unchecked")
         PersistentTreeMap<Integer, Integer> jmap = PersistentTreeMap.EMPTY;
         // warmup
@@ -94,10 +97,11 @@ public class PerfTest {
             }
             out.println(end());
         }
-        out.println(String.format("Javersion total time: %s", System.nanoTime() - begin));
+        out.println(String.format("\nJaversion total time: %s", System.nanoTime() - begin));
     }
     
     private static void runJaversionMutableTree(Integer[] data) {
+        out.println("Javersion MutableTreeMap");
         MutableTreeMap<Integer, Integer> jmap = new MutableTreeMap<>();
         // warmup
         for (Integer v : data) {
@@ -118,10 +122,11 @@ public class PerfTest {
             }
             out.println(end());
         }
-        out.println(String.format("Javersion total time: %s", System.nanoTime() - begin));
+        out.println(String.format("\n%s", System.nanoTime() - begin));
     }
     
     private static void runJavaTree(Integer[] data) {
+        out.println("Java TreeMap");
         TreeMap<Integer, Integer> map = new TreeMap<Integer, Integer>();
         // warmup
         for (Integer v : data) {
@@ -142,10 +147,11 @@ public class PerfTest {
             }
             out.println(end());
         }
-        out.println(String.format("Java total time: %s", System.nanoTime() - begin));
+        out.println(String.format("\n%s", System.nanoTime() - begin));
     }
     
     private static void runClojureTree(Integer[] data) {
+        out.println("Clojure PersistentTreeMap");
         clojure.lang.PersistentTreeMap cmap = clojure.lang.PersistentTreeMap.EMPTY;
         
         // warmup
@@ -167,7 +173,7 @@ public class PerfTest {
             }
             out.println(end());
         }
-        out.println(String.format("Clojure total time: %s", System.nanoTime() - begin));
+        out.println(String.format("\n%s", System.nanoTime() - begin));
     }
 
     private static void start() {
@@ -177,7 +183,7 @@ public class PerfTest {
         return System.nanoTime() - start;
     }
     
-    private static final Random RANDOM = new Random(1234567);
+    private static final Random RANDOM = new Random();
     
     public static Integer[] sequentialData(int length) {
         Integer[] data = new Integer[length];

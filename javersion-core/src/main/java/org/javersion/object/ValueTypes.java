@@ -17,6 +17,6 @@ package org.javersion.object;
 
 public interface ValueTypes<V> {
 
-    ValueTypeFactory<V> getFactory(ValueMappingKey mappingKey);
+    ValueTypeMapping<V> getMapping(ValueMappingKey mappingKey);
 
 }

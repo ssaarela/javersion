@@ -19,7 +19,7 @@ import java.util.List;
 
 import org.javersion.object.AbstractValueTypes;
 import org.javersion.object.IdMapper;
-import org.javersion.object.ValueTypeFactory;
+import org.javersion.object.ValueTypeMapping;
 import org.javersion.object.ValueTypes;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
@@ -33,7 +33,7 @@ public class BasicValueTypes extends AbstractValueTypes<Object> {
         return new Builder();
     }
     
-    private static List<ValueTypeFactory<Object>> DEFAULT_FACTORIES = ImmutableList.of(
+    private static List<ValueTypeMapping<Object>> DEFAULT_FACTORIES = ImmutableList.of(
                 PrimitivesType.FACTORY,
                 new VersionableTypeFactory()
                 );
@@ -42,11 +42,11 @@ public class BasicValueTypes extends AbstractValueTypes<Object> {
         super(DEFAULT_FACTORIES);
     }
     
-    public BasicValueTypes(Iterable<ValueTypeFactory<Object>> factories) {
+    public BasicValueTypes(Iterable<ValueTypeMapping<Object>> factories) {
         this(TypeDescriptors.DEFAULT, factories);
     }
     
-    public BasicValueTypes(TypeDescriptors typeDescriptors, Iterable<ValueTypeFactory<Object>> factories) {
+    public BasicValueTypes(TypeDescriptors typeDescriptors, Iterable<ValueTypeMapping<Object>> factories) {
         super(Iterables.concat(factories, DEFAULT_FACTORIES));
     }
 
@@ -66,7 +66,7 @@ public class BasicValueTypes extends AbstractValueTypes<Object> {
         }
 
         @Override
-        protected ValueTypeFactory<Object> createObjectTypeFactory(
+        protected ValueTypeMapping<Object> createObjectTypeFactory(
                 Iterable<TypeDescriptor> types, 
                 IdMapper<?> idMapper,
                 String alias) {
@@ -74,7 +74,7 @@ public class BasicValueTypes extends AbstractValueTypes<Object> {
         }
 
         @Override
-        protected ValueTypes<Object> build(List<ValueTypeFactory<Object>> factories) {
+        protected ValueTypes<Object> build(List<ValueTypeMapping<Object>> factories) {
             return new BasicValueTypes(factories);
         }
         

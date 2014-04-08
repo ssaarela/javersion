@@ -23,8 +23,8 @@ import org.javersion.reflect.TypeDescriptor;
 
 import com.google.common.collect.ImmutableSet;
 
-public abstract class AbstractVersionableTypeFactory<V> 
-        implements ValueTypeFactory<V> {
+public abstract class AbstractVersionableTypeMapping<V> 
+        implements ValueTypeMapping<V> {
 
     @Override
     public boolean applies(ValueMappingKey mappingKey) {

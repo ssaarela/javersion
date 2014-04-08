@@ -23,7 +23,7 @@ public class PrimitivesType implements ValueType<Object> {
     
     private static final PrimitivesType INSTANCE = new PrimitivesType();
     
-    public static final ValueTypeFactory<Object> FACTORY = new ValueTypeFactory<Object>() {
+    public static final ValueTypeMapping<Object> FACTORY = new ValueTypeMapping<Object>() {
         
         @Override
         public ValueType<Object> describe(DescribeContext<Object> context) {

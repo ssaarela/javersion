@@ -17,10 +17,10 @@ package org.javersion.object.basic;
 
 import java.util.Set;
 
-import org.javersion.object.AbstractVersionableTypeFactory;
+import org.javersion.object.AbstractVersionableTypeMapping;
 import org.javersion.reflect.TypeDescriptor;
 
-public class VersionableTypeFactory extends AbstractVersionableTypeFactory<Object> {
+public class VersionableTypeFactory extends AbstractVersionableTypeMapping<Object> {
     
     @Override
     protected ObjectType newEntityType(Set<TypeDescriptor> types) {
