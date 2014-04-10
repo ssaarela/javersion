@@ -25,22 +25,22 @@ import org.javersion.util.Check;
 
 import com.google.common.base.Objects;
 
-public final class ValueMappingKey {
+public final class TypeMappingKey {
     
     @Nullable 
     public final ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent;
     
     public final TypeDescriptor typeDescriptor;
 
-    public ValueMappingKey(TypeDescriptor typeDescriptor) {
+    public TypeMappingKey(TypeDescriptor typeDescriptor) {
         this(null, typeDescriptor);
     }
     
-    public ValueMappingKey(FieldDescriptor fieldDescriptor) {
+    public TypeMappingKey(FieldDescriptor fieldDescriptor) {
         this(fieldDescriptor, fieldDescriptor.getType());
     }
 
-    public ValueMappingKey(ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent, TypeDescriptor typeDescriptor) {
+    public TypeMappingKey(ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> parent, TypeDescriptor typeDescriptor) {
         this.parent = parent;
         this.typeDescriptor = Check.notNull(typeDescriptor, "typeDescriptor");
     }
@@ -52,8 +52,8 @@ public final class ValueMappingKey {
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
-        } else if (obj instanceof ValueMappingKey) {
-            ValueMappingKey key = (ValueMappingKey) obj; 
+        } else if (obj instanceof TypeMappingKey) {
+            TypeMappingKey key = (TypeMappingKey) obj; 
             return this.typeDescriptor.equals(key.typeDescriptor)
                     && Objects.equal(this.parent, key.parent);
         } else {

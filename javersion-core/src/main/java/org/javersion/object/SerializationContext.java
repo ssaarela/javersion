@@ -27,21 +27,21 @@ import org.javersion.path.PropertyPath;
 
 import com.google.common.collect.Maps;
 
-public abstract class SerializationContext<V> {
+public class SerializationContext {
 
     private final Object root;
     
-    private final RootMapping<V> rootMapping;
+    private final RootMapping rootMapping;
 
     private final Deque<QueueItem<PropertyPath, Object>> queue = new ArrayDeque<>();
     
     private final IdentityHashMap<Object, PropertyPath> objects = Maps.newIdentityHashMap();
     
-    private final Map<PropertyPath, V> properties = Maps.newHashMap();
+    private final Map<PropertyPath, Object> properties = Maps.newHashMap();
     
     private QueueItem<PropertyPath, Object> currentItem;
     
-    protected SerializationContext(RootMapping<V> rootMapping, Object root) {
+    protected SerializationContext(RootMapping rootMapping, Object root) {
         this.root = root;
         this.rootMapping = rootMapping;
     }
@@ -56,10 +56,10 @@ public abstract class SerializationContext<V> {
         }
     }
     
-    public Map<PropertyPath, V> toMap() {
+    public Map<PropertyPath, Object> toMap() {
         serialize(PropertyPath.ROOT, root);
         while ((currentItem = queue.pollFirst()) != null) {
-            ValueMapping<V> mapping = getValueMapping(currentItem.key);
+            ValueMapping mapping = getValueMapping(currentItem.key);
             if (currentItem.hasValue() // not null?
                     && mapping.hasChildren()  // Composite (not scalar)?
                     && !mapping.isReference() // Not a reference - multiple references to same object are allowed
@@ -71,7 +71,7 @@ public abstract class SerializationContext<V> {
         return unmodifiableMap(properties);
     }
     
-    private ValueMapping<V> getValueMapping(PropertyPath path) {
+    private ValueMapping getValueMapping(PropertyPath path) {
         return rootMapping.get(path);
     }
 
@@ -82,7 +82,7 @@ public abstract class SerializationContext<V> {
                 currentItem.key));
     }
     
-    public void put(V value) {
+    public void put(Object value) {
         put(getCurrentPath(), value);
     }
     
@@ -90,14 +90,14 @@ public abstract class SerializationContext<V> {
         return properties.containsKey(path);
     }
     
-    public void put(PropertyPath path, V value) {
+    public void put(PropertyPath path, Object value) {
         if (properties.containsKey(path)) {
             throw new IllegalArgumentException("Duplicate value for " + path);
         }
         properties.put(path, value);
     }
     
-    public RootMapping<V> getRootMapping() {
+    public RootMapping getRootMapping() {
         return rootMapping;
     }
     

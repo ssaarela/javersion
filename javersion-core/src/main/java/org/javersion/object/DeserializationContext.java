@@ -9,11 +9,11 @@ import org.javersion.path.PropertyTree;
 
 import com.google.common.collect.Maps;
 
-public class DeserializationContext<V> {
+public class DeserializationContext {
 
-    private final Map<PropertyPath, V> properties;
+    private final Map<PropertyPath, Object> properties;
     
-    private final RootMapping<V> rootMapping;
+    private final RootMapping rootMapping;
     
     private final PropertyTree rootNode;
 
@@ -23,7 +23,7 @@ public class DeserializationContext<V> {
     
 //    private QueueItem<PropertyPath, Object> currentItem;
     
-    protected DeserializationContext(RootMapping<V> rootMapping, Map<PropertyPath, V> properties) {
+    protected DeserializationContext(RootMapping rootMapping, Map<PropertyPath, Object> properties) {
         this.properties = properties;
         this.rootMapping = rootMapping;
         this.rootNode = PropertyTree.build(properties.keySet());
@@ -31,14 +31,14 @@ public class DeserializationContext<V> {
     
     public Object getObject() {
         try {
-            V value = properties.get(rootNode.path);
+            Object value = properties.get(rootNode.path);
             Object result = rootMapping.valueType.instantiate(rootNode, value, this);
             objects.put(rootNode.path, result);
             if (result != null && rootNode.hasChildren()) {
                 rootMapping.valueType.bind(rootNode, result, this);
                 while (!queue.isEmpty()) {
                     PropertyTree propertyTree = queue.pop();
-                    ValueMapping<V> valueMapping = rootMapping.get(propertyTree.path);
+                    ValueMapping valueMapping = rootMapping.get(propertyTree.path);
                     Object target = objects.get(propertyTree.path);
                     valueMapping.valueType.bind(propertyTree, target, this);
                 }
@@ -58,8 +58,8 @@ public class DeserializationContext<V> {
         if (objects.containsKey(propertyTree.path)) {
             return objects.get(propertyTree.path);
         } else {
-            ValueMapping<V> valueMapping = rootMapping.get(propertyTree.path);
-            V value = properties.get(propertyTree.path);
+            ValueMapping valueMapping = rootMapping.get(propertyTree.path);
+            Object value = properties.get(propertyTree.path);
             try {
                 Object result = valueMapping.valueType.instantiate(propertyTree, value, this);
                 objects.put(propertyTree.path, result);

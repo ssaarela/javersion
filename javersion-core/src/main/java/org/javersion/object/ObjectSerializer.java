@@ -4,10 +4,24 @@ import java.util.Map;
 
 import org.javersion.path.PropertyPath;
 
-public interface ObjectSerializer<B, V> {
+public class ObjectSerializer<B> {
 
-    public Map<PropertyPath, V> toMap(B object);
+    private final RootMapping rootMapping;
+    
+    public ObjectSerializer(Class<B> clazz) {
+        this.rootMapping = DescribeContext.DEFAULT.describe(clazz);
+    }
+    
+    public ObjectSerializer(Class<B> clazz, ValueTypes valueTypes) {
+        this.rootMapping = new DescribeContext(valueTypes).describe(clazz);
+    }
 
-    public B fromMap(Map<PropertyPath, V> properties);
+    public Map<PropertyPath, Object> toMap(B object) {
+        return new SerializationContext(rootMapping, object).toMap();
+    }
 
+    @SuppressWarnings("unchecked")
+    public B fromMap(Map<PropertyPath, Object> properties) {
+        return (B) new DeserializationContext(rootMapping, properties).getObject();
+    }
 }

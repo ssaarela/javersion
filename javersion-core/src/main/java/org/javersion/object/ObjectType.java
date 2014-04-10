@@ -26,17 +26,27 @@ import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
+import com.google.common.collect.ImmutableSet;
 
-public abstract class AbstractObjectType<V> implements ValueType<V> {
+
+public class ObjectType<O> implements ValueType {
 
     protected final Map<Class<?>, TypeDescriptor> types;
     
-    public AbstractObjectType(Set<TypeDescriptor> types) {
+    protected final Class<? extends O> rootType;
+    
+    @SuppressWarnings("unchecked")
+    public ObjectType(TypeDescriptor type) {
+        this((Class<? extends O>) type.getRawType(), ImmutableSet.of(type));
+    }
+    
+    public ObjectType(Class<? extends O> rootType, Set<TypeDescriptor> types) {
         Check.notNullOrEmpty(types, "types");
+        this.rootType = rootType;
         this.types = uniqueIndex(types, TypeDescriptor.getRawType);
     }
     
-    public Object instantiate(PropertyTree propertyTree, V value, DeserializationContext<V> context) throws Exception {
+    public Object instantiate(PropertyTree propertyTree, Object value, DeserializationContext context) throws Exception {
         if (value == null) {
             return null;
         } else {
@@ -44,7 +54,7 @@ public abstract class AbstractObjectType<V> implements ValueType<V> {
         }
     }
     
-    public void bind(PropertyTree propertyTree, Object object, DeserializationContext<V> context) throws Exception {
+    public void bind(PropertyTree propertyTree, Object object, DeserializationContext context) throws Exception {
         TypeDescriptor typeDescriptor = types.get(object.getClass());
         for (PropertyTree child : propertyTree.getChildren()) {
             FieldDescriptor fieldDescriptor = typeDescriptor.getField(child.getName());
@@ -54,7 +64,7 @@ public abstract class AbstractObjectType<V> implements ValueType<V> {
     }
 
     @Override
-    public void serialize(Object object, SerializationContext<V> context) {
+    public void serialize(Object object, SerializationContext context) {
         PropertyPath path = context.getCurrentPath();
         if (object == null) {
             context.put(path, null);
@@ -69,12 +79,22 @@ public abstract class AbstractObjectType<V> implements ValueType<V> {
         }
     }
 
-    protected abstract V toValue(Object object);
-    
-    protected abstract Object fromValue(V value) throws Exception;
+    public Object toValue(Object object) {
+        return object.getClass();
+    }
+
+    protected Object fromValue(Object value) throws Exception {
+        return ((Class<?>) value).newInstance();
+    }
     
     public String toString() {
         return "EntityType of " + types.values();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Class<Class<? extends O>> getValueType() {
+        return (Class<Class<? extends O>>) rootType.getClass();
     }
 
 }

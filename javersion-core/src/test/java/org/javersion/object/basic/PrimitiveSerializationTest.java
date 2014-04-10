@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
+import org.javersion.object.ObjectSerializer;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
@@ -46,8 +47,8 @@ public class PrimitiveSerializationTest {
         public char charPrimitive;
     }
     
-    private static final BasicObjectSerializer<Primitives> primitivesSerializer =
-            new BasicObjectSerializer<>(Primitives.class);
+    private static final ObjectSerializer<Primitives> primitivesSerializer =
+            new ObjectSerializer<>(Primitives.class);
     
     @Test
     public void Primitive_Values() {

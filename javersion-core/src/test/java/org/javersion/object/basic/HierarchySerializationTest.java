@@ -1,11 +1,13 @@
 package org.javersion.object.basic;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.nullValue;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
+import org.javersion.object.ObjectSerializer;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -31,11 +33,9 @@ public class HierarchySerializationTest {
     }
     
     
-    private static final BasicObjectSerializer<Tree> treeSerializer = 
-            new BasicObjectSerializer<>(Tree.class);
+    private static final ObjectSerializer<Tree> treeSerializer = new ObjectSerializer<>(Tree.class);
             
-    private static final BasicObjectSerializer<BiTree> biTreeSerializer = 
-            new BasicObjectSerializer<>(BiTree.class);
+    private static final ObjectSerializer<BiTree> biTreeSerializer = new ObjectSerializer<>(BiTree.class);
     
     @Test
     public void Hierarchy() {

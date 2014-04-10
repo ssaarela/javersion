@@ -1,7 +1,9 @@
 package org.javersion.object.basic;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.isIn;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.object.basic.TestUtil.properties;
 import static org.javersion.object.basic.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
@@ -10,6 +12,7 @@ import static org.junit.Assert.assertThat;
 import java.util.Map;
 
 import org.javersion.object.IdMapper;
+import org.javersion.object.ObjectSerializer;
 import org.javersion.object.ValueTypes;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -31,7 +34,7 @@ public class ReferencesSerializationTest {
         }
     }
     
-    private ValueTypes<Object> valueTypes = BasicValueTypes.builder()
+    private ValueTypes valueTypes = ValueTypes.builder()
             .withClass(Node.class)
             .havingAlias("nodes")
             .havingIdMapper(new IdMapper<Node>() {
@@ -42,8 +45,7 @@ public class ReferencesSerializationTest {
             })
             .build();
     
-    private final BasicObjectSerializer<Node> nodeSerializer = 
-            new BasicObjectSerializer<>(Node.class, valueTypes);
+    private final ObjectSerializer<Node> nodeSerializer = new ObjectSerializer<>(Node.class, valueTypes);
     
     @Test
     public void Cycles() {

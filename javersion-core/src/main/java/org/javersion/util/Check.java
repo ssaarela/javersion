@@ -30,6 +30,10 @@ public class Check {
     public static <T> T notNull$(T reference, String messageFormat, Object... args) {
         return checkNotNull(reference, messageFormat, args);
     }
+
+    public static void that(boolean expression, String messageFormat, Object... args) {
+        checkArgument(expression, messageFormat, args);
+    }
     
     public static <T extends Iterable<?>> T notNullOrEmpty(T reference, String fieldName) {
         return notNullOrEmpty$(reference, "%s shoud not be null or empty. Got %s", fieldName, reference);

@@ -20,46 +20,51 @@ import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
 
-public final class ReferenceType<V, R> implements ValueType<V> {
+public final class ObjectReferenceType<R> implements ValueType {
     
     private final IdMapper<R> idMapper;
     
     private final PropertyPath targetRoot;
     
-    private final ValueType<V> stringType;
+    private static final ValueType STRING = BasicValueTypeMapping.STRING.getValueType();
     
-    public ReferenceType(IdMapper<R> idMapper, PropertyPath targetRoot, ValueType<V> stringType) {
+    public ObjectReferenceType(IdMapper<R> idMapper, PropertyPath targetRoot) {
         this.idMapper = Check.notNull(idMapper, "idMapper");
         this.targetRoot = Check.notNull(targetRoot, "targetRoot");
-        this.stringType = Check.notNull(stringType, "stringType");
     }
     
     @Override
-    public void serialize(Object object, SerializationContext<V> context) {
+    public void serialize(Object object, SerializationContext context) {
         PropertyPath path = context.getCurrentPath();
         if (object == null) {
             context.put(path, null);
         } else {
             @SuppressWarnings("unchecked")
             String id = idMapper.getId((R) object);
-            stringType.serialize(id, context);
+            STRING.serialize(id, context);
             context.serialize(targetRoot.index(id), object);
         }
     }
 
     @Override
-    public Object instantiate(PropertyTree propertyTree, V value, DeserializationContext<V> context) throws Exception {
+    @SuppressWarnings("unchecked")
+    public Object instantiate(PropertyTree propertyTree, Object value, DeserializationContext context) throws Exception {
         if (value == null) {
             return null;
         } else {
-            String id = (String) stringType.instantiate(propertyTree, value, context);
-            return context.getObject(targetRoot.index(id));
+            String id = (String) STRING.instantiate(propertyTree, value, context);
+            return (R) context.getObject(targetRoot.index(id));
         }
     }
 
     @Override
-    public void bind(PropertyTree propertyTree, Object object, DeserializationContext<V> context) throws Exception {
+    public void bind(PropertyTree propertyTree, Object object, DeserializationContext context) throws Exception {
         // Nothing to do here
+    }
+
+    @Override
+    public Class<String> getValueType() {
+        return String.class;
     }
 
 }

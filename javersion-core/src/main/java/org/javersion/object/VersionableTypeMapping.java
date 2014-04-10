@@ -15,34 +15,27 @@
  */
 package org.javersion.object;
 
-import java.util.Set;
-
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 
-import com.google.common.collect.ImmutableSet;
-
-public abstract class AbstractVersionableTypeMapping<V> 
-        implements ValueTypeMapping<V> {
+public class VersionableTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(ValueMappingKey mappingKey) {
+    public boolean applies(TypeMappingKey mappingKey) {
         return mappingKey.typeDescriptor.hasAnnotation(Versionable.class);
     }
     
     
     @Override
-    public  synchronized ValueType<V> describe(DescribeContext<V> context) {
+    public  synchronized ValueType describe(DescribeContext context) {
         TypeDescriptor type = context.getCurrentType();
         PropertyPath path = context.getCurrentPath();
         for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
-            ValueMappingKey mappingKey = new ValueMappingKey(fieldDescriptor);
+            TypeMappingKey mappingKey = new TypeMappingKey(fieldDescriptor);
             context.describe(path.property(fieldDescriptor.getName()), mappingKey);
         }
-        return newEntityType(ImmutableSet.of(type));
+        return new ObjectType<Object>(type);
     }
-    
-    protected abstract AbstractObjectType<V> newEntityType(Set<TypeDescriptor> types);
     
 }

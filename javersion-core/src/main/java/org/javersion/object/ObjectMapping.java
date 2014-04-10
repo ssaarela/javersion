@@ -26,7 +26,7 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
-public abstract class AbstractObjectTypeMapping<V> implements ValueTypeMapping<V> {
+public class ObjectMapping<O> implements TypeMapping {
 
     private static final String REFERENCES = "@REF@";
     
@@ -36,24 +36,23 @@ public abstract class AbstractObjectTypeMapping<V> implements ValueTypeMapping<V
 
     private final IdMapper<?> idMapper;
     
-    private final ValueType<V> stringType;
+    private final Class<? extends O> rootType;
     
-    public AbstractObjectTypeMapping(Iterable<TypeDescriptor> types) {
-        this(types, null, null, null);
+    public ObjectMapping(Class<? extends O> rootType, Iterable<TypeDescriptor> types) {
+        this(rootType, types, null, null);
     }
-    public AbstractObjectTypeMapping(
+    public ObjectMapping(
+            Class<? extends O> rootType, 
             Iterable<TypeDescriptor> types,
             IdMapper<?> idMapper,
-            String alias,
-            ValueType<V> stringType) {
+            String alias) {
+        this.rootType = Check.notNull(rootType, "rootType");
         Check.notNullOrEmpty(types, "types");
 
         this.types = ImmutableSet.copyOf(types);
         this.idMapper = idMapper;
-        this.stringType = stringType;
         
         if (idMapper != null) {
-            Check.notNull(stringType, "stringType");
             this.targetSchemaPath = PropertyPath.ROOT.property(REFERENCES).property(alias).index("");
         } else {
             this.targetSchemaPath = null;
@@ -61,12 +60,12 @@ public abstract class AbstractObjectTypeMapping<V> implements ValueTypeMapping<V
     }
 
     @Override
-    public boolean applies(ValueMappingKey mappingKey) {
+    public boolean applies(TypeMappingKey mappingKey) {
         return types.contains(mappingKey.typeDescriptor);
     }
     
     @Override
-    public  synchronized ValueType<V> describe(DescribeContext<V> context) {
+    public  synchronized ValueType describe(DescribeContext context) {
         PropertyPath path = context.getCurrentPath();
         if (isReferencePath(path)) {
             return describeReferenceType(context);
@@ -79,25 +78,23 @@ public abstract class AbstractObjectTypeMapping<V> implements ValueTypeMapping<V
         return targetSchemaPath != null && !targetSchemaPath.equals(path);
     }
 
-    private ValueType<V> describeReferenceType(DescribeContext<V> context) {
-        context.describe(targetSchemaPath, new ValueMappingKey(context.getCurrentType()));
-        return new ReferenceType<>(idMapper, targetSchemaPath.parent, stringType);
+    private ValueType describeReferenceType(DescribeContext context) {
+        context.describe(targetSchemaPath, new TypeMappingKey(context.getCurrentType()));
+        return new ObjectReferenceType<>(idMapper, targetSchemaPath.parent);
     }
 
-    private ValueType<V> describeEntityType(DescribeContext<V> context) {
+    private ValueType describeEntityType(DescribeContext context) {
         PropertyPath path = context.getCurrentPath();
         Set<FieldDescriptor> uniqueFields = Sets.newHashSet();
         for (TypeDescriptor type : types) {
             for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
                 if (uniqueFields.add(fieldDescriptor)) {
-                    ValueMappingKey mappingKey = new ValueMappingKey(fieldDescriptor);
+                    TypeMappingKey mappingKey = new TypeMappingKey(fieldDescriptor);
                     context.describe(path.property(fieldDescriptor.getName()), mappingKey);
                 }
             }
         }
-        return newEntityType(types);
+        return new ObjectType<>(rootType, types);
     }
-    
-    protected abstract AbstractObjectType<V> newEntityType(Set<TypeDescriptor> types);
     
 }

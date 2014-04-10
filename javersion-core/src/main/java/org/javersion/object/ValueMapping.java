@@ -22,21 +22,21 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-public class ValueMapping<V> {
+public class ValueMapping {
     
-    public final ValueType<V> valueType;
+    public final ValueType valueType;
     
-    private Map<String, ValueMapping<V>> children = Maps.newHashMap();
+    private Map<String, ValueMapping> children = Maps.newHashMap();
     
 
     ValueMapping() {
         this.valueType = null;
     }
-    ValueMapping(ValueType<V> valueType) {
+    ValueMapping(ValueType valueType) {
         this.valueType = Check.notNull(valueType, "valueType");
     }
 
-    public ValueMapping<V> getChild(String name) {
+    public ValueMapping getChild(String name) {
         return children.get(name);
     }
     
@@ -44,7 +44,7 @@ public class ValueMapping<V> {
         return !children.isEmpty();
     }
     
-    ValueMapping<V> addChild(String name, ValueMapping<V> child) {
+    ValueMapping addChild(String name, ValueMapping child) {
         children.put(name, child);
         return child;
     }
@@ -58,7 +58,7 @@ public class ValueMapping<V> {
     }
 
     public boolean isReference() {
-        return valueType instanceof ReferenceType;
+        return valueType instanceof ObjectReferenceType;
     }
     
     public boolean hasChild(String name) {
