@@ -1,11 +1,11 @@
-package org.javersion.object.basic;
+package org.javersion.object;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.isIn;
 import static org.hamcrest.Matchers.sameInstance;
-import static org.javersion.object.basic.TestUtil.properties;
-import static org.javersion.object.basic.TestUtil.property;
+import static org.javersion.object.TestUtil.properties;
+import static org.javersion.object.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
 
@@ -48,7 +48,7 @@ public class ReferencesSerializationTest {
     private final ObjectSerializer<Node> nodeSerializer = new ObjectSerializer<>(Node.class, valueTypes);
     
     @Test
-    public void Cycles() {
+    public void Node_Cycles_Read_And_Write() {
         Node root = new Node(1);
         root.left = new Node(2);
         root.right = root;

@@ -13,7 +13,7 @@ public class BasicValueTypeMapping implements TypeMapping {
     public static BasicValueTypeMapping DOUBLE = new PrimitiveValueTypeMapping(Double.class, double.class);
     public static BasicValueTypeMapping BOOLEAN = new PrimitiveValueTypeMapping(Boolean.class, boolean.class);
     public static BasicValueTypeMapping CHAR = new PrimitiveValueTypeMapping(Character.class, char.class);
-    
+
     public final Class<?> type;
     
     public final ValueType valueType;

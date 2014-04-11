@@ -1,4 +1,4 @@
-package org.javersion.object.basic;
+package org.javersion.object;
 
 import java.util.Map;
 

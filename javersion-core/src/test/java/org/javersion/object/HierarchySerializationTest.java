@@ -1,4 +1,4 @@
-package org.javersion.object.basic;
+package org.javersion.object;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;

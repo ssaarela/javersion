@@ -1,7 +1,7 @@
-package org.javersion.object.basic;
+package org.javersion.object;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.javersion.object.basic.TestUtil.property;
+import static org.javersion.object.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
 
