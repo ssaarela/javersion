@@ -35,6 +35,10 @@ public class ValueTypes {
     public static Builder builder() {
         return new Builder();
     }
+    
+    public static Builder builder(List<TypeMapping> mappings) {
+        return new Builder(mappings);
+    }
 
     public static final List<TypeMapping> DEFAULT_MAPPINGS = 
             ImmutableList.<TypeMapping>of(
@@ -69,10 +73,18 @@ public class ValueTypes {
 
     public static class Builder {
         
-        protected final List<TypeMapping> factories = Lists.newArrayList(DEFAULT_MAPPINGS);
+        protected final List<TypeMapping> mappings;
+        
+        public Builder() {
+            this(DEFAULT_MAPPINGS);
+        }
+        
+        public Builder(List<TypeMapping> mappings) {
+            this.mappings = Lists.newArrayList(mappings);
+        }
         
         public Builder withMapping(TypeMapping mapping) {
-            factories.add(mapping);
+            mappings.add(mapping);
             return this;
         }
         
@@ -81,7 +93,7 @@ public class ValueTypes {
         }
 
         public ValueTypes build() {
-            return new ValueTypes(Lists.reverse(factories));
+            return new ValueTypes(Lists.reverse(mappings));
         }
         
         
