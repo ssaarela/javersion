@@ -35,7 +35,7 @@ public class PolymorphismTest {
     private final ObjectSerializer<Owner> serializer = new ObjectSerializer<>(Owner.class, valueTypes);
     
     @Test
-    public void Owner_With_Dog() {
+    public void Write_And_Read_Owner_With_Dog() {
         Owner owner = new Owner();
         owner.pet = new Dog();
         owner.pet.name = "Musti";
@@ -49,7 +49,7 @@ public class PolymorphismTest {
     }
     
     @Test
-    public void Owner_With_Cat() {
+    public void Write_And_Read_Owner_With_Cat() {
         Owner owner = new Owner();
         owner.pet = new Cat();
         owner.pet.name = "Mirri";
