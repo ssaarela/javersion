@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2014 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,26 @@
  */
 package org.javersion.object;
 
+import java.util.List;
+
+import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.Index;
 import org.javersion.path.PropertyTree;
 
-public class BasicValueType implements ValueType {
+import com.google.common.collect.Lists;
 
-    private final Class<?> valueType;
-    
-    public BasicValueType(Class<?> valueType) {
-        this.valueType = valueType;
-    }
-    
+public class ListType implements ValueType {
+
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        return value;
+        int size = (Integer) value;
+        Object[] values = new Object[size];
+        for (PropertyTree child : propertyTree.getChildren()) {
+            int index = Integer.valueOf(((Index) child.path).index);
+            Object element = context.getObject(child);
+            values[index] = element;
+        }
+        return Lists.newArrayList(values);
     }
 
     @Override
@@ -35,12 +42,18 @@ public class BasicValueType implements ValueType {
 
     @Override
     public void serialize(Object object, WriteContext context) {
-        context.put(object);
+        @SuppressWarnings("rawtypes")
+        List list = (List) object;
+        context.put(list.size());
+        PropertyPath path = context.getCurrentPath();
+        for (int i=0; i < list.size(); i++) {
+            context.serialize(path.index(i), list.get(i));
+        }
     }
 
     @Override
     public Class<?> getValueType() {
-        return valueType;
+        return Integer.class;
     }
 
 }

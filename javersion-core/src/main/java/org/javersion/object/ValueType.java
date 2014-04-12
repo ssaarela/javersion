@@ -20,11 +20,11 @@ import org.javersion.path.PropertyTree;
 
 public interface ValueType {
     
-    Object instantiate(PropertyTree propertyTree, Object value, DeserializationContext context) throws Exception;
+    Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception;
     
-    void bind(PropertyTree propertyTree, Object object, DeserializationContext context) throws Exception;
+    void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception;
     
-    void serialize(Object object, SerializationContext context);
+    void serialize(Object object, WriteContext context);
 
     Class<?> getValueType();
     

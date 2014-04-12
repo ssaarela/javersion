@@ -17,6 +17,7 @@ package org.javersion.object;
 
 import static com.google.common.collect.Maps.uniqueIndex;
 
+import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,15 +47,15 @@ public class ObjectType<O> implements ValueType {
         this.types = uniqueIndex(types, TypeDescriptor.getRawType);
     }
     
-    public Object instantiate(PropertyTree propertyTree, Object value, DeserializationContext context) throws Exception {
-        if (value == null) {
-            return null;
-        } else {
-            return fromValue(value);
-        }
+    public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
+        Class<?> type = (Class<?>) value;
+        Check.notNull$(types.get(value), "Unsupported type: %s", type);
+        Constructor<?> constructor = type.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        return constructor.newInstance();
     }
     
-    public void bind(PropertyTree propertyTree, Object object, DeserializationContext context) throws Exception {
+    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
         TypeDescriptor typeDescriptor = types.get(object.getClass());
         for (PropertyTree child : propertyTree.getChildren()) {
             FieldDescriptor fieldDescriptor = typeDescriptor.getField(child.getName());
@@ -64,27 +65,15 @@ public class ObjectType<O> implements ValueType {
     }
 
     @Override
-    public void serialize(Object object, SerializationContext context) {
+    public void serialize(Object object, WriteContext context) {
         PropertyPath path = context.getCurrentPath();
-        if (object == null) {
-            context.put(path, null);
-        } else {
-            context.put(path, toValue(object));
-            TypeDescriptor typeDescriptor = types.get(object.getClass());
-            for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {
-                Object value = fieldDescriptor.get(object);
-                PropertyPath subPath = path.property(fieldDescriptor.getName());
-                context.serialize(subPath, value);
-            }
+        context.put(path, object.getClass());
+        TypeDescriptor typeDescriptor = types.get(object.getClass());
+        for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {
+            Object value = fieldDescriptor.get(object);
+            PropertyPath subPath = path.property(fieldDescriptor.getName());
+            context.serialize(subPath, value);
         }
-    }
-
-    public Object toValue(Object object) {
-        return object.getClass();
-    }
-
-    protected Object fromValue(Object value) throws Exception {
-        return ((Class<?>) value).newInstance();
     }
     
     public String toString() {

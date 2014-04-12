@@ -35,16 +35,16 @@ public class DescribeContext {
     
     public static final DescribeContext DEFAULT = new DescribeContext(ValueTypes.DEFAULT);
     
-    private final Map<TypeMappingKey, ValueMapping> typeMappings = Maps.newHashMap();
+    private final Map<TypeMappingKey, Schema> schemaMapping = Maps.newHashMap();
     
     private final ValueTypes valueTypes;
     
     private final Deque<QueueItem<SubPath, TypeMappingKey>> stack = new ArrayDeque<>();
 
     
-    private Map<PropertyPath, TypeMappingKey> pathMappings;
+    private Map<PropertyPath, TypeMappingKey> pathMapping;
 
-    private RootMapping rootMapping;
+    private SchemaRoot schemaRoot;
     
     private QueueItem<? extends PropertyPath, TypeMappingKey> currentItem;
     
@@ -52,72 +52,72 @@ public class DescribeContext {
         this.valueTypes = valueTypes;
     }
 
-    public RootMapping describe(Class<?> clazz) {
+    public SchemaRoot describe(Class<?> clazz) {
         return describe(getTypeDescriptor(clazz));
     }
 
-    public synchronized RootMapping describe(TypeDescriptor rootType) {
+    public synchronized SchemaRoot describe(TypeDescriptor rootType) {
         TypeMappingKey mappingKey = new TypeMappingKey(rootType);
 
-        if (typeMappings.containsKey(mappingKey)) {
-            return (RootMapping) typeMappings.get(mappingKey);
+        if (schemaMapping.containsKey(mappingKey)) {
+            return (SchemaRoot) schemaMapping.get(mappingKey);
         }
             
-        pathMappings = Maps.newHashMap();
+        pathMapping = Maps.newHashMap();
         
         currentItem = new QueueItem<PropertyPath, TypeMappingKey>(PropertyPath.ROOT, mappingKey);
         
-        pathMappings.put(PropertyPath.ROOT, mappingKey);
+        pathMapping.put(PropertyPath.ROOT, mappingKey);
         ValueType valueType = createValueType(mappingKey);
-        rootMapping = new RootMapping(valueType, unmodifiableMap(typeMappings));
-        registerMapping(currentItem, rootMapping);
+        schemaRoot = new SchemaRoot(valueType, unmodifiableMap(schemaMapping));
+        registerMapping(currentItem, schemaRoot);
 
         processSubMappings();
         
         lockMappings();
         
         try {
-            return rootMapping;
+            return schemaRoot;
         } finally {
-            pathMappings = null;
-            rootMapping = null;
+            pathMapping = null;
+            schemaRoot = null;
         }
     }
     
     private void lockMappings() {
-        for (ValueMapping mapping : typeMappings.values()) {
+        for (Schema mapping : schemaMapping.values()) {
             if (!mapping.isLocked()) {
                 mapping.lock();
             }
         }
     }
 
-    private void registerMapping(QueueItem<? extends PropertyPath, TypeMappingKey> item, ValueMapping mapping) {
-        typeMappings.put(item.value, mapping);
+    private void registerMapping(QueueItem<? extends PropertyPath, TypeMappingKey> item, Schema mapping) {
+        schemaMapping.put(item.value, mapping);
 
         // Add to parent
         if (item.key instanceof SubPath) {
             PropertyPath parentPath = ((SubPath) item.key).parent;
-            ValueMapping parentMapping = getValueMapping(parentPath);
-            if (parentMapping == null) {
-                parentMapping = rootMapping.addPath(parentPath);
+            Schema parentSchema = getSchema(parentPath);
+            if (parentSchema == null) {
+                parentSchema = schemaRoot.addPath(parentPath);
             }
-            parentMapping.addChild(item.key.getName(), mapping);
+            parentSchema.addChild(item.key.getName(), mapping);
         }
     }
     
-    private ValueMapping getValueMapping(PropertyPath path) {
-        return typeMappings.get(pathMappings.get(path));
+    private Schema getSchema(PropertyPath path) {
+        return schemaMapping.get(pathMapping.get(path));
     }
     
     private void processSubMappings() {
         while ((currentItem = stack.poll()) != null) {
             TypeMappingKey mappingKey = currentItem.value;
-            ValueMapping mapping= typeMappings.get(mappingKey);
+            Schema mapping= schemaMapping.get(mappingKey);
             PropertyPath path = currentItem.key;
-            if (mapping == null || (mapping.isReference() && !pathMappings.containsKey(path))) {
-                pathMappings.put(path, mappingKey);
-                mapping = new ValueMapping(createValueType(mappingKey));
+            if (mapping == null || (mapping.isReference() && !pathMapping.containsKey(path))) {
+                pathMapping.put(path, mappingKey);
+                mapping = new Schema(createValueType(mappingKey));
             }
             registerMapping(currentItem, mapping);
         }

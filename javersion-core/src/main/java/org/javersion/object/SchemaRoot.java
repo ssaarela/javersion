@@ -22,22 +22,22 @@ import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableMap;
 
-public class RootMapping extends ValueMapping {
+public class SchemaRoot extends Schema {
 
-    private Map<TypeMappingKey, ValueMapping> typeMappings;
+    private Map<TypeMappingKey, Schema> typeMappings;
     
-    RootMapping(ValueType valueType, Map<TypeMappingKey, ValueMapping> typeMappings) {
+    SchemaRoot(ValueType valueType, Map<TypeMappingKey, Schema> typeMappings) {
         super(valueType);
         this.typeMappings = typeMappings;
     }
     
-    public ValueMapping get(TypeMappingKey mappingKey) {
+    public Schema get(TypeMappingKey mappingKey) {
         return typeMappings.get(mappingKey);
     }
     
-    public ValueMapping get(PropertyPath path) {
+    public Schema get(PropertyPath path) {
         Check.notNull(path, "path");
-        ValueMapping currentMapping = this;
+        Schema currentMapping = this;
         for (PropertyPath currentPath : path.toSchemaPath().asList()) {
             currentMapping = currentMapping.getChild(currentPath.getName());
             if (currentMapping == null) {
@@ -47,12 +47,12 @@ public class RootMapping extends ValueMapping {
         return currentMapping;
     }
 
-    ValueMapping addPath(PropertyPath path) {
-        ValueMapping currentMapping = this;
+    Schema addPath(PropertyPath path) {
+        Schema currentMapping = this;
         for (PropertyPath currentPath : path.toSchemaPath().asList()) {
             String childName = currentPath.getName();
             if (!currentMapping.hasChild(childName)) {
-                currentMapping = currentMapping.addChild(childName, new ValueMapping());
+                currentMapping = currentMapping.addChild(childName, new Schema());
             } else {
                 currentMapping = currentMapping.getChild(childName);
             }

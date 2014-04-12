@@ -17,7 +17,7 @@ import org.javersion.object.ValueTypes;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
-public class ReferencesSerializationTest {
+public class ReferencesTest {
 
     public static class Node {
 
@@ -55,7 +55,7 @@ public class ReferencesSerializationTest {
         root.left.left = root;
         root.left.right = root.left;
         
-        Map<PropertyPath, Object> properties = nodeSerializer.toMap(root);
+        Map<PropertyPath, Object> properties = nodeSerializer.write(root);
         
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, "1",
@@ -73,7 +73,7 @@ public class ReferencesSerializationTest {
         
         assertThat(properties.entrySet(), everyItem(isIn(expectedProperties.entrySet())));
         
-        root = nodeSerializer.fromMap(properties);
+        root = nodeSerializer.read(properties);
         assertThat(root.id, equalTo(1));
         assertThat(root.left.id, equalTo(2));
         assertThat(root.right, sameInstance(root));

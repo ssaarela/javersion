@@ -22,21 +22,21 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-public class ValueMapping {
+public class Schema {
     
     public final ValueType valueType;
     
-    private Map<String, ValueMapping> children = Maps.newHashMap();
+    private Map<String, Schema> children = Maps.newHashMap();
     
 
-    ValueMapping() {
+    Schema() {
         this.valueType = null;
     }
-    ValueMapping(ValueType valueType) {
+    Schema(ValueType valueType) {
         this.valueType = Check.notNull(valueType, "valueType");
     }
 
-    public ValueMapping getChild(String name) {
+    public Schema getChild(String name) {
         return children.get(name);
     }
     
@@ -44,7 +44,7 @@ public class ValueMapping {
         return !children.isEmpty();
     }
     
-    ValueMapping addChild(String name, ValueMapping child) {
+    Schema addChild(String name, Schema child) {
         children.put(name, child);
         return child;
     }

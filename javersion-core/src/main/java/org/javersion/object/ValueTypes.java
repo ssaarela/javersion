@@ -51,6 +51,7 @@ public class ValueTypes {
                     BOOLEAN,
                     CHAR,
                     STRING,
+                    new ListTypeMapping(),
                     new VersionableTypeMapping()
                     );
     

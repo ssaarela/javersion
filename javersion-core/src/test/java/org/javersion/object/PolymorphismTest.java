@@ -1,24 +1,42 @@
 package org.javersion.object;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertThat;
+
 import java.util.Map;
 
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
 
 public class PolymorphismTest {
 
     public static class Pet {
         String name;
+        protected Pet() {
+            // for deserialization
+        }
+        public Pet(String name) {
+            this.name = name;
+        }
     }
     
     public static class Dog extends Pet {
         boolean bark = true;
+        @SuppressWarnings("unused")
+        private Dog() {}
+        public Dog(String name) {
+            super(name);
+        }
     }
     
     public static class Cat extends Pet {
         boolean meow = true;
+        @SuppressWarnings("unused")
+        private Cat() {}
+        public Cat(String name) {
+            super(name);
+        }
     }
 
     @Versionable
@@ -37,12 +55,11 @@ public class PolymorphismTest {
     @Test
     public void Write_And_Read_Owner_With_Dog() {
         Owner owner = new Owner();
-        owner.pet = new Dog();
-        owner.pet.name = "Musti";
+        owner.pet = new Dog("Musti");
         
-        Map<PropertyPath, Object> map = serializer.toMap(owner);
+        Map<PropertyPath, Object> map = serializer.write(owner);
         
-        owner = serializer.fromMap(map);
+        owner = serializer.read(map);
         assertThat(owner.pet, instanceOf(Dog.class));
         assertThat(owner.pet.name, equalTo("Musti"));
         assertThat(((Dog) owner.pet).bark, equalTo(true));
@@ -51,15 +68,13 @@ public class PolymorphismTest {
     @Test
     public void Write_And_Read_Owner_With_Cat() {
         Owner owner = new Owner();
-        owner.pet = new Cat();
-        owner.pet.name = "Mirri";
+        owner.pet = new Cat("Mirri");
         
-        Map<PropertyPath, Object> map = serializer.toMap(owner);
+        Map<PropertyPath, Object> map = serializer.write(owner);
         
-        owner = serializer.fromMap(map);
+        owner = serializer.read(map);
         assertThat(owner.pet, instanceOf(Cat.class));
         assertThat(owner.pet.name, equalTo("Mirri"));
         assertThat(((Cat) owner.pet).meow, equalTo(true));
     }
-
 }

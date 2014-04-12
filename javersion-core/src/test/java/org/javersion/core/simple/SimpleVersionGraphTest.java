@@ -58,6 +58,10 @@ public class SimpleVersionGraphTest {
      * 6    status: "Married", mood: null, married: null
      * :
      * 7    type: ROOT, status: "New beginning"
+     * | \
+     * 8  | 
+     * |  |
+     * |  9 
      * </pre>
      */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
@@ -124,6 +128,22 @@ public class SimpleVersionGraphTest {
                             "lastName", "Foe", // 4
                             "mood", "Ecstatic" // 4
                             )),
+
+//            FIXME: merge branches should retain newest values of each branch by default
+//            then("Merge with concurrent older version in same branch")
+//                    .mergeRevisions(setOf(2l, 4l))
+//                    .expectRevisions(setOf(2l, 4l))
+//                    .expectProperties(mapOf(
+//                            "firstName", "John", // 1
+//                            "lastName", "Doe", // 1
+//                            "status", "Just married", // 4
+//                            "mood", "Lonely", // 3
+//                            "married", "2013-10-12")) // 4
+//                    .expectConflicts(multimapOf(
+//                            "lastName", "Foe", // 4
+//                            "mood", "Ecstatic", // 4
+//                            "status", "Single" // 2
+//                            )),
 
 
             when(version(5l)

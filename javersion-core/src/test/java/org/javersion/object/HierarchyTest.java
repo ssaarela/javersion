@@ -14,7 +14,7 @@ import org.junit.Test;
 
 import com.google.common.collect.Maps;
 
-public class HierarchySerializationTest {
+public class HierarchyTest {
     
     @Versionable
     public static class Tree {
@@ -44,7 +44,7 @@ public class HierarchySerializationTest {
         root.child = new Tree("child");
         root.child.child = new Tree("grandchild");
         
-        Map<PropertyPath, Object> properties = treeSerializer.toMap(root);
+        Map<PropertyPath, Object> properties = treeSerializer.write(root);
         
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, Tree.class,
@@ -60,7 +60,7 @@ public class HierarchySerializationTest {
         
         assertThat(properties, equalTo(expectedProperties));
         
-        root = treeSerializer.fromMap(properties);
+        root = treeSerializer.read(properties);
         assertThat(root.name, equalTo("root"));
         assertThat(root.child.name, equalTo("child"));
         assertThat(root.child.child.name, equalTo("grandchild"));
@@ -74,14 +74,14 @@ public class HierarchySerializationTest {
         root.child = new Tree("child");
         root.child.child = root;
 
-        treeSerializer.toMap(root);
+        treeSerializer.write(root);
     }
 
     @Test
     public void Null_References_Are_Not_Same() {
         BiTree biTree = new BiTree();
 
-        biTreeSerializer.toMap(biTree);
+        biTreeSerializer.write(biTree);
     }
     
     public static Map<PropertyPath, Object> properties(Object... keysAndValues) {

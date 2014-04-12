@@ -27,11 +27,11 @@ import org.javersion.path.PropertyPath;
 
 import com.google.common.collect.Maps;
 
-public class SerializationContext {
+public class WriteContext {
 
     private final Object root;
     
-    private final RootMapping rootMapping;
+    private final SchemaRoot schemaRoot;
 
     private final Deque<QueueItem<PropertyPath, Object>> queue = new ArrayDeque<>();
     
@@ -41,9 +41,9 @@ public class SerializationContext {
     
     private QueueItem<PropertyPath, Object> currentItem;
     
-    protected SerializationContext(RootMapping rootMapping, Object root) {
+    protected WriteContext(SchemaRoot schemaRoot, Object root) {
         this.root = root;
-        this.rootMapping = rootMapping;
+        this.schemaRoot = schemaRoot;
     }
     
     public PropertyPath getCurrentPath() {
@@ -59,20 +59,23 @@ public class SerializationContext {
     public Map<PropertyPath, Object> toMap() {
         serialize(PropertyPath.ROOT, root);
         while ((currentItem = queue.pollFirst()) != null) {
-            ValueMapping mapping = getValueMapping(currentItem.key);
-            if (currentItem.hasValue() // not null?
-                    && mapping.hasChildren()  // Composite (not scalar)?
-                    && !mapping.isReference() // Not a reference - multiple references to same object are allowed
-                    && objects.put(currentItem.value, currentItem.key) != null) { // First time for this object?
-                illegalReferenceException();
+            if (currentItem.value == null) {
+                put(currentItem.key, null);
+            } else {
+                Schema schema = getSchema(currentItem.key);
+                if (schema.hasChildren()  // Composite (not scalar)?
+                        && !schema.isReference() // Not a reference - multiple references to same object are allowed
+                        && objects.put(currentItem.value, currentItem.key) != null) { // First time for this object?
+                    illegalReferenceException();
+                }
+                schema.valueType.serialize(currentItem.value, this);
             }
-            mapping.valueType.serialize(currentItem.value, this);
         }
         return unmodifiableMap(properties);
     }
     
-    private ValueMapping getValueMapping(PropertyPath path) {
-        return rootMapping.get(path);
+    private Schema getSchema(PropertyPath path) {
+        return schemaRoot.get(path);
     }
 
     private void illegalReferenceException() {
@@ -97,8 +100,8 @@ public class SerializationContext {
         properties.put(path, value);
     }
     
-    public RootMapping getRootMapping() {
-        return rootMapping;
+    public SchemaRoot getRootMapping() {
+        return schemaRoot;
     }
     
 }

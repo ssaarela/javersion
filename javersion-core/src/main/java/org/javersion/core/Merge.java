@@ -97,7 +97,7 @@ public final class Merge<K, V> {
                         // newEntry derives from a common ancestor?
                         if (mergedRevisions.contains(newEntry.getValue().revision)) {
                             return false;
-                        } 
+                        }
                         // Conflicting value?
                         else if (!equal(oldEntry.getValue().value, newEntry.getValue().value)) {
                             conflicts.put(newEntry);

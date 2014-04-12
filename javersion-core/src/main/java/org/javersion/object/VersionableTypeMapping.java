@@ -28,7 +28,7 @@ public class VersionableTypeMapping implements TypeMapping {
     
     
     @Override
-    public  synchronized ValueType describe(DescribeContext context) {
+    public  ValueType describe(DescribeContext context) {
         TypeDescriptor type = context.getCurrentType();
         PropertyPath path = context.getCurrentPath();
         for (FieldDescriptor fieldDescriptor : type.getFields().values()) {

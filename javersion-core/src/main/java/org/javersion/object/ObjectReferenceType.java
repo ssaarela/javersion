@@ -34,31 +34,22 @@ public final class ObjectReferenceType<R> implements ValueType {
     }
     
     @Override
-    public void serialize(Object object, SerializationContext context) {
-        PropertyPath path = context.getCurrentPath();
-        if (object == null) {
-            context.put(path, null);
-        } else {
-            @SuppressWarnings("unchecked")
-            String id = idMapper.getId((R) object);
-            STRING.serialize(id, context);
-            context.serialize(targetRoot.index(id), object);
-        }
+    public void serialize(Object object, WriteContext context) {
+        @SuppressWarnings("unchecked")
+        String id = idMapper.getId((R) object);
+        STRING.serialize(id, context);
+        context.serialize(targetRoot.index(id), object);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Object instantiate(PropertyTree propertyTree, Object value, DeserializationContext context) throws Exception {
-        if (value == null) {
-            return null;
-        } else {
-            String id = (String) STRING.instantiate(propertyTree, value, context);
-            return (R) context.getObject(targetRoot.index(id));
-        }
+    public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
+        String id = (String) STRING.instantiate(propertyTree, value, context);
+        return (R) context.getObject(targetRoot.index(id));
     }
 
     @Override
-    public void bind(PropertyTree propertyTree, Object object, DeserializationContext context) throws Exception {
+    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
         // Nothing to do here
     }
 

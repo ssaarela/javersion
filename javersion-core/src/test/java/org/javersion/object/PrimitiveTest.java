@@ -16,7 +16,7 @@ import org.junit.Test;
 
 import com.google.common.collect.Maps;
 
-public class PrimitiveSerializationTest {
+public class PrimitiveTest {
 
     @Versionable
     public static class Primitives {
@@ -84,11 +84,11 @@ public class PrimitiveSerializationTest {
     }
 
     private void assertPropertiesRoundTrip(Primitives primitives) {
-        Map<PropertyPath, Object> properties = primitivesSerializer.toMap(primitives);
+        Map<PropertyPath, Object> properties = primitivesSerializer.write(primitives);
         Map<PropertyPath, Object> expectedProperties = getProperties(primitives);
         
         assertThat(properties, equalTo(expectedProperties));
-        primitives = primitivesSerializer.fromMap(properties);
+        primitives = primitivesSerializer.read(properties);
         assertThat(getProperties(primitives), equalTo(expectedProperties));
     }
 
