@@ -3,6 +3,7 @@ package org.javersion.object;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 import java.util.List;
@@ -33,11 +34,11 @@ public class ListTest {
     @Test
     public void Write_And_Read_Owner_With_Cats_And_Dogs() {
         Owner owner = new Owner();
-        owner.pets = Lists.newArrayList(new Cat("Mirri"), new Dog("Musti"));
+        owner.pets = Lists.newArrayList(new Cat("Mirri"), new Dog("Musti"), null);
         Map<PropertyPath, Object> map = serializer.write(owner);
         
         owner = serializer.read(map);
-        assertThat(owner.pets, hasSize(2));
+        assertThat(owner.pets, hasSize(3));
         
         assertThat(owner.pets.get(0), instanceOf(Cat.class));
         assertThat(owner.pets.get(0).name, equalTo("Mirri"));
@@ -46,6 +47,8 @@ public class ListTest {
         assertThat(owner.pets.get(1), instanceOf(Dog.class));
         assertThat(owner.pets.get(1).name, equalTo("Musti"));
         assertThat(((Dog) owner.pets.get(1)).bark, equalTo(true));
+        
+        assertThat(owner.pets.get(2), nullValue());
     }
 
 }
