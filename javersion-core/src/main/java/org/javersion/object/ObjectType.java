@@ -17,7 +17,6 @@ package org.javersion.object;
 
 import static com.google.common.collect.Maps.uniqueIndex;
 
-import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,10 +48,8 @@ public class ObjectType<O> implements ValueType {
     
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         Class<?> type = (Class<?>) value;
-        Check.notNull$(types.get(value), "Unsupported type: %s", type);
-        Constructor<?> constructor = type.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        return constructor.newInstance();
+        TypeDescriptor typeDescriptor = Check.notNull$(types.get(value), "Unsupported type: %s", type);
+        return typeDescriptor.newInstance();
     }
     
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {

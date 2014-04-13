@@ -18,6 +18,7 @@ package org.javersion.reflect;
 import static com.google.common.base.Predicates.not;
 import static java.util.Collections.unmodifiableSet;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -67,7 +68,7 @@ public abstract class AbstractTypeDescriptor<
     private volatile SortedMap<String, F> fields;
 
     private volatile Set<Class<?>> classes;
-
+    
     public AbstractTypeDescriptor(Ts typeDescriptors, TypeToken<?> typeToken) {
         super(typeDescriptors);
         this.typeToken = Check.notNull(typeToken, "typeToken");
@@ -166,6 +167,17 @@ public abstract class AbstractTypeDescriptor<
 
     public boolean isSuperTypeOf(Class<?> clazz) {
         return getRawType().isAssignableFrom(clazz);
+    }
+    
+    public Object newInstance() {
+        Constructor<?> constructor;
+        try {
+            constructor = getRawType().getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
     
     private static LinkedHashSet<Class<?>> newLinkedHashSet() {
