@@ -15,12 +15,15 @@
  */
 package org.javersion.object;
 
-import static org.javersion.object.BasicValueTypeMapping.*;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.javersion.object.BasicTypeMapping.PrimitiveValueTypeMapping;
+import org.javersion.object.BasicTypeMapping.StringTypeMapping;
+import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
 import org.javersion.util.Check;
@@ -31,6 +34,17 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class ValueTypes {
+
+    public static TypeMapping STRING = new StringTypeMapping();
+
+    public static TypeMapping CHAR = new PrimitiveValueTypeMapping(Character.class, char.class);
+    public static TypeMapping BYTE = new PrimitiveValueTypeMapping(Byte.class, byte.class);
+    public static TypeMapping SHORT = new PrimitiveValueTypeMapping(Short.class, short.class);
+    public static TypeMapping INTEGER = new PrimitiveValueTypeMapping(Integer.class, int.class);
+    public static TypeMapping LONG = new PrimitiveValueTypeMapping(Long.class, long.class);
+    public static TypeMapping FLOAT = new PrimitiveValueTypeMapping(Float.class, float.class);
+    public static TypeMapping DOUBLE = new PrimitiveValueTypeMapping(Double.class, double.class);
+    public static TypeMapping BOOLEAN = new PrimitiveValueTypeMapping(Boolean.class, boolean.class);
     
     public static Builder builder() {
         return new Builder();
@@ -42,17 +56,19 @@ public class ValueTypes {
 
     public static final List<TypeMapping> DEFAULT_MAPPINGS = 
             ImmutableList.<TypeMapping>of(
-                    BYTE,
-                    SHORT,
+                    new VersionableReferenceTypeMapping(),
+                    new VersionableTypeMapping(),
+                    new ListTypeMapping(),
+                    new SetTypeMapping(),
+                    STRING,
                     INTEGER,
                     LONG,
-                    FLOAT,
                     DOUBLE,
                     BOOLEAN,
-                    CHAR,
-                    STRING,
-                    new ListTypeMapping(),
-                    new VersionableTypeMapping()
+                    BYTE,
+                    SHORT,
+                    FLOAT,
+                    CHAR
                     );
     
     public static final ValueTypes DEFAULT = new ValueTypes(DEFAULT_MAPPINGS);
@@ -63,25 +79,27 @@ public class ValueTypes {
         this.types = ImmutableList.copyOf(types);
     }
 
-    public TypeMapping getMapping(TypeMappingKey mappingKey) {
+    public TypeMapping getMapping(PropertyPath path, ElementDescriptor elementDescriptor) {
         for (TypeMapping valueType : types) {
-            if (valueType.applies(mappingKey)) {
+            if (valueType.applies(path, elementDescriptor)) {
                 return valueType;
             }
         }
-        throw new IllegalArgumentException("ValueType not found for " + mappingKey);
+        throw new IllegalArgumentException("ValueType not found for " + elementDescriptor);
     }
 
     public static class Builder {
-        
-        protected final List<TypeMapping> mappings;
+
+        private final List<TypeMapping> defaultMappings;
+
+        private final List<TypeMapping> mappings = Lists.newArrayList();
         
         public Builder() {
             this(DEFAULT_MAPPINGS);
         }
         
-        public Builder(List<TypeMapping> mappings) {
-            this.mappings = Lists.newArrayList(mappings);
+        public Builder(List<TypeMapping> defaultMappings) {
+            this.defaultMappings = Check.notNull(defaultMappings, "defaultMappings");
         }
         
         public Builder withMapping(TypeMapping mapping) {
@@ -94,7 +112,7 @@ public class ValueTypes {
         }
 
         public ValueTypes build() {
-            return new ValueTypes(Lists.reverse(mappings));
+            return new ValueTypes(Iterables.concat(mappings, defaultMappings));
         }
         
         
@@ -106,12 +124,9 @@ public class ValueTypes {
             
             protected Set<Class<? extends R>> classes = Sets.newHashSet();
 
-            protected IdMapper<R> idMapper;
-
             public HierarchyBuilder(Class<R> root) {
                 this.rootType = root;
                 classes.add(Check.notNull(root, "root"));
-                alias = Check.notNull(root.getCanonicalName(), "root.getCanonicalName()");
             }
 
             public Builder withFactory(TypeMapping factory) {
@@ -132,22 +147,20 @@ public class ValueTypes {
                 classes.addAll(subClasses);
                 return this;
             }
-            
-            public HierarchyBuilder<R> havingIdMapper(IdMapper<R> idMapper) {
-                Check.notNull(idMapper, "idMapper");
-                this.idMapper = idMapper;
-                return this;
-            }
 
-            public HierarchyBuilder<R> havingAlias(String alias) {
+            public HierarchyBuilder<R> asReferenceWithAlias(String alias) {
                 Check.notNullOrEmpty(alias, "alias");
                 this.alias = alias;
                 return this;
             }
             
             Builder register() {
+                Builder builder = Builder.this;
+                if (!isNullOrEmpty(alias)) {
+                    builder = builder.withMapping(new ReferenceTypeMapping(rootType, alias));
+                }
                 Iterable<TypeDescriptor> types = Iterables.transform(classes, TypeDescriptors.DEFAULT.getTypeDescriptor);
-                return Builder.this.withMapping(new ObjectMapping<R>(rootType, types, idMapper, alias));
+                return builder.withMapping(new ObjectTypeMapping<R>(rootType, types));
             }
 
             public ValueTypes build() {

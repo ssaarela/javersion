@@ -15,9 +15,11 @@
  */
 package org.javersion.object;
 
+import org.javersion.path.PropertyPath;
+
 public interface TypeMapping {
 
-    boolean applies(TypeMappingKey mappingKey);
+    boolean applies(PropertyPath path, ElementDescriptor elementDescriptor);
     
     ValueType describe(DescribeContext context);
 

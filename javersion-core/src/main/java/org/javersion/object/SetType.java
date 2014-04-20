@@ -15,26 +15,29 @@
  */
 package org.javersion.object;
 
-import java.util.List;
+import java.util.Set;
 
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.Index;
 import org.javersion.path.PropertyTree;
+import org.javersion.util.Check;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
-public class ListType implements ValueType {
+public class SetType implements ValueType {
 
+    private final IdentifiableType identifiableType;
+    
+    public SetType(IdentifiableType identifiableType) {
+        this.identifiableType = Check.notNull(identifiableType, "keyType");
+    }
+    
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        int size = (Integer) value;
-        Object[] values = new Object[size];
-        for (PropertyTree child : propertyTree.getChildren()) {
-            int index = Integer.valueOf(((Index) child.path).index);
-            Object element = context.getObject(child);
-            values[index] = element;
+        Set<Object> set = Sets.newLinkedHashSetWithExpectedSize((Integer) value);
+        for (PropertyTree elementPath : propertyTree.getChildren()) {
+            set.add(context.getObject(elementPath));
         }
-        return Lists.newArrayList(values);
+        return set;
     }
 
     @Override
@@ -42,18 +45,19 @@ public class ListType implements ValueType {
 
     @Override
     public void serialize(Object object, WriteContext context) {
-        @SuppressWarnings("rawtypes")
-        List list = (List) object;
-        context.put(list.size());
+        Set<?> set = (Set<?>) object;
         PropertyPath path = context.getCurrentPath();
-        for (int i=0; i < list.size(); i++) {
-            context.serialize(path.index(i), list.get(i));
+        context.put(path, set.size());
+        
+        for (Object element : set) {
+            String key = identifiableType.toString(element);
+            context.serialize(path.index(key), element);
         }
     }
 
     @Override
     public Class<?> getTargetType() {
-        return Integer.class;
+        return Set.class;
     }
 
 }

@@ -47,15 +47,15 @@ public class ReadContext {
     public Object getObject() {
         try {
             Object value = properties.get(rootNode.path);
-            Object result = schemaRoot.valueType.instantiate(rootNode, value, this);
+            Object result = schemaRoot.instantiate(rootNode, value, this);
             objects.put(rootNode.path, result);
             if (result != null && rootNode.hasChildren()) {
-                schemaRoot.valueType.bind(rootNode, result, this);
+                schemaRoot.bind(rootNode, result, this);
                 while (!queue.isEmpty()) {
                     PropertyTree propertyTree = queue.pop();
                     Schema schema = schemaRoot.get(propertyTree.path);
                     Object target = objects.get(propertyTree.path);
-                    schema.valueType.bind(propertyTree, target, this);
+                    schema.bind(propertyTree, target, this);
                 }
             }
             return result;
@@ -80,7 +80,7 @@ public class ReadContext {
                 return null;
             } else {
                 try {
-                    Object result = schema.valueType.instantiate(propertyTree, value, this);
+                    Object result = schema.instantiate(propertyTree, value, this);
                     objects.put(propertyTree.path, result);
                     if (result != null && schema.hasChildren()) {
                         queue.add(propertyTree);

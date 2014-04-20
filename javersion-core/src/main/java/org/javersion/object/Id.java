@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2014 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
  */
 package org.javersion.object;
 
-import org.javersion.path.PropertyTree;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public interface ValueType {
-    
-    Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception;
-    
-    void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception;
-    
-    void serialize(Object object, WriteContext context);
-
-    Class<?> getTargetType();
-    
+@Target({ FIELD })
+@Retention(RUNTIME)
+@Documented
+public @interface Id {
 }

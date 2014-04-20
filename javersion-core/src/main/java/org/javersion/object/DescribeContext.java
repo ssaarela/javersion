@@ -15,7 +15,6 @@
  */
 package org.javersion.object;
 
-import static java.util.Collections.unmodifiableMap;
 import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
 
 import java.util.ArrayDeque;
@@ -24,10 +23,8 @@ import java.util.Map;
 
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.SubPath;
-import org.javersion.reflect.ElementDescriptor;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
-import org.javersion.reflect.TypeDescriptors;
 
 import com.google.common.collect.Maps;
 
@@ -35,109 +32,67 @@ public class DescribeContext {
     
     public static final DescribeContext DEFAULT = new DescribeContext(ValueTypes.DEFAULT);
     
-    private final Map<TypeMappingKey, Schema> schemaMapping = Maps.newHashMap();
+    private final Map<ElementDescriptor, Schema> schemaMappings = Maps.newHashMap();
     
     private final ValueTypes valueTypes;
     
-    private final Deque<QueueItem<SubPath, TypeMappingKey>> stack = new ArrayDeque<>();
+    private final Deque<QueueItem<SubPath, ElementDescriptor>> queue = new ArrayDeque<>();
 
     
-    private Map<PropertyPath, TypeMappingKey> pathMapping;
-
     private SchemaRoot schemaRoot;
     
-    private QueueItem<? extends PropertyPath, TypeMappingKey> currentItem;
+    private QueueItem<? extends PropertyPath, ElementDescriptor> currentItem;
     
     public DescribeContext(ValueTypes valueTypes) {
         this.valueTypes = valueTypes;
     }
 
-    public SchemaRoot describe(Class<?> clazz) {
-        return describe(getTypeDescriptor(clazz));
+    public SchemaRoot describeSchema(Class<?> rootClass) {
+        return describeSchema(getTypeDescriptor(rootClass));
     }
 
-    public synchronized SchemaRoot describe(TypeDescriptor rootType) {
-        TypeMappingKey mappingKey = new TypeMappingKey(rootType);
-
-        if (schemaMapping.containsKey(mappingKey)) {
-            return (SchemaRoot) schemaMapping.get(mappingKey);
-        }
-            
-        pathMapping = Maps.newHashMap();
+    public SchemaRoot describeSchema(TypeDescriptor rootType) {
+        schemaRoot = new SchemaRoot();
+        ElementDescriptor elementDescriptor = new ElementDescriptor(rootType);
+        currentItem = new QueueItem<PropertyPath, ElementDescriptor>(PropertyPath.ROOT, elementDescriptor);
         
-        currentItem = new QueueItem<PropertyPath, TypeMappingKey>(PropertyPath.ROOT, mappingKey);
-        
-        pathMapping.put(PropertyPath.ROOT, mappingKey);
-        ValueType valueType = createValueType(mappingKey);
-        schemaRoot = new SchemaRoot(valueType, unmodifiableMap(schemaMapping));
-        registerMapping(currentItem, schemaRoot);
+        schemaRoot.setValueType(createValueType(PropertyPath.ROOT, elementDescriptor));
 
-        processSubMappings();
+        processMappings();
         
         lockMappings();
         
         try {
             return schemaRoot;
         } finally {
-            pathMapping = null;
             schemaRoot = null;
         }
     }
     
-    private void lockMappings() {
-        for (Schema mapping : schemaMapping.values()) {
-            if (!mapping.isLocked()) {
-                mapping.lock();
-            }
+    public void describeAsync(SubPath path, FieldDescriptor fieldDescriptor) {
+        queue.add(new QueueItem<SubPath, ElementDescriptor>(path, new ElementDescriptor(fieldDescriptor)));
+    }
+    
+    public void describeAsync(SubPath path, TypeDescriptor typeDescriptor) {
+        queue.add(new QueueItem<SubPath, ElementDescriptor>(path, new ElementDescriptor(typeDescriptor)));
+    }
+    
+    public ValueType describeNow(SubPath path, FieldDescriptor fieldDescriptor) {
+        return describeNow(path, new ElementDescriptor(fieldDescriptor));
+    }
+    
+    public ValueType describeNow(SubPath path, TypeDescriptor typeDescriptor) {
+        return describeNow(path, new ElementDescriptor(typeDescriptor));
+    }
+    
+    private ValueType describeNow(SubPath path, ElementDescriptor elementDescriptor) {
+        QueueItem<? extends PropertyPath, ElementDescriptor> stackedItem = currentItem;
+        try {
+            currentItem = new QueueItem<SubPath, ElementDescriptor>(path, elementDescriptor);
+            return registerMapping(this.currentItem);
+        } finally {
+            currentItem = stackedItem;
         }
-    }
-
-    private void registerMapping(QueueItem<? extends PropertyPath, TypeMappingKey> item, Schema mapping) {
-        schemaMapping.put(item.value, mapping);
-
-        // Add to parent
-        if (item.key instanceof SubPath) {
-            PropertyPath parentPath = ((SubPath) item.key).parent;
-            Schema parentSchema = getSchema(parentPath);
-            if (parentSchema == null) {
-                parentSchema = schemaRoot.addPath(parentPath);
-            }
-            parentSchema.addChild(item.key.getName(), mapping);
-        }
-    }
-    
-    private Schema getSchema(PropertyPath path) {
-        return schemaMapping.get(pathMapping.get(path));
-    }
-    
-    private void processSubMappings() {
-        while ((currentItem = stack.poll()) != null) {
-            TypeMappingKey mappingKey = currentItem.value;
-            Schema mapping= schemaMapping.get(mappingKey);
-            PropertyPath path = currentItem.key;
-            if (mapping == null || (mapping.isReference() && !pathMapping.containsKey(path))) {
-                pathMapping.put(path, mappingKey);
-                mapping = new Schema(createValueType(mappingKey));
-            }
-            registerMapping(currentItem, mapping);
-        }
-    }
-    
-    public synchronized ValueType createValueType(TypeMappingKey mappingKey) {
-        TypeMapping valueTypeFactory = valueTypes.getMapping(mappingKey);
-        return valueTypeFactory.describe(this);
-    }
-   
-    public synchronized void describe(SubPath path, TypeMappingKey mappingKey) {
-        stack.add(new QueueItem<SubPath, TypeMappingKey>(path, mappingKey));
-    }
-    
-    public synchronized ElementDescriptor<FieldDescriptor, TypeDescriptor, TypeDescriptors> getCurrentParent() {
-        return currentItem.value.parent;
-    }
-    
-    public synchronized TypeMappingKey getCurrentMappingKey() {
-        return currentItem.value;
     }
     
     public synchronized TypeDescriptor getCurrentType() {
@@ -146,5 +101,61 @@ public class DescribeContext {
 
     public synchronized PropertyPath getCurrentPath() {
         return currentItem.key;
+    }
+    
+    private void processMappings() {
+        while ((currentItem = queue.poll()) != null) {
+            registerMapping(currentItem);
+        }
+    }
+
+    private ValueType registerMapping(QueueItem<? extends PropertyPath, ElementDescriptor> item) {
+        PropertyPath path = item.key;
+        ElementDescriptor elementDescriptor = item.value;
+        Schema schema = schemaMappings.get(elementDescriptor);
+        if (schema == null) {
+            schema = addSchema(path);
+            ValueType valueType = createValueType(path, elementDescriptor);
+            schema.setValueType(valueType);
+            // FIXME: Refactor this check into ValueType
+            if (!schema.isReference()) {
+                schemaMappings.put(elementDescriptor, schema);
+            }
+        } else {
+            connectSchema((SubPath) path, schema);
+        }
+        return schema.getValueType();
+    }
+    
+    private void connectSchema(SubPath path, Schema schema) {
+        Schema parent = addSchema(path.parent);
+        parent.addChild(path.getName(), schema);
+    }
+    
+    private Schema addSchema(PropertyPath path) {
+        Schema schema = schemaRoot;
+        for (PropertyPath pathElement : path.asList()) {
+            String name = pathElement.getName();
+            Schema child = schema.getChild(name);
+            if (child == null) {
+                child = new Schema();
+                schema.addChild(name, child);
+            }
+            schema = child;
+        }
+        return schema;
+    }
+    
+    private synchronized ValueType createValueType(PropertyPath path, ElementDescriptor elementDescriptor) {
+        TypeMapping typeMapping = valueTypes.getMapping(path, elementDescriptor);
+        return typeMapping.describe(this);
+    }
+    
+    private void lockMappings() {
+        for (Schema mapping : schemaMappings.values()) {
+            if (!mapping.isLocked()) {
+                mapping.lock();
+            }
+        }
     }
 }

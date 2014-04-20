@@ -15,27 +15,23 @@
  */
 package org.javersion.object;
 
+import static java.util.Arrays.asList;
+
 import org.javersion.path.PropertyPath;
-import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 
 public class VersionableTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(TypeMappingKey mappingKey) {
-        return mappingKey.typeDescriptor.hasAnnotation(Versionable.class);
+    public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
+        return elementDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
     }
     
     
     @Override
     public  ValueType describe(DescribeContext context) {
         TypeDescriptor type = context.getCurrentType();
-        PropertyPath path = context.getCurrentPath();
-        for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
-            TypeMappingKey mappingKey = new TypeMappingKey(fieldDescriptor);
-            context.describe(path.property(fieldDescriptor.getName()), mappingKey);
-        }
-        return new ObjectType<Object>(type);
+        return ObjectTypeMapping.describe(type.getRawType(), asList(type), context);
     }
     
 }

@@ -37,7 +37,7 @@ public class WriteContext {
     
     private final IdentityHashMap<Object, PropertyPath> objects = Maps.newIdentityHashMap();
     
-    private final Map<PropertyPath, Object> properties = Maps.newHashMap();
+    private final Map<PropertyPath, Object> properties = Maps.newLinkedHashMap();
     
     private QueueItem<PropertyPath, Object> currentItem;
     
@@ -68,7 +68,7 @@ public class WriteContext {
                         && objects.put(currentItem.value, currentItem.key) != null) { // First time for this object?
                     illegalReferenceException();
                 }
-                schema.valueType.serialize(currentItem.value, this);
+                schema.serialize(currentItem.value, this);
             }
         }
         return unmodifiableMap(properties);
@@ -87,10 +87,6 @@ public class WriteContext {
     
     public void put(Object value) {
         put(getCurrentPath(), value);
-    }
-    
-    public boolean containsKey(PropertyPath path) {
-        return properties.containsKey(path);
     }
     
     public void put(PropertyPath path, Object value) {

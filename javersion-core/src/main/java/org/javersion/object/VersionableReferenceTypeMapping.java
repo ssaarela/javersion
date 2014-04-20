@@ -15,26 +15,26 @@
  */
 package org.javersion.object;
 
-import java.util.List;
+import static com.google.common.base.Strings.isNullOrEmpty;
 
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
-public class ListTypeMapping implements TypeMapping {
+public class VersionableReferenceTypeMapping implements TypeMapping {
 
     @Override
     public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-        return elementDescriptor.typeDescriptor.getRawType().equals(List.class);
+        Versionable versionable = elementDescriptor.typeDescriptor.getAnnotation(Versionable.class);
+        return versionable != null 
+                && !isNullOrEmpty(versionable.byReferenceAlias())
+                && ReferenceTypeMapping.isReferencePath(versionable.byReferenceAlias(), path);
     }
 
     @Override
     public ValueType describe(DescribeContext context) {
-        PropertyPath path = context.getCurrentPath();
-        TypeDescriptor listType = context.getCurrentType();
-        TypeDescriptor elementType = listType.resolveGenericParameter(List.class, 0);
-        context.describeAsync(path.index(""), elementType);
-
-        return new ListType();
+        TypeDescriptor typeDescriptor = context.getCurrentType();
+        Versionable versionable = typeDescriptor.getAnnotation(Versionable.class);
+        return ReferenceTypeMapping.describeReference(versionable.byReferenceAlias(), context);
     }
 
 }

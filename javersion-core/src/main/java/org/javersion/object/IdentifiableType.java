@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2014 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,8 @@
  */
 package org.javersion.object;
 
-public interface IdMapper<R> {
+public interface IdentifiableType {
 
-    public String getId(R object);
-    
-//    public void setId(R object, String id);
-    
+    public String toString(Object object);
+
 }

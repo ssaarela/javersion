@@ -11,9 +11,6 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
-import org.javersion.object.IdMapper;
-import org.javersion.object.ObjectSerializer;
-import org.javersion.object.ValueTypes;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
@@ -21,7 +18,7 @@ public class ReferencesTest {
 
     public static class Node {
 
-        public int id;
+        @Id public int id;
         
         public Node left;
 
@@ -34,15 +31,9 @@ public class ReferencesTest {
         }
     }
     
-    private ValueTypes valueTypes = ValueTypes.builder()
+    public static ValueTypes valueTypes = ValueTypes.builder()
             .withClass(Node.class)
-            .havingAlias("nodes")
-            .havingIdMapper(new IdMapper<Node>() {
-                @Override
-                public String getId(Node object) {
-                    return Long.toString(object.id);
-                }
-            })
+            .asReferenceWithAlias("nodes")
             .build();
     
     private final ObjectSerializer<Node> nodeSerializer = new ObjectSerializer<>(Node.class, valueTypes);

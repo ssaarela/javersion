@@ -74,6 +74,10 @@ public abstract class AbstractTypeDescriptor<
         this.typeToken = Check.notNull(typeToken, "typeToken");
     }
 
+    public boolean equalTo(Class<?> type) {
+        return getRawType().equals(type);
+    }
+
     public Map<String, F> getFields() {
         Map<String, F> result = fields;
         if (result == null) {
@@ -102,6 +106,14 @@ public abstract class AbstractTypeDescriptor<
             classes = unmodifiableSet(collectAllClasses(getRawType(), newLinkedHashSet()));
         }
         return classes;
+    }
+
+    public String getSimpleName() {
+        return getRawType().getSimpleName();
+    }
+
+    public boolean hasField(String fieldName) {
+        return getFields().containsKey(fieldName);
     }
 
     public F getField(String name) {
@@ -167,6 +179,10 @@ public abstract class AbstractTypeDescriptor<
 
     public boolean isSuperTypeOf(Class<?> clazz) {
         return getRawType().isAssignableFrom(clazz);
+    }
+
+    public boolean isSubTypeOf(Class<?> clazz) {
+        return clazz.isAssignableFrom(getRawType());
     }
     
     public Object newInstance() {

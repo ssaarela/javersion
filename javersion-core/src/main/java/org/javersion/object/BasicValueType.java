@@ -17,7 +17,7 @@ package org.javersion.object;
 
 import org.javersion.path.PropertyTree;
 
-public class BasicValueType implements ValueType {
+public class BasicValueType implements ValueType, IdentifiableType {
 
     private final Class<?> valueType;
     
@@ -39,8 +39,13 @@ public class BasicValueType implements ValueType {
     }
 
     @Override
-    public Class<?> getValueType() {
+    public Class<?> getTargetType() {
         return valueType;
+    }
+
+    @Override
+    public String toString(Object object) {
+        return object.toString();
     }
 
 }

@@ -24,11 +24,11 @@ public class ObjectSerializer<B> {
     private final SchemaRoot schemaRoot;
     
     public ObjectSerializer(Class<B> clazz) {
-        this.schemaRoot = DescribeContext.DEFAULT.describe(clazz);
+        this.schemaRoot = DescribeContext.DEFAULT.describeSchema(clazz);
     }
     
     public ObjectSerializer(Class<B> clazz, ValueTypes valueTypes) {
-        this.schemaRoot = new DescribeContext(valueTypes).describe(clazz);
+        this.schemaRoot = new DescribeContext(valueTypes).describeSchema(clazz);
     }
 
     public Map<PropertyPath, Object> write(B object) {

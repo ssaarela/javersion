@@ -15,25 +15,12 @@
  */
 package org.javersion.object;
 
-import java.util.Map;
-
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 
-import com.google.common.collect.ImmutableMap;
-
-public class SchemaRoot extends Schema {
-
-    private Map<TypeMappingKey, Schema> typeMappings;
+public class SchemaRoot extends Schema  {
     
-    SchemaRoot(ValueType valueType, Map<TypeMappingKey, Schema> typeMappings) {
-        super(valueType);
-        this.typeMappings = typeMappings;
-    }
-    
-    public Schema get(TypeMappingKey mappingKey) {
-        return typeMappings.get(mappingKey);
-    }
+    SchemaRoot() {}
     
     public Schema get(PropertyPath path) {
         Check.notNull(path, "path");
@@ -63,7 +50,6 @@ public class SchemaRoot extends Schema {
     @Override
     void lock() {
         super.lock();
-        typeMappings = ImmutableMap.copyOf(typeMappings);
     }
 
 }

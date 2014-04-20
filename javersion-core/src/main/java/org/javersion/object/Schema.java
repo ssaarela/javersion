@@ -17,14 +17,15 @@ package org.javersion.object;
 
 import java.util.Map;
 
+import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-public class Schema {
+public class Schema implements ValueType {
     
-    public final ValueType valueType;
+    private ValueType valueType;
     
     private Map<String, Schema> children = Maps.newHashMap();
     
@@ -34,6 +35,10 @@ public class Schema {
     }
     Schema(ValueType valueType) {
         this.valueType = Check.notNull(valueType, "valueType");
+    }
+    
+    public ValueType getValueType() {
+        return valueType;
     }
 
     public Schema getChild(String name) {
@@ -49,6 +54,11 @@ public class Schema {
         return child;
     }
     
+    void setValueType(ValueType valueType) {
+        Check.that(this.valueType == null, "valueType has been set already");
+        this.valueType = Check.notNull(valueType, "valueType");
+    }
+    
     void lock() {
         children = ImmutableMap.copyOf(children);
     }
@@ -58,11 +68,28 @@ public class Schema {
     }
 
     public boolean isReference() {
-        return valueType instanceof ObjectReferenceType;
+        return valueType instanceof ReferenceType;
     }
     
     public boolean hasChild(String name) {
         return children.containsKey(name);
+    }
+    @Override
+    public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
+        return valueType.instantiate(propertyTree, value, context);
+    }
+
+    @Override
+    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
+        valueType.bind(propertyTree, object, context);
+    }
+    @Override
+    public void serialize(Object object, WriteContext context) {
+        valueType.serialize(object, context);
+    }
+    @Override
+    public Class<?> getTargetType() {
+        return valueType.getTargetType();
     }
 
 }

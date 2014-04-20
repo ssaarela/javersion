@@ -18,7 +18,6 @@ package org.javersion.object;
 import static com.google.common.collect.Maps.uniqueIndex;
 
 import java.util.Map;
-import java.util.Set;
 
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
@@ -40,7 +39,7 @@ public class ObjectType<O> implements ValueType {
         this((Class<? extends O>) type.getRawType(), ImmutableSet.of(type));
     }
     
-    public ObjectType(Class<? extends O> rootType, Set<TypeDescriptor> types) {
+    public ObjectType(Class<? extends O> rootType, Iterable<TypeDescriptor> types) {
         Check.notNullOrEmpty(types, "types");
         this.rootType = rootType;
         this.types = uniqueIndex(types, TypeDescriptor.getRawType);
@@ -55,9 +54,12 @@ public class ObjectType<O> implements ValueType {
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
         TypeDescriptor typeDescriptor = types.get(object.getClass());
         for (PropertyTree child : propertyTree.getChildren()) {
-            FieldDescriptor fieldDescriptor = typeDescriptor.getField(child.getName());
-            Object value = context.getObject(child);
-            fieldDescriptor.set(object, value);
+            String fieldName = child.getName();
+            if (typeDescriptor.hasField(fieldName)) {
+                FieldDescriptor fieldDescriptor = typeDescriptor.getField(fieldName);
+                Object value = context.getObject(child);
+                fieldDescriptor.set(object, value);
+            }
         }
     }
 
@@ -79,7 +81,7 @@ public class ObjectType<O> implements ValueType {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Class<Class<? extends O>> getValueType() {
+    public Class<Class<? extends O>> getTargetType() {
         return (Class<Class<? extends O>>) rootType.getClass();
     }
 

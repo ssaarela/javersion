@@ -15,26 +15,25 @@
  */
 package org.javersion.object;
 
-import java.util.List;
+import java.util.Set;
 
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
-public class ListTypeMapping implements TypeMapping {
+public class SetTypeMapping implements TypeMapping {
 
     @Override
     public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-        return elementDescriptor.typeDescriptor.getRawType().equals(List.class);
+        return elementDescriptor.typeDescriptor.equalTo(Set.class);
     }
 
     @Override
     public ValueType describe(DescribeContext context) {
         PropertyPath path = context.getCurrentPath();
-        TypeDescriptor listType = context.getCurrentType();
-        TypeDescriptor elementType = listType.resolveGenericParameter(List.class, 0);
-        context.describeAsync(path.index(""), elementType);
-
-        return new ListType();
+        TypeDescriptor setType = context.getCurrentType();
+        TypeDescriptor elementType = setType.resolveGenericParameter(Set.class, 0);
+        ValueType valueType = context.describeNow(path.index(""), elementType);
+        return new SetType((IdentifiableType) valueType);
     }
 
 }

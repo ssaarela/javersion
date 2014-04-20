@@ -15,26 +15,24 @@
  */
 package org.javersion.object;
 
-import java.util.List;
-
-import org.javersion.path.PropertyPath;
+import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 
-public class ListTypeMapping implements TypeMapping {
+public class IdentifiableObjectType<O> extends ObjectType<O> implements IdentifiableType {
 
-    @Override
-    public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-        return elementDescriptor.typeDescriptor.getRawType().equals(List.class);
+    private final FieldDescriptor idField;
+    
+    private final IdentifiableType idType;
+    
+    public IdentifiableObjectType(Class<O> rootType, Iterable<TypeDescriptor> types, FieldDescriptor idField, IdentifiableType idType) {
+        super(rootType, types);
+        this.idField = idField;
+        this.idType = idType;
     }
-
+    
     @Override
-    public ValueType describe(DescribeContext context) {
-        PropertyPath path = context.getCurrentPath();
-        TypeDescriptor listType = context.getCurrentType();
-        TypeDescriptor elementType = listType.resolveGenericParameter(List.class, 0);
-        context.describeAsync(path.index(""), elementType);
-
-        return new ListType();
+    public String toString(Object object) {
+        return idType.toString(idField.get(object));
     }
 
 }

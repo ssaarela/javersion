@@ -20,42 +20,41 @@ import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
 
-public final class ObjectReferenceType<R> implements ValueType {
+public final class ReferenceType implements ValueType, IdentifiableType {
     
-    private final IdMapper<R> idMapper;
+    private final IdentifiableType identifiableType;
     
     private final PropertyPath targetRoot;
     
-    private static final ValueType STRING = BasicValueTypeMapping.STRING.getValueType();
-    
-    public ObjectReferenceType(IdMapper<R> idMapper, PropertyPath targetRoot) {
-        this.idMapper = Check.notNull(idMapper, "idMapper");
+    public ReferenceType(IdentifiableType identifiableType, PropertyPath targetRoot) {
+        this.identifiableType = Check.notNull(identifiableType, "keyType");
         this.targetRoot = Check.notNull(targetRoot, "targetRoot");
     }
     
     @Override
     public void serialize(Object object, WriteContext context) {
-        @SuppressWarnings("unchecked")
-        String id = idMapper.getId((R) object);
-        STRING.serialize(id, context);
+        String id = identifiableType.toString(object);
+        context.put(id);
         context.serialize(targetRoot.index(id), object);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        String id = (String) STRING.instantiate(propertyTree, value, context);
-        return (R) context.getObject(targetRoot.index(id));
+        String id = (String) value;
+        return context.getObject(targetRoot.index(id));
     }
 
     @Override
-    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
-        // Nothing to do here
-    }
+    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
 
     @Override
-    public Class<String> getValueType() {
+    public Class<String> getTargetType() {
         return String.class;
+    }
+
+    @Override
+    public String toString(Object object) {
+        return identifiableType.toString(object);
     }
 
 }
