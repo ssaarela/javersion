@@ -35,7 +35,7 @@ public class SetType implements ValueType {
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         Set<Object> set = Sets.newLinkedHashSetWithExpectedSize((Integer) value);
         for (PropertyTree elementPath : propertyTree.getChildren()) {
-            set.add(context.getObject(elementPath));
+            set.add(context.getAndBindObject(elementPath));
         }
         return set;
     }

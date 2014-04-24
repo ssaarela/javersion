@@ -23,8 +23,8 @@ import org.javersion.reflect.TypeDescriptor;
 public class VersionableTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-        return elementDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        return localTypeDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
     }
     
     

@@ -23,8 +23,8 @@ import org.javersion.reflect.TypeDescriptor;
 public class ListTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-        return elementDescriptor.typeDescriptor.getRawType().equals(List.class);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        return localTypeDescriptor.typeDescriptor.getRawType().equals(List.class);
     }
 
     @Override
@@ -32,8 +32,7 @@ public class ListTypeMapping implements TypeMapping {
         PropertyPath path = context.getCurrentPath();
         TypeDescriptor listType = context.getCurrentType();
         TypeDescriptor elementType = listType.resolveGenericParameter(List.class, 0);
-        context.describeAsync(path.index(""), elementType);
-
+        context.describeComponent(path.index(""), listType, elementType);
         return new ListType();
     }
 

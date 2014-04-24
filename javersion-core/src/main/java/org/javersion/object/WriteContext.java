@@ -51,24 +51,26 @@ public class WriteContext {
     }
 
     public void serialize(PropertyPath path, Object object) {
-        if (!properties.containsKey(path)) {
-            queue.add(new QueueItem<PropertyPath, Object>(path, object));
-        }
+        queue.add(new QueueItem<PropertyPath, Object>(path, object));
     }
     
     public Map<PropertyPath, Object> toMap() {
         serialize(PropertyPath.ROOT, root);
         while ((currentItem = queue.pollFirst()) != null) {
-            if (currentItem.value == null) {
-                put(currentItem.key, null);
-            } else {
-                Schema schema = getSchema(currentItem.key);
-                if (schema.hasChildren()  // Composite (not scalar)?
-                        && !schema.isReference() // Not a reference - multiple references to same object are allowed
-                        && objects.put(currentItem.value, currentItem.key) != null) { // First time for this object?
-                    illegalReferenceException();
+            PropertyPath path = currentItem.key;
+            if (!properties.containsKey(path)) {
+                Object value = currentItem.value;
+                if (value == null) {
+                    put(path, null);
+                } else {
+                    Schema schema = getSchema(path);
+                    if (schema.hasChildren()  // Composite (not scalar)?
+                            && !schema.isReference() // Not a reference - multiple references to same object are allowed
+                            && objects.put(value, path) != null) { // First time for this object?
+                        illegalReferenceException();
+                    }
+                    schema.serialize(currentItem.value, this);
                 }
-                schema.serialize(currentItem.value, this);
             }
         }
         return unmodifiableMap(properties);

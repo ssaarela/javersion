@@ -29,6 +29,19 @@ public class ReferencesTest {
         public Node(int id) {
             this.id = id;
         }
+        public int hashCode() {
+            return id;
+        }
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof Node) {
+                Node other = (Node) obj;
+                return this.id  == other.id;
+            } else {
+                return false;
+            }
+        }
     }
     
     public static ValueTypes valueTypes = ValueTypes.builder()

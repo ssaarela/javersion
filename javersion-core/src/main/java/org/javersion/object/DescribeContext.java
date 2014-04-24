@@ -32,16 +32,16 @@ public class DescribeContext {
     
     public static final DescribeContext DEFAULT = new DescribeContext(ValueTypes.DEFAULT);
     
-    private final Map<ElementDescriptor, Schema> schemaMappings = Maps.newHashMap();
+    private final Map<LocalTypeDescriptor, Schema> schemaMappings = Maps.newHashMap();
     
     private final ValueTypes valueTypes;
     
-    private final Deque<QueueItem<SubPath, ElementDescriptor>> queue = new ArrayDeque<>();
+    private final Deque<QueueItem<SubPath, LocalTypeDescriptor>> queue = new ArrayDeque<>();
 
     
     private SchemaRoot schemaRoot;
     
-    private QueueItem<? extends PropertyPath, ElementDescriptor> currentItem;
+    private QueueItem<? extends PropertyPath, LocalTypeDescriptor> currentItem;
     
     public DescribeContext(ValueTypes valueTypes) {
         this.valueTypes = valueTypes;
@@ -53,10 +53,10 @@ public class DescribeContext {
 
     public SchemaRoot describeSchema(TypeDescriptor rootType) {
         schemaRoot = new SchemaRoot();
-        ElementDescriptor elementDescriptor = new ElementDescriptor(rootType);
-        currentItem = new QueueItem<PropertyPath, ElementDescriptor>(PropertyPath.ROOT, elementDescriptor);
+        LocalTypeDescriptor localTypeDescriptor = new LocalTypeDescriptor(rootType);
+        currentItem = new QueueItem<PropertyPath, LocalTypeDescriptor>(PropertyPath.ROOT, localTypeDescriptor);
         
-        schemaRoot.setValueType(createValueType(PropertyPath.ROOT, elementDescriptor));
+        schemaRoot.setValueType(createValueType(PropertyPath.ROOT, localTypeDescriptor));
 
         processMappings();
         
@@ -70,25 +70,29 @@ public class DescribeContext {
     }
     
     public void describeAsync(SubPath path, FieldDescriptor fieldDescriptor) {
-        queue.add(new QueueItem<SubPath, ElementDescriptor>(path, new ElementDescriptor(fieldDescriptor)));
+        queue.add(new QueueItem<SubPath, LocalTypeDescriptor>(path, new LocalTypeDescriptor(fieldDescriptor)));
     }
     
     public void describeAsync(SubPath path, TypeDescriptor typeDescriptor) {
-        queue.add(new QueueItem<SubPath, ElementDescriptor>(path, new ElementDescriptor(typeDescriptor)));
+        queue.add(new QueueItem<SubPath, LocalTypeDescriptor>(path, new LocalTypeDescriptor(typeDescriptor)));
     }
     
     public ValueType describeNow(SubPath path, FieldDescriptor fieldDescriptor) {
-        return describeNow(path, new ElementDescriptor(fieldDescriptor));
+        return describeNow(path, new LocalTypeDescriptor(fieldDescriptor));
     }
     
     public ValueType describeNow(SubPath path, TypeDescriptor typeDescriptor) {
-        return describeNow(path, new ElementDescriptor(typeDescriptor));
+        return describeNow(path, new LocalTypeDescriptor(typeDescriptor));
     }
     
-    private ValueType describeNow(SubPath path, ElementDescriptor elementDescriptor) {
-        QueueItem<? extends PropertyPath, ElementDescriptor> stackedItem = currentItem;
+    public ValueType describeComponent(SubPath path, TypeDescriptor parent, TypeDescriptor typeDescriptor) {
+        return describeNow(path, new LocalTypeDescriptor(parent, typeDescriptor));
+    }
+    
+    private ValueType describeNow(SubPath path, LocalTypeDescriptor localTypeDescriptor) {
+        QueueItem<? extends PropertyPath, LocalTypeDescriptor> stackedItem = currentItem;
         try {
-            currentItem = new QueueItem<SubPath, ElementDescriptor>(path, elementDescriptor);
+            currentItem = new QueueItem<SubPath, LocalTypeDescriptor>(path, localTypeDescriptor);
             return registerMapping(this.currentItem);
         } finally {
             currentItem = stackedItem;
@@ -109,17 +113,17 @@ public class DescribeContext {
         }
     }
 
-    private ValueType registerMapping(QueueItem<? extends PropertyPath, ElementDescriptor> item) {
+    private ValueType registerMapping(QueueItem<? extends PropertyPath, LocalTypeDescriptor> item) {
         PropertyPath path = item.key;
-        ElementDescriptor elementDescriptor = item.value;
-        Schema schema = schemaMappings.get(elementDescriptor);
+        LocalTypeDescriptor localTypeDescriptor = item.value;
+        Schema schema = schemaMappings.get(localTypeDescriptor);
         if (schema == null) {
             schema = addSchema(path);
-            ValueType valueType = createValueType(path, elementDescriptor);
+            ValueType valueType = createValueType(path, localTypeDescriptor);
             schema.setValueType(valueType);
             // FIXME: Refactor this check into ValueType
             if (!schema.isReference()) {
-                schemaMappings.put(elementDescriptor, schema);
+                schemaMappings.put(localTypeDescriptor, schema);
             }
         } else {
             connectSchema((SubPath) path, schema);
@@ -146,8 +150,8 @@ public class DescribeContext {
         return schema;
     }
     
-    private synchronized ValueType createValueType(PropertyPath path, ElementDescriptor elementDescriptor) {
-        TypeMapping typeMapping = valueTypes.getMapping(path, elementDescriptor);
+    private synchronized ValueType createValueType(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        TypeMapping typeMapping = valueTypes.getMapping(path, localTypeDescriptor);
         return typeMapping.describe(this);
     }
     

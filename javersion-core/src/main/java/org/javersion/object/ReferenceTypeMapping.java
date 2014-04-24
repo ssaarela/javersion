@@ -35,9 +35,9 @@ public class ReferenceTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         return rootType != null 
-                && elementDescriptor.typeDescriptor.isSubTypeOf(rootType)
+                && localTypeDescriptor.typeDescriptor.isSubTypeOf(rootType)
                 && isReferencePath(alias, path);
     }
 

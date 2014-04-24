@@ -23,8 +23,8 @@ import org.javersion.reflect.TypeDescriptor;
 public class SetTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-        return elementDescriptor.typeDescriptor.equalTo(Set.class);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        return localTypeDescriptor.typeDescriptor.equalTo(Set.class);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class SetTypeMapping implements TypeMapping {
         PropertyPath path = context.getCurrentPath();
         TypeDescriptor setType = context.getCurrentType();
         TypeDescriptor elementType = setType.resolveGenericParameter(Set.class, 0);
-        ValueType valueType = context.describeNow(path.index(""), elementType);
+        ValueType valueType = context.describeComponent(path.index(""), setType, elementType);
         return new SetType((IdentifiableType) valueType);
     }
 

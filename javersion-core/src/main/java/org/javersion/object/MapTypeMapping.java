@@ -15,26 +15,32 @@
  */
 package org.javersion.object;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
+import java.util.Map;
 
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.TypeDescriptor;
 
-public class VersionableReferenceTypeMapping implements TypeMapping {
+public class MapTypeMapping implements TypeMapping {
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        Versionable versionable = localTypeDescriptor.typeDescriptor.getAnnotation(Versionable.class);
-        return versionable != null 
-                && !isNullOrEmpty(versionable.byReferenceAlias())
-                && ReferenceTypeMapping.isReferencePath(versionable.byReferenceAlias(), path);
+        return localTypeDescriptor.typeDescriptor.getRawType().equals(Map.class);
     }
 
     @Override
     public ValueType describe(DescribeContext context) {
-        TypeDescriptor typeDescriptor = context.getCurrentType();
-        Versionable versionable = typeDescriptor.getAnnotation(Versionable.class);
-        return ReferenceTypeMapping.describeReference(versionable.byReferenceAlias(), context);
+        SubPath valuePath = context.getCurrentPath().index("");
+        TypeDescriptor mapType = context.getCurrentType();
+        TypeDescriptor keyType = mapType.resolveGenericParameter(Map.class, 0);
+        TypeDescriptor valueType = mapType.resolveGenericParameter(Map.class, 1);
+        
+        IdentifiableType identifiableKeyType = (IdentifiableType) 
+                context.describeComponent(valuePath.property(MapType.KEY), mapType, keyType);
+
+        context.describeComponent(valuePath, mapType, valueType);
+        
+        return new MapType(identifiableKeyType);
     }
 
 }

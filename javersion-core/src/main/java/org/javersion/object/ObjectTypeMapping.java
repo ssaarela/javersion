@@ -44,8 +44,8 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-        return types.contains(elementDescriptor.typeDescriptor);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        return types.contains(localTypeDescriptor.typeDescriptor);
     }
     
     @Override

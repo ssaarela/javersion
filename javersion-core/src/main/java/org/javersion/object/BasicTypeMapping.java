@@ -31,8 +31,8 @@ public class BasicTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-        TypeDescriptor typeDescriptor = elementDescriptor.typeDescriptor;
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
         return typeDescriptor.getRawType().equals(type);
     }
 
@@ -55,9 +55,9 @@ public class BasicTypeMapping implements TypeMapping {
         }
 
         @Override
-        public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-            TypeDescriptor typeDescriptor = elementDescriptor.typeDescriptor;
-            return super.applies(path, elementDescriptor) || typeDescriptor.getRawType().equals(primitiveType);
+        public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+            TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
+            return super.applies(path, localTypeDescriptor) || typeDescriptor.getRawType().equals(primitiveType);
         }
 
     }
@@ -74,8 +74,8 @@ public class BasicTypeMapping implements TypeMapping {
         };
 
         @Override
-        public boolean applies(PropertyPath path, ElementDescriptor elementDescriptor) {
-            return elementDescriptor.typeDescriptor.getRawType().equals(String.class);
+        public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+            return localTypeDescriptor.typeDescriptor.getRawType().equals(String.class);
         }
 
         @Override

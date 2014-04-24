@@ -60,6 +60,7 @@ public class ValueTypes {
                     new VersionableTypeMapping(),
                     new ListTypeMapping(),
                     new SetTypeMapping(),
+                    new MapTypeMapping(),
                     STRING,
                     INTEGER,
                     LONG,
@@ -79,13 +80,13 @@ public class ValueTypes {
         this.types = ImmutableList.copyOf(types);
     }
 
-    public TypeMapping getMapping(PropertyPath path, ElementDescriptor elementDescriptor) {
+    public TypeMapping getMapping(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         for (TypeMapping valueType : types) {
-            if (valueType.applies(path, elementDescriptor)) {
+            if (valueType.applies(path, localTypeDescriptor)) {
                 return valueType;
             }
         }
-        throw new IllegalArgumentException("ValueType not found for " + elementDescriptor);
+        throw new IllegalArgumentException("ValueType not found for " + localTypeDescriptor);
     }
 
     public static class Builder {

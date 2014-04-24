@@ -69,7 +69,15 @@ public class ReadContext {
         return propertyTree != null ? getObject(propertyTree) : null;
     }
 
+    public Object getAndBindObject(PropertyTree propertyTree) {
+        return getObject(propertyTree, true);
+    }
+
     public Object getObject(PropertyTree propertyTree) {
+        return getObject(propertyTree, false);
+    }
+
+    private Object getObject(PropertyTree propertyTree, boolean bind) {
         if (objects.containsKey(propertyTree.path)) {
             return objects.get(propertyTree.path);
         } else {
@@ -83,7 +91,11 @@ public class ReadContext {
                     Object result = schema.instantiate(propertyTree, value, this);
                     objects.put(propertyTree.path, result);
                     if (result != null && schema.hasChildren()) {
-                        queue.add(propertyTree);
+                        if (bind) {
+                            schema.bind(propertyTree, result, this);
+                        } else {
+                            queue.add(propertyTree);
+                        }
                     }
                     return result;
                 } catch (Exception e) {

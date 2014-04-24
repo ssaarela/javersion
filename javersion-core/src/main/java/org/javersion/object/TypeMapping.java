@@ -19,7 +19,7 @@ import org.javersion.path.PropertyPath;
 
 public interface TypeMapping {
 
-    boolean applies(PropertyPath path, ElementDescriptor elementDescriptor);
+    boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor);
     
     ValueType describe(DescribeContext context);
 
