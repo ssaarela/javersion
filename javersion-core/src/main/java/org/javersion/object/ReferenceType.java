@@ -41,7 +41,7 @@ public final class ReferenceType implements ValueType, IdentifiableType {
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         String id = (String) value;
-        return context.getObject(targetRoot.index(id));
+        return context.prepareObject(targetRoot.index(id));
     }
 
     @Override

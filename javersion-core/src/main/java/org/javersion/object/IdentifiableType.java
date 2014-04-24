@@ -15,7 +15,7 @@
  */
 package org.javersion.object;
 
-public interface IdentifiableType {
+public interface IdentifiableType extends ValueType {
 
     public String toString(Object object);
 

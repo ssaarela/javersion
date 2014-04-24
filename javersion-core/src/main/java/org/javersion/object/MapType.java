@@ -20,17 +20,27 @@ public class MapType implements ValueType {
     
     @Override
     public Object instantiate(PropertyTree propertyTree, Object mapSize, ReadContext context) throws Exception {
-        Map<Object, Object> map = Maps.newHashMapWithExpectedSize((Integer) mapSize);
+        prepareKeysAndValues(propertyTree, context);
+        return Maps.newHashMapWithExpectedSize((Integer) mapSize);
+    }
+
+    private void prepareKeysAndValues(PropertyTree propertyTree, ReadContext context) {
         for (PropertyTree entryPath : propertyTree.getChildren()) {
-            Object key = context.getAndBindObject(entryPath.get(KEY));
-            Object value = context.getObject(entryPath);
-            map.put(key, value);
+            context.prepareObject(entryPath.get(KEY));
+            context.prepareObject(entryPath);
         }
-        return map;
     }
 
     @Override
-    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
+    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> map = (Map<Object, Object>) object;
+        for (PropertyTree entryPath : propertyTree.getChildren()) {
+            Object key = context.getObject(entryPath.get(KEY));
+            Object value = context.getObject(entryPath);
+            map.put(key, value);
+        }
+    }
 
     @Override
     public void serialize(Object object, WriteContext context) {

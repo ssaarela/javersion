@@ -33,15 +33,24 @@ public class SetType implements ValueType {
     
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        Set<Object> set = Sets.newLinkedHashSetWithExpectedSize((Integer) value);
+        prepareElements(propertyTree, context);
+        return Sets.newLinkedHashSetWithExpectedSize((Integer) value);
+    }
+
+    private void prepareElements(PropertyTree propertyTree, ReadContext context) {
         for (PropertyTree elementPath : propertyTree.getChildren()) {
-            set.add(context.getAndBindObject(elementPath));
+            context.prepareObject(elementPath);
         }
-        return set;
     }
 
     @Override
-    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
+    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
+        @SuppressWarnings("unchecked")
+        Set<Object> set = (Set<Object>) object;
+        for (PropertyTree elementPath : propertyTree.getChildren()) {
+            set.add(context.getObject(elementPath));
+        }
+    }
 
     @Override
     public void serialize(Object object, WriteContext context) {
