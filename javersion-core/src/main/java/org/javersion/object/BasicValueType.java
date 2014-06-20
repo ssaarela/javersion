@@ -15,6 +15,7 @@
  */
 package org.javersion.object;
 
+import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 
 public class BasicValueType implements ValueType, IdentifiableType {
@@ -34,8 +35,8 @@ public class BasicValueType implements ValueType, IdentifiableType {
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
 
     @Override
-    public void serialize(Object object, WriteContext context) {
-        context.put(object);
+    public void serialize(PropertyPath path, Object object, WriteContext context) {
+        context.put(path, object);
     }
 
     @Override

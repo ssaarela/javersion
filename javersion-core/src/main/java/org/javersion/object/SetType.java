@@ -53,9 +53,8 @@ public class SetType implements ValueType {
     }
 
     @Override
-    public void serialize(Object object, WriteContext context) {
+    public void serialize(PropertyPath path, Object object, WriteContext context) {
         Set<?> set = (Set<?>) object;
-        PropertyPath path = context.getCurrentPath();
         context.put(path, set.size());
         
         for (Object element : set) {

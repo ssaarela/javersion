@@ -17,6 +17,7 @@ package org.javersion.object;
 
 import java.util.Map;
 
+import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
@@ -84,8 +85,8 @@ public class Schema implements ValueType {
         valueType.bind(propertyTree, object, context);
     }
     @Override
-    public void serialize(Object object, WriteContext context) {
-        valueType.serialize(object, context);
+    public void serialize(PropertyPath path, Object object, WriteContext context) {
+        valueType.serialize(path, object, context);
     }
     @Override
     public Class<?> getTargetType() {

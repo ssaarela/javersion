@@ -32,9 +32,9 @@ public final class ReferenceType implements ValueType, IdentifiableType {
     }
     
     @Override
-    public void serialize(Object object, WriteContext context) {
+    public void serialize(PropertyPath path, Object object, WriteContext context) {
         String id = identifiableType.toString(object);
-        context.put(id);
+        context.put(path, id);
         context.serialize(targetRoot.index(id), object);
     }
 

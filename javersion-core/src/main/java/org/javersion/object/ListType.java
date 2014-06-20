@@ -41,11 +41,10 @@ public class ListType implements ValueType {
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
 
     @Override
-    public void serialize(Object object, WriteContext context) {
+    public void serialize(PropertyPath path, Object object, WriteContext context) {
         @SuppressWarnings("rawtypes")
         List list = (List) object;
-        context.put(list.size());
-        PropertyPath path = context.getCurrentPath();
+        context.put(path, list.size());
         for (int i=0; i < list.size(); i++) {
             context.serialize(path.index(i), list.get(i));
         }

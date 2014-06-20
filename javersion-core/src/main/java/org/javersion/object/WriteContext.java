@@ -39,15 +39,9 @@ public class WriteContext {
     
     private final Map<PropertyPath, Object> properties = Maps.newLinkedHashMap();
     
-    private QueueItem<PropertyPath, Object> currentItem;
-    
     protected WriteContext(SchemaRoot schemaRoot, Object root) {
         this.root = root;
         this.schemaRoot = schemaRoot;
-    }
-    
-    public PropertyPath getCurrentPath() {
-        return currentItem.key;
     }
 
     public void serialize(PropertyPath path, Object object) {
@@ -56,10 +50,11 @@ public class WriteContext {
     
     public Map<PropertyPath, Object> toMap() {
         serialize(PropertyPath.ROOT, root);
+        QueueItem<PropertyPath, Object> currentItem;
         while ((currentItem = queue.pollFirst()) != null) {
             PropertyPath path = currentItem.key;
+            Object value = currentItem.value;
             if (!properties.containsKey(path)) {
-                Object value = currentItem.value;
                 if (value == null) {
                     put(path, null);
                 } else {
@@ -67,9 +62,9 @@ public class WriteContext {
                     if (schema.hasChildren()  // Composite (not scalar)?
                             && !schema.isReference() // Not a reference - multiple references to same object are allowed
                             && objects.put(value, path) != null) { // First time for this object?
-                        illegalReferenceException();
+                        illegalReferenceException(path, value);
                     }
-                    schema.serialize(currentItem.value, this);
+                    schema.serialize(path, currentItem.value, this);
                 }
             }
         }
@@ -80,15 +75,11 @@ public class WriteContext {
         return schemaRoot.get(path);
     }
 
-    private void illegalReferenceException() {
+    private void illegalReferenceException(PropertyPath path, Object value) {
         throw new IllegalArgumentException(format(
                 "Multiple references to the same object: \"%s\"@\"%s\"", 
-                currentItem.value, 
-                currentItem.key));
-    }
-    
-    public void put(Object value) {
-        put(getCurrentPath(), value);
+                value, 
+                path));
     }
     
     public void put(PropertyPath path, Object value) {

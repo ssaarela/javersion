@@ -64,8 +64,7 @@ public class ObjectType<O> implements ValueType {
     }
 
     @Override
-    public void serialize(Object object, WriteContext context) {
-        PropertyPath path = context.getCurrentPath();
+    public void serialize(PropertyPath path, Object object, WriteContext context) {
         context.put(path, object.getClass());
         TypeDescriptor typeDescriptor = types.get(object.getClass());
         for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {

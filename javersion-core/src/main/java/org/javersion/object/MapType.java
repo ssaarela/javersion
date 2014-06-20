@@ -43,10 +43,9 @@ public class MapType implements ValueType {
     }
 
     @Override
-    public void serialize(Object object, WriteContext context) {
+    public void serialize(PropertyPath path, Object object, WriteContext context) {
         Map<?, ?> map = (Map<?, ?>) object;
-        context.put(map.size());
-        PropertyPath path = context.getCurrentPath();
+        context.put(path, map.size());
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             Object key = entry.getKey();
             Object value = entry.getValue();

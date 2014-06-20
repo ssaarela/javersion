@@ -38,8 +38,6 @@ public class ReadContext {
     
     private final Map<PropertyPath, Object> objects = Maps.newHashMap();
     
-//    private QueueItem<PropertyPath, Object> currentItem;
-    
     protected ReadContext(SchemaRoot schemaRoot, Map<PropertyPath, Object> properties) {
         this.properties = properties;
         this.schemaRoot = schemaRoot;
@@ -92,7 +90,7 @@ public class ReadContext {
         return getObject(propertyTree, false);
     }
 
-    public Object getObject(PropertyTree propertyTree, boolean highPriority) {
+    private Object getObject(PropertyTree propertyTree, boolean highPriority) {
         if (objects.containsKey(propertyTree.path)) {
             return objects.get(propertyTree.path);
         } else {

@@ -15,6 +15,7 @@
  */
 package org.javersion.object;
 
+import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 
 
@@ -24,7 +25,7 @@ public interface ValueType {
     
     void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception;
     
-    void serialize(Object object, WriteContext context);
+    void serialize(PropertyPath path, Object object, WriteContext context);
 
     Class<?> getTargetType();
     
