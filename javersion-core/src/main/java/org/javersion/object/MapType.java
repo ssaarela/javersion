@@ -55,10 +55,4 @@ public class MapType implements ValueType {
         }
     }
 
-    @Override
-    public Class<?> getTargetType() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
 }

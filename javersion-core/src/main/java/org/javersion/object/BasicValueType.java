@@ -19,11 +19,8 @@ import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 
 public class BasicValueType implements ValueType, IdentifiableType {
-
-    private final Class<?> valueType;
     
-    public BasicValueType(Class<?> valueType) {
-        this.valueType = valueType;
+    public BasicValueType() {
     }
     
     @Override
@@ -37,11 +34,6 @@ public class BasicValueType implements ValueType, IdentifiableType {
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         context.put(path, object);
-    }
-
-    @Override
-    public Class<?> getTargetType() {
-        return valueType;
     }
 
     @Override

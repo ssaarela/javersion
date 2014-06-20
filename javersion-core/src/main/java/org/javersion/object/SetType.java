@@ -63,9 +63,4 @@ public class SetType implements ValueType {
         }
     }
 
-    @Override
-    public Class<?> getTargetType() {
-        return Set.class;
-    }
-
 }

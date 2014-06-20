@@ -27,7 +27,7 @@ public class BasicTypeMapping implements TypeMapping {
     
     public BasicTypeMapping(Class<?> type) {
         this.type = Check.notNull(type, "type");
-        this.valueType = new BasicValueType(type);
+        this.valueType = new BasicValueType();
     }
 
     @Override
@@ -64,7 +64,7 @@ public class BasicTypeMapping implements TypeMapping {
     
     public static class StringTypeMapping implements TypeMapping {
 
-        public static final ValueType STRING_TYPE = new BasicValueType(String.class) {
+        public static final ValueType STRING_TYPE = new BasicValueType() {
             
             @Override
             public String toString(Object object) {

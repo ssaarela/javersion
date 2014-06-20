@@ -48,11 +48,6 @@ public final class ReferenceType implements ValueType, IdentifiableType {
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
 
     @Override
-    public Class<String> getTargetType() {
-        return String.class;
-    }
-
-    @Override
     public String toString(Object object) {
         return identifiableType.toString(object);
     }

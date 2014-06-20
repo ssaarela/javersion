@@ -50,9 +50,4 @@ public class ListType implements ValueType {
         }
     }
 
-    @Override
-    public Class<?> getTargetType() {
-        return Integer.class;
-    }
-
 }

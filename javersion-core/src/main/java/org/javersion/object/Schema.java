@@ -75,6 +75,7 @@ public class Schema implements ValueType {
     public boolean hasChild(String name) {
         return children.containsKey(name);
     }
+    
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         return valueType.instantiate(propertyTree, value, context);
@@ -84,13 +85,10 @@ public class Schema implements ValueType {
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
         valueType.bind(propertyTree, object, context);
     }
+
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         valueType.serialize(path, object, context);
-    }
-    @Override
-    public Class<?> getTargetType() {
-        return valueType.getTargetType();
     }
 
 }

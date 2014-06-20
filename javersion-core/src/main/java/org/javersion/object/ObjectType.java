@@ -78,10 +78,4 @@ public class ObjectType<O> implements ValueType {
         return "EntityType of " + types.values();
     }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Class<Class<? extends O>> getTargetType() {
-        return (Class<Class<? extends O>>) rootType.getClass();
-    }
-
 }
