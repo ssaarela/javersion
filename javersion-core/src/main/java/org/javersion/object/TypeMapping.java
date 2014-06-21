@@ -16,11 +16,12 @@
 package org.javersion.object;
 
 import org.javersion.path.PropertyPath;
+import org.javersion.reflect.TypeDescriptor;
 
 public interface TypeMapping {
 
     boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor);
     
-    ValueType describe(DescribeContext context);
-
+    ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context);
+    
 }

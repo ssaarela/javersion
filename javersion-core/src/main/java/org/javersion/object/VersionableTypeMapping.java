@@ -29,9 +29,8 @@ public class VersionableTypeMapping implements TypeMapping {
     
     
     @Override
-    public  ValueType describe(DescribeContext context) {
-        TypeDescriptor type = context.getCurrentType();
-        return ObjectTypeMapping.describe(type.getRawType(), asList(type), context);
+    public  ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return ObjectTypeMapping.describe(path, type.getRawType(), asList(type), context);
     }
     
 }

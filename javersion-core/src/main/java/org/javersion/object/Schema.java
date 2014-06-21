@@ -69,7 +69,7 @@ public class Schema implements ValueType {
     }
 
     public boolean isReference() {
-        return valueType instanceof ReferenceType;
+        return valueType.isReference();
     }
     
     public boolean hasChild(String name) {

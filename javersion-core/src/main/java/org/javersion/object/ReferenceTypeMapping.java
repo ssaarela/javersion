@@ -42,8 +42,8 @@ public class ReferenceTypeMapping implements TypeMapping {
     }
 
     @Override
-    public ValueType describe(DescribeContext context) {
-        return describeReference(alias, context);
+    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return describeReference(path, type, alias, context);
     }
     
     public static boolean isReferencePath(String alias, PropertyPath path) {
@@ -56,9 +56,8 @@ public class ReferenceTypeMapping implements TypeMapping {
         return PropertyPath.ROOT.property(REFERENCES).property(alias);
     }
 
-    public static ValueType describeReference(String alias, DescribeContext context) {
-        TypeDescriptor typeDescriptor = context.getCurrentType();
-        IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath(alias).index(""), typeDescriptor);
+    public static ValueType describeReference(PropertyPath path, TypeDescriptor type, String alias, DescribeContext context) {
+        IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath(alias).index(""), type);
         return new ReferenceType(identifiableType, targetPath(alias));
     }
 }

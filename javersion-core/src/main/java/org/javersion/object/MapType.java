@@ -55,4 +55,9 @@ public class MapType implements ValueType {
         }
     }
 
+	@Override
+	public boolean isReference() {
+		return false;
+	}
+
 }

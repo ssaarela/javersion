@@ -29,9 +29,8 @@ public class MapTypeMapping implements TypeMapping {
     }
 
     @Override
-    public ValueType describe(DescribeContext context) {
-        SubPath valuePath = context.getCurrentPath().index("");
-        TypeDescriptor mapType = context.getCurrentType();
+    public ValueType describe(PropertyPath path, TypeDescriptor mapType, DescribeContext context) {
+        SubPath valuePath = path.index("");
         TypeDescriptor keyType = mapType.resolveGenericParameter(Map.class, 0);
         TypeDescriptor valueType = mapType.resolveGenericParameter(Map.class, 1);
         

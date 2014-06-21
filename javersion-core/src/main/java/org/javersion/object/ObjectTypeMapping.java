@@ -49,12 +49,11 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
     
     @Override
-    public  synchronized ValueType describe(DescribeContext context) {
-        return describe(rootType, types, context);
+    public  synchronized ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return describe(path, rootType, types, context);
     }
     
-    public static ValueType describe(Class<?> rootType, Iterable<TypeDescriptor> allTypes, DescribeContext context) {
-        PropertyPath path = context.getCurrentPath();
+    public static ValueType describe(PropertyPath path, Class<?> rootType, Iterable<TypeDescriptor> allTypes, DescribeContext context) {
         Set<FieldDescriptor> uniqueFields = Sets.newHashSet();
         FieldDescriptor idField = null;
         IdentifiableType idType = null;

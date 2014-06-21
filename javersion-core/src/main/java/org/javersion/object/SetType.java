@@ -63,4 +63,9 @@ public class SetType implements ValueType {
         }
     }
 
+	@Override
+	public boolean isReference() {
+		return false;
+	}
+
 }

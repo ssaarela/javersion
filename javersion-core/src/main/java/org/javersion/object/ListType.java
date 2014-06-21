@@ -50,4 +50,9 @@ public class ListType implements ValueType {
         }
     }
 
+	@Override
+	public boolean isReference() {
+		return false;
+	}
+
 }

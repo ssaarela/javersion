@@ -37,7 +37,7 @@ public class BasicTypeMapping implements TypeMapping {
     }
 
     @Override
-    public ValueType describe(DescribeContext context) {
+    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
         return valueType;
     }
     
@@ -58,29 +58,6 @@ public class BasicTypeMapping implements TypeMapping {
         public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
             TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
             return super.applies(path, localTypeDescriptor) || typeDescriptor.getRawType().equals(primitiveType);
-        }
-
-    }
-    
-    public static class StringTypeMapping implements TypeMapping {
-
-        public static final ValueType STRING_TYPE = new BasicValueType() {
-            
-            @Override
-            public String toString(Object object) {
-                return (String) object;
-            }
-            
-        };
-
-        @Override
-        public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-            return localTypeDescriptor.typeDescriptor.getRawType().equals(String.class);
-        }
-
-        @Override
-        public ValueType describe(DescribeContext context) {
-            return STRING_TYPE;
         }
 
     }

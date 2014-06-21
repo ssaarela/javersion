@@ -26,5 +26,7 @@ public interface ValueType {
     void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception;
     
     void serialize(PropertyPath path, Object object, WriteContext context);
-    
+
+    boolean isReference();
+   
 }

@@ -16,34 +16,27 @@
 package org.javersion.object;
 
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyTree;
+import org.javersion.reflect.TypeDescriptor;
 
-public class BasicValueType implements ValueType, IdentifiableType {
-    
-    public BasicValueType() {
-    }
-    
-    @Override
-    public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        return value;
-    }
+public class StringTypeMapping implements TypeMapping {
 
-    @Override
-    public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
+    public static final ValueType STRING_TYPE = new BasicValueType() {
+        
+        @Override
+        public String toString(Object object) {
+            return (String) object;
+        }
+        
+    };
 
     @Override
-    public void serialize(PropertyPath path, Object object, WriteContext context) {
-        context.put(path, object);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        return localTypeDescriptor.typeDescriptor.getRawType().equals(String.class);
     }
 
     @Override
-    public String toString(Object object) {
-        return object.toString();
+    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return STRING_TYPE;
     }
-
-	@Override
-	public boolean isReference() {
-		return false;
-	}
 
 }

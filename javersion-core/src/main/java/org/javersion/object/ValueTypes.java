@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.javersion.object.BasicTypeMapping.PrimitiveValueTypeMapping;
-import org.javersion.object.BasicTypeMapping.StringTypeMapping;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;

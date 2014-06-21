@@ -31,10 +31,9 @@ public class VersionableReferenceTypeMapping implements TypeMapping {
     }
 
     @Override
-    public ValueType describe(DescribeContext context) {
-        TypeDescriptor typeDescriptor = context.getCurrentType();
-        Versionable versionable = typeDescriptor.getAnnotation(Versionable.class);
-        return ReferenceTypeMapping.describeReference(versionable.byReferenceAlias(), context);
+    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        Versionable versionable = type.getAnnotation(Versionable.class);
+        return ReferenceTypeMapping.describeReference(path, type, versionable.byReferenceAlias(), context);
     }
 
 }

@@ -1,5 +1,6 @@
 package org.javersion.object;
 
+import static java.util.Collections.singleton;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.sameInstance;
@@ -22,7 +23,19 @@ public class SetTest {
         private Set<Node> nodes = Sets.newLinkedHashSet();
     }
     
-    private final ObjectSerializer<NodeSet> serializer = new ObjectSerializer<>(NodeSet.class, ReferencesTest.valueTypes);
+    public static class NodeExt extends Node {
+        Set<NodeExt> nodes = Sets.newLinkedHashSet();
+    }
+
+    public static ValueTypes valueTypes = ValueTypes.builder()
+            .withClass(Node.class)
+            .havingSubClasses(NodeExt.class)
+            .asReferenceWithAlias("nodes")
+            .build();
+
+    private final ObjectSerializer<NodeSet> nodeSetSerializer = new ObjectSerializer<>(NodeSet.class, valueTypes);
+    
+    private final ObjectSerializer<NodeExt> nodeExtSerializer = new ObjectSerializer<>(NodeExt.class, valueTypes);
     
     @Test
     public void Write_And_Read_NodeSet() {
@@ -37,9 +50,9 @@ public class SetTest {
         nodeSet.nodes.add(node1);
         nodeSet.nodes.add(node2);
 
-        Map<PropertyPath, Object> map = serializer.write(nodeSet);
+        Map<PropertyPath, Object> map = nodeSetSerializer.write(nodeSet);
         
-        nodeSet = serializer.read(map);
+        nodeSet = nodeSetSerializer.read(map);
         assertThat(nodeSet.nodes, hasSize(2));
         Iterator<Node> iter = nodeSet.nodes.iterator();
         node1 = iter.next();
@@ -51,4 +64,18 @@ public class SetTest {
         assertThat(node2.left, sameInstance(node1));
         assertThat(node2.right, sameInstance(node2));
     }
+    
+    @Test
+    public void NodeExt_Containing_Itself_In_a_Set() {
+    	NodeExt nodeExt = new NodeExt();
+    	nodeExt.id = 789;
+    	nodeExt.nodes.add(nodeExt);
+
+    	Map<PropertyPath, Object> map = nodeExtSerializer.write(nodeExt);
+        
+    	nodeExt = nodeExtSerializer.read(map);
+    	assertThat(nodeExt.id, equalTo(789));
+    	assertThat(nodeExt.nodes, equalTo(singleton(nodeExt)));
+    }
+    
 }
