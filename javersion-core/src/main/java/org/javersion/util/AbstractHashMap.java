@@ -157,12 +157,7 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
         @Override
         public Node<K, Entry<K, V>> assocInternal(final UpdateContext<? super Entry<K, V>>  currentContext, final int shift, final int hash, final Entry<K, V> newEntry) {
             if (equal(key, newEntry.key)) {
-                if (equal(value, newEntry.value)) {
-                    currentContext.merge(this, newEntry); 
-                    return this;
-                } else {
-                    return currentContext.merge(this, newEntry) ? newEntry : this;
-                }
+            	return currentContext.merge(this, newEntry) ? newEntry : this;
             } else {
                 return split(currentContext, shift, hash, newEntry);
             }

@@ -15,58 +15,21 @@
  */
 package org.javersion.core;
 
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-
-import org.javersion.util.Check;
-import org.javersion.util.Merger;
-import org.javersion.util.MutableHashMap;
-import org.javersion.util.PersistentHashMap;
-import org.javersion.util.PersistentHashSet;
 
 import com.google.common.collect.ImmutableSet;
 
-public final class VersionNode<K, V, T extends Version<K, V>> implements Comparable<VersionNode<K, V, T>> {
-
-    private final Merger<Entry<K, VersionProperty<V>>> merger;
-    
-    private static <K, V> Merger<Entry<K, VersionProperty<V>>> newMerger() {
-        return new Merger<Entry<K, VersionProperty<V>>>() {
-
-            @Override
-            public void insert(Entry<K, VersionProperty<V>> newEntry) {
-            }
-
-            @Override
-            public boolean merge(
-                    Entry<K, VersionProperty<V>> oldEntry,
-                    Entry<K, VersionProperty<V>> newEntry) {
-                return oldEntry.getValue().revision < newEntry.getValue().revision ? true : false;
-            }
-
-            @Override
-            public void delete(Entry<K, VersionProperty<V>> oldEntry) {
-                throw new UnsupportedOperationException();
-            }
-
-        };
-    }
+public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMergeNode<K, V> implements Comparable<VersionNode<K, V, T>> {
     
     public final T version;
-    
+
     public final Set<VersionNode<K, V, T>> parents;
-    
+
     public final VersionNode<K, V, T> previous;
 
-    public final PersistentHashMap<K, VersionProperty<V>> allProperties;
-    
-    public final PersistentHashSet<Long> allRevisions;
-
-    public VersionNode(VersionNode<K, V, T> previous, T version, Set<VersionNode<K, V, T>> parents) {
-        Check.notNull(version, "version");
-        Check.notNull(parents, "parents");
+    public VersionNode(VersionNode<K, V, T> previous, T version, Iterable<VersionNode<K, V, T>> parents) {
+    	super(toMergeNodeIterable(parents), version);
 
         if (previous != null && version.revision <= previous.getRevision()) {
             throw new IllegalVersionOrderException(previous.getRevision(), version.revision);
@@ -75,29 +38,6 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
         this.previous = previous;
         this.version = version;
         this.parents = ImmutableSet.copyOf(parents);
-        
-        Iterator<VersionNode<K, V, T>> iter = parents.iterator();
-        
-        if (!iter.hasNext()) {
-            this.allRevisions = new PersistentHashSet<Long>().conj(version.revision);
-            this.allProperties = PersistentHashMap.copyOf(version.getVersionProperties());
-            this.merger = newMerger();
-        } else {
-            VersionNode<K, V, T> parent = iter.next();
-            this.merger = parent.merger;
-            PersistentHashSet<Long> revisions = parent.allRevisions;
-            MutableHashMap<K, VersionProperty<V>> properties = parent.allProperties.toMutableMap();
-            
-            while (iter.hasNext()) {
-                parent = iter.next();
-                revisions = revisions.conjAll(parent.allRevisions);
-                properties.mergeAll(parent.allProperties, merger);
-            }
-            properties.putAll(version.getVersionProperties());
-
-            this.allRevisions = revisions.conj(version.revision);
-            this.allProperties = properties.toPersistentMap();
-        }
     }
     
     public long getRevision() {
@@ -108,6 +48,11 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
         return version.getVersionProperties();
     }
 
+	@Override
+	public Set<Long> getHeads() {
+		return ImmutableSet.of(version.revision);
+	}
+
     @Override
     public int compareTo(VersionNode<K, V, T> o) {
         return Long.compare(getRevision(), o.getRevision());
@@ -117,4 +62,8 @@ public final class VersionNode<K, V, T extends Version<K, V>> implements Compara
     public String toString() {
         return version.toString();
     }
+
+	@Override
+	protected void setHeads(Set<Long> heads) {}
+
 }

@@ -27,8 +27,9 @@ public class MutableHashSet<E> extends AbstractTrieSet<E, MutableHashSet<E>> {
     
     private int size;
 
+    @SuppressWarnings("unchecked")
     public MutableHashSet() {
-        this(null, 0);
+        this(EMPTY_NODE, 0);
     }
     
     MutableHashSet(Node<E, Entry<E>> root, int size) {

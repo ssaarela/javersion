@@ -15,10 +15,9 @@
  */
 package org.javersion.core;
 
-import java.util.Collections;
-import java.util.Set;
-
-import com.google.common.collect.Iterables;
+import static com.google.common.collect.Iterables.transform;
+import static java.util.Collections.unmodifiableMap;
+import static org.javersion.core.AbstractMergeNode.toMergeNodeIterable;
 
 public abstract class VersionGraph<K, V, 
                           T extends Version<K, V>,
@@ -29,7 +28,7 @@ public abstract class VersionGraph<K, V,
     public final VersionNode<K, V, T> tip;
     
     protected VersionGraph(VersionGraphBuilder<K, V, T, This, B> builder) {
-        super(builder.lock, builder.parentGraph, Collections.unmodifiableMap(builder.versionNodes));
+        super(builder.lock, builder.parentGraph, unmodifiableMap(builder.versionNodes));
         this.tip = builder.tip;
     }
     
@@ -37,8 +36,8 @@ public abstract class VersionGraph<K, V,
     
     public abstract This commit(Iterable<T> versions);
     
-    public final Merge<K, V> merge(Set<Long> revisions) {
-        return new Merge<K, V>(Iterables.transform(revisions, this));
+    public final Merge<K, V> merge(Iterable<Long> revisions) {
+        return new Merge<K, V>(toMergeNodeIterable(transform(revisions, this)));
     }
     
 
