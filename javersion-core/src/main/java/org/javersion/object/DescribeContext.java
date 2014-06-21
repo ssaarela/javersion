@@ -135,7 +135,7 @@ public class DescribeContext {
     }
     
     private synchronized ValueType createValueType(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeMapping typeMapping = typeMappings.getMapping(path, localTypeDescriptor);
+        TypeMapping typeMapping = typeMappings.getTypeMapping(path, localTypeDescriptor);
         return typeMapping.describe(path, localTypeDescriptor.typeDescriptor, this);
     }
     

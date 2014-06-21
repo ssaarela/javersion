@@ -79,7 +79,7 @@ public class TypeMappings {
         this.types = ImmutableList.copyOf(types);
     }
 
-    public TypeMapping getMapping(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+    public TypeMapping getTypeMapping(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         for (TypeMapping valueType : types) {
             if (valueType.applies(path, localTypeDescriptor)) {
                 return valueType;
