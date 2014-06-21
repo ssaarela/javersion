@@ -24,12 +24,12 @@ public class ListTest {
         private List<Pet> pets;
     }
 
-    private ValueTypes valueTypes = ValueTypes.builder()
+    private TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Pet.class)
             .havingSubClasses(Dog.class, Cat.class)
             .build();
     
-    private final ObjectSerializer<Owner> serializer = new ObjectSerializer<>(Owner.class, valueTypes);
+    private final ObjectSerializer<Owner> serializer = new ObjectSerializer<>(Owner.class, typeMappings);
 
     @Test
     public void Write_And_Read_Owner_With_Cats_And_Dogs() {

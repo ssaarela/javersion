@@ -30,19 +30,19 @@ import com.google.common.collect.Maps;
 
 public class DescribeContext {
     
-    public static final DescribeContext DEFAULT = new DescribeContext(ValueTypes.DEFAULT);
+    public static final DescribeContext DEFAULT = new DescribeContext(TypeMappings.DEFAULT);
     
     private final Map<LocalTypeDescriptor, Schema> schemaMappings = Maps.newHashMap();
     
-    private final ValueTypes valueTypes;
+    private final TypeMappings typeMappings;
     
     private final Deque<QueueItem<SubPath, LocalTypeDescriptor>> queue = new ArrayDeque<>();
 
     
     private SchemaRoot schemaRoot;
     
-    public DescribeContext(ValueTypes valueTypes) {
-        this.valueTypes = valueTypes;
+    public DescribeContext(TypeMappings typeMappings) {
+        this.typeMappings = typeMappings;
     }
 
     public SchemaRoot describeSchema(Class<?> rootClass) {
@@ -135,7 +135,7 @@ public class DescribeContext {
     }
     
     private synchronized ValueType createValueType(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeMapping typeMapping = valueTypes.getMapping(path, localTypeDescriptor);
+        TypeMapping typeMapping = typeMappings.getMapping(path, localTypeDescriptor);
         return typeMapping.describe(path, localTypeDescriptor.typeDescriptor, this);
     }
     

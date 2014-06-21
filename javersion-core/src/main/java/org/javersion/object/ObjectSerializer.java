@@ -27,8 +27,8 @@ public class ObjectSerializer<B> {
         this.schemaRoot = DescribeContext.DEFAULT.describeSchema(clazz);
     }
     
-    public ObjectSerializer(Class<B> clazz, ValueTypes valueTypes) {
-        this.schemaRoot = new DescribeContext(valueTypes).describeSchema(clazz);
+    public ObjectSerializer(Class<B> clazz, TypeMappings typeMappings) {
+        this.schemaRoot = new DescribeContext(typeMappings).describeSchema(clazz);
     }
 
     public Map<PropertyPath, Object> write(B object) {

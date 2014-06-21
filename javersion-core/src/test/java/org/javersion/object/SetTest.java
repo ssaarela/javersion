@@ -27,15 +27,15 @@ public class SetTest {
         Set<NodeExt> nodes = Sets.newLinkedHashSet();
     }
 
-    public static ValueTypes valueTypes = ValueTypes.builder()
+    public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
             .havingSubClasses(NodeExt.class)
             .asReferenceWithAlias("nodes")
             .build();
 
-    private final ObjectSerializer<NodeSet> nodeSetSerializer = new ObjectSerializer<>(NodeSet.class, valueTypes);
+    private final ObjectSerializer<NodeSet> nodeSetSerializer = new ObjectSerializer<>(NodeSet.class, typeMappings);
     
-    private final ObjectSerializer<NodeExt> nodeExtSerializer = new ObjectSerializer<>(NodeExt.class, valueTypes);
+    private final ObjectSerializer<NodeExt> nodeExtSerializer = new ObjectSerializer<>(NodeExt.class, typeMappings);
     
     @Test
     public void Write_And_Read_NodeSet() {

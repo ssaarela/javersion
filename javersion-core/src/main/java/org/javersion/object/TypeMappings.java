@@ -32,7 +32,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-public class ValueTypes {
+public class TypeMappings {
 
     public static TypeMapping STRING = new StringTypeMapping();
 
@@ -71,11 +71,11 @@ public class ValueTypes {
                     CHAR
                     );
     
-    public static final ValueTypes DEFAULT = new ValueTypes(DEFAULT_MAPPINGS);
+    public static final TypeMappings DEFAULT = new TypeMappings(DEFAULT_MAPPINGS);
     
     private final List<TypeMapping> types;
     
-    public ValueTypes(Iterable<TypeMapping> types) {
+    public TypeMappings(Iterable<TypeMapping> types) {
         this.types = ImmutableList.copyOf(types);
     }
 
@@ -111,8 +111,8 @@ public class ValueTypes {
             return new HierarchyBuilder<>(root);
         }
 
-        public ValueTypes build() {
-            return new ValueTypes(Iterables.concat(mappings, defaultMappings));
+        public TypeMappings build() {
+            return new TypeMappings(Iterables.concat(mappings, defaultMappings));
         }
         
         
@@ -163,7 +163,7 @@ public class ValueTypes {
                 return builder.withMapping(new ObjectTypeMapping<R>(rootType, types));
             }
 
-            public ValueTypes build() {
+            public TypeMappings build() {
                 return register().build();
             }
 

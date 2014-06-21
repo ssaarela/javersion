@@ -46,12 +46,12 @@ public class ReferencesTest {
         }
     }
     
-    public static ValueTypes valueTypes = ValueTypes.builder()
+    public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
             .asReferenceWithAlias("nodes")
             .build();
     
-    private final ObjectSerializer<Node> nodeSerializer = new ObjectSerializer<>(Node.class, valueTypes);
+    private final ObjectSerializer<Node> nodeSerializer = new ObjectSerializer<>(Node.class, typeMappings);
     
     @Test
     public void Node_Cycles_Read_And_Write() {
