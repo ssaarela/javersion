@@ -45,8 +45,7 @@ public interface PersistentSortedMap<K, V> extends PersistentMap<K, V> {
     PersistentSortedMap<K, V> dissoc(Object key, Merger<Entry<K, V>> merger);
     
     @Override
-    // TODO: MutableSortedMap
-    MutableMap<K, V> toMutableMap();
+    MutableSortedMap<K, V> toMutableMap();
     
     @Override
     // TODO: SortedMap

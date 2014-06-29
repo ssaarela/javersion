@@ -15,21 +15,25 @@
  */
 package org.javersion.core;
 
+import static com.google.common.collect.Iterables.transform;
+
 import org.javersion.util.Check;
+import org.javersion.util.MutableHashSet;
+import org.javersion.util.MutableSet;
+import org.javersion.util.MutableSortedMap;
 import org.javersion.util.MutableTreeMap;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 
 public abstract class AbstractVersionGraphBuilder<K, 
                                V, 
                                T extends Version<K, V>, 
                                G extends AbstractVersionGraph<K, V, T, G, B>,
                                B extends AbstractVersionGraphBuilder<K, V, T, G, B>> {
-    
-    VersionNode<K, V, T> tip;
-    
-    MutableTreeMap<Long, VersionNode<K, V, T>> versionNodes;
+
+	MutableSet<VersionNode<K, V, T>> leaves;
+	
+    MutableSortedMap<Long, VersionNode<K, V, T>> versionNodes;
 
     private Function<Long, VersionNode<K, V, T>> revisionToVersionNode = new Function<Long, VersionNode<K, V, T>>() {
         @Override
@@ -40,27 +44,37 @@ public abstract class AbstractVersionGraphBuilder<K,
 
     
     protected AbstractVersionGraphBuilder() {
-    	this.versionNodes = new MutableTreeMap<>();
+    	reset();
     }
     
     protected AbstractVersionGraphBuilder(G parentGraph) {
     	this.versionNodes = parentGraph.versionNodes.toMutableMap();
-        this.tip = parentGraph.tip;
+        this.leaves = parentGraph.leaves.toMutableSet();
+    }
+    
+    private void reset() {
+    	this.versionNodes = new MutableTreeMap<>();
+    	this.leaves = new MutableHashSet<VersionNode<K, V, T>>();
     }
     
     public final void add(T version) {
         Check.notNull(version, "version");
         if (version.type == VersionType.ROOT) {
-        	this.versionNodes = new MutableTreeMap<>();
-        	this.tip = null;
+        	reset();
         }
-        Iterable<VersionNode<K, V, T>> parentsDescending = revisionsToNodes(version.parentRevisions);
-        tip = new VersionNode<K, V, T>(tip, version, parentsDescending);
+        Iterable<VersionNode<K, V, T>> parents = revisionsToNodes(version.parentRevisions);
+        VersionNode<K, V, T> tip = new VersionNode<K, V, T>(version, parents);
+        for (VersionNode<K, V, T> parent : tip.parents) {
+        	if (parent.version.branch.equals(tip.version.branch)) {
+        		leaves.remove(parent);
+        	}
+        }
+        leaves.add(tip);
         versionNodes.put(version.revision, tip);
     }
     
     Iterable<VersionNode<K, V, T>> revisionsToNodes(Iterable<Long> revisions) {
-        return Iterables.transform(revisions, revisionToVersionNode);
+        return transform(revisions, revisionToVersionNode);
     }
 
     private VersionNode<K, V, T> getVersionNode(long revision) {

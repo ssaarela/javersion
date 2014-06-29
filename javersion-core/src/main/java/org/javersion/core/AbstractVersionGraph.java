@@ -18,6 +18,9 @@ package org.javersion.core;
 import static com.google.common.collect.Iterables.transform;
 import static org.javersion.core.AbstractMergeNode.toMergeNodeIterable;
 
+import org.javersion.util.PersistentHashSet;
+import org.javersion.util.PersistentSet;
+import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
@@ -28,21 +31,22 @@ public abstract class AbstractVersionGraph<K, V,
                           B extends AbstractVersionGraphBuilder<K, V, T, This, B>> 
 		implements Function<Long, VersionNode<K, V, T>> {
 
-    public final PersistentTreeMap<Long, VersionNode<K, V, T>> versionNodes;
+    public final PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes;
 
-    public final VersionNode<K, V, T> tip;
+    public final PersistentSet<VersionNode<K, V, T>> leaves;
     
     public AbstractVersionGraph() {
-    	this(PersistentTreeMap. <Long, VersionNode<K, V, T>> empty(), null);
+    	this(PersistentTreeMap.<Long, VersionNode<K, V, T>> empty(), 
+    			new PersistentHashSet<VersionNode<K, V, T>>());
     }
     
     protected AbstractVersionGraph(AbstractVersionGraphBuilder<K, V, T, This, B> builder) {
-    	this(builder.versionNodes.toPersistentMap(), builder.tip);
+    	this(builder.versionNodes.toPersistentMap(), builder.leaves.toPersistentSet());
     }
     
-    public AbstractVersionGraph(PersistentTreeMap<Long, VersionNode<K, V, T>> versionNodes, VersionNode<K, V, T> tip) {
+    protected AbstractVersionGraph(PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes, PersistentSet<VersionNode<K, V, T>> leaves) {
 		this.versionNodes = versionNodes;
-		this.tip = tip;
+		this.leaves = leaves;
 	}
 
 	public final This commit(T version) {

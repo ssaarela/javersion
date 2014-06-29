@@ -18,7 +18,7 @@ package org.javersion.util;
 import java.util.Comparator;
 import java.util.Map;
 
-public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> implements PersistentMap<K, V> {
+public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> implements PersistentSortedMap<K, V> {
     
     @SuppressWarnings("rawtypes")
     public static final PersistentTreeMap EMPTY = new PersistentTreeMap();

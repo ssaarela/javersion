@@ -19,7 +19,7 @@ import java.util.*;
 
 import org.javersion.util.AbstractTreeMap.Node;
 
-public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableMap<K, V> {
+public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableSortedMap<K, V> {
     
     private MMap<K, V> map;
     

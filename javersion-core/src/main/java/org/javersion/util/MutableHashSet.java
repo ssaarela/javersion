@@ -94,18 +94,18 @@ public class MutableHashSet<E> extends AbstractSet<E> implements MutableSet<E> {
 	    
 	    private int size;
 	
-	    @SuppressWarnings("unchecked")
 	    private MSet(int expectedSize) {
-	        this(expectedSize, EMPTY_NODE, 0);
+	        this(expectedSize, null, 0);
 	    }
 	    
 	    private MSet(Node<E, Entry<E>> root, int size) {
 	    	this(32, root, size);
 	    }
 	    
+	    @SuppressWarnings("unchecked")
 	    private MSet(int expectedSize, Node<E, Entry<E>> root, int size) {
 	    	this.updateContext = new UpdateContext<>(expectedSize);
-	        this.root = root;
+	        this.root = root != null ? root : EMPTY_NODE;
 	        this.size = size;
 	    }
 	    
@@ -128,9 +128,10 @@ public class MutableHashSet<E> extends AbstractSet<E> implements MutableSet<E> {
 	    }
 	
 	    @Override
+	    @SuppressWarnings("unchecked")
 	    protected MSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
 	        verifyThread();
-	        root = newRoot;
+	        root = newRoot != null ? newRoot : EMPTY_NODE;
 	        size = newSize;
 	        return this;
 	    }

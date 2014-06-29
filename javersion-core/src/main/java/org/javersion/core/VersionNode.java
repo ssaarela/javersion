@@ -26,16 +26,9 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMe
 
     public final Set<VersionNode<K, V, T>> parents;
 
-    public final VersionNode<K, V, T> previous;
-
-    public VersionNode(VersionNode<K, V, T> previous, T version, Iterable<VersionNode<K, V, T>> parents) {
+    public VersionNode(T version, Iterable<VersionNode<K, V, T>> parents) {
     	super(toMergeNodeIterable(parents), version);
 
-        if (previous != null && version.revision <= previous.getRevision()) {
-            throw new IllegalVersionOrderException(previous.getRevision(), version.revision);
-        }
-
-        this.previous = previous;
         this.version = version;
         this.parents = ImmutableSet.copyOf(parents);
     }
