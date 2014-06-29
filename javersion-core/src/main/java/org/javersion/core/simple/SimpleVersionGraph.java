@@ -15,42 +15,44 @@
  */
 package org.javersion.core.simple;
 
-import org.javersion.core.VersionGraph;
-import org.javersion.core.VersionGraphBuilder;
+import org.javersion.core.AbstractVersionGraph;
+import org.javersion.core.AbstractVersionGraphBuilder;
 import org.javersion.core.simple.SimpleVersionGraph.Builder;
 
-public final class SimpleVersionGraph extends VersionGraph<String, String, SimpleVersion, SimpleVersionGraph, Builder> {
+public final class SimpleVersionGraph extends AbstractVersionGraph<String, String, SimpleVersion, SimpleVersionGraph, Builder> {
     
     public static SimpleVersionGraph init() {
-        return build(new Builder());
+    	return new SimpleVersionGraph();
     }
     
     public static SimpleVersionGraph init(SimpleVersion version) {
-        return build(new Builder(), version);
+    	Builder builder = new Builder();
+    	builder.add(version);
+    	return builder.build();
     }
     
     public static SimpleVersionGraph init(Iterable<SimpleVersion> versions) {
-        return build(new Builder(), versions);
-    }
-    
-
-    @Override
-    public SimpleVersionGraph commit(SimpleVersion version) {
-        return build(new Builder(this), version);
+    	Builder builder = new Builder();
+    	for (SimpleVersion version : versions) {
+    		builder.add(version);
+    	}
+    	return builder.build();
     }
 
-    @Override
-    public SimpleVersionGraph commit(Iterable<SimpleVersion> versions) {
-        return build(new Builder(this), versions);
+    private SimpleVersionGraph() {
+    	super();
     }
 
-
-    SimpleVersionGraph(Builder builder) {
+    private SimpleVersionGraph(Builder builder) {
         super(builder);
     }
+
+	@Override
+	protected Builder newBuilder() {
+		return new Builder(this);
+	}
     
-    
-    static class Builder extends VersionGraphBuilder<String, String, SimpleVersion, SimpleVersionGraph, Builder> {
+    static class Builder extends AbstractVersionGraphBuilder<String, String, SimpleVersion, SimpleVersionGraph, Builder> {
 
         protected Builder() {
             super();
@@ -63,15 +65,6 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Simpl
         protected SimpleVersionGraph build() {
             return new SimpleVersionGraph(this);
         }
-        
-        @Override
-        protected Builder newBuilder() {
-            return new Builder();
-        }
-
-        @Override
-        protected Builder self() {
-            return this;
-        }
     }
+
 }
