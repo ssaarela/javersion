@@ -120,7 +120,7 @@ public class SimpleVersionGraphTest {
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
                         "status", "Just married", // 4
-                        "mood", "Ecstatic", // 3
+                        "mood", "Ecstatic", // 4
                         "married", "2013-10-12")), // 4
 
             then("Merge with concurrent older version, prefer older")
