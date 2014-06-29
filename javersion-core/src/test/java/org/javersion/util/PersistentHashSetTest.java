@@ -52,7 +52,7 @@ public class PersistentHashSetTest {
     public void Removal() {
         MutableHashSet<Integer> set = SET.toMutableSet();
         for (Integer e : set) {
-            set.disjoin(e);
+            set.remove(e);
         }
         assertThat(set.size(), equalTo(0));
     }

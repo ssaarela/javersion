@@ -83,8 +83,8 @@ public class MergeHelper<K, V> {
         	conflicts.removeAll(entry.getKey());
     	}
         heads.removeAll(version.parentRevisions);
-        mergedRevisions.conjAll(version.parentRevisions);
-        mergedRevisions.conj(version.revision);
+        mergedRevisions.addAllFrom(version.parentRevisions);
+        mergedRevisions.add(version.revision);
         heads.add(version.revision);
         locked = true;
 	}
@@ -138,7 +138,7 @@ public class MergeHelper<K, V> {
 		    };
 
             mergedProperties.mergeAll(node.allProperties, merger);
-            mergedRevisions.conjAll(node.allRevisions);
+            mergedRevisions.addAllFrom(node.allRevisions);
             heads.removeAll(node.allRevisions.asSet());
 		}
 		conflicts.putAll(node.conflicts);

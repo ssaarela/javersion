@@ -62,6 +62,10 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
     public S conjAll(AbstractTrieSet<? extends E, ?> elements) {
         return conjAll(elements, elements.size());
     }
+    
+    public S conjAll(final Iterable<? extends E> elements) {
+    	return conjAll(elements, 32);
+    }
 
     @SuppressWarnings("unchecked")
     private S conjAll(final Iterable<? extends E> elements, int size) {

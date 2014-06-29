@@ -57,9 +57,11 @@ public class SimpleVersionGraphTest {
      * |/
      * 6    mood: null, married: null // unresolved status!
      * |
-     * 7    status="Married" // resolve status
+     * 7    // still unresolved status!
+     * |
+     * 8    status="Married" // resolve status
      * :
-     * 8    type: ROOT, status: "New beginning"
+     * 9    type: ROOT, status: "New beginning"
      * </pre>
      */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
@@ -176,11 +178,22 @@ public class SimpleVersionGraphTest {
                 		"lastName", "Foe",
                 		"status", "Just married")) // 4
                 .expectConflicts(multimapOf(
-                		"status", "Single"
+                		"status", "Single" // 2 - unresolved conflict
             			)),
                 		
                 		
     		when(version(7l)
+				.withParents(setOf(6l)))
+                .expectProperties(mapOf(
+                		"firstName", "John",
+                		"lastName", "Foe",
+                		"status", "Just married"))
+                .expectConflicts(multimapOf(
+                		"status", "Single" // 2 - still unresolved conflict
+            			)),
+                		
+                		
+    		when(version(8l)
 				.withParents(setOf(6l))
 				.withProperties(mapOf(
 						"status", "Married"
@@ -191,7 +204,7 @@ public class SimpleVersionGraphTest {
                 		"status", "Married")),
 			
 
-            when(version(8l)
+            when(version(9l)
                 .withProperties(mapOf(
                 		"status", "New beginning"))
                 .withType(VersionType.ROOT))

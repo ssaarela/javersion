@@ -16,7 +16,7 @@
 package org.javersion.util;
 
 
-public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E>> {
+public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E>> implements PersistentSet<E> {
     
     private final Node<E, Entry<E>> root;
     
@@ -32,10 +32,12 @@ public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E
         this.size = size;
     }
 
+    @Override
     public MutableHashSet<E> toMutableSet() {
         return new MutableHashSet<E>(root, size);
     }
     
+    @Override
     public ImmutableTrieSet<E> asSet() {
         return new ImmutableTrieSet<E>(this);
     }
