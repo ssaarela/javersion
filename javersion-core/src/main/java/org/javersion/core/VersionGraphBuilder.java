@@ -31,26 +31,18 @@ public abstract class VersionGraphBuilder<K,
     VersionNode<K, V, T> tip;
     
     protected VersionGraphBuilder() {
-        this(null, null);
+        this(null);
     }
     
     protected VersionGraphBuilder(G parentGraph) {
-        this(null, Check.notNull(parentGraph, "parentGraph"));
-        this.tip = parentGraph.tip;
-    }
-    
-    protected VersionGraphBuilder(Lock lock) {
-        this(Check.notNull(lock, "lock"), null);
-    }
-    
-    private VersionGraphBuilder(Lock lock, G parentGraph) {
-        super(lock, parentGraph, Maps.<Long, VersionNode<K, V, T>>newLinkedHashMap());
+    	super(parentGraph, Maps.<Long, VersionNode<K, V, T>>newLinkedHashMap());
+        this.tip = parentGraph != null ? parentGraph.tip : null;
     }
     
     final B add(T version) {
         Check.notNull(version, "version");
         if (version.type == VersionType.ROOT) {
-            return newBuilder(this.lock).addInternal(version);
+            return newBuilder().addInternal(version);
         } else {
             return addInternal(version);
         }
@@ -65,7 +57,7 @@ public abstract class VersionGraphBuilder<K,
     
     protected abstract B self();
     
-    protected abstract B newBuilder(Lock lock);
+    protected abstract B newBuilder();
 
     protected abstract G build();
 

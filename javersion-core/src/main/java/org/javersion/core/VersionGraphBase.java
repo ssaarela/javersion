@@ -29,8 +29,6 @@ public abstract class VersionGraphBase<K, V,
                                        This extends VersionGraph<K, V, T, This, B>,
                                        B extends VersionGraphBuilder<K, V, T, This, B>> 
                 implements Function<Long, VersionNode<K, V, T>>{
-    
-    public final Lock lock;
 
     public final This parentGraph;
     
@@ -47,15 +45,8 @@ public abstract class VersionGraphBase<K, V,
         
     }
 
-    VersionGraphBase(Lock lock, This parentGraph, Map<Long, VersionNode<K, V, T>> versionNodes) {
+    VersionGraphBase(This parentGraph, Map<Long, VersionNode<K, V, T>> versionNodes) {
         this.parentGraph = parentGraph;
-        if (parentGraph != null) {
-            this.lock = parentGraph.lock;
-        } else if (lock != null) {
-            this.lock = lock;
-        } else {
-            this.lock = new Lock();
-        }
         this.versionNodes = Check.notNull(versionNodes, "versionNodes");
     }
     

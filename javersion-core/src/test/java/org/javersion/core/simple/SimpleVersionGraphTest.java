@@ -20,8 +20,6 @@ import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
@@ -29,13 +27,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.javersion.core.Lock;
 import org.javersion.core.Merge;
 import org.javersion.core.VersionType;
 import org.junit.Test;
 
 import com.google.common.base.Function;
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 
 public class SimpleVersionGraphTest {
     
@@ -243,16 +246,12 @@ public class SimpleVersionGraphTest {
     @Test
     public void Bulk_Load() {
         long revision = -1;
-        Lock lock = null;
         SimpleVersionGraph versionGraph = null;
         for (List<VersionExpectation> expectations : getBulkExpectations()) {
             if (versionGraph == null) {
                 versionGraph = SimpleVersionGraph.init(getVersions(expectations));
-                lock = versionGraph.lock;
-                assertThat(lock, notNullValue());
             } else {
                 versionGraph = versionGraph.commit(getVersions(expectations));
-                assertThat(lock, sameInstance(versionGraph.lock));
             }
             for (VersionExpectation expectation : expectations) {
                 if (expectation.version != null) {

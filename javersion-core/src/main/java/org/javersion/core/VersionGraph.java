@@ -28,7 +28,7 @@ public abstract class VersionGraph<K, V,
     public final VersionNode<K, V, T> tip;
     
     protected VersionGraph(VersionGraphBuilder<K, V, T, This, B> builder) {
-        super(builder.lock, builder.parentGraph, unmodifiableMap(builder.versionNodes));
+        super(builder.parentGraph, unmodifiableMap(builder.versionNodes));
         this.tip = builder.tip;
     }
     

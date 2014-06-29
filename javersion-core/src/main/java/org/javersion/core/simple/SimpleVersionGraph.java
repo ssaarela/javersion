@@ -15,7 +15,6 @@
  */
 package org.javersion.core.simple;
 
-import org.javersion.core.Lock;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionGraphBuilder;
 import org.javersion.core.simple.SimpleVersionGraph.Builder;
@@ -59,10 +58,6 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Simpl
         protected Builder(SimpleVersionGraph parentGraph) {
             super(parentGraph);
         }
-        
-        protected Builder(Lock lock) {
-            super(lock);
-        }
 
         @Override
         protected SimpleVersionGraph build() {
@@ -70,8 +65,8 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Simpl
         }
         
         @Override
-        protected Builder newBuilder(Lock lock) {
-            return new Builder(lock);
+        protected Builder newBuilder() {
+            return new Builder();
         }
 
         @Override
