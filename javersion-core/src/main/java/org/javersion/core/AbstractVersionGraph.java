@@ -37,7 +37,7 @@ public abstract class AbstractVersionGraph<K, V,
     }
     
     protected AbstractVersionGraph(AbstractVersionGraphBuilder<K, V, T, This, B> builder) {
-    	this(builder.versions.toPersistentMap(), builder.tip);
+    	this(builder.versionNodes.toPersistentMap(), builder.tip);
     }
     
     public AbstractVersionGraph(PersistentTreeMap<Long, VersionNode<K, V, T>> versionNodes, VersionNode<K, V, T> tip) {

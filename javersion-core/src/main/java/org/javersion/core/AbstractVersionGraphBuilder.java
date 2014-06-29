@@ -29,7 +29,7 @@ public abstract class AbstractVersionGraphBuilder<K,
     
     VersionNode<K, V, T> tip;
     
-    MutableTreeMap<Long, VersionNode<K, V, T>> versions;
+    MutableTreeMap<Long, VersionNode<K, V, T>> versionNodes;
 
     private Function<Long, VersionNode<K, V, T>> revisionToVersionNode = new Function<Long, VersionNode<K, V, T>>() {
         @Override
@@ -40,23 +40,23 @@ public abstract class AbstractVersionGraphBuilder<K,
 
     
     protected AbstractVersionGraphBuilder() {
-    	this.versions = new MutableTreeMap<>();
+    	this.versionNodes = new MutableTreeMap<>();
     }
     
     protected AbstractVersionGraphBuilder(G parentGraph) {
-    	this.versions = parentGraph.versionNodes.toMutableMap();
+    	this.versionNodes = parentGraph.versionNodes.toMutableMap();
         this.tip = parentGraph.tip;
     }
     
     public final void add(T version) {
         Check.notNull(version, "version");
         if (version.type == VersionType.ROOT) {
-        	this.versions = new MutableTreeMap<>();
+        	this.versionNodes = new MutableTreeMap<>();
         	this.tip = null;
         }
         Iterable<VersionNode<K, V, T>> parentsDescending = revisionsToNodes(version.parentRevisions);
         tip = new VersionNode<K, V, T>(tip, version, parentsDescending);
-        versions.put(version.revision, tip);
+        versionNodes.put(version.revision, tip);
     }
     
     Iterable<VersionNode<K, V, T>> revisionsToNodes(Iterable<Long> revisions) {
@@ -64,7 +64,7 @@ public abstract class AbstractVersionGraphBuilder<K,
     }
 
     private VersionNode<K, V, T> getVersionNode(long revision) {
-        VersionNode<K, V, T> node = versions.get(revision);
+        VersionNode<K, V, T> node = versionNodes.get(revision);
         if (node == null) {
             throw new VersionNotFoundException(revision);
         }
