@@ -8,7 +8,7 @@ import com.google.common.base.Function;
 public class MapUtils {
 
 	@SuppressWarnings("rawtypes")
-	public static final Function TO_MAP_ENTRY = new Function() {
+	private static final Function TO_MAP_ENTRY = new Function() {
 	    @Override
 	    public Object apply(Object input) {
 	        return (Map.Entry) input;
@@ -16,7 +16,7 @@ public class MapUtils {
 	};
 	
 	@SuppressWarnings("rawtypes")
-	public static final Function GET_KEY = new Function() {
+	private static final Function GET_KEY = new Function() {
 	    @Override
 	    public Object apply(Object input) {
 	        return ((Entry) input).getKey();
@@ -24,11 +24,25 @@ public class MapUtils {
 	};
 	
 	@SuppressWarnings("rawtypes")
-	public static final Function GET_VALUE = new Function() {
+	private static final Function GET_VALUE = new Function() {
 	    @Override
 	    public Object apply(Object input) {
 	        return ((Entry) input).getValue();
 	    }
 	};
+	
+	@SuppressWarnings("unchecked")
+	public static <K, V> Function<? super Map.Entry<K, V>, Map.Entry<K, V>> mapEntryFunction() {
+		return TO_MAP_ENTRY;
+	}
 
+	@SuppressWarnings("unchecked")
+	public static <K> Function<Map.Entry<K, ?>, K> mapKeyFunction() {
+		return GET_KEY;
+	};
+
+	@SuppressWarnings("unchecked")
+	public static <V> Function<Map.Entry<?, V>, V> mapValueFunction() {
+		return GET_VALUE;
+	};
 }

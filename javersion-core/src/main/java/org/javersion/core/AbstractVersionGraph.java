@@ -16,12 +16,18 @@
 package org.javersion.core;
 
 import static com.google.common.collect.Iterables.transform;
-import static org.javersion.core.AbstractMergeNode.toMergeNodeIterable;
+import static org.javersion.core.AbstractMergeNode.toMergeNodes;
+import static org.javersion.core.BranchAndRevision.max;
+import static org.javersion.core.BranchAndRevision.min;
 
+import java.util.List;
+
+import org.javersion.util.MapUtils;
 import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 
 public abstract class AbstractVersionGraph<K, V, 
                           T extends Version<K, V>,
@@ -75,9 +81,22 @@ public abstract class AbstractVersionGraph<K, V,
         }
         return node;
     }
+    
+    public final Merge<K, V> mergeBranches(Iterable<String> branches) {
+    	List<MergeNode<K, V>> mergedBranches = Lists.newArrayList();
+    	for (String branch : branches) {
+    		mergedBranches.add(new MergeNode<>(getHeads(branch)));
+    	}
+    	return new Merge<K, V>(mergedBranches);
+    }
 
-    public final Merge<K, V> merge(Iterable<Long> revisions) {
-        return new Merge<K, V>(toMergeNodeIterable(transform(revisions, this)));
+    public final Merge<K, V> mergeRevisions(Iterable<Long> revisions) {
+        return new Merge<K, V>(toMergeNodes(transform(revisions, this)));
+    }
+    
+    protected Iterable<VersionNode<K, V, T>> getHeads(String branch) {
+    	return transform(heads.range(min(branch), max(branch)), 
+    			MapUtils.<VersionNode<K, V, T>>mapValueFunction());
     }
     
 }

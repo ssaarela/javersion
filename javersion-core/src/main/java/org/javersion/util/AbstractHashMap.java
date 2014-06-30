@@ -17,9 +17,6 @@ package org.javersion.util;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.collect.Iterators.transform;
-import static org.javersion.util.MapUtils.GET_KEY;
-import static org.javersion.util.MapUtils.GET_VALUE;
-import static org.javersion.util.MapUtils.TO_MAP_ENTRY;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -110,19 +107,16 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
         return root().find(key) != null;
     }
 
-    @SuppressWarnings("unchecked")
     public Iterator<Map.Entry<K, V>> iterator() {
-        return transform(doIterator(), TO_MAP_ENTRY);
+        return transform(doIterator(), MapUtils.<K, V>mapEntryFunction());
     }
 
-    @SuppressWarnings("unchecked")
     public Iterable<K> keys() {
-        return Iterables.transform(this, GET_KEY);
+        return Iterables.transform(this, MapUtils.<K>mapKeyFunction());
     }
 
-    @SuppressWarnings("unchecked")
     public Iterable<V> values() {
-        return Iterables.transform(this, GET_VALUE);
+        return Iterables.transform(this, MapUtils.<V>mapValueFunction());
     }
     
     

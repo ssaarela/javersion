@@ -63,7 +63,8 @@ public class MapTest {
         assertThat(mab.objects, equalTo(map(kv, kv, new KeyValue(789), new KeyValue(234), new KeyValue(890), null)));
     }
     
-    private static <K, V> Map<K, V> map(K k, V v) {
+    @SuppressWarnings("unused")
+	private static <K, V> Map<K, V> map(K k, V v) {
         Map<K, V> map = Maps.newLinkedHashMap();
         map.put(k, v);
         return map;

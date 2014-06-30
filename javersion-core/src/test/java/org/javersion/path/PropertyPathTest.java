@@ -16,8 +16,9 @@
 package org.javersion.path;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.path.PropertyPath.ROOT;

@@ -26,7 +26,7 @@ import com.google.common.collect.Multimap;
 
 public abstract class AbstractMergeNode<K, V> {
 	
-	protected static <K, V, T extends Version<K, V>> Iterable<AbstractMergeNode<K, V>> toMergeNodeIterable(Iterable<VersionNode<K, V, T>> nodes) {
+	protected static <K, V, T extends Version<K, V>> Iterable<AbstractMergeNode<K, V>> toMergeNodes(Iterable<VersionNode<K, V, T>> nodes) {
 		return Iterables.transform(nodes, new Function<VersionNode<K, V, T>, AbstractMergeNode<K, V>>() {
 			@Override
 			public AbstractMergeNode<K, V> apply(VersionNode<K, V, T> input) {

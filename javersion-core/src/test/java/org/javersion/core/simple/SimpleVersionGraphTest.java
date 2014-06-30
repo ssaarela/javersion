@@ -20,6 +20,7 @@ import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
+import static org.javersion.core.Version.DEFAULT_BRANCH;
 import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
@@ -44,12 +45,15 @@ import com.google.common.collect.Multimaps;
 
 public class SimpleVersionGraphTest {
     
-    private static Set<Long> EMPTY_REVISIONS = setOf();
+    private static final Set<Long> EMPTY_REVISIONS = setOf();
     
-    private static Map<String, String> EMPTY_PROPERTIES = mapOf();
+    private static final Map<String, String> EMPTY_PROPERTIES = mapOf();
     
+    private static final String ALT_BRANCH = "alt-branch"; 
     /**
      * <pre>
+     * default
+     *    alt-branch
      * 1    firstName: "John", lastName: "Doe"
      * | \   
      * 2  |  status: "Single"
@@ -79,7 +83,7 @@ public class SimpleVersionGraphTest {
                         "lastName", "Doe")),
 
             then("Empty merge")
-	            .expectLeaves(setOf(1l))
+	            .expectAllHeads(setOf(1l))
                 .mergeRevisions(EMPTY_REVISIONS)
                 .expectProperties(EMPTY_PROPERTIES),
                 
@@ -95,10 +99,11 @@ public class SimpleVersionGraphTest {
 
 
             when(version(3l)
+            	.withBranch(ALT_BRANCH)
                 .withParents(setOf(1l))
                 .withProperties(mapOf(
                 		"mood", "Lonely")))
-        		.expectLeaves(setOf(2l, 3l))
+        		.expectAllHeads(setOf(2l, 3l))
                 .mergeRevisions(setOf(3l, 2l))
                 .expectProperties(mapOf(
                 		"firstName", "John", // 1
@@ -108,13 +113,14 @@ public class SimpleVersionGraphTest {
 
 
             when(version(4l)
+            	.withBranch(ALT_BRANCH)
                 .withParents(setOf(3l))
                 .withProperties(mapOf(
                 		"lastName", "Foe",
                 		"status", "Just married",
                 		"mood", "Ecstatic",
                 		"married", "2013-10-12")))
-        		.expectLeaves(setOf(2l, 4l))
+        		.expectAllHeads(setOf(2l, 4l))
                 .mergeRevisions(setOf(4l))
                 .expectProperties(mapOf(
                 		"firstName", "John", // 1
@@ -124,9 +130,8 @@ public class SimpleVersionGraphTest {
                 		"married", "2013-10-12")), // 4
 
             then("Merge with ancestor")
-        		.expectLeaves(setOf(2l, 4l))
                 .mergeRevisions(setOf(3l, 4l))
-                .expectHeads(setOf(4l))
+                .expectMergeHeads(setOf(4l))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
@@ -135,9 +140,8 @@ public class SimpleVersionGraphTest {
                         "married", "2013-10-12")), // 4
 
             then("Merge with concurrent older version, prefer older")
-        		.expectLeaves(setOf(2l, 4l))
                 .mergeRevisions(setOf(2l, 4l))
-                .expectHeads(setOf(2l, 4l))
+                .expectMergeHeads(setOf(2l, 4l))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
@@ -149,9 +153,8 @@ public class SimpleVersionGraphTest {
                         )),
 
             then("Merge with concurrent older version, prefer newer")
-        		.expectLeaves(setOf(2l, 4l))
             	.mergeRevisions(setOf(4l, 2l))
-                .expectHeads(setOf(2l, 4l))
+                .expectMergeHeads(setOf(2l, 4l))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
@@ -160,14 +163,14 @@ public class SimpleVersionGraphTest {
                         "married", "2013-10-12")) // 4
                 .expectConflicts(multimapOf(
                         "status", "Single" // 2
-                        )),
+                        )),            	
 
 
             when(version(5l)
                 .withParents(setOf(2l))
                 .withProperties(mapOf(
                 		"mood", "Ecstatic")))
-        		.expectLeaves(setOf(5l, 4l))
+        		.expectAllHeads(setOf(5l, 4l))
                 .mergeRevisions(setOf(4l, 5l))
                 .expectProperties(mapOf(
                 		"firstName", "John",
@@ -178,6 +181,25 @@ public class SimpleVersionGraphTest {
                 .expectConflicts(multimapOf(
                 		"status", "Single" // 2
                 		)),  
+                        
+            then("Merge default branch")
+            	.mergeBranches(setOf(DEFAULT_BRANCH))
+            	.expectMergeHeads(setOf(5l))
+                .expectProperties(mapOf(
+                		"firstName", "John", // 1
+                		"lastName", "Doe", // 1
+                		"status", "Single", // 2
+                		"mood", "Ecstatic")), // 5
+                        
+            then("Merge alt-branch")
+            	.mergeBranches(setOf(ALT_BRANCH))
+            	.expectMergeHeads(setOf(4l))
+                .expectProperties(mapOf(
+                		"firstName", "John", // 1
+                		"lastName", "Foe", // 4
+                		"status", "Just married", // 4
+                		"mood", "Ecstatic", // 4
+                		"married", "2013-10-12")), // 4
 
 
             when(version(6l)
@@ -185,6 +207,7 @@ public class SimpleVersionGraphTest {
                 .withProperties(mapOf(
                 		"mood", null,
                 		"married", null)))
+        		.expectAllHeads(setOf(6l, 4l))
                 .expectProperties(mapOf(
                 		"firstName", "John",
                 		"lastName", "Foe",
@@ -193,6 +216,28 @@ public class SimpleVersionGraphTest {
                 		"status", "Single" // 2 - unresolved conflict
             			)),
                 		
+                        
+            then("Merge alt-branch - should not have changed")
+            	.mergeBranches(setOf(ALT_BRANCH))
+            	.expectMergeHeads(setOf(4l))
+                .expectProperties(mapOf(
+                		"firstName", "John", // 1
+                		"lastName", "Foe", // 4
+                		"status", "Just married", // 4
+                		"mood", "Ecstatic", // 4
+                		"married", "2013-10-12")), // 4
+                        
+            then("Merge alt-branch and default")
+            	.mergeBranches(setOf(ALT_BRANCH, DEFAULT_BRANCH))
+            	.expectMergeHeads(setOf(6l))
+                .expectProperties(mapOf(
+                		"firstName", "John",
+                		"lastName", "Foe",
+                		"status", "Just married")) // 4
+                .expectConflicts(multimapOf(
+                		"status", "Single" // 2 - unresolved conflict
+            			)),
+
                 		
     		when(version(7l)
 				.withParents(setOf(6l)))
@@ -240,35 +285,21 @@ public class SimpleVersionGraphTest {
     }
     
     static List<List<VersionExpectation>> getBulkExpectations() {
-        List<List<VersionExpectation>> bulks = Lists.newArrayList();
-        List<VersionExpectation> bulk = Lists.newArrayList();
-        for (VersionExpectation expectation : EXPECTATIONS) {
-            if (expectation.version != null && expectation.version.type == VersionType.ROOT) {
-                bulks.add(bulk);
-                bulk = Lists.newArrayList();
-            }
-            bulk.add(expectation);
-        }
-        bulks.add(bulk);
+    	List<List<VersionExpectation>> bulks = Lists.newArrayList();
+    	for (int i=1; i<= EXPECTATIONS.size(); i++) {
+    		bulks.add(EXPECTATIONS.subList(0, i));
+    	}
         return bulks;
     }
 
     @Test
     public void Bulk_Load() {
-        long revision = -1;
-        SimpleVersionGraph versionGraph = null;
         for (List<VersionExpectation> expectations : getBulkExpectations()) {
-            if (versionGraph == null) {
-                versionGraph = SimpleVersionGraph.init(getVersions(expectations));
-            } else {
-                versionGraph = versionGraph.commit(getVersions(expectations));
-            }
-            for (VersionExpectation expectation : expectations) {
-                if (expectation.version != null) {
-                    revision = expectation.version.revision;
-                }
-                assertMergeExpectations(versionGraph, revision, expectation);
-            }
+        	long revision = -1;
+        	SimpleVersionGraph versionGraph = SimpleVersionGraph.init(getVersions(expectations));
+        	VersionExpectation expectation = expectations.get(expectations.size() - 1);
+            assertGraphExpectations(versionGraph, revision, expectation);
+            assertMergeExpectations(versionGraph, revision, expectation);
         }
     }
 
@@ -278,20 +309,27 @@ public class SimpleVersionGraphTest {
     }
     
     private void assertGraphExpectations(SimpleVersionGraph versionGraph, long revision, VersionExpectation expectation) {
-    	Set<Long> leaves = new HashSet<>();
-    	for (BranchAndRevision leaf : versionGraph.heads.keys()) {
-    		leaves.add(leaf.revision);
+    	if (expectation.expectedHeads != null) {
+	    	Set<Long> heads = new HashSet<>();
+	    	for (BranchAndRevision leaf : versionGraph.heads.keys()) {
+	    		heads.add(leaf.revision);
+	    	}
+	    	assertThat(title("heads", revision, expectation),
+	    			heads,
+	    			equalTo(expectation.expectedHeads));
     	}
-    	assertThat(title("leaves", revision, expectation),
-    			leaves,
-    			equalTo(expectation.expectedLeaves));
     }
     private void assertMergeExpectations(SimpleVersionGraph versionGraph, long revision, VersionExpectation expectation) {
         try {
-            Merge<String, String> merge = versionGraph.merge(expectation.mergeRevisions);
-            assertThat(title("revisions", revision, expectation), 
+            Merge<String, String> merge;
+            if (expectation.mergeBranches != null) {
+            	merge = versionGraph.mergeBranches(expectation.mergeBranches);
+            } else {
+            	merge = versionGraph.mergeRevisions(expectation.mergeRevisions);
+            }
+            assertThat(title("mergeHeads", revision, expectation), 
                     merge.heads, 
-                    equalTo(expectation.expectedHeads));
+                    equalTo(expectation.expectedMergeHeads));
             
             assertThat(title("properties", revision, expectation), 
                     merge.getProperties(), 
@@ -320,10 +358,11 @@ public class SimpleVersionGraphTest {
         public final String title;
         public final SimpleVersion version;
         public Set<Long> mergeRevisions = ImmutableSet.of();
+        public Iterable<String> mergeBranches;
         public Map<String, String> expectedProperties;
         public Multimap<String, String> expectedConflicts = ImmutableMultimap.of();
+        public Set<Long> expectedMergeHeads;
         public Set<Long> expectedHeads;
-        public Set<Long> expectedLeaves = ImmutableSet.of();
         public VersionExpectation(String title) {
             this(null, title);
         }
@@ -335,25 +374,28 @@ public class SimpleVersionGraphTest {
             this.title = title;
             if (version != null) {
                 this.mergeRevisions = ImmutableSet.of(version.revision);
-                this.expectedLeaves = ImmutableSet.of(version.revision);
             }
-            this.expectedHeads = mergeRevisions;
+            this.expectedMergeHeads = mergeRevisions;
         }
         public VersionExpectation mergeRevisions(Set<Long> mergeRevisions) {
             this.mergeRevisions = mergeRevisions;
-            this.expectedHeads = mergeRevisions;
+            this.expectedMergeHeads = mergeRevisions;
             return this;
+        }
+        public VersionExpectation mergeBranches(Iterable<String> mergeBranches) {
+        	this.mergeBranches = mergeBranches;
+        	return this;
         }
         public VersionExpectation expectProperties(Map<String, String> expectedProperties) {
             this.expectedProperties = expectedProperties;
             return this;
         }
-        public VersionExpectation expectHeads(Set<Long> expectedRevisions) {
-            this.expectedHeads = expectedRevisions;
+        public VersionExpectation expectMergeHeads(Set<Long> expectedRevisions) {
+            this.expectedMergeHeads = expectedRevisions;
             return this;
         }
-        public VersionExpectation expectLeaves(Set<Long> expectedLeaves) {
-            this.expectedLeaves = expectedLeaves;
+        public VersionExpectation expectAllHeads(Set<Long> expectedHeads) {
+            this.expectedHeads = expectedHeads;
             return this;
         }
         public VersionExpectation expectConflicts(Multimap<String, String> expectedConflicts) {

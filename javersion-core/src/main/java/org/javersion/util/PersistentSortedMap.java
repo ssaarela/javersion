@@ -15,6 +15,7 @@
  */
 package org.javersion.util;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -50,4 +51,15 @@ public interface PersistentSortedMap<K, V> extends PersistentMap<K, V> {
     @Override
     // TODO: SortedMap
     Map<K, V> asMap();
+
+    Iterator<Map.Entry<K, V>> iterator(boolean asc);
+    
+    Iterable<Map.Entry<K, V>> range(K from, K to);
+    
+    Iterable<Map.Entry<K, V>> range(K from, K to, boolean asc);
+    
+    Iterable<Map.Entry<K, V>> range(final K from, final boolean fromInclusive, final K to, final boolean toInclusive);
+    		
+    Iterable<Map.Entry<K, V>> range(final K from, final boolean fromInclusive, final K to, final boolean toInclusive, final boolean asc);
+    
 }

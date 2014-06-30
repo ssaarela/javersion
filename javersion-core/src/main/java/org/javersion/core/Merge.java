@@ -44,7 +44,7 @@ public final class Merge<K, V> {
         
     };
 
-    public Merge(Iterable<AbstractMergeNode<K, V>> versions) {
+    public Merge(Iterable<? extends AbstractMergeNode<K, V>> versions) {
         Check.notNull(versions, "versions");
 
         MergeHelper<K, V> mergeHelper = new MergeHelper<K, V>() {

@@ -17,9 +17,6 @@ package org.javersion.util;
 
 import static com.google.common.collect.Iterables.transform;
 import static org.javersion.util.AbstractRedBlackTree.Color.RED;
-import static org.javersion.util.MapUtils.GET_KEY;
-import static org.javersion.util.MapUtils.GET_VALUE;
-import static org.javersion.util.MapUtils.TO_MAP_ENTRY;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -116,20 +113,43 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     }
 
 
-    @SuppressWarnings("unchecked")
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
-        return Iterators.transform(doIterator(root(), true), TO_MAP_ENTRY);
+        return iterator(true);
+    }
+
+    public Iterator<Map.Entry<K, V>> iterator(boolean asc) {
+        return Iterators.transform(doIterator(root(), true), MapUtils.<K, V>mapEntryFunction());
     }
     
-    @SuppressWarnings("unchecked")
+    public Iterable<Map.Entry<K, V>> range(K from, K to) {
+    	return range(from, true, to, false, true);
+    }
+    
+    public Iterable<Map.Entry<K, V>> range(K from, K to, boolean asc) {
+    	return range(from, true, to, false, asc);
+    }
+
+    public Iterable<Map.Entry<K, V>> range(final K from, final boolean fromInclusive, final K to, final boolean toInclusive) {
+    	return range(from, fromInclusive, to, toInclusive, true);
+    }
+
+    public Iterable<Map.Entry<K, V>> range(final K from, final boolean fromInclusive, final K to, final boolean toInclusive, final boolean asc) {
+    	return new Iterable<Map.Entry<K,V>>() {
+			@Override
+			public Iterator<Entry<K, V>> iterator() {
+				return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive), 
+						MapUtils.<K, V>mapEntryFunction());
+			}
+		};
+	}
+
     public Iterable<K> keys() {
-    	return Iterables.transform(this, GET_KEY);
+    	return Iterables.transform(this, MapUtils.<K>mapKeyFunction());
     }
     
-    @SuppressWarnings("unchecked")
     public Iterable<V> values() {
-    	return Iterables.transform(this, GET_VALUE);
+    	return Iterables.transform(this, MapUtils.<V>mapValueFunction());
     }
 
     public String toString() {

@@ -20,7 +20,7 @@ import java.util.Set;
 public class MergeNode<K, V> extends AbstractMergeNode<K, V> {
 	
 	public <T extends Version<K, V>> MergeNode(Iterable<VersionNode<K, V, T>> nodes) {
-		super(toMergeNodeIterable(nodes));
+		super(toMergeNodes(nodes));
 	}
 
 	private Set<Long> heads;

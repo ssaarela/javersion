@@ -146,6 +146,10 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
     protected Iterator<N> doIterator(N root, boolean asc) {
         return new RBIterator<K, N>(root, asc);
     }
+    
+    protected Iterator<N> doRangeIterator(N root, boolean asc, K from, boolean fromInclusive, K to, boolean toInclusive) {
+    	return new RangeIterator<K, N>(root, asc, comparator, from, fromInclusive, to, toInclusive);
+    }
 
     protected final This doRemove(UpdateContext<? super N> context, N root, Object keyObj) {
         @SuppressWarnings("unchecked")
@@ -548,23 +552,17 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     }
 
-    static final class RBIterator<K, N extends Node<K, N>> extends UnmodifiableIterator<N> {
+    static abstract class AbstractRBIterator<K, N extends Node<K, N>> extends UnmodifiableIterator<N> {
 
-        private final Deque<N> stack = new ArrayDeque<N>();
+        final Deque<N> stack = new ArrayDeque<N>();
 
-        private final boolean asc;
+        final boolean asc;
         
-        public RBIterator(N root, boolean asc) {
+        public AbstractRBIterator(boolean asc) {
             this.asc = asc;
-            push(root);
         }
         
-        private void push(N node) {
-            while (node != null) {
-                stack.addLast(node);
-                node = (asc ? node.left : node.right);
-            }
-        }
+        protected abstract void push(N node);
         
         @Override
         public boolean hasNext() {
@@ -576,9 +574,73 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            N result = stack.removeLast();
+            N result = stack.pop();
             push(asc ? result.right : result.left);
             return result;
         }
+    	
+    }
+
+    static class RBIterator<K, N extends Node<K, N>> extends AbstractRBIterator<K, N> {
+        
+        public RBIterator(N root, boolean asc) {
+        	super(asc);
+            push(root);
+        }
+        
+        protected void push(N node) {
+            while (node != null) {
+                stack.push(node);
+                node = (asc ? node.left : node.right);
+            }
+        }
+    }
+    
+    static class RangeIterator<K, N extends Node<K, N>> extends AbstractRBIterator<K, N> {
+
+    	final Comparator<? super K> comparator; 
+    	final K from;
+    	final boolean fromInclusive;
+    	final K to;
+    	final boolean toInclusive;
+
+		public RangeIterator(N root, boolean asc, Comparator<? super K> comparator, K from, boolean fromInclusive, K to, boolean toInclusive) {
+			super(asc);
+			this.comparator = comparator;
+			this.from = from;
+			this.fromInclusive = fromInclusive;
+			this.to = to;
+			this.toInclusive = toInclusive;
+            push(root);
+		}
+
+		@Override
+        protected void push(N node) {
+            while (node != null) {
+            	boolean fromIncluded = fromIncluded(node.key);
+            	boolean toIncluded = toIncluded(node.key);
+            	if (fromIncluded && toIncluded) {
+            		stack.push(node);
+            	}
+            	if (asc) {
+            		node = fromIncluded ? node.left : node.right;
+            	} else {
+            		node = toIncluded ? node.right : node.left;
+            	}
+            }
+        }
+		
+		private boolean fromIncluded(K key) {
+			return from == null || isIncluded(from, key, fromInclusive);
+		}
+		
+		private boolean toIncluded(K key) {
+			return to == null || isIncluded(key, to, toInclusive);
+		}
+		
+		private boolean isIncluded(K key1, K key2, boolean inclusive) {
+			int cmpr = comparator.compare(key1, key2);
+			return cmpr < 0 || inclusive && cmpr == 0;
+		}
     }
 }

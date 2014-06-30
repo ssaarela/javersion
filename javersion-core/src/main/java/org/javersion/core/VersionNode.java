@@ -27,7 +27,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMe
     public final Set<VersionNode<K, V, T>> parents;
 
     public VersionNode(T version, Iterable<VersionNode<K, V, T>> parents) {
-    	super(toMergeNodeIterable(parents), version);
+    	super(toMergeNodes(parents), version);
 
         this.version = version;
         this.parents = ImmutableSet.copyOf(parents);
