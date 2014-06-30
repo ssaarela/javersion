@@ -17,6 +17,9 @@ package org.javersion.util;
 
 import static com.google.common.base.Objects.equal;
 import static com.google.common.collect.Iterators.transform;
+import static org.javersion.util.MapUtils.GET_KEY;
+import static org.javersion.util.MapUtils.GET_VALUE;
+import static org.javersion.util.MapUtils.TO_MAP_ENTRY;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -24,8 +27,11 @@ import java.util.Map;
 import org.javersion.util.AbstractHashMap.Entry;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 
-public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, This>> extends AbstractHashTrie<K, Entry<K,V>, AbstractHashMap<K, V, This>> {
+public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, This>> 
+		extends AbstractHashTrie<K, Entry<K,V>, AbstractHashMap<K, V, This>>
+		implements Iterable<Map.Entry<K, V>> {
     
     @SuppressWarnings("rawtypes")
     private static final Function TO_ENTRY = new Function() {
@@ -33,14 +39,6 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
         @Override
         public Object apply(Object input) {
             return toEntry((Map.Entry) input);
-        }
-    };
-    
-    @SuppressWarnings("rawtypes")
-    private static final Function TO_MAP_ENTRY = new Function() {
-        @Override
-        public Object apply(Object input) {
-            return (Map.Entry) input;
         }
     };
     
@@ -115,6 +113,16 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     @SuppressWarnings("unchecked")
     public Iterator<Map.Entry<K, V>> iterator() {
         return transform(doIterator(), TO_MAP_ENTRY);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Iterable<K> keys() {
+        return Iterables.transform(this, GET_KEY);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Iterable<V> values() {
+        return Iterables.transform(this, GET_VALUE);
     }
     
     

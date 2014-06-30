@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.core.BranchAndRevision;
 import org.javersion.core.Merge;
-import org.javersion.core.VersionNode;
 import org.javersion.core.VersionType;
 import org.junit.Test;
 
@@ -279,8 +279,8 @@ public class SimpleVersionGraphTest {
     
     private void assertGraphExpectations(SimpleVersionGraph versionGraph, long revision, VersionExpectation expectation) {
     	Set<Long> leaves = new HashSet<>();
-    	for (VersionNode<?, ?, ?> leaf : versionGraph.leaves) {
-    		leaves.add(leaf.getRevision());
+    	for (BranchAndRevision leaf : versionGraph.heads.keys()) {
+    		leaves.add(leaf.revision);
     	}
     	assertThat(title("leaves", revision, expectation),
     			leaves,

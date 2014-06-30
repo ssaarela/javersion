@@ -20,7 +20,7 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
-public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMergeNode<K, V> implements Comparable<VersionNode<K, V, T>> {
+public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMergeNode<K, V> {
     
     public final T version;
 
@@ -37,6 +37,10 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMe
         return version.revision;
     }
     
+    public String getBranch() {
+    	return version.branch;
+    }
+    
     public Map<K, VersionProperty<V>> getVersionProperties() {
         return version.getVersionProperties();
     }
@@ -45,11 +49,16 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMe
 	public Set<Long> getHeads() {
 		return ImmutableSet.of(version.revision);
 	}
-
+	
     @Override
-    public int compareTo(VersionNode<K, V, T> o) {
-        return Long.compare(getRevision(), o.getRevision());
-    }
+	public int hashCode() {
+		return Long.hashCode(version.revision);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return obj == this;
+	}
     
     @Override
     public String toString() {

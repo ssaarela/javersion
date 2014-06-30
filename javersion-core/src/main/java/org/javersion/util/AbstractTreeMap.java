@@ -17,6 +17,9 @@ package org.javersion.util;
 
 import static com.google.common.collect.Iterables.transform;
 import static org.javersion.util.AbstractRedBlackTree.Color.RED;
+import static org.javersion.util.MapUtils.GET_KEY;
+import static org.javersion.util.MapUtils.GET_VALUE;
+import static org.javersion.util.MapUtils.TO_MAP_ENTRY;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -27,18 +30,11 @@ import org.javersion.util.AbstractTreeMap.Node;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 
 public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, This>> 
         extends AbstractRedBlackTree<K, Node<K, V>, This> implements Iterable<Map.Entry<K, V>> {
-    
-    @SuppressWarnings("rawtypes")
-    private static final Function TO_MAP_ENTRY = new Function() {
-        @Override
-        public Object apply(Object input) {
-            return (Map.Entry) input;
-        }
-    };
     
     protected AbstractTreeMap() {
         super();
@@ -124,6 +120,16 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     @Override
     public Iterator<Map.Entry<K, V>> iterator() {
         return Iterators.transform(doIterator(root(), true), TO_MAP_ENTRY);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public Iterable<K> keys() {
+    	return Iterables.transform(this, GET_KEY);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public Iterable<V> values() {
+    	return Iterables.transform(this, GET_VALUE);
     }
 
     public String toString() {

@@ -18,8 +18,6 @@ package org.javersion.core;
 import static com.google.common.collect.Iterables.transform;
 import static org.javersion.core.AbstractMergeNode.toMergeNodeIterable;
 
-import org.javersion.util.PersistentHashSet;
-import org.javersion.util.PersistentSet;
 import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
@@ -33,20 +31,20 @@ public abstract class AbstractVersionGraph<K, V,
 
     public final PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes;
 
-    public final PersistentSet<VersionNode<K, V, T>> leaves;
+    public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
     
     public AbstractVersionGraph() {
     	this(PersistentTreeMap.<Long, VersionNode<K, V, T>> empty(), 
-    			new PersistentHashSet<VersionNode<K, V, T>>());
+    			PersistentTreeMap.<BranchAndRevision, VersionNode<K, V, T>> empty());
     }
     
     protected AbstractVersionGraph(AbstractVersionGraphBuilder<K, V, T, This, B> builder) {
-    	this(builder.versionNodes.toPersistentMap(), builder.leaves.toPersistentSet());
+    	this(builder.versionNodes.toPersistentMap(), builder.heads.toPersistentMap());
     }
     
-    protected AbstractVersionGraph(PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes, PersistentSet<VersionNode<K, V, T>> leaves) {
+    protected AbstractVersionGraph(PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> leaves) {
 		this.versionNodes = versionNodes;
-		this.leaves = leaves;
+		this.heads = leaves;
 	}
 
 	public final This commit(T version) {
