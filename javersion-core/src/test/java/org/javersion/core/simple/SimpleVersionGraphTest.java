@@ -75,7 +75,7 @@ public class SimpleVersionGraphTest {
      */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
             when(version(1l)
-        		.withProperties(mapOf(
+        		.properties(mapOf(
                         "firstName", "John",
                         "lastName", "Doe")))
                 .expectProperties(mapOf(
@@ -89,8 +89,8 @@ public class SimpleVersionGraphTest {
                 
 
             when(version(2l)
-        		.withParents(setOf(1l))
-        		.withProperties(mapOf(
+        		.parents(setOf(1l))
+        		.properties(mapOf(
         				"status", "Single")))
 				.expectProperties(mapOf(
                         "firstName", "John", // 1
@@ -99,9 +99,9 @@ public class SimpleVersionGraphTest {
 
 
             when(version(3l)
-            	.withBranch(ALT_BRANCH)
-                .withParents(setOf(1l))
-                .withProperties(mapOf(
+            	.branch(ALT_BRANCH)
+                .parents(setOf(1l))
+                .properties(mapOf(
                 		"mood", "Lonely")))
         		.expectAllHeads(setOf(2l, 3l))
                 .mergeRevisions(setOf(3l, 2l))
@@ -113,9 +113,9 @@ public class SimpleVersionGraphTest {
 
 
             when(version(4l)
-            	.withBranch(ALT_BRANCH)
-                .withParents(setOf(3l))
-                .withProperties(mapOf(
+            	.branch(ALT_BRANCH)
+                .parents(setOf(3l))
+                .properties(mapOf(
                 		"lastName", "Foe",
                 		"status", "Just married",
                 		"mood", "Ecstatic",
@@ -167,8 +167,8 @@ public class SimpleVersionGraphTest {
 
 
             when(version(5l)
-                .withParents(setOf(2l))
-                .withProperties(mapOf(
+                .parents(setOf(2l))
+                .properties(mapOf(
                 		"mood", "Ecstatic")))
         		.expectAllHeads(setOf(5l, 4l))
                 .mergeRevisions(setOf(4l, 5l))
@@ -203,8 +203,8 @@ public class SimpleVersionGraphTest {
 
 
             when(version(6l)
-                .withParents(setOf(5l, 4l))
-                .withProperties(mapOf(
+                .parents(setOf(5l, 4l))
+                .properties(mapOf(
                 		"mood", null,
                 		"married", null)))
         		.expectAllHeads(setOf(6l, 4l))
@@ -240,7 +240,7 @@ public class SimpleVersionGraphTest {
 
                 		
     		when(version(7l)
-				.withParents(setOf(6l)))
+				.parents(setOf(6l)))
                 .expectProperties(mapOf(
                 		"firstName", "John",
                 		"lastName", "Foe",
@@ -251,8 +251,8 @@ public class SimpleVersionGraphTest {
                 		
                 		
     		when(version(8l)
-				.withParents(setOf(7l))
-				.withProperties(mapOf(
+				.parents(setOf(7l))
+				.properties(mapOf(
 						"status", "Married"
 						)))
                 .expectProperties(mapOf(
@@ -262,9 +262,9 @@ public class SimpleVersionGraphTest {
 			
 
             when(version(9l)
-                .withProperties(mapOf(
+                .properties(mapOf(
                 		"status", "New beginning"))
-                .withType(VersionType.ROOT))
+                .type(VersionType.ROOT))
                 .expectProperties(mapOf(
                 		"status", "New beginning")) // 4 and 5 - not conflicting!
             );

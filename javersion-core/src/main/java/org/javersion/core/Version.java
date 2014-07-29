@@ -85,22 +85,22 @@ public class Version<K, V> {
             this.revision = revision;
         }
 
-        public Builder<K, V> withType(VersionType versionType) {
+        public Builder<K, V> type(VersionType versionType) {
             this.type = Check.notNull(versionType, "type");
             return this;
         }
 
-        public Builder<K, V> withBranch(String branch) {
+        public Builder<K, V> branch(String branch) {
             this.branch = Check.notNull(branch, "branch");
             return this;
         }
 
-        public Builder<K, V> withParents(Set<Long> parentRevisions) {
+        public Builder<K, V> parents(Set<Long> parentRevisions) {
             this.parentRevisions = Check.notNull(parentRevisions, "parentRevisions");
             return this;
         }
 
-        public Builder<K, V> withProperties(Map<K, V> properties) {
+        public Builder<K, V> properties(Map<K, V> properties) {
             this.properties = Check.notNull(properties, "properties");
             return this;
         }

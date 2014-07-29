@@ -35,32 +35,32 @@ public class SimpleVersion extends Version<String, String> {
         }
 
         @Override
-        public Builder withBranch(String branch) {
-            super.withBranch(branch);
+        public Builder branch(String branch) {
+            super.branch(branch);
             return this;
         }
 
         @Override
-        public Builder withParents(Set<Long> parentRevisions) {
-            super.withParents(parentRevisions);
+        public Builder parents(Set<Long> parentRevisions) {
+            super.parents(parentRevisions);
             return this;
         }
 
         @Override
-        public Builder withProperties(Map<String, String> properties) {
-            super.withProperties(properties);
+        public Builder properties(Map<String, String> properties) {
+            super.properties(properties);
+            return this;
+        }
+
+        @Override
+        public Builder type(VersionType versionType) {
+            super.type(versionType);
             return this;
         }
 
         @Override
         public SimpleVersion build() {
             return new SimpleVersion(this);
-        }
-
-        @Override
-        public Builder withType(VersionType versionType) {
-            super.withType(versionType);
-            return this;
         }
 
     }
