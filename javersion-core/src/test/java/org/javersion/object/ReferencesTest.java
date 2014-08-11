@@ -30,11 +30,11 @@ public class ReferencesTest {
             this.id = id;
         }
         public int hashCode() {
-        	if (id == null) throw new IllegalStateException("id is null");
+            if (id == null) throw new IllegalStateException("id is null");
             return id;
         }
         public boolean equals(Object obj) {
-        	if (id == null) throw new IllegalStateException("id is null");
+            if (id == null) throw new IllegalStateException("id is null");
             if (obj == this) {
                 return true;
             } else if (obj instanceof Node) {

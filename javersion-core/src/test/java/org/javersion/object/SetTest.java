@@ -67,15 +67,15 @@ public class SetTest {
     
     @Test
     public void NodeExt_Containing_Itself_In_a_Set() {
-    	NodeExt nodeExt = new NodeExt();
-    	nodeExt.id = 789;
-    	nodeExt.nodes.add(nodeExt);
+        NodeExt nodeExt = new NodeExt();
+        nodeExt.id = 789;
+        nodeExt.nodes.add(nodeExt);
 
-    	Map<PropertyPath, Object> map = nodeExtSerializer.write(nodeExt);
+        Map<PropertyPath, Object> map = nodeExtSerializer.write(nodeExt);
         
-    	nodeExt = nodeExtSerializer.read(map);
-    	assertThat(nodeExt.id, equalTo(789));
-    	assertThat(nodeExt.nodes, equalTo(singleton(nodeExt)));
+        nodeExt = nodeExtSerializer.read(map);
+        assertThat(nodeExt.id, equalTo(789));
+        assertThat(nodeExt.nodes, equalTo(singleton(nodeExt)));
     }
     
 }

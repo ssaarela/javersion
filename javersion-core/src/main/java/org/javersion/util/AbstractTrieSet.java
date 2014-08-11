@@ -64,7 +64,7 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
     }
     
     public S conjAll(final Iterable<? extends E> elements) {
-    	return conjAll(elements, 32);
+        return conjAll(elements, 32);
     }
 
     @SuppressWarnings("unchecked")

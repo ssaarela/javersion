@@ -74,28 +74,28 @@ public class ObjectType<O> implements ValueType {
         }
     }
 
-	@Override
-	public boolean isReference() {
-		return false;
-	}
+    @Override
+    public boolean isReference() {
+        return false;
+    }
     
     public String toString() {
         return "ObjectType of " + types.values();
     }
 
     public int hashCode() {
-    	int hash = types.hashCode();
-    	return 31*hash + rootType.hashCode();
+        int hash = types.hashCode();
+        return 31*hash + rootType.hashCode();
     }
     
     public boolean equals(Object obj) {
-    	if (obj == this) {
-    		return true;
-    	} else if (obj != null && obj.getClass().equals(ObjectType.class)) {
-    		ObjectType<?> other = (ObjectType<?>) obj;
-    		return this.rootType.equals(other.rootType) && this.types.equals(other.types);
-    	} else {
-    		return false;
-    	}
+        if (obj == this) {
+            return true;
+        } else if (obj != null && obj.getClass().equals(ObjectType.class)) {
+            ObjectType<?> other = (ObjectType<?>) obj;
+            return this.rootType.equals(other.rootType) && this.types.equals(other.types);
+        } else {
+            return false;
+        }
     }
 }

@@ -48,13 +48,13 @@ public final class Merge<K, V> {
         Check.notNull(versions, "versions");
 
         MergeHelper<K, V> mergeHelper = new MergeHelper<K, V>() {
-        	protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
-        		return false;
-        	}
+            protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
+                return false;
+            }
         };
         
         for (AbstractMergeNode<K, V> node : versions) {
-        	mergeHelper.merge(node);
+            mergeHelper.merge(node);
         }
         
         this.mergedProperties = mergeHelper.getMergedProperties().asMap();

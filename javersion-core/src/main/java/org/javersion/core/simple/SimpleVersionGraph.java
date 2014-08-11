@@ -22,35 +22,35 @@ import org.javersion.core.simple.SimpleVersionGraph.Builder;
 public final class SimpleVersionGraph extends AbstractVersionGraph<String, String, SimpleVersion, SimpleVersionGraph, Builder> {
     
     public static SimpleVersionGraph init() {
-    	return new SimpleVersionGraph();
+        return new SimpleVersionGraph();
     }
     
     public static SimpleVersionGraph init(SimpleVersion version) {
-    	Builder builder = new Builder();
-    	builder.add(version);
-    	return builder.build();
+        Builder builder = new Builder();
+        builder.add(version);
+        return builder.build();
     }
     
     public static SimpleVersionGraph init(Iterable<SimpleVersion> versions) {
-    	Builder builder = new Builder();
-    	for (SimpleVersion version : versions) {
-    		builder.add(version);
-    	}
-    	return builder.build();
+        Builder builder = new Builder();
+        for (SimpleVersion version : versions) {
+            builder.add(version);
+        }
+        return builder.build();
     }
 
     private SimpleVersionGraph() {
-    	super();
+        super();
     }
 
     private SimpleVersionGraph(Builder builder) {
         super(builder);
     }
 
-	@Override
-	protected Builder newBuilder() {
-		return new Builder(this);
-	}
+    @Override
+    protected Builder newBuilder() {
+        return new Builder(this);
+    }
     
     static class Builder extends AbstractVersionGraphBuilder<String, String, SimpleVersion, SimpleVersionGraph, Builder> {
 

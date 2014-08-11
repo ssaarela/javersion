@@ -33,30 +33,30 @@ public abstract class AbstractVersionGraph<K, V,
                           T extends Version<K, V>,
                           This extends AbstractVersionGraph<K, V, T, This, B>,
                           B extends AbstractVersionGraphBuilder<K, V, T, This, B>> 
-		implements Function<Long, VersionNode<K, V, T>> {
+        implements Function<Long, VersionNode<K, V, T>> {
 
     public final PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes;
 
     public AbstractVersionGraph() {
-    	this(PersistentTreeMap.<Long, VersionNode<K, V, T>> empty());
+        this(PersistentTreeMap.<Long, VersionNode<K, V, T>> empty());
     }
     
     protected AbstractVersionGraph(AbstractVersionGraphBuilder<K, V, T, This, B> builder) {
-    	this(builder.versionNodes.toPersistentMap());
+        this(builder.versionNodes.toPersistentMap());
     }
     
     protected AbstractVersionGraph(PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes) {
-		this.versionNodes = versionNodes;
-	}
+        this.versionNodes = versionNodes;
+    }
 
-	public final This commit(T version) {
-    	B builder = newBuilder();
-    	builder.add(version);
-    	return builder.build();
+    public final This commit(T version) {
+        B builder = newBuilder();
+        builder.add(version);
+        return builder.build();
     }
     
     public final This commit(Iterable<T> versions) {
-    	B builder = newBuilder();
+        B builder = newBuilder();
         for (T version : versions) {
             builder.add(version);
         }
@@ -64,7 +64,7 @@ public abstract class AbstractVersionGraph<K, V,
     }
     
     protected abstract B newBuilder();
-
+    
     @Override
     public VersionNode<K, V, T> apply(Long input) {
         return input != null ? getVersionNode(input) : null;
@@ -79,11 +79,11 @@ public abstract class AbstractVersionGraph<K, V,
     }
     
     public final Merge<K, V> mergeBranches(Iterable<String> branches) {
-    	List<MergeNode<K, V>> mergedBranches = Lists.newArrayList();
-    	for (String branch : branches) {
-    		mergedBranches.add(new MergeNode<>(getHeads(branch)));
-    	}
-    	return new Merge<K, V>(mergedBranches);
+        List<MergeNode<K, V>> mergedBranches = Lists.newArrayList();
+        for (String branch : branches) {
+            mergedBranches.add(new MergeNode<>(getHeads(branch)));
+        }
+        return new Merge<K, V>(mergedBranches);
     }
 
     public final Merge<K, V> mergeRevisions(Iterable<Long> revisions) {
@@ -91,15 +91,15 @@ public abstract class AbstractVersionGraph<K, V,
     }
     
     public Iterable<VersionNode<K, V, T>> getHeads(String branch) {
-    	return transform(getHeads().range(min(branch), max(branch)), 
-    			MapUtils.<VersionNode<K, V, T>>mapValueFunction());
+        return transform(getHeads().range(min(branch), max(branch)), 
+                MapUtils.<VersionNode<K, V, T>>mapValueFunction());
     }
     
     public PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> getHeads() {
-    	if (versionNodes.isEmpty()) {
-    		return PersistentTreeMap.empty();
-    	}
-    	return versionNodes.getLastEntry().getValue().heads;
+        if (versionNodes.isEmpty()) {
+            return PersistentTreeMap.empty();
+        }
+        return versionNodes.getLastEntry().getValue().heads;
     }
     
 }

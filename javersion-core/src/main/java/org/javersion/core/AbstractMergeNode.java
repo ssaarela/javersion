@@ -25,38 +25,38 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
 public abstract class AbstractMergeNode<K, V> {
-	
-	protected static <K, V, T extends Version<K, V>> Iterable<AbstractMergeNode<K, V>> toMergeNodes(Iterable<VersionNode<K, V, T>> nodes) {
-		return Iterables.transform(nodes, new Function<VersionNode<K, V, T>, AbstractMergeNode<K, V>>() {
-			@Override
-			public AbstractMergeNode<K, V> apply(VersionNode<K, V, T> input) {
-				return (AbstractMergeNode<K, V>) input;
-			}
-		});
-	}
+    
+    protected static <K, V, T extends Version<K, V>> Iterable<AbstractMergeNode<K, V>> toMergeNodes(Iterable<VersionNode<K, V, T>> nodes) {
+        return Iterables.transform(nodes, new Function<VersionNode<K, V, T>, AbstractMergeNode<K, V>>() {
+            @Override
+            public AbstractMergeNode<K, V> apply(VersionNode<K, V, T> input) {
+                return (AbstractMergeNode<K, V>) input;
+            }
+        });
+    }
     
     public final PersistentHashMap<K, VersionProperty<V>> allProperties;
     
     public final PersistentHashSet<Long> allRevisions;
     
     public final Multimap<K, VersionProperty<V>> conflicts;
-	
+    
     public AbstractMergeNode(Iterable<AbstractMergeNode<K, V>> nodes) {
-    	this(nodes, null);
+        this(nodes, null);
     }
     
     protected AbstractMergeNode(Iterable<AbstractMergeNode<K, V>> parents, Version<K, V> newVersion) {
-    	MergeHelper<K, V> mergeHelper = new MergeHelper<>();
-    	for (AbstractMergeNode<K, V> node : parents) {
-    		mergeHelper.merge(node);
-    	}
-    	if (newVersion != null) {
-    		mergeHelper.overwrite(newVersion);
-    	}
-    	this.allProperties = mergeHelper.getMergedProperties();
-    	this.allRevisions = mergeHelper.getMergedRevisions();
-    	this.conflicts = mergeHelper.getConflicts();
-    	setHeads(mergeHelper.getHeads());
+        MergeHelper<K, V> mergeHelper = new MergeHelper<>();
+        for (AbstractMergeNode<K, V> node : parents) {
+            mergeHelper.merge(node);
+        }
+        if (newVersion != null) {
+            mergeHelper.overwrite(newVersion);
+        }
+        this.allProperties = mergeHelper.getMergedProperties();
+        this.allRevisions = mergeHelper.getMergedRevisions();
+        this.conflicts = mergeHelper.getConflicts();
+        setHeads(mergeHelper.getHeads());
     }
     
     public abstract Set<Long> getHeads();

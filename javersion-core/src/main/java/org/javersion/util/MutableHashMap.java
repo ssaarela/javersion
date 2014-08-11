@@ -111,9 +111,9 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
 
     @Override
     public void clear() {
-    	if (map.size() > 0) {
-    		map = new MMap<K, V>();
-    	}
+        if (map.size() > 0) {
+            map = new MMap<K, V>();
+        }
     }
 
 

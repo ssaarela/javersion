@@ -36,125 +36,125 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
 public class MergeHelper<K, V> {
-	
-	private boolean first = true;
-	
-	private boolean locked = false;
-	
-	private MutableHashMap<K, VersionProperty<V>> mergedProperties;
+    
+    private boolean first = true;
+    
+    private boolean locked = false;
+    
+    private MutableHashMap<K, VersionProperty<V>> mergedProperties;
 
-	private MutableHashSet<Long> mergedRevisions;
-	
-	private ArrayListMultimap<K, VersionProperty<V>> conflicts = ArrayListMultimap.create();
-	
-	private Set<Long> heads = Sets.newHashSet();
-	
-	public PersistentHashMap<K, VersionProperty<V>> getMergedProperties() {
-		ensureInitialized();
+    private MutableHashSet<Long> mergedRevisions;
+    
+    private ArrayListMultimap<K, VersionProperty<V>> conflicts = ArrayListMultimap.create();
+    
+    private Set<Long> heads = Sets.newHashSet();
+    
+    public PersistentHashMap<K, VersionProperty<V>> getMergedProperties() {
+        ensureInitialized();
         locked = true;
-		return mergedProperties.toPersistentMap();
-	}
-	
-	public PersistentHashSet<Long> getMergedRevisions() {
-		ensureInitialized();
+        return mergedProperties.toPersistentMap();
+    }
+    
+    public PersistentHashSet<Long> getMergedRevisions() {
+        ensureInitialized();
         locked = true;
-		return mergedRevisions.toPersistentSet();
-	}
-	
-	public Multimap<K, VersionProperty<V>> getConflicts() {
-		ensureInitialized();
+        return mergedRevisions.toPersistentSet();
+    }
+    
+    public Multimap<K, VersionProperty<V>> getConflicts() {
+        ensureInitialized();
         locked = true;
-		return ImmutableMultimap.copyOf(conflicts);
-	}
-	
-	public Set<Long> getHeads() {
-		ensureInitialized();
+        return ImmutableMultimap.copyOf(conflicts);
+    }
+    
+    public Set<Long> getHeads() {
+        ensureInitialized();
         locked = true;
-		return ImmutableSet.copyOf(heads);
-	}
-	
-	public final void overwrite(Version<K, V> version) {
-		Check.notNull(version, "version");
-		ensureNotLocked();
-		ensureInitialized();
+        return ImmutableSet.copyOf(heads);
+    }
+    
+    public final void overwrite(Version<K, V> version) {
+        Check.notNull(version, "version");
+        ensureNotLocked();
+        ensureInitialized();
 
-		for (Map.Entry<K, V> entry : version.properties.entrySet()) {
-        	mergedProperties.put(entry.getKey(), new VersionProperty<V>(version.revision, entry.getValue()));
-        	conflicts.removeAll(entry.getKey());
-    	}
+        for (Map.Entry<K, V> entry : version.properties.entrySet()) {
+            mergedProperties.put(entry.getKey(), new VersionProperty<V>(version.revision, entry.getValue()));
+            conflicts.removeAll(entry.getKey());
+        }
         heads.removeAll(version.parentRevisions);
         mergedRevisions.addAllFrom(version.parentRevisions);
         mergedRevisions.add(version.revision);
         heads.add(version.revision);
         locked = true;
-	}
+    }
 
-	private void ensureNotLocked() {
-		Check.that(!locked, "MergeHelper is locked");
-	}
-	
-	public final void merge(final AbstractMergeNode<K, V> node) {
-		Check.notNull(node, "node");
-		ensureNotLocked();
-		
-		if (first) {
-			first = false;
-			mergedProperties = node.allProperties.toMutableMap();
-			mergedRevisions = node.allRevisions.toMutableSet();
-		} else {
-			Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
-		        @Override
-		        public boolean merge(
-		                Entry<K, VersionProperty<V>> oldEntry,
-		                Entry<K, VersionProperty<V>> newEntry) {
-		        	VersionProperty<V> oldValue = oldEntry.getValue();
-		        	VersionProperty<V> newValue = newEntry.getValue();
-		        	
-		            // newValue from common ancestor?
-		            if (mergedRevisions.contains(newValue.revision)) {
-		                return false;
-		            }
-		            // oldValue from common ancestor? 
-		            else if (node.allRevisions.contains(oldValue.revision)) {
-		            	return true;
-		            }
-		            // Conflicting value?
-		            else if (!equal(oldValue.value, newValue.value)) {
-		            	K key = newEntry.getKey();
-		            	boolean retainNewer = replaceWith(oldValue, newValue);
-	                	if (retainNewer) {
-	                		conflicts.put(key, oldValue);
-	                	} else {
-	                		conflicts.put(key, newValue);
-	                	}
-		                return retainNewer;
-		            } 
-		            // Newer value
-		            else {
-		                return true;
-		            }
-		
-		        }
-		    };
+    private void ensureNotLocked() {
+        Check.that(!locked, "MergeHelper is locked");
+    }
+    
+    public final void merge(final AbstractMergeNode<K, V> node) {
+        Check.notNull(node, "node");
+        ensureNotLocked();
+        
+        if (first) {
+            first = false;
+            mergedProperties = node.allProperties.toMutableMap();
+            mergedRevisions = node.allRevisions.toMutableSet();
+        } else {
+            Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
+                @Override
+                public boolean merge(
+                        Entry<K, VersionProperty<V>> oldEntry,
+                        Entry<K, VersionProperty<V>> newEntry) {
+                    VersionProperty<V> oldValue = oldEntry.getValue();
+                    VersionProperty<V> newValue = newEntry.getValue();
+                    
+                    // newValue from common ancestor?
+                    if (mergedRevisions.contains(newValue.revision)) {
+                        return false;
+                    }
+                    // oldValue from common ancestor? 
+                    else if (node.allRevisions.contains(oldValue.revision)) {
+                        return true;
+                    }
+                    // Conflicting value?
+                    else if (!equal(oldValue.value, newValue.value)) {
+                        K key = newEntry.getKey();
+                        boolean retainNewer = replaceWith(oldValue, newValue);
+                        if (retainNewer) {
+                            conflicts.put(key, oldValue);
+                        } else {
+                            conflicts.put(key, newValue);
+                        }
+                        return retainNewer;
+                    } 
+                    // Newer value
+                    else {
+                        return true;
+                    }
+        
+                }
+            };
 
             mergedProperties.mergeAll(node.allProperties, merger);
             mergedRevisions.addAllFrom(node.allRevisions);
             heads.removeAll(node.allRevisions.asSet());
-		}
-		conflicts.putAll(node.conflicts);
+        }
+        conflicts.putAll(node.conflicts);
         heads.addAll(node.getHeads());
-	}
-	
-	protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
-		return oldValue.revision < newValue.revision;
-	}
-	
-	private void ensureInitialized() {
-		if (first) {
-			first = false;
-			mergedProperties = new MutableHashMap<>();
-			mergedRevisions = new MutableHashSet<>();
-		}
-	}
+    }
+    
+    protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
+        return oldValue.revision < newValue.revision;
+    }
+    
+    private void ensureInitialized() {
+        if (first) {
+            first = false;
+            mergedProperties = new MutableHashMap<>();
+            mergedRevisions = new MutableHashSet<>();
+        }
+    }
 
 }

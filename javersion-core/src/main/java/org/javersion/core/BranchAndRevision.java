@@ -19,52 +19,52 @@ import org.javersion.util.Check;
 
 public class BranchAndRevision implements Comparable<BranchAndRevision>{
 
-	public static BranchAndRevision min(String branch) {
-		return new BranchAndRevision(branch, Long.MIN_VALUE);
-	}
+    public static BranchAndRevision min(String branch) {
+        return new BranchAndRevision(branch, Long.MIN_VALUE);
+    }
 
-	public static BranchAndRevision max(String branch) {
-		return new BranchAndRevision(branch, Long.MAX_VALUE);
-	}
-	
-	
-	public final String branch;
-	
-	public final long revision;
+    public static BranchAndRevision max(String branch) {
+        return new BranchAndRevision(branch, Long.MAX_VALUE);
+    }
+    
+    
+    public final String branch;
+    
+    public final long revision;
 
-	public BranchAndRevision(VersionNode<?, ?, ?> versionNode) {
-		this(versionNode.getBranch(), versionNode.getRevision());
-	}
+    public BranchAndRevision(VersionNode<?, ?, ?> versionNode) {
+        this(versionNode.getBranch(), versionNode.getRevision());
+    }
 
-	private BranchAndRevision(String branch, long revision) {
-		this.branch = Check.notNullOrEmpty(branch, "branch");
-		this.revision = revision;
-	}
+    private BranchAndRevision(String branch, long revision) {
+        this.branch = Check.notNullOrEmpty(branch, "branch");
+        this.revision = revision;
+    }
 
-	@Override
-	public int hashCode() {
-		return Long.hashCode(revision);
-	}
+    @Override
+    public int hashCode() {
+        return Long.hashCode(revision);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == this) {
-			return true;
-		} else if (obj instanceof BranchAndRevision) {
-			BranchAndRevision other = (BranchAndRevision) obj;
-			return branch.equals(other.branch) && revision == other.revision;
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof BranchAndRevision) {
+            BranchAndRevision other = (BranchAndRevision) obj;
+            return branch.equals(other.branch) && revision == other.revision;
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public int compareTo(BranchAndRevision other) {
-		int cmpr = branch.compareTo(other.branch);
-		if (cmpr == 0) {
-			return Long.compare(revision, other.revision);
-		}
-		return cmpr;
-	}
-	
+    @Override
+    public int compareTo(BranchAndRevision other) {
+        int cmpr = branch.compareTo(other.branch);
+        if (cmpr == 0) {
+            return Long.compare(revision, other.revision);
+        }
+        return cmpr;
+    }
+    
 }

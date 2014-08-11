@@ -25,24 +25,24 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  * operations with no return type.
  */
 public interface PropertyPathVisitor<T> extends ParseTreeVisitor<T> {
-	/**
-	 * Visit a parse tree produced by {@link PropertyPathParser#index}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIndex(@NotNull PropertyPathParser.IndexContext ctx);
+    /**
+     * Visit a parse tree produced by {@link PropertyPathParser#index}.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitIndex(@NotNull PropertyPathParser.IndexContext ctx);
 
-	/**
-	 * Visit a parse tree produced by {@link PropertyPathParser#root}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitRoot(@NotNull PropertyPathParser.RootContext ctx);
+    /**
+     * Visit a parse tree produced by {@link PropertyPathParser#root}.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitRoot(@NotNull PropertyPathParser.RootContext ctx);
 
-	/**
-	 * Visit a parse tree produced by {@link PropertyPathParser#property}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitProperty(@NotNull PropertyPathParser.PropertyContext ctx);
+    /**
+     * Visit a parse tree produced by {@link PropertyPathParser#property}.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitProperty(@NotNull PropertyPathParser.PropertyContext ctx);
 }

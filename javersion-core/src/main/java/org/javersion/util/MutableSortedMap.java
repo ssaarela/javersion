@@ -18,7 +18,7 @@ package org.javersion.util;
 // TODO: More methods...
 public interface MutableSortedMap<K, V> extends MutableMap<K, V> {
 
-	@Override
+    @Override
     PersistentSortedMap<K, V> toPersistentMap();
 
 }

@@ -17,17 +17,17 @@ package org.javersion.util;
 
 public class MergerAdapter<T> implements Merger<T> {
 
-	@Override
-	public void insert(T newEntry) {
-	}
+    @Override
+    public void insert(T newEntry) {
+    }
 
-	@Override
-	public boolean merge(T oldEntry, T newEntry) {
-		return true;
-	}
+    @Override
+    public boolean merge(T oldEntry, T newEntry) {
+        return true;
+    }
 
-	@Override
-	public void delete(T oldEntry) {
-	}
+    @Override
+    public void delete(T oldEntry) {
+    }
 
 }

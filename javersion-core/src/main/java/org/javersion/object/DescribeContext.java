@@ -87,11 +87,11 @@ public class DescribeContext {
     }
     
     private ValueType describeNow(SubPath path, LocalTypeDescriptor localTypeDescriptor) {
-    	return registerMapping(path, localTypeDescriptor);
+        return registerMapping(path, localTypeDescriptor);
     }
     
     private void processMappings() {
-    	QueueItem<SubPath, LocalTypeDescriptor> currentItem;
+        QueueItem<SubPath, LocalTypeDescriptor> currentItem;
         while ((currentItem = queue.poll()) != null) {
             registerMapping(currentItem.key, currentItem.value);
         }
@@ -102,12 +102,12 @@ public class DescribeContext {
         if (schema == null) {
             schema = addSchema(path);
             if (schema.getValueType() == null) {
-	            ValueType valueType = createValueType(path, localTypeDescriptor);
-	            schema.setValueType(valueType);
+                ValueType valueType = createValueType(path, localTypeDescriptor);
+                schema.setValueType(valueType);
 
-	            if (!valueType.isReference()) {
-	                schemaMappings.put(localTypeDescriptor, schema);
-	            }
+                if (!valueType.isReference()) {
+                    schemaMappings.put(localTypeDescriptor, schema);
+                }
             }
         } else {
             connectSchema((SubPath) path, schema);

@@ -47,10 +47,10 @@ public final class ReferenceType implements ValueType, IdentifiableType {
     @Override
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
 
-	@Override
-	public boolean isReference() {
-		return true;
-	}
+    @Override
+    public boolean isReference() {
+        return true;
+    }
 
     @Override
     public String toString(Object object) {

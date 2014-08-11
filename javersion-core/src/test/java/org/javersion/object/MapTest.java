@@ -64,7 +64,7 @@ public class MapTest {
     }
     
     @SuppressWarnings("unused")
-	private static <K, V> Map<K, V> map(K k, V v) {
+    private static <K, V> Map<K, V> map(K k, V v) {
         Map<K, V> map = Maps.newLinkedHashMap();
         map.put(k, v);
         return map;

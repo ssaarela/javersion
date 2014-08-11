@@ -44,7 +44,7 @@ public class Version<K, V> {
     public final long revision;
     
     public final String branch;
-	
+    
     public final Set<Long> parentRevisions;
 
     public final Map<K, V> properties;

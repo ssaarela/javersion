@@ -31,8 +31,8 @@ public abstract class AbstractVersionGraphBuilder<K,
                                G extends AbstractVersionGraph<K, V, T, G, B>,
                                B extends AbstractVersionGraphBuilder<K, V, T, G, B>> {
 
-	PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
-	
+    PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
+    
     MutableSortedMap<Long, VersionNode<K, V, T>> versionNodes;
 
     private Function<Long, VersionNode<K, V, T>> revisionToVersionNode = new Function<Long, VersionNode<K, V, T>>() {
@@ -44,23 +44,23 @@ public abstract class AbstractVersionGraphBuilder<K,
 
     
     protected AbstractVersionGraphBuilder() {
-    	reset();
+        reset();
     }
     
     protected AbstractVersionGraphBuilder(G parentGraph) {
-    	this.versionNodes = parentGraph.versionNodes.toMutableMap();
+        this.versionNodes = parentGraph.versionNodes.toMutableMap();
         this.heads = parentGraph.getHeads();
     }
     
     private void reset() {
-    	this.versionNodes = new MutableTreeMap<>();
-    	this.heads = PersistentTreeMap.empty();
+        this.versionNodes = new MutableTreeMap<>();
+        this.heads = PersistentTreeMap.empty();
     }
     
     public final void add(T version) {
         Check.notNull(version, "version");
         if (version.type == VersionType.ROOT) {
-        	reset();
+            reset();
         }
         Iterable<VersionNode<K, V, T>> parents = revisionsToNodes(version.parentRevisions);
         VersionNode<K, V, T> versionNode = new VersionNode<K, V, T>(version, parents, heads);

@@ -41,9 +41,9 @@ public class SimpleValueType implements ValueType, IdentifiableType {
         return object.toString();
     }
 
-	@Override
-	public boolean isReference() {
-		return false;
-	}
+    @Override
+    public boolean isReference() {
+        return false;
+    }
 
 }

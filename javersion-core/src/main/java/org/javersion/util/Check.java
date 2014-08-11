@@ -25,7 +25,7 @@ public class Check {
 
     private static final String NOT_NULL_OR_EMPTY_FMT = "%s shoud not be null or empty. Got %s";
 
-	public static <T> T notNull(T reference, String fieldName) {
+    public static <T> T notNull(T reference, String fieldName) {
         return notNull$(reference, "%s should not be null", fieldName);
     }
 

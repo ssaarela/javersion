@@ -30,15 +30,15 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMe
     public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
 
     public VersionNode(T version, Iterable<VersionNode<K, V, T>> parents, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads) {
-    	super(toMergeNodes(parents), version);
+        super(toMergeNodes(parents), version);
 
         this.version = version;
 
         MutableSortedMap<BranchAndRevision, VersionNode<K, V, T>> mutableHeads = heads.toMutableMap();
         for (VersionNode<K, V, T> parent : parents) {
-        	if (parent.version.branch.equals(version.branch)) {
-        		mutableHeads.remove(new BranchAndRevision(parent));
-        	}
+            if (parent.version.branch.equals(version.branch)) {
+                mutableHeads.remove(new BranchAndRevision(parent));
+            }
         }
         mutableHeads.put(new BranchAndRevision(this), this);
         this.heads = mutableHeads.toPersistentMap();
@@ -49,34 +49,34 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMe
     }
     
     public String getBranch() {
-    	return version.branch;
+        return version.branch;
     }
     
     public Map<K, VersionProperty<V>> getVersionProperties() {
         return version.getVersionProperties();
     }
 
-	@Override
-	public Set<Long> getHeads() {
-		return ImmutableSet.of(version.revision);
-	}
-	
     @Override
-	public int hashCode() {
-		return Long.hashCode(version.revision);
-	}
+    public Set<Long> getHeads() {
+        return ImmutableSet.of(version.revision);
+    }
+    
+    @Override
+    public int hashCode() {
+        return Long.hashCode(version.revision);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		return obj == this;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this;
+    }
     
     @Override
     public String toString() {
         return version.toString();
     }
 
-	@Override
-	protected void setHeads(Set<Long> heads) {}
+    @Override
+    protected void setHeads(Set<Long> heads) {}
 
 }

@@ -26,27 +26,27 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
  * operations with no return type.
  */
 public class PropertyPathBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements PropertyPathVisitor<T> {
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 */
-	@Override public T visitIndex(@NotNull PropertyPathParser.IndexContext ctx) { return visitChildren(ctx); }
+    /**
+     * {@inheritDoc}
+     * <p/>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     */
+    @Override public T visitIndex(@NotNull PropertyPathParser.IndexContext ctx) { return visitChildren(ctx); }
 
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 */
-	@Override public T visitRoot(@NotNull PropertyPathParser.RootContext ctx) { return visitChildren(ctx); }
+    /**
+     * {@inheritDoc}
+     * <p/>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     */
+    @Override public T visitRoot(@NotNull PropertyPathParser.RootContext ctx) { return visitChildren(ctx); }
 
-	/**
-	 * {@inheritDoc}
-	 * <p/>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 */
-	@Override public T visitProperty(@NotNull PropertyPathParser.PropertyContext ctx) { return visitChildren(ctx); }
+    /**
+     * {@inheritDoc}
+     * <p/>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     */
+    @Override public T visitProperty(@NotNull PropertyPathParser.PropertyContext ctx) { return visitChildren(ctx); }
 }

@@ -27,8 +27,8 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 
 public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, This>> 
-		extends AbstractHashTrie<K, Entry<K,V>, AbstractHashMap<K, V, This>>
-		implements Iterable<Map.Entry<K, V>> {
+        extends AbstractHashTrie<K, Entry<K,V>, AbstractHashMap<K, V, This>>
+        implements Iterable<Map.Entry<K, V>> {
     
     @SuppressWarnings("rawtypes")
     private static final Function TO_ENTRY = new Function() {
@@ -159,7 +159,7 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
         @Override
         public Node<K, Entry<K, V>> assocInternal(final UpdateContext<? super Entry<K, V>>  currentContext, final int shift, final int hash, final Entry<K, V> newEntry) {
             if (equal(key, newEntry.key)) {
-            	return currentContext.merge(this, newEntry) ? newEntry : this;
+                return currentContext.merge(this, newEntry) ? newEntry : this;
             } else {
                 return split(currentContext, shift, hash, newEntry);
             }

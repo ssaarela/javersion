@@ -66,7 +66,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
         for (int kv = 1; kv < 10; kv++) {
             pmap = pmap.assoc(kv, kv);
         }
-    	assertThat(keys(pmap), contains(1,2,3,4,5,6,7,8,9));
+        assertThat(keys(pmap), contains(1,2,3,4,5,6,7,8,9));
     }
     
     @Test
@@ -76,12 +76,12 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
             pmap = pmap.assoc(kv, kv);
         }
         final PersistentTreeMap<Integer, Integer> map = pmap;
-    	assertThat(keys(new Iterable<Map.Entry<Integer, Integer>>() {
-			@Override
-			public Iterator<Entry<Integer, Integer>> iterator() {
-				return map.iterator(false);
-			}
-    	}), contains(1,2,3,4,5,6,7,8,9));
+        assertThat(keys(new Iterable<Map.Entry<Integer, Integer>>() {
+            @Override
+            public Iterator<Entry<Integer, Integer>> iterator() {
+                return map.iterator(false);
+            }
+        }), contains(1,2,3,4,5,6,7,8,9));
     }
     
     @Test
@@ -97,13 +97,13 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
         assertThat(keys(map.range(9, false, 20, false)), emptyIterable());
     }
 
-	private PersistentTreeMap<Integer, Integer> mapForRangeTest() {
-		PersistentTreeMap<Integer, Integer> map = emptyMap();
+    private PersistentTreeMap<Integer, Integer> mapForRangeTest() {
+        PersistentTreeMap<Integer, Integer> map = emptyMap();
         for (int kv = 1; kv < 10; kv += 2) {
-        	map = map.assoc(kv, kv);
+            map = map.assoc(kv, kv);
         }
-		return map;
-	}
+        return map;
+    }
     
     @Test
     public void Iterate_Descending_Range() {
@@ -140,7 +140,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
     }
     
     private static Iterable<Integer> keys(Iterable<Map.Entry<Integer, Integer>> entries) {
-    	return transform(entries, MapUtils.<Integer>mapKeyFunction());
+        return transform(entries, MapUtils.<Integer>mapKeyFunction());
     }
     
     @Test

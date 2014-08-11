@@ -20,19 +20,19 @@ import java.util.Set;
 
 // TODO: More methods...
 public interface PersistentSet<E> extends Iterable<E> {
-	
-	Set<E> asSet();
+    
+    Set<E> asSet();
 
-	PersistentSet<E> conj(E element);
+    PersistentSet<E> conj(E element);
 
-	PersistentSet<E> conjAll(Collection<? extends E> elements);
-	
-	boolean contains(Object o);
-	
-	PersistentSet<E> disjoin(Object element);
-	
-	MutableSet<E> toMutableSet();
-	
-	int size();
+    PersistentSet<E> conjAll(Collection<? extends E> elements);
+    
+    boolean contains(Object o);
+    
+    PersistentSet<E> disjoin(Object element);
+    
+    MutableSet<E> toMutableSet();
+    
+    int size();
 
 }

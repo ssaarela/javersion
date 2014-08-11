@@ -119,14 +119,14 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
         return root == null ? "NIL" : root.toString();
     }
 
-	@Override
-	public Entry<K, V> getFirstEntry() {
-		return findMin(root);
-	}
+    @Override
+    public Entry<K, V> getFirstEntry() {
+        return findMin(root);
+    }
 
-	@Override
-	public Entry<K, V> getLastEntry() {
-		return findMax(root);
-	}
+    @Override
+    public Entry<K, V> getLastEntry() {
+        return findMax(root);
+    }
 
 }

@@ -18,21 +18,21 @@ package org.javersion.core;
 import java.util.Set;
 
 public class MergeNode<K, V> extends AbstractMergeNode<K, V> {
-	
-	private Set<Long> heads;
-	
-	public <T extends Version<K, V>> MergeNode(Iterable<VersionNode<K, V, T>> nodes) {
-		super(toMergeNodes(nodes));
-	}
+    
+    private Set<Long> heads;
+    
+    public <T extends Version<K, V>> MergeNode(Iterable<VersionNode<K, V, T>> nodes) {
+        super(toMergeNodes(nodes));
+    }
 
-	@Override
-	public Set<Long> getHeads() {
-		return heads;
-	}
+    @Override
+    public Set<Long> getHeads() {
+        return heads;
+    }
 
-	@Override
-	protected void setHeads(Set<Long> heads) {
-		this.heads = heads;
-	}
+    @Override
+    protected void setHeads(Set<Long> heads) {
+        this.heads = heads;
+    }
 
 }
