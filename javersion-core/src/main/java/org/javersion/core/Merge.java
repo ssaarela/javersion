@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2014 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,25 @@ import static com.google.common.collect.Maps.filterValues;
 import java.util.Map;
 import java.util.Set;
 
-import org.javersion.util.Check;
+import org.javersion.util.PersistentHashMap;
+import org.javersion.util.PersistentHashSet;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
-public final class Merge<K, V> {
+public abstract class Merge<K, V> {
     
-    public final Map<K, VersionProperty<V>> mergedProperties;
+    protected static <K, V, T extends Version<K, V>> Iterable<Merge<K, V>> toMergeNodes(Iterable<VersionNode<K, V, T>> nodes) {
+        return Iterables.transform(nodes, new Function<VersionNode<K, V, T>, Merge<K, V>>() {
+            @Override
+            public Merge<K, V> apply(VersionNode<K, V, T> input) {
+                return (Merge<K, V>) input;
+            }
+        });
+    }
 
-    public final Multimap<K, VersionProperty<V>> conflicts;
-
-    public final Set<Long> heads;
-    
     public final Function<VersionProperty<V>, V> getVersionPropertyValue = new Function<VersionProperty<V>, V>() {
 
         @Override
@@ -43,27 +48,26 @@ public final class Merge<K, V> {
         }
         
     };
-
-    public Merge(Iterable<? extends AbstractMergeNode<K, V>> versions) {
-        Check.notNull(versions, "versions");
-
-        MergeHelper<K, V> mergeHelper = new MergeHelper<K, V>() {
-            protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
-                return false;
-            }
-        };
-        
-        for (AbstractMergeNode<K, V> node : versions) {
-            mergeHelper.merge(node);
-        }
-        
-        this.mergedProperties = mergeHelper.getMergedProperties().asMap();
-        this.heads = mergeHelper.getHeads();
-        this.conflicts = mergeHelper.getConflicts();
+    
+    public final PersistentHashMap<K, VersionProperty<V>> mergedProperties;
+    
+    public final PersistentHashSet<Long> mergedRevisions;
+    
+    public final Multimap<K, VersionProperty<V>> conflicts;
+    
+    protected Merge(MergeBuilder<K, V> mergeBuilder) {
+        this.mergedProperties = mergeBuilder.getMergedProperties();
+        this.mergedRevisions = mergeBuilder.getMergedRevisions();
+        this.conflicts = mergeBuilder.getConflicts();
+        setHeads(mergeBuilder.getHeads());
     }
+    
+    public abstract Set<Long> getHeads();
+
+    protected abstract void setHeads(Set<Long> heads);
 
     public Map<K, V> getProperties() {
-        return filterValues(Maps.transformValues(mergedProperties, getVersionPropertyValue), notNull());
+        return filterValues(Maps.transformValues(mergedProperties.asMap(), getVersionPropertyValue), notNull());
     }
 
 }

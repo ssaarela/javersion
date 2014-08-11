@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
-public class MergeHelper<K, V> {
+public class MergeBuilder<K, V> {
     
     private boolean first = true;
     
@@ -48,6 +48,13 @@ public class MergeHelper<K, V> {
     private ArrayListMultimap<K, VersionProperty<V>> conflicts = ArrayListMultimap.create();
     
     private Set<Long> heads = Sets.newHashSet();
+    
+    public MergeBuilder() {
+    }
+    
+    public MergeBuilder(Iterable<? extends Merge<K, V>> nodes) {
+        mergeAll(nodes);
+    }
     
     public PersistentHashMap<K, VersionProperty<V>> getMergedProperties() {
         ensureInitialized();
@@ -73,7 +80,7 @@ public class MergeHelper<K, V> {
         return ImmutableSet.copyOf(heads);
     }
     
-    public final void overwrite(Version<K, V> version) {
+    public final MergeBuilder<K, V> overwrite(Version<K, V> version) {
         Check.notNull(version, "version");
         ensureNotLocked();
         ensureInitialized();
@@ -86,63 +93,79 @@ public class MergeHelper<K, V> {
         mergedRevisions.addAllFrom(version.parentRevisions);
         mergedRevisions.add(version.revision);
         heads.add(version.revision);
-        locked = true;
+        return this;
     }
 
     private void ensureNotLocked() {
         Check.that(!locked, "MergeHelper is locked");
     }
     
-    public final void merge(final AbstractMergeNode<K, V> node) {
+    public final MergeBuilder<K, V> mergeAll(final Iterable<? extends Merge<K, V>> nodes) {
+        for (Merge<K, V> node : nodes) {
+            merge(node);
+        }
+        return this;
+    }
+    
+    public final MergeBuilder<K, V> merge(final Merge<K, V> node) {
         Check.notNull(node, "node");
         ensureNotLocked();
         
         if (first) {
-            first = false;
-            mergedProperties = node.allProperties.toMutableMap();
-            mergedRevisions = node.allRevisions.toMutableSet();
+            firstVersion(node);
         } else {
-            Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
-                @Override
-                public boolean merge(
-                        Entry<K, VersionProperty<V>> oldEntry,
-                        Entry<K, VersionProperty<V>> newEntry) {
-                    VersionProperty<V> oldValue = oldEntry.getValue();
-                    VersionProperty<V> newValue = newEntry.getValue();
-                    
-                    // newValue from common ancestor?
-                    if (mergedRevisions.contains(newValue.revision)) {
-                        return false;
-                    }
-                    // oldValue from common ancestor? 
-                    else if (node.allRevisions.contains(oldValue.revision)) {
-                        return true;
-                    }
-                    // Conflicting value?
-                    else if (!equal(oldValue.value, newValue.value)) {
-                        K key = newEntry.getKey();
-                        boolean retainNewer = replaceWith(oldValue, newValue);
-                        if (retainNewer) {
-                            conflicts.put(key, oldValue);
-                        } else {
-                            conflicts.put(key, newValue);
-                        }
-                        return retainNewer;
-                    } 
-                    // Newer value
-                    else {
-                        return true;
-                    }
-        
-                }
-            };
-
-            mergedProperties.mergeAll(node.allProperties, merger);
-            mergedRevisions.addAllFrom(node.allRevisions);
-            heads.removeAll(node.allRevisions.asSet());
+            nextVersion(node);
         }
         conflicts.putAll(node.conflicts);
         heads.addAll(node.getHeads());
+        return this;
+    }
+
+    private void nextVersion(final Merge<K, V> node) {
+        Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
+            @Override
+            public boolean merge(
+                    Entry<K, VersionProperty<V>> oldEntry,
+                    Entry<K, VersionProperty<V>> newEntry) {
+                VersionProperty<V> oldValue = oldEntry.getValue();
+                VersionProperty<V> newValue = newEntry.getValue();
+                
+                // newValue from common ancestor?
+                if (mergedRevisions.contains(newValue.revision)) {
+                    return false;
+                }
+                // oldValue from common ancestor? 
+                else if (node.mergedRevisions.contains(oldValue.revision)) {
+                    return true;
+                }
+                // Conflicting value?
+                else if (!equal(oldValue.value, newValue.value)) {
+                    K key = newEntry.getKey();
+                    boolean retainNewer = replaceWith(oldValue, newValue);
+                    if (retainNewer) {
+                        conflicts.put(key, oldValue);
+                    } else {
+                        conflicts.put(key, newValue);
+                    }
+                    return retainNewer;
+                } 
+                // Newer value
+                else {
+                    return true;
+                }
+      
+            }
+        };
+
+        mergedProperties.mergeAll(node.mergedProperties, merger);
+        mergedRevisions.addAllFrom(node.mergedRevisions);
+        heads.removeAll(node.mergedRevisions.asSet());
+    }
+
+    private void firstVersion(final Merge<K, V> node) {
+        first = false;
+        mergedProperties = node.mergedProperties.toMutableMap();
+        mergedRevisions = node.mergedRevisions.toMutableSet();
     }
     
     protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {

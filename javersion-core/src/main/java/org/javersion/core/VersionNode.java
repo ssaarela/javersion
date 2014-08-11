@@ -23,14 +23,14 @@ import org.javersion.util.PersistentSortedMap;
 
 import com.google.common.collect.ImmutableSet;
 
-public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMergeNode<K, V> {
+public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V> {
     
     public final T version;
 
     public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
 
     public VersionNode(T version, Iterable<VersionNode<K, V, T>> parents, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads) {
-        super(toMergeNodes(parents), version);
+        super(new MergeBuilder<K, V>().mergeAll(toMergeNodes(parents)).overwrite(version));
 
         this.version = version;
 

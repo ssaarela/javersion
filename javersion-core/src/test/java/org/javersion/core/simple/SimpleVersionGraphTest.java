@@ -139,20 +139,20 @@ public class SimpleVersionGraphTest {
                         "mood", "Ecstatic", // 4
                         "married", "2013-10-12")), // 4
 
-            then("Merge with concurrent older version, prefer older")
+            then("Merge with concurrent older version")
                 .mergeRevisions(setOf(2l, 4l))
                 .expectMergeHeads(setOf(2l, 4l))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
-                        "status", "Single", // 2
+                        "status", "Just married", // 4
                         "mood", "Ecstatic", // 4
                         "married", "2013-10-12")) // 4
                 .expectConflicts(multimapOf(
-                        "status", "Just married" // 4
+                        "status", "Single" // 2
                         )),
 
-            then("Merge with concurrent older version, prefer newer")
+            then("Merge with concurrent older version, ignore order")
                 .mergeRevisions(setOf(4l, 2l))
                 .expectMergeHeads(setOf(2l, 4l))
                 .expectProperties(mapOf(
@@ -333,7 +333,7 @@ public class SimpleVersionGraphTest {
                 merge = versionGraph.mergeRevisions(expectation.mergeRevisions);
             }
             assertThat(title("mergeHeads", revision, expectation), 
-                    merge.heads, 
+                    merge.getHeads(), 
                     equalTo(expectation.expectedMergeHeads));
             
             assertThat(title("properties", revision, expectation), 

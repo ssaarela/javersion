@@ -16,7 +16,6 @@
 package org.javersion.core;
 
 import static com.google.common.collect.Iterables.transform;
-import static org.javersion.core.AbstractMergeNode.toMergeNodes;
 import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
 
@@ -79,15 +78,15 @@ public abstract class AbstractVersionGraph<K, V,
     }
     
     public final Merge<K, V> mergeBranches(Iterable<String> branches) {
-        List<MergeNode<K, V>> mergedBranches = Lists.newArrayList();
+        List<VersionMerge<K, V>> mergedBranches = Lists.newArrayList();
         for (String branch : branches) {
-            mergedBranches.add(new MergeNode<>(getHeads(branch)));
+            mergedBranches.add(new VersionMerge<>(getHeads(branch)));
         }
-        return new Merge<K, V>(mergedBranches);
+        return new BranchMerge<K, V>(mergedBranches);
     }
 
     public final Merge<K, V> mergeRevisions(Iterable<Long> revisions) {
-        return new Merge<K, V>(toMergeNodes(transform(revisions, this)));
+        return new VersionMerge<>(transform(revisions, this));
     }
     
     public Iterable<VersionNode<K, V, T>> getHeads(String branch) {

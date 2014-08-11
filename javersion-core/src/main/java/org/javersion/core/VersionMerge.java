@@ -17,12 +17,12 @@ package org.javersion.core;
 
 import java.util.Set;
 
-public class MergeNode<K, V> extends AbstractMergeNode<K, V> {
+public class VersionMerge<K, V> extends Merge<K, V> {
     
     private Set<Long> heads;
     
-    public <T extends Version<K, V>> MergeNode(Iterable<VersionNode<K, V, T>> nodes) {
-        super(toMergeNodes(nodes));
+    public <T extends Version<K, V>> VersionMerge(Iterable<VersionNode<K, V, T>> nodes) {
+        super(new MergeBuilder<K, V>(toMergeNodes(nodes)));
     }
 
     @Override
