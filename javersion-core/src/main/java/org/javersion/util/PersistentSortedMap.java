@@ -61,5 +61,9 @@ public interface PersistentSortedMap<K, V> extends PersistentMap<K, V> {
     Iterable<Map.Entry<K, V>> range(final K from, final boolean fromInclusive, final K to, final boolean toInclusive);
     		
     Iterable<Map.Entry<K, V>> range(final K from, final boolean fromInclusive, final K to, final boolean toInclusive, final boolean asc);
+
+    Map.Entry<K, V> getFirstEntry();
+
+    Map.Entry<K, V> getLastEntry();
     
 }
