@@ -56,6 +56,10 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
 
     public abstract int size();
     
+    public boolean isEmpty() {
+    	return size() == 0;
+    }
+    
     protected abstract This doReturn(Comparator<? super K> comparator, N newRoot, int newSize);
 
     private final This commitAndReturn(UpdateContext<? super N> context, Comparator<? super K> comparator, N newRoot, int newSize) {

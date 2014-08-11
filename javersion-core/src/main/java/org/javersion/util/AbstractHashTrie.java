@@ -31,6 +31,10 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
 
     public abstract int size();
     
+    public boolean isEmpty() {
+    	return size() == 0;
+    }
+    
     @SuppressWarnings("unchecked")
     protected This self() {
         return (This) this;

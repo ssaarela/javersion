@@ -46,6 +46,8 @@ public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
     
     int size();
     
+    boolean isEmpty();
+    
     MutableMap<K, V> toMutableMap();
     
     Map<K, V> asMap();
