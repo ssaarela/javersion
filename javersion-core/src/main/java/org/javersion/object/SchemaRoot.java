@@ -34,19 +34,6 @@ public class SchemaRoot extends Schema  {
         return currentMapping;
     }
 
-    Schema addPath(PropertyPath path) {
-        Schema currentMapping = this;
-        for (PropertyPath currentPath : path.toSchemaPath().asList()) {
-            String childName = currentPath.getName();
-            if (!currentMapping.hasChild(childName)) {
-                currentMapping = currentMapping.addChild(childName, new Schema());
-            } else {
-                currentMapping = currentMapping.getChild(childName);
-            }
-        }
-        return currentMapping;
-    }
-
     @Override
     void lock() {
         super.lock();

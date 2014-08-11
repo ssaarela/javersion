@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2014 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,19 @@ package org.javersion.object;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
-public class StringTypeMapping implements TypeMapping {
+public class PrimitiveTypeMapping extends SimpleTypeMapping {
+    
+    private final Class<?> primitiveType;
 
-    public static final ValueType STRING_TYPE = new SimpleValueType() {
-        
-        @Override
-        public String toString(Object object) {
-            return (String) object;
-        }
-        
-    };
-
-    @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.getRawType().equals(String.class);
+    public PrimitiveTypeMapping(Class<?> wrapperType, Class<?> primitiveType) {
+        super(wrapperType);
+        this.primitiveType = primitiveType;
     }
 
     @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return STRING_TYPE;
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
+        return super.applies(path, localTypeDescriptor) || typeDescriptor.getRawType().equals(primitiveType);
     }
 
 }

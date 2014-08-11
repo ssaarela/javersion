@@ -18,9 +18,9 @@ package org.javersion.object;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 
-public class BasicValueType implements ValueType, IdentifiableType {
+public class SimpleValueType implements ValueType, IdentifiableType {
     
-    public BasicValueType() {
+    public SimpleValueType() {
     }
     
     @Override

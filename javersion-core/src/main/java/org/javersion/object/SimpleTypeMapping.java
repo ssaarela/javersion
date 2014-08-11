@@ -19,15 +19,15 @@ import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
-public class BasicTypeMapping implements TypeMapping {
+public class SimpleTypeMapping implements TypeMapping {
 
     public final Class<?> type;
     
     public final ValueType valueType;
     
-    public BasicTypeMapping(Class<?> type) {
+    public SimpleTypeMapping(Class<?> type) {
         this.type = Check.notNull(type, "type");
-        this.valueType = new BasicValueType();
+        this.valueType = new SimpleValueType();
     }
 
     @Override
@@ -43,23 +43,6 @@ public class BasicTypeMapping implements TypeMapping {
     
     public ValueType getValueType() {
         return valueType;
-    }
-
-    public static class PrimitiveValueTypeMapping extends BasicTypeMapping {
-        
-        private final Class<?> primitiveType;
-
-        public PrimitiveValueTypeMapping(Class<?> wrapperType, Class<?> primitiveType) {
-            super(wrapperType);
-            this.primitiveType = primitiveType;
-        }
-
-        @Override
-        public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-            TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
-            return super.applies(path, localTypeDescriptor) || typeDescriptor.getRawType().equals(primitiveType);
-        }
-
     }
 
 }

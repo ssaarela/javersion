@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.javersion.object.BasicTypeMapping.PrimitiveValueTypeMapping;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
@@ -36,14 +35,14 @@ public class TypeMappings {
 
     public static TypeMapping STRING = new StringTypeMapping();
 
-    public static TypeMapping CHAR = new PrimitiveValueTypeMapping(Character.class, char.class);
-    public static TypeMapping BYTE = new PrimitiveValueTypeMapping(Byte.class, byte.class);
-    public static TypeMapping SHORT = new PrimitiveValueTypeMapping(Short.class, short.class);
-    public static TypeMapping INTEGER = new PrimitiveValueTypeMapping(Integer.class, int.class);
-    public static TypeMapping LONG = new PrimitiveValueTypeMapping(Long.class, long.class);
-    public static TypeMapping FLOAT = new PrimitiveValueTypeMapping(Float.class, float.class);
-    public static TypeMapping DOUBLE = new PrimitiveValueTypeMapping(Double.class, double.class);
-    public static TypeMapping BOOLEAN = new PrimitiveValueTypeMapping(Boolean.class, boolean.class);
+    public static TypeMapping CHAR = new PrimitiveTypeMapping(Character.class, char.class);
+    public static TypeMapping BYTE = new PrimitiveTypeMapping(Byte.class, byte.class);
+    public static TypeMapping SHORT = new PrimitiveTypeMapping(Short.class, short.class);
+    public static TypeMapping INTEGER = new PrimitiveTypeMapping(Integer.class, int.class);
+    public static TypeMapping LONG = new PrimitiveTypeMapping(Long.class, long.class);
+    public static TypeMapping FLOAT = new PrimitiveTypeMapping(Float.class, float.class);
+    public static TypeMapping DOUBLE = new PrimitiveTypeMapping(Double.class, double.class);
+    public static TypeMapping BOOLEAN = new PrimitiveTypeMapping(Boolean.class, boolean.class);
     
     public static Builder builder() {
         return new Builder();
