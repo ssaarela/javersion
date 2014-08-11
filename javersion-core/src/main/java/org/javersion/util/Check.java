@@ -23,7 +23,9 @@ import java.util.Map;
 
 public class Check {
 
-    public static <T> T notNull(T reference, String fieldName) {
+    private static final String NOT_NULL_OR_EMPTY_FMT = "%s shoud not be null or empty. Got %s";
+
+	public static <T> T notNull(T reference, String fieldName) {
         return notNull$(reference, "%s should not be null", fieldName);
     }
 
@@ -36,7 +38,7 @@ public class Check {
     }
     
     public static <T extends Iterable<?>> T notNullOrEmpty(T reference, String fieldName) {
-        return notNullOrEmpty$(reference, "%s shoud not be null or empty. Got %s", fieldName, reference);
+        return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
     }
     
     public static <T extends Iterable<?>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
@@ -45,7 +47,7 @@ public class Check {
     }
     
     public static <T extends Collection<?>> T notNullOrEmpty(T reference, String fieldName) {
-        return notNullOrEmpty$(reference, "%s shoud not be null or empty. Got %s", fieldName, reference);
+        return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
     }
     
     public static <T extends Collection<?>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
@@ -54,7 +56,7 @@ public class Check {
     }
     
     public static <K, V, T extends Map<K, V>> T notNullOrEmpty(T reference, String fieldName) {
-        return notNullOrEmpty$(reference, "%s shoud not be null or empty. Got %s", fieldName, reference);
+        return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
     }
     
     public static <K, V, T extends Map<K, V>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
@@ -63,7 +65,7 @@ public class Check {
     }
     
     public static String notNullOrEmpty(String reference, String fieldName) {
-        return notNullOrEmpty$(reference, "%s shoud not be null or empty. Got %s", fieldName, reference);
+        return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
     }
     
     public static String notNullOrEmpty$(String reference, String messageFormat, Object... args) {
