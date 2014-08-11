@@ -294,8 +294,12 @@ public class SimpleVersionGraphTest {
 
     @Test
     public void Bulk_Load() {
+    	Long revision = null;
         for (List<VersionExpectation> expectations : getBulkExpectations()) {
-        	long revision = -1;
+        	VersionExpectation lastExpectation = expectations.get(expectations.size() - 1);
+        	if (lastExpectation.getRevision() != null) {
+        		revision = lastExpectation.getRevision();
+        	}
         	SimpleVersionGraph versionGraph = SimpleVersionGraph.init(getVersions(expectations));
         	VersionExpectation expectation = expectations.get(expectations.size() - 1);
             assertGraphExpectations(versionGraph, revision, expectation);
@@ -311,7 +315,7 @@ public class SimpleVersionGraphTest {
     private void assertGraphExpectations(SimpleVersionGraph versionGraph, long revision, VersionExpectation expectation) {
     	if (expectation.expectedHeads != null) {
 	    	Set<Long> heads = new HashSet<>();
-	    	for (BranchAndRevision leaf : versionGraph.heads.keys()) {
+	    	for (BranchAndRevision leaf : versionGraph.getHeads().keys()) {
 	    		heads.add(leaf.revision);
 	    	}
 	    	assertThat(title("heads", revision, expectation),
@@ -319,6 +323,7 @@ public class SimpleVersionGraphTest {
 	    			equalTo(expectation.expectedHeads));
     	}
     }
+
     private void assertMergeExpectations(SimpleVersionGraph versionGraph, long revision, VersionExpectation expectation) {
         try {
             Merge<String, String> merge;
@@ -376,6 +381,9 @@ public class SimpleVersionGraphTest {
                 this.mergeRevisions = ImmutableSet.of(version.revision);
             }
             this.expectedMergeHeads = mergeRevisions;
+        }
+        public Long getRevision() {
+        	return version != null ? version.revision : null;
         }
         public VersionExpectation mergeRevisions(Set<Long> mergeRevisions) {
             this.mergeRevisions = mergeRevisions;

@@ -20,6 +20,8 @@ import static com.google.common.collect.Iterables.transform;
 import org.javersion.util.Check;
 import org.javersion.util.MutableSortedMap;
 import org.javersion.util.MutableTreeMap;
+import org.javersion.util.PersistentSortedMap;
+import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
 
@@ -29,7 +31,7 @@ public abstract class AbstractVersionGraphBuilder<K,
                                G extends AbstractVersionGraph<K, V, T, G, B>,
                                B extends AbstractVersionGraphBuilder<K, V, T, G, B>> {
 
-	MutableSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
+	PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
 	
     MutableSortedMap<Long, VersionNode<K, V, T>> versionNodes;
 
@@ -47,12 +49,12 @@ public abstract class AbstractVersionGraphBuilder<K,
     
     protected AbstractVersionGraphBuilder(G parentGraph) {
     	this.versionNodes = parentGraph.versionNodes.toMutableMap();
-        this.heads = parentGraph.heads.toMutableMap();
+        this.heads = parentGraph.getHeads();
     }
     
     private void reset() {
     	this.versionNodes = new MutableTreeMap<>();
-    	this.heads = new MutableTreeMap<>();
+    	this.heads = PersistentTreeMap.empty();
     }
     
     public final void add(T version) {
@@ -61,13 +63,8 @@ public abstract class AbstractVersionGraphBuilder<K,
         	reset();
         }
         Iterable<VersionNode<K, V, T>> parents = revisionsToNodes(version.parentRevisions);
-        VersionNode<K, V, T> versionNode = new VersionNode<K, V, T>(version, parents);
-        for (VersionNode<K, V, T> parent : versionNode.parents) {
-        	if (parent.version.branch.equals(versionNode.version.branch)) {
-        		heads.remove(new BranchAndRevision(parent));
-        	}
-        }
-        heads.put(new BranchAndRevision(versionNode), versionNode);
+        VersionNode<K, V, T> versionNode = new VersionNode<K, V, T>(version, parents, heads);
+        heads = versionNode.heads;
         versionNodes.put(version.revision, versionNode);
     }
     

@@ -18,19 +18,30 @@ package org.javersion.core;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.util.MutableSortedMap;
+import org.javersion.util.PersistentSortedMap;
+
 import com.google.common.collect.ImmutableSet;
 
 public final class VersionNode<K, V, T extends Version<K, V>> extends AbstractMergeNode<K, V> {
     
     public final T version;
 
-    public final Set<VersionNode<K, V, T>> parents;
+    public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
 
-    public VersionNode(T version, Iterable<VersionNode<K, V, T>> parents) {
+    public VersionNode(T version, Iterable<VersionNode<K, V, T>> parents, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads) {
     	super(toMergeNodes(parents), version);
 
         this.version = version;
-        this.parents = ImmutableSet.copyOf(parents);
+
+        MutableSortedMap<BranchAndRevision, VersionNode<K, V, T>> mutableHeads = heads.toMutableMap();
+        for (VersionNode<K, V, T> parent : parents) {
+        	if (parent.version.branch.equals(version.branch)) {
+        		mutableHeads.remove(new BranchAndRevision(parent));
+        	}
+        }
+        mutableHeads.put(new BranchAndRevision(this), this);
+        this.heads = mutableHeads.toPersistentMap();
     }
     
     public long getRevision() {
