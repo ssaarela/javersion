@@ -67,7 +67,7 @@
         <!-- Usage: mvn compile org.pitest:pitest-maven:mutationCoverage -->
         <groupId>org.pitest</groupId>
         <artifactId>pitest-maven</artifactId>
-        <version>0.32</version>
+        <version>1.0.0</version>
         <configuration>
           <jvmArgs>
             <value>-XX:-UseSplitVerifier</value>
