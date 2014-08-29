@@ -15,18 +15,18 @@
  */
 package org.javersion.core;
 
+import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Maps.newLinkedHashMap;
+import static com.google.common.collect.Maps.transformValues;
 import static java.util.Collections.unmodifiableMap;
+import static org.javersion.util.Check.notNull;
 
 import java.util.Map;
 import java.util.Set;
 
-import org.javersion.util.Check;
-
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 
 public class Version<K, V> {
     
@@ -55,12 +55,12 @@ public class Version<K, V> {
         this.revision = builder.revision;
         this.branch = builder.branch;
         this.type = builder.type;
-        this.parentRevisions = ImmutableSet.copyOf(builder.parentRevisions);
+        this.parentRevisions = copyOf(builder.parentRevisions);
         this.properties = unmodifiableMap(newLinkedHashMap(builder.properties));
     }
     
     public Map<K, VersionProperty<V>> getVersionProperties() {
-        return Maps.transformValues(properties, toVersionProperties);
+        return transformValues(properties, toVersionProperties);
     }
     
     public String toString() {
@@ -86,22 +86,22 @@ public class Version<K, V> {
         }
 
         public Builder<K, V> type(VersionType versionType) {
-            this.type = Check.notNull(versionType, "type");
+            this.type = notNull(versionType, "type");
             return this;
         }
 
         public Builder<K, V> branch(String branch) {
-            this.branch = Check.notNull(branch, "branch");
+            this.branch = notNull(branch, "branch");
             return this;
         }
 
         public Builder<K, V> parents(Set<Long> parentRevisions) {
-            this.parentRevisions = Check.notNull(parentRevisions, "parentRevisions");
+            this.parentRevisions = notNull(parentRevisions, "parentRevisions");
             return this;
         }
 
         public Builder<K, V> properties(Map<K, V> properties) {
-            this.properties = Check.notNull(properties, "properties");
+            this.properties = notNull(properties, "properties");
             return this;
         }
         
