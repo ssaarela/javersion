@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Samppa Saarela
+ * Copyright 2013 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,24 @@
  */
 package org.javersion.object.mapping;
 
-import java.util.Map;
-
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
-import org.javersion.object.types.IdentifiableType;
-import org.javersion.object.types.MapType;
+import org.javersion.object.types.DateTimeType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.TypeDescriptor;
+import org.joda.time.DateTime;
 
-public class MapTypeMapping implements TypeMapping {
+public class DateTimeMapping implements TypeMapping {
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.getRawType().equals(Map.class);
+        return localTypeDescriptor.typeDescriptor.isSubTypeOf(DateTime.class);
     }
 
     @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor mapType, DescribeContext context) {
-        SubPath valuePath = path.index("");
-        TypeDescriptor keyType = mapType.resolveGenericParameter(Map.class, 0);
-        TypeDescriptor valueType = mapType.resolveGenericParameter(Map.class, 1);
-        
-        IdentifiableType identifiableKeyType = (IdentifiableType) 
-                context.describeComponent(valuePath.property(MapType.KEY), mapType, keyType);
-
-        context.describeComponent(valuePath, mapType, valueType);
-        
-        return new MapType(identifiableKeyType);
+    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return new DateTimeType();
     }
 
 }

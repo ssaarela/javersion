@@ -21,10 +21,10 @@ import com.google.common.base.Function;
 import com.google.common.reflect.TypeToken;
 
 public class TypeDescriptor extends AbstractTypeDescriptor<
-            FieldDescriptor, 
-            TypeDescriptor, 
+            FieldDescriptor,
+            TypeDescriptor,
             TypeDescriptors>{
-    
+
     public static final Function<TypeDescriptor, Class<?>> getRawType = new Function<TypeDescriptor, Class<?>>() {
         @Override
         public Class<?> apply(TypeDescriptor input) {
@@ -36,5 +36,5 @@ public class TypeDescriptor extends AbstractTypeDescriptor<
     public TypeDescriptor(TypeDescriptors typeDescriptors, TypeToken<?> typeToken) {
         super(typeDescriptors, typeToken);
     }
-    
+
 }

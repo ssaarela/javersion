@@ -17,20 +17,25 @@ package org.javersion.object;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.javersion.object.mapping.DateTimeMapping;
+import org.javersion.object.mapping.EnumTypeMapping;
 import org.javersion.object.mapping.ListTypeMapping;
 import org.javersion.object.mapping.MapTypeMapping;
 import org.javersion.object.mapping.ObjectTypeMapping;
 import org.javersion.object.mapping.PrimitiveTypeMapping;
 import org.javersion.object.mapping.ReferenceTypeMapping;
 import org.javersion.object.mapping.SetTypeMapping;
+import org.javersion.object.mapping.SimpleTypeMapping;
 import org.javersion.object.mapping.StringTypeMapping;
+import org.javersion.object.mapping.TypeMapping;
 import org.javersion.object.mapping.VersionableReferenceTypeMapping;
 import org.javersion.object.mapping.VersionableTypeMapping;
-import org.javersion.object.types.TypeMapping;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
@@ -53,22 +58,33 @@ public class TypeMappings {
     public static TypeMapping FLOAT = new PrimitiveTypeMapping(Float.class, float.class);
     public static TypeMapping DOUBLE = new PrimitiveTypeMapping(Double.class, double.class);
     public static TypeMapping BOOLEAN = new PrimitiveTypeMapping(Boolean.class, boolean.class);
-    
+
+    public static TypeMapping BIG_INTEGER = new SimpleTypeMapping(BigInteger.class);
+    public static TypeMapping BIG_DECIMAL = new SimpleTypeMapping(BigDecimal.class);
+
+    public static TypeMapping ENUM = new EnumTypeMapping();
+
+    public static TypeMapping DATE_TIME = new DateTimeMapping();
+
     public static Builder builder() {
         return new Builder();
     }
-    
+
     public static Builder builder(List<TypeMapping> mappings) {
         return new Builder(mappings);
     }
 
-    public static final List<TypeMapping> DEFAULT_MAPPINGS = 
+    public static final List<TypeMapping> DEFAULT_MAPPINGS =
             ImmutableList.<TypeMapping>of(
                     new VersionableReferenceTypeMapping(),
                     new VersionableTypeMapping(),
                     new ListTypeMapping(),
                     new SetTypeMapping(),
                     new MapTypeMapping(),
+                    DATE_TIME,
+                    ENUM,
+                    BIG_INTEGER,
+                    BIG_DECIMAL,
                     STRING,
                     INTEGER,
                     LONG,
@@ -79,11 +95,11 @@ public class TypeMappings {
                     FLOAT,
                     CHAR
                     );
-    
+
     public static final TypeMappings DEFAULT = new TypeMappings(DEFAULT_MAPPINGS);
-    
+
     private final List<TypeMapping> types;
-    
+
     public TypeMappings(Iterable<TypeMapping> types) {
         this.types = ImmutableList.copyOf(types);
     }
@@ -102,20 +118,20 @@ public class TypeMappings {
         private final List<TypeMapping> defaultMappings;
 
         private final List<TypeMapping> mappings = Lists.newArrayList();
-        
+
         public Builder() {
             this(DEFAULT_MAPPINGS);
         }
-        
+
         public Builder(List<TypeMapping> defaultMappings) {
             this.defaultMappings = Check.notNull(defaultMappings, "defaultMappings");
         }
-        
+
         public Builder withMapping(TypeMapping mapping) {
             mappings.add(mapping);
             return this;
         }
-        
+
         public <R> HierarchyBuilder<R> withClass(Class<R> root) {
             return new HierarchyBuilder<>(root);
         }
@@ -123,14 +139,14 @@ public class TypeMappings {
         public TypeMappings build() {
             return new TypeMappings(Iterables.concat(mappings, defaultMappings));
         }
-        
-        
+
+
         public final class HierarchyBuilder<R> {
-            
+
             protected String alias;
-            
+
             protected final Class<? extends R> rootType;
-            
+
             protected Set<Class<? extends R>> classes = Sets.newHashSet();
 
             public HierarchyBuilder(Class<R> root) {
@@ -141,12 +157,12 @@ public class TypeMappings {
             public Builder withFactory(TypeMapping factory) {
                 return register().withMapping(factory);
             }
-            
+
             public <N> HierarchyBuilder<N> withClass(Class<N> root) {
                 return register().withClass(root);
             }
 
-            
+
             @SafeVarargs
             public final HierarchyBuilder<R> havingSubClasses(Class<? extends R>... subClasses) {
                 return havingSubClasses(ImmutableList.copyOf(subClasses));
@@ -162,7 +178,7 @@ public class TypeMappings {
                 this.alias = alias;
                 return this;
             }
-            
+
             Builder register() {
                 Builder builder = Builder.this;
                 if (!isNullOrEmpty(alias)) {
@@ -177,6 +193,6 @@ public class TypeMappings {
             }
 
         }
-        
+
     }
 }

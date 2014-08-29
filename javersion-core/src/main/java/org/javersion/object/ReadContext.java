@@ -27,24 +27,27 @@ import com.google.common.collect.Maps;
 public class ReadContext {
 
     private final Map<PropertyPath, Object> properties;
-    
+
     private final SchemaRoot schemaRoot;
-    
+
     private final PropertyTree rootNode;
 
     private final Deque<PropertyTree> lowPriorityQueue = new ArrayDeque<>();
 
     private final Deque<PropertyTree> hightPriorityQueue = new ArrayDeque<>();
-    
+
     private final Map<PropertyPath, Object> objects = Maps.newHashMap();
-    
+
     protected ReadContext(SchemaRoot schemaRoot, Map<PropertyPath, Object> properties) {
         this.properties = properties;
         this.schemaRoot = schemaRoot;
         this.rootNode = PropertyTree.build(properties.keySet());
     }
-    
+
     public Object getObject() {
+        if (rootNode == null) {
+            return null;
+        }
         try {
             Object value = properties.get(rootNode.path);
             Object result = schemaRoot.instantiate(rootNode, value, this);
@@ -63,11 +66,11 @@ public class ReadContext {
             throw new RuntimeException(e);
         }
     }
-    
+
     private boolean queueIsNotEmpty() {
         return !(hightPriorityQueue.isEmpty() && lowPriorityQueue.isEmpty());
     }
-    
+
     private PropertyTree nextQueueItem() {
         return !hightPriorityQueue.isEmpty() ? hightPriorityQueue.removeFirst() : lowPriorityQueue.removeFirst();
     }
@@ -80,7 +83,7 @@ public class ReadContext {
     public Object prepareObject(PropertyTree propertyTree) {
         return getObject(propertyTree, true);
     }
-    
+
     public Object getObject(PropertyPath path) {
         PropertyTree propertyTree = rootNode.get(path);
         return propertyTree != null ? getObject(propertyTree) : null;

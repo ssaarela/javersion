@@ -20,7 +20,6 @@ import java.util.List;
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.ListType;
-import org.javersion.object.types.TypeMapping;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;

@@ -30,12 +30,12 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
 public abstract class Merge<K, V> {
-    
+
     protected static <K, V, T extends Version<K, V>> Iterable<Merge<K, V>> toMergeNodes(Iterable<VersionNode<K, V, T>> nodes) {
         return Iterables.transform(nodes, new Function<VersionNode<K, V, T>, Merge<K, V>>() {
             @Override
             public Merge<K, V> apply(VersionNode<K, V, T> input) {
-                return (Merge<K, V>) input;
+                return input;
             }
         });
     }
@@ -46,30 +46,30 @@ public abstract class Merge<K, V> {
         public V apply(VersionProperty<V> input) {
             return input != null ? input.value : null;
         }
-        
+
     };
-    
+
     public final PersistentHashMap<K, VersionProperty<V>> mergedProperties;
-    
+
     public final PersistentHashSet<Long> mergedRevisions;
-    
+
     public final Multimap<K, VersionProperty<V>> conflicts;
-    
+
     protected Merge(MergeBuilder<K, V> mergeBuilder) {
         this.mergedProperties = mergeBuilder.getMergedProperties();
         this.mergedRevisions = mergeBuilder.getMergedRevisions();
         this.conflicts = mergeBuilder.getConflicts();
         setMergeHeads(mergeBuilder.getHeads());
     }
-    
+
     public abstract Set<Long> getMergeHeads();
 
     protected abstract void setMergeHeads(Set<Long> heads);
-    
+
     public Map<K, V> diff(Map<K, V> newProperties) {
         return Diff.diff(getPropertiesAsPlainMap(), newProperties);
     }
-    
+
     public Map<K, V> getProperties() {
         return filterValues(getPropertiesAsPlainMap(), notNull());
     }
@@ -78,4 +78,7 @@ public abstract class Merge<K, V> {
         return transformValues(mergedProperties.asMap(), getVersionPropertyValue);
     }
 
+    public Multimap<K, VersionProperty<V>> getConflicts() {
+        return conflicts;
+    }
 }

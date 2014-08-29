@@ -21,7 +21,6 @@ import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.SetType;
-import org.javersion.object.types.TypeMapping;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;

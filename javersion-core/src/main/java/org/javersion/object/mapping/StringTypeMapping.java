@@ -18,7 +18,6 @@ package org.javersion.object.mapping;
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.SimpleValueType;
-import org.javersion.object.types.TypeMapping;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;

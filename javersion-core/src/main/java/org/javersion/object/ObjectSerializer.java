@@ -19,24 +19,24 @@ import java.util.Map;
 
 import org.javersion.path.PropertyPath;
 
-public class ObjectSerializer<B> {
+public class ObjectSerializer<O> {
 
     private final SchemaRoot schemaRoot;
     
-    public ObjectSerializer(Class<B> clazz) {
+    public ObjectSerializer(Class<O> clazz) {
         this.schemaRoot = DescribeContext.DEFAULT.describeSchema(clazz);
     }
     
-    public ObjectSerializer(Class<B> clazz, TypeMappings typeMappings) {
+    public ObjectSerializer(Class<O> clazz, TypeMappings typeMappings) {
         this.schemaRoot = new DescribeContext(typeMappings).describeSchema(clazz);
     }
 
-    public Map<PropertyPath, Object> write(B object) {
+    public Map<PropertyPath, Object> write(O object) {
         return new WriteContext(schemaRoot, object).toMap();
     }
 
     @SuppressWarnings("unchecked")
-    public B read(Map<PropertyPath, Object> properties) {
-        return (B) new ReadContext(schemaRoot, properties).getObject();
+    public O read(Map<PropertyPath, Object> properties) {
+        return (O) new ReadContext(schemaRoot, properties).getObject();
     }
 }

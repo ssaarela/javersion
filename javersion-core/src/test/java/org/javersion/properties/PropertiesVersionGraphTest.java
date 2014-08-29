@@ -78,7 +78,7 @@ public class PropertiesVersionGraphTest {
      */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
             when(version(1l)
-                .properties(mapOf(
+                .changeset(mapOf(
                         "firstName", "John",
                         "lastName", "Doe")))
                 .expectProperties(mapOf(
@@ -93,7 +93,7 @@ public class PropertiesVersionGraphTest {
 
             when(version(2l)
                 .parents(setOf(1l))
-                .properties(mapOf(
+                .changeset(mapOf(
                         "status", "Single")))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
@@ -104,7 +104,7 @@ public class PropertiesVersionGraphTest {
             when(version(3l)
                 .branch(ALT_BRANCH)
                 .parents(setOf(1l))
-                .properties(mapOf(
+                .changeset(mapOf(
                         "mood", "Lonely")))
                 .expectAllHeads(setOf(2l, 3l))
                 .mergeRevisions(setOf(3l, 2l))
@@ -118,7 +118,7 @@ public class PropertiesVersionGraphTest {
             when(version(4l)
                 .branch(ALT_BRANCH)
                 .parents(setOf(3l))
-                .properties(mapOf(
+                .changeset(mapOf(
                         "lastName", "Foe",
                         "status", "Just married",
                         "mood", "Ecstatic",
@@ -171,7 +171,7 @@ public class PropertiesVersionGraphTest {
 
             when(version(5l)
                 .parents(setOf(2l))
-                .properties(mapOf(
+                .changeset(mapOf(
                         "mood", "Ecstatic")))
                 .expectAllHeads(setOf(5l, 4l))
                 .mergeRevisions(setOf(4l, 5l))
@@ -207,7 +207,7 @@ public class PropertiesVersionGraphTest {
 
             when(version(6l)
                 .parents(setOf(5l, 4l))
-                .properties(mapOf(
+                .changeset(mapOf(
                         "mood", null,
                         "married", null)))
                 .expectAllHeads(setOf(6l, 4l))
@@ -255,7 +255,7 @@ public class PropertiesVersionGraphTest {
                         
             when(version(8l)
                 .parents(setOf(7l))
-                .properties(mapOf(
+                .changeset(mapOf(
                         "status", "Married"
                         )))
                 .expectProperties(mapOf(
@@ -265,7 +265,7 @@ public class PropertiesVersionGraphTest {
             
 
             when(version(9l)
-                .properties(mapOf(
+                .changeset(mapOf(
                         "status", "New beginning"))
                 .type(VersionType.ROOT))
                 .expectProperties(mapOf(

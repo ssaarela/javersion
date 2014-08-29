@@ -36,56 +36,56 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
 public class MergeBuilder<K, V> {
-    
-    private boolean first = true;
-    
-    private boolean locked = false;
-    
-    private MutableHashMap<K, VersionProperty<V>> mergedProperties;
 
-    private MutableHashSet<Long> mergedRevisions;
-    
-    private ArrayListMultimap<K, VersionProperty<V>> conflicts = ArrayListMultimap.create();
-    
-    private Set<Long> heads = Sets.newHashSet();
-    
+    private boolean first = true;
+
+    private boolean locked = false;
+
+    private MutableHashMap<K, VersionProperty<V>> mergedProperties = new MutableHashMap<>();
+
+    private MutableHashSet<Long> mergedRevisions = new MutableHashSet<>();
+
+    private final ArrayListMultimap<K, VersionProperty<V>> conflicts = ArrayListMultimap.create();
+
+    private final Set<Long> heads = Sets.newHashSet();
+
     public MergeBuilder() {
     }
-    
+
     public MergeBuilder(Iterable<? extends Merge<K, V>> nodes) {
         mergeAll(nodes);
     }
-    
+
     public PersistentHashMap<K, VersionProperty<V>> getMergedProperties() {
         ensureInitialized();
         locked = true;
         return mergedProperties.toPersistentMap();
     }
-    
+
     public PersistentHashSet<Long> getMergedRevisions() {
         ensureInitialized();
         locked = true;
         return mergedRevisions.toPersistentSet();
     }
-    
+
     public Multimap<K, VersionProperty<V>> getConflicts() {
         ensureInitialized();
         locked = true;
         return ImmutableMultimap.copyOf(conflicts);
     }
-    
+
     public Set<Long> getHeads() {
         ensureInitialized();
         locked = true;
         return ImmutableSet.copyOf(heads);
     }
-    
+
     public final MergeBuilder<K, V> overwrite(Version<K, V> version) {
         Check.notNull(version, "version");
         ensureNotLocked();
         ensureInitialized();
 
-        for (Map.Entry<K, V> entry : version.properties.entrySet()) {
+        for (Map.Entry<K, V> entry : version.changeset.entrySet()) {
             mergedProperties.put(entry.getKey(), new VersionProperty<V>(version.revision, entry.getValue()));
             conflicts.removeAll(entry.getKey());
         }
@@ -99,18 +99,18 @@ public class MergeBuilder<K, V> {
     private void ensureNotLocked() {
         Check.that(!locked, "MergeHelper is locked");
     }
-    
+
     public final MergeBuilder<K, V> mergeAll(final Iterable<? extends Merge<K, V>> nodes) {
         for (Merge<K, V> node : nodes) {
             merge(node);
         }
         return this;
     }
-    
+
     public final MergeBuilder<K, V> merge(final Merge<K, V> node) {
         Check.notNull(node, "node");
         ensureNotLocked();
-        
+
         if (first) {
             firstVersion(node);
         } else {
@@ -129,12 +129,12 @@ public class MergeBuilder<K, V> {
                     Entry<K, VersionProperty<V>> newEntry) {
                 VersionProperty<V> oldValue = oldEntry.getValue();
                 VersionProperty<V> newValue = newEntry.getValue();
-                
+
                 // newValue from common ancestor?
                 if (mergedRevisions.contains(newValue.revision)) {
                     return false;
                 }
-                // oldValue from common ancestor? 
+                // oldValue from common ancestor?
                 else if (node.mergedRevisions.contains(oldValue.revision)) {
                     return true;
                 }
@@ -148,12 +148,12 @@ public class MergeBuilder<K, V> {
                         conflicts.put(key, newValue);
                     }
                     return retainNewer;
-                } 
+                }
                 // Newer value
                 else {
                     return true;
                 }
-      
+
             }
         };
 
@@ -167,11 +167,11 @@ public class MergeBuilder<K, V> {
         mergedProperties = node.mergedProperties.toMutableMap();
         mergedRevisions = node.mergedRevisions.toMutableSet();
     }
-    
+
     protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
         return oldValue.revision < newValue.revision;
     }
-    
+
     private void ensureInitialized() {
         if (first) {
             first = false;

@@ -29,57 +29,58 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 public class Version<K, V> {
-    
+
     public static final String DEFAULT_BRANCH = "default";
-    
-    private Function<V, VersionProperty<V>> toVersionProperties = new Function<V, VersionProperty<V>>() {
+
+    private final Function<V, VersionProperty<V>> toVersionProperties = new Function<V, VersionProperty<V>>() {
 
         @Override
         public VersionProperty<V> apply(V input) {
             return new VersionProperty<V>(revision, input);
         }
-        
+
     };
 
     public final long revision;
-    
+
     public final String branch;
-    
+
     public final Set<Long> parentRevisions;
 
-    public final Map<K, V> properties;
-    
+    public final Map<K, V> changeset;
+
     public final VersionType type;
-    
+
     protected Version(Builder<K, V, ?> builder) {
         this.revision = builder.revision;
         this.branch = builder.branch;
         this.type = builder.type;
         this.parentRevisions = copyOf(builder.parentRevisions);
-        this.properties = unmodifiableMap(newLinkedHashMap(builder.properties));
+        this.changeset = unmodifiableMap(newLinkedHashMap(builder.changeset));
     }
-    
+
     public Map<K, VersionProperty<V>> getVersionProperties() {
-        return transformValues(properties, toVersionProperties);
+        return transformValues(changeset, toVersionProperties);
     }
-    
+
+    @Override
     public String toString() {
         return "#" + revision;
     }
 
-    public static class Builder<K, V, B extends Builder<K, K, B>> {
+    public static class Builder<K, V, B extends Builder<K, V, B>> {
 
         private static Set<Long> EMPTY_PARENTS = ImmutableSet.of();
-        
-        private final long revision;
-        
-        private VersionType type = VersionType.NORMAL;
 
-        private String branch = DEFAULT_BRANCH;
-        
-        private Set<Long> parentRevisions = EMPTY_PARENTS;
+        protected final long revision;
 
-        private Map<K, V> properties = ImmutableMap.of();
+        protected VersionType type = VersionType.NORMAL;
+
+        protected String branch = DEFAULT_BRANCH;
+
+        protected Set<Long> parentRevisions = EMPTY_PARENTS;
+
+        protected Map<K, V> changeset = ImmutableMap.of();
 
         public Builder(long revision) {
             this.revision = revision;
@@ -100,21 +101,21 @@ public class Version<K, V> {
             return self();
         }
 
-        public B properties(Map<K, V> properties) {
-            this.properties = notNull(properties, "properties");
+        public B changeset(Map<K, V> changeset) {
+            this.changeset = notNull(changeset, "changeset");
             return self();
         }
-        
+
         @SuppressWarnings("unchecked")
         protected B self() {
             return (B) this;
         }
-        
+
         public Version<K, V> build() {
             return new Version<>(this);
         }
-        
+
     }
-    
+
 }
 

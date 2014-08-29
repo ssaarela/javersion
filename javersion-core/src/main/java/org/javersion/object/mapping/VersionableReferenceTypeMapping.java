@@ -20,7 +20,6 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.Versionable;
-import org.javersion.object.types.TypeMapping;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;

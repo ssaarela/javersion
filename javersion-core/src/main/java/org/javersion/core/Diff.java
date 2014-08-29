@@ -15,6 +15,7 @@
  */
 package org.javersion.core;
 
+import static com.google.common.base.Objects.equal;
 import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
 import static org.javersion.util.Check.notNull;
 
@@ -22,32 +23,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.base.Objects;
-
 public class Diff {
 
     public static <K, V> Map<K, V> diff(Map<K, V> from, Map<K, V> to) {
         notNull(from, "from");
         notNull(to, "to");
-        
+
         if (from.size() < to.size()) {
             return diffBySmallerFrom(from, to);
         } else {
             return diffBySmallerTo(from, to);
         }
     }
-    
+
     private static <K, V> Map<K, V> diffBySmallerFrom(Map<K, V> from, Map<K, V> to) {
         Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
         Map<K, V> fromClone = new HashMap<>(from);
         for (Entry<K, V> entry : to.entrySet()) {
             K key = entry.getKey();
             V newValue = entry.getValue();
-            if (fromClone.containsKey(key)) {
-                V oldValue = fromClone.remove(key);
-                if (!Objects.equal(newValue, oldValue)) {
-                    diff.put(key, newValue);
-                }
+            V oldValue = fromClone.remove(key);
+            if (!equal(newValue, oldValue)) {
+                diff.put(key, newValue);
             }
         }
         for (K key : fromClone.keySet()) {
@@ -55,7 +52,7 @@ public class Diff {
         }
         return diff;
     }
-    
+
     private static <K, V> Map<K, V> diffBySmallerTo(Map<K, V> from, Map<K, V> to) {
         Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
         Map<K, V> toClone = new HashMap<>(to);
@@ -63,7 +60,7 @@ public class Diff {
             K key = entry.getKey();
             V oldValue = entry.getValue();
             V newValue = toClone.remove(key);
-            if (!Objects.equal(oldValue, newValue)) {
+            if (!equal(oldValue, newValue)) {
                 diff.put(key, newValue);
             }
         }

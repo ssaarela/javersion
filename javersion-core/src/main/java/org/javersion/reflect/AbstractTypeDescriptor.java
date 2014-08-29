@@ -33,13 +33,13 @@ import com.google.common.collect.*;
 import com.google.common.reflect.TypeToken;
 
 public abstract class AbstractTypeDescriptor<
-            F extends AbstractFieldDescriptor<F, T, Ts>, 
+            F extends AbstractFieldDescriptor<F, T, Ts>,
             T extends AbstractTypeDescriptor<F, T, Ts>,
-            Ts extends AbstractTypeDescriptors<F, T, Ts>> 
+            Ts extends AbstractTypeDescriptors<F, T, Ts>>
         extends ElementDescriptor<F, T, Ts> {
-    
+
     public static final BiMap<Class<?>, Class<?>> WRAPPER_TO_PRIMITIVE;
-    
+
     static {
         ImmutableBiMap.Builder<Class<?>, Class<?>> primitives = ImmutableBiMap.builder();
         primitives.put(Byte.class, Byte.TYPE);
@@ -53,7 +53,7 @@ public abstract class AbstractTypeDescriptor<
         primitives.put(void.class, Void.TYPE);
         WRAPPER_TO_PRIMITIVE = primitives.build();
     }
-    
+
     private static final Predicate<Class<?>> isInterface = new Predicate<Class<?>>() {
 
         @Override
@@ -62,13 +62,13 @@ public abstract class AbstractTypeDescriptor<
         }
 
     };
-    
+
     protected final TypeToken<?> typeToken;
-    
+
     private volatile SortedMap<String, F> fields;
 
     private volatile Set<Class<?>> classes;
-    
+
     public AbstractTypeDescriptor(Ts typeDescriptors, TypeToken<?> typeToken) {
         super(typeDescriptors);
         this.typeToken = Check.notNull(typeToken, "typeToken");
@@ -92,15 +92,15 @@ public abstract class AbstractTypeDescriptor<
         }
         return result;
     }
-    
+
     public Set<Class<?>> getSuperClasses() {
         return Sets.filter(getAllClasses(), not(isInterface));
     }
-    
+
     public Set<Class<?>> getInterfaces() {
         return Sets.filter(getAllClasses(), isInterface);
     }
-    
+
     public Set<Class<?>> getAllClasses() {
         if (classes == null) {
             classes = unmodifiableSet(collectAllClasses(getRawType(), newLinkedHashSet()));
@@ -123,11 +123,12 @@ public abstract class AbstractTypeDescriptor<
         }
         return field;
     }
-    
+
     public T resolveGenericParameter(Class<?> genericClass, int genericParam) {
         return typeDescriptors.get(typeToken.resolveType(genericClass.getTypeParameters()[genericParam]));
     }
-    
+
+    @Override
     public Class<?> getElement() {
         return getRawType();
     }
@@ -135,7 +136,7 @@ public abstract class AbstractTypeDescriptor<
     public Class<?> getRawType() {
         return typeToken.getRawType();
     }
-    
+
     private void collectFields(Class<?> clazz, Map<String, F> fields) {
         for (Field field : clazz.getDeclaredFields()) {
             if (typeDescriptors.fieldFilter.apply(field) && !fields.containsKey(field.getName())) {
@@ -147,10 +148,10 @@ public abstract class AbstractTypeDescriptor<
             collectFields(superClass, fields);
         }
     }
-    
+
     private static Set<Class<?>> collectAllClasses(Class<?> clazz, LinkedHashSet<Class<?>> classes) {
         classes.add(clazz);
-        
+
         List<Class<?>> stack = Lists.newArrayList();
 
         Class<?> superClass = clazz.getSuperclass();
@@ -164,11 +165,11 @@ public abstract class AbstractTypeDescriptor<
                 stack.add(iface);
             }
         }
-        
+
         for (Class<?> next : stack) {
             collectAllClasses(next, classes);
         }
-        
+
         return classes;
     }
 
@@ -184,7 +185,11 @@ public abstract class AbstractTypeDescriptor<
     public boolean isSubTypeOf(Class<?> clazz) {
         return clazz.isAssignableFrom(getRawType());
     }
-    
+
+    public boolean isEnum() {
+        return getRawType().isEnum();
+    }
+
     public Object newInstance() {
         Constructor<?> constructor;
         try {
@@ -195,11 +200,12 @@ public abstract class AbstractTypeDescriptor<
             throw new RuntimeException(e);
         }
     }
-    
+
     private static LinkedHashSet<Class<?>> newLinkedHashSet() {
         return Sets.<Class<?>>newLinkedHashSet();
     }
-    
+
+    @Override
     public final boolean equals(Object obj) {
         if (obj == this) {
             return true;
@@ -212,11 +218,13 @@ public abstract class AbstractTypeDescriptor<
             return false;
         }
     }
-    
+
+    @Override
     public final int hashCode() {
         return 31 * typeDescriptors.hashCode() + typeToken.hashCode();
     }
 
+    @Override
     public String toString() {
         return typeToken.toString();
     }
