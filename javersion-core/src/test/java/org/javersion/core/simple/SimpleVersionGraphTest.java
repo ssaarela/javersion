@@ -50,6 +50,7 @@ public class SimpleVersionGraphTest {
     private static final Map<String, String> EMPTY_PROPERTIES = mapOf();
     
     private static final String ALT_BRANCH = "alt-branch"; 
+    
     /**
      * <pre>
      * default
@@ -333,7 +334,7 @@ public class SimpleVersionGraphTest {
                 merge = versionGraph.mergeRevisions(expectation.mergeRevisions);
             }
             assertThat(title("mergeHeads", revision, expectation), 
-                    merge.getHeads(), 
+                    merge.getMergeHeads(), 
                     equalTo(expectation.expectedMergeHeads));
             
             assertThat(title("properties", revision, expectation), 

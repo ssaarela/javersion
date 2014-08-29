@@ -38,12 +38,12 @@ public class BranchMerge<K, V> extends Merge<K, V> {
     }
 
     @Override
-    public Set<Long> getHeads() {
+    public Set<Long> getMergeHeads() {
         return heads;
     }
 
     @Override
-    protected void setHeads(Set<Long> heads) {
+    protected void setMergeHeads(Set<Long> heads) {
         this.heads = heads;
     }
 

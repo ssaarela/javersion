@@ -117,7 +117,7 @@ public class MergeBuilder<K, V> {
             nextVersion(node);
         }
         conflicts.putAll(node.conflicts);
-        heads.addAll(node.getHeads());
+        heads.addAll(node.getMergeHeads());
         return this;
     }
 

@@ -17,6 +17,7 @@ package org.javersion.core;
 
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Maps.filterValues;
+import static com.google.common.collect.Maps.transformValues;
 
 import java.util.Map;
 import java.util.Set;
@@ -26,7 +27,6 @@ import org.javersion.util.PersistentHashSet;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
 public abstract class Merge<K, V> {
@@ -59,15 +59,23 @@ public abstract class Merge<K, V> {
         this.mergedProperties = mergeBuilder.getMergedProperties();
         this.mergedRevisions = mergeBuilder.getMergedRevisions();
         this.conflicts = mergeBuilder.getConflicts();
-        setHeads(mergeBuilder.getHeads());
+        setMergeHeads(mergeBuilder.getHeads());
     }
     
-    public abstract Set<Long> getHeads();
+    public abstract Set<Long> getMergeHeads();
 
-    protected abstract void setHeads(Set<Long> heads);
-
+    protected abstract void setMergeHeads(Set<Long> heads);
+    
+    public Map<K, V> diff(Map<K, V> newProperties) {
+        return Diff.diff(getPropertiesAsPlainMap(), newProperties);
+    }
+    
     public Map<K, V> getProperties() {
-        return filterValues(Maps.transformValues(mergedProperties.asMap(), getVersionPropertyValue), notNull());
+        return filterValues(getPropertiesAsPlainMap(), notNull());
+    }
+
+    private Map<K, V> getPropertiesAsPlainMap() {
+        return transformValues(mergedProperties.asMap(), getVersionPropertyValue);
     }
 
 }

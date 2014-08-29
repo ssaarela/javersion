@@ -57,7 +57,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V
     }
 
     @Override
-    public Set<Long> getHeads() {
+    public Set<Long> getMergeHeads() {
         return ImmutableSet.of(version.revision);
     }
     
@@ -77,6 +77,6 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V
     }
 
     @Override
-    protected void setHeads(Set<Long> heads) {}
+    protected void setMergeHeads(Set<Long> heads) {}
 
 }
