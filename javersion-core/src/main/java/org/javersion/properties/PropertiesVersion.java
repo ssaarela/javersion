@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.core.simple;
+package org.javersion.properties;
 
 import java.util.Map;
 import java.util.Set;
@@ -21,10 +21,10 @@ import java.util.Set;
 import org.javersion.core.Version;
 import org.javersion.core.VersionType;
 
-public class SimpleVersion extends Version<String, String> {
+public class PropertiesVersion extends Version<String, String> {
 
     
-    public SimpleVersion(Builder builder) {
+    public PropertiesVersion(Builder builder) {
         super(builder);
     }
 
@@ -59,8 +59,8 @@ public class SimpleVersion extends Version<String, String> {
         }
 
         @Override
-        public SimpleVersion build() {
-            return new SimpleVersion(this);
+        public PropertiesVersion build() {
+            return new PropertiesVersion(this);
         }
 
     }
