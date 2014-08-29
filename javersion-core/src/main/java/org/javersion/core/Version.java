@@ -51,7 +51,7 @@ public class Version<K, V> {
     
     public final VersionType type;
     
-    protected Version(Builder<K, V> builder) {
+    protected Version(Builder<K, V, ?> builder) {
         this.revision = builder.revision;
         this.branch = builder.branch;
         this.type = builder.type;
@@ -67,7 +67,7 @@ public class Version<K, V> {
         return "#" + revision;
     }
 
-    public static class Builder<K, V> {
+    public static class Builder<K, V, B extends Builder<K, K, B>> {
 
         private static Set<Long> EMPTY_PARENTS = ImmutableSet.of();
         
@@ -85,24 +85,29 @@ public class Version<K, V> {
             this.revision = revision;
         }
 
-        public Builder<K, V> type(VersionType versionType) {
+        public B type(VersionType versionType) {
             this.type = notNull(versionType, "type");
-            return this;
+            return self();
         }
 
-        public Builder<K, V> branch(String branch) {
+        public B branch(String branch) {
             this.branch = notNull(branch, "branch");
-            return this;
+            return self();
         }
 
-        public Builder<K, V> parents(Set<Long> parentRevisions) {
+        public B parents(Set<Long> parentRevisions) {
             this.parentRevisions = notNull(parentRevisions, "parentRevisions");
-            return this;
+            return self();
         }
 
-        public Builder<K, V> properties(Map<K, V> properties) {
+        public B properties(Map<K, V> properties) {
             this.properties = notNull(properties, "properties");
-            return this;
+            return self();
+        }
+        
+        @SuppressWarnings("unchecked")
+        protected B self() {
+            return (B) this;
         }
         
         public Version<K, V> build() {

@@ -1,7 +1,9 @@
-package org.javersion.object;
+package org.javersion.object.types;
 
 import java.util.Map;
 
+import org.javersion.object.ReadContext;
+import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 import org.javersion.path.PropertyPath.SubPath;

@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.types;
 
-import static java.util.Arrays.asList;
-
+import org.javersion.object.DescribeContext;
+import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
-public class VersionableTypeMapping implements TypeMapping {
+public interface TypeMapping {
 
-    @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
-    }
+    boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor);
     
-    
-    @Override
-    public  ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return ObjectTypeMapping.describe(path, type.getRawType(), asList(type), context);
-    }
+    ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context);
     
 }

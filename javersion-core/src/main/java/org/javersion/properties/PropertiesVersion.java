@@ -15,11 +15,7 @@
  */
 package org.javersion.properties;
 
-import java.util.Map;
-import java.util.Set;
-
 import org.javersion.core.Version;
-import org.javersion.core.VersionType;
 
 public class PropertiesVersion extends Version<String, String> {
 
@@ -28,34 +24,10 @@ public class PropertiesVersion extends Version<String, String> {
         super(builder);
     }
 
-    public static class Builder extends Version.Builder<String, String> {
+    public static class Builder extends Version.Builder<String, String, Builder> {
 
         public Builder(long revision) {
             super(revision);
-        }
-
-        @Override
-        public Builder branch(String branch) {
-            super.branch(branch);
-            return this;
-        }
-
-        @Override
-        public Builder parents(Set<Long> parentRevisions) {
-            super.parents(parentRevisions);
-            return this;
-        }
-
-        @Override
-        public Builder properties(Map<String, String> properties) {
-            super.properties(properties);
-            return this;
-        }
-
-        @Override
-        public Builder type(VersionType versionType) {
-            super.type(versionType);
-            return this;
         }
 
         @Override

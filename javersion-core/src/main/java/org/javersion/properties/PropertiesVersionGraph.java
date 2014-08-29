@@ -57,6 +57,7 @@ public final class PropertiesVersionGraph extends AbstractVersionGraph<String, S
         protected Builder() {
             super();
         }
+        
         protected Builder(PropertiesVersionGraph parentGraph) {
             super(parentGraph);
         }

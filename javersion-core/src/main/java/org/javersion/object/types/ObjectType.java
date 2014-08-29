@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.types;
 
 import static com.google.common.collect.Maps.uniqueIndex;
 
 import java.util.Map;
 
+import org.javersion.object.ReadContext;
+import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 import org.javersion.reflect.FieldDescriptor;

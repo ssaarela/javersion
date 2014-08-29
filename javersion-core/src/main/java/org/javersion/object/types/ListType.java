@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2014 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.types;
 
+import java.util.List;
+
+import org.javersion.object.ReadContext;
+import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.Index;
 import org.javersion.path.PropertyTree;
 
-public class SimpleValueType implements ValueType, IdentifiableType {
-    
-    public SimpleValueType() {
-    }
-    
+import com.google.common.collect.Lists;
+
+public class ListType implements ValueType {
+
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        return value;
+        int size = (Integer) value;
+        Object[] values = new Object[size];
+        for (PropertyTree child : propertyTree.getChildren()) {
+            int index = Integer.valueOf(((Index) child.path).index);
+            Object element = context.getObject(child);
+            values[index] = element;
+        }
+        return Lists.newArrayList(values);
     }
 
     @Override
@@ -33,12 +44,12 @@ public class SimpleValueType implements ValueType, IdentifiableType {
 
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
-        context.put(path, object);
-    }
-
-    @Override
-    public String toString(Object object) {
-        return object.toString();
+        @SuppressWarnings("rawtypes")
+        List list = (List) object;
+        context.put(path, list.size());
+        for (int i=0; i < list.size(); i++) {
+            context.serialize(path.index(i), list.get(i));
+        }
     }
 
     @Override

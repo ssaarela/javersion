@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.mapping;
 
+import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 

@@ -21,6 +21,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 
+import org.javersion.object.types.TypeMapping;
+import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.FieldDescriptor;

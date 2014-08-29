@@ -21,6 +21,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.javersion.object.mapping.ListTypeMapping;
+import org.javersion.object.mapping.MapTypeMapping;
+import org.javersion.object.mapping.ObjectTypeMapping;
+import org.javersion.object.mapping.PrimitiveTypeMapping;
+import org.javersion.object.mapping.ReferenceTypeMapping;
+import org.javersion.object.mapping.SetTypeMapping;
+import org.javersion.object.mapping.StringTypeMapping;
+import org.javersion.object.mapping.VersionableReferenceTypeMapping;
+import org.javersion.object.mapping.VersionableTypeMapping;
+import org.javersion.object.types.TypeMapping;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;

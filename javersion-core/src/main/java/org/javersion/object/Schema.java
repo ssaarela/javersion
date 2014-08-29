@@ -17,6 +17,7 @@ package org.javersion.object;
 
 import java.util.Map;
 
+import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;

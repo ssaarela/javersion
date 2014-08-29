@@ -13,48 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.types;
 
+import org.javersion.object.ReadContext;
+import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
-import org.javersion.util.Check;
 
-
-public final class ReferenceType implements ValueType, IdentifiableType {
+public class SimpleValueType implements ValueType, IdentifiableType {
     
-    private final IdentifiableType identifiableType;
-    
-    private final PropertyPath targetRoot;
-    
-    public ReferenceType(IdentifiableType identifiableType, PropertyPath targetRoot) {
-        this.identifiableType = Check.notNull(identifiableType, "keyType");
-        this.targetRoot = Check.notNull(targetRoot, "targetRoot");
+    public SimpleValueType() {
     }
     
-    @Override
-    public void serialize(PropertyPath path, Object object, WriteContext context) {
-        String id = identifiableType.toString(object);
-        context.put(path, id);
-        context.serialize(targetRoot.index(id), object);
-    }
-
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        String id = (String) value;
-        return context.prepareObject(targetRoot.index(id));
+        return value;
     }
 
     @Override
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
 
     @Override
-    public boolean isReference() {
-        return true;
+    public void serialize(PropertyPath path, Object object, WriteContext context) {
+        context.put(path, object);
     }
 
     @Override
     public String toString(Object object) {
-        return identifiableType.toString(object);
+        return object.toString();
+    }
+
+    @Override
+    public boolean isReference() {
+        return false;
     }
 
 }

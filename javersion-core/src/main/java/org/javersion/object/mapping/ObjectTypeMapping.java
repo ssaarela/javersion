@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.mapping;
 
 import java.util.Set;
 
+import org.javersion.object.DescribeContext;
+import org.javersion.object.Id;
+import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.types.IdentifiableObjectType;
+import org.javersion.object.types.IdentifiableType;
+import org.javersion.object.types.ObjectType;
+import org.javersion.object.types.TypeMapping;
+import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.FieldDescriptor;

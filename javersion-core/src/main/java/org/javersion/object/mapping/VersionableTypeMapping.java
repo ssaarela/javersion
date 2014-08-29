@@ -13,36 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.mapping;
 
+import static java.util.Arrays.asList;
+
+import org.javersion.object.DescribeContext;
+import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.Versionable;
+import org.javersion.object.types.TypeMapping;
+import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
-import org.javersion.util.Check;
 
-public class SimpleTypeMapping implements TypeMapping {
-
-    public final Class<?> type;
-    
-    public final ValueType valueType;
-    
-    public SimpleTypeMapping(Class<?> type) {
-        this.type = Check.notNull(type, "type");
-        this.valueType = new SimpleValueType();
-    }
+public class VersionableTypeMapping implements TypeMapping {
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
-        return typeDescriptor.getRawType().equals(type);
-    }
-
-    @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return valueType;
+        return localTypeDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
     }
     
-    public ValueType getValueType() {
-        return valueType;
+    
+    @Override
+    public  ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return ObjectTypeMapping.describe(path, type.getRawType(), asList(type), context);
     }
-
+    
 }
