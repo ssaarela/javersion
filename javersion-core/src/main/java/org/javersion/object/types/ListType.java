@@ -66,8 +66,9 @@ public class ListType implements ValueType {
         @SuppressWarnings("rawtypes")
         List list = (List) object;
         context.put(path, CONSTANT);
-        for (int i=0; i < list.size(); i++) {
-            context.serialize(path.index(i), list.get(i));
+        int i=0;
+        for (Object element : list) {
+            context.serialize(path.index(i++), element);
         }
     }
 

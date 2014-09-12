@@ -12,18 +12,20 @@ import com.google.common.collect.Maps;
 
 public class MapType implements ValueType {
 
+    private static final String CONSTANT = "Map";
+
     public static final String KEY = "@KEY@";
 
     private final IdentifiableType keyType;
-    
+
     public MapType(IdentifiableType keyType) {
         this.keyType = keyType;
     }
-    
+
     @Override
     public Object instantiate(PropertyTree propertyTree, Object mapSize, ReadContext context) throws Exception {
         prepareKeysAndValues(propertyTree, context);
-        return Maps.newHashMapWithExpectedSize((Integer) mapSize);
+        return Maps.newHashMapWithExpectedSize(propertyTree.getChildren().size());
     }
 
     private void prepareKeysAndValues(PropertyTree propertyTree, ReadContext context) {
@@ -47,7 +49,7 @@ public class MapType implements ValueType {
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         Map<?, ?> map = (Map<?, ?>) object;
-        context.put(path, map.size());
+        context.put(path, CONSTANT);
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             Object key = entry.getKey();
             Object value = entry.getValue();
