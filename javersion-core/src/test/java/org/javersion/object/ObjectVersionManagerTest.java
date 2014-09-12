@@ -2,6 +2,7 @@ package org.javersion.object;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
@@ -14,6 +15,7 @@ import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.util.Set;
 
+import org.javersion.core.Version;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -92,6 +94,32 @@ public class ObjectVersionManagerTest {
         version = versionManager.buildVersion(product).build();
         assertThat(version.changeset.size(), equalTo(1));
         defaultMergeNoConflicts(product, 4);
+    }
+
+    @Test
+    public void Merge_Price_and_Name() {
+        // First version
+        Product product = new Product();
+        product.name = "name";
+        product.price = new BigDecimal("1.0");
+        versionManager.buildVersion(product).build();
+
+        // Second version, new name
+        product.name = "name2";
+        versionManager.buildVersion(product).build();
+
+        // Concurrent version, new price
+        product.price = new BigDecimal("2.0");
+        versionManager.buildVersion(product).parents(1l).build();
+
+        // Merged
+        MergeObject<Product> mergeObject = versionManager.mergeObject(Version.DEFAULT_BRANCH);
+        assertThat(mergeObject.merge.getMergeHeads(), equalTo(set(2l, 3l)));
+        assertThat(mergeObject.merge.getConflicts().isEmpty(), equalTo(true));
+
+        product = mergeObject.object;
+        assertThat(product.name, equalTo("name2"));
+        assertThat(product.price, equalTo(new BigDecimal("2.0")));
     }
 
     @SafeVarargs

@@ -3,6 +3,7 @@ package org.javersion.object;
 import static com.google.common.collect.ImmutableSet.of;
 import static java.util.Arrays.asList;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.javersion.core.Merge;
@@ -45,7 +46,7 @@ public class ObjectVersionManager<O, M> {
         return mergeObject(asList(branches));
     }
 
-    public MergeObject<O> mergeObject(Iterable<String> branches) {
+    public MergeObject<O> mergeObject(Collection<String> branches) {
         Merge<PropertyPath, Object> merge = versionGraph.mergeBranches(branches);
         MergeObject<O> mergeObject = new MergeObject<>(toObject(merge), merge);
         heads = merge.getMergeHeads();

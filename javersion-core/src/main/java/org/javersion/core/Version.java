@@ -96,6 +96,10 @@ public class Version<K, V> {
             return self();
         }
 
+        public B parents(Long... parentRevisions) {
+            return parents(copyOf(parentRevisions));
+        }
+
         public B parents(Set<Long> parentRevisions) {
             this.parentRevisions = notNull(parentRevisions, "parentRevisions");
             return self();
