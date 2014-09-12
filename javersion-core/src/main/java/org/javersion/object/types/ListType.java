@@ -15,28 +15,47 @@
  */
 package org.javersion.object.types;
 
+import static java.lang.Integer.valueOf;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.Index;
 import org.javersion.path.PropertyTree;
-
-import com.google.common.collect.Lists;
 
 public class ListType implements ValueType {
 
+    private static final String CONSTANT = "List";
+
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        int size = (Integer) value;
-        Object[] values = new Object[size];
-        for (PropertyTree child : propertyTree.getChildren()) {
-            int index = Integer.valueOf(((Index) child.path).index);
-            Object element = context.getObject(child);
-            values[index] = element;
+        Map<String, PropertyTree> children = propertyTree.getChildrenMap();
+        List<Object> list = new ArrayList<>(children.size());
+        for (Map.Entry<String, PropertyTree> entry : children.entrySet()) {
+            PropertyTree child = entry.getValue();
+            int index = valueOf(entry.getKey());
+            if (index > list.size()) {
+                fill(list, index, children, context);
+            }
+            if (index == list.size()) {
+                list.add(index, context.getObject(child));
+            }
         }
-        return Lists.newArrayList(values);
+        return list;
+    }
+
+    private void fill(List<Object> list, int targetSize, Map<String, PropertyTree> children, ReadContext context) {
+        for (int i=list.size(); i < targetSize; i++) {
+            PropertyTree child = children.get(Integer.toString(i));
+            if (child == null) {
+                list.add(i, null);
+            } else {
+                list.add(i, context.getObject(child));
+            }
+        }
     }
 
     @Override
@@ -46,7 +65,7 @@ public class ListType implements ValueType {
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         @SuppressWarnings("rawtypes")
         List list = (List) object;
-        context.put(path, list.size());
+        context.put(path, CONSTANT);
         for (int i=0; i < list.size(); i++) {
             context.serialize(path.index(i), list.get(i));
         }
