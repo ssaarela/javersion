@@ -47,8 +47,8 @@ public class ObjectVersionManager<O, M> {
 
     public MergeObject<O> mergeObject(Iterable<String> branches) {
         Merge<PropertyPath, Object> merge = versionGraph.mergeBranches(branches);
-        MergeObject<O> mergeObject = new MergeObject<>(toObject(merge), merge.getMergeHeads(), merge.getConflicts());
-        heads = mergeObject.revisions;
+        MergeObject<O> mergeObject = new MergeObject<>(toObject(merge), merge);
+        heads = merge.getMergeHeads();
         return mergeObject;
     }
 

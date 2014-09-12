@@ -59,8 +59,8 @@ public class ObjectVersionManagerTest {
             assertThat(actual, not(sameInstance(expected)));
         }
         assertThat(actual, reflectionEquals(expected));
-        assertThat(mergeObject.conflicts.entries(), empty());
-        assertThat(mergeObject.revisions, equalTo(set(expectedRevision)));
+        assertThat(mergeObject.merge.getConflicts().entries(), empty());
+        assertThat(mergeObject.merge.getMergeHeads(), equalTo(set(expectedRevision)));
         return mergeObject;
     }
 

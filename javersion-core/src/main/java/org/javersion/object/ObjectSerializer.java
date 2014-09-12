@@ -22,11 +22,11 @@ import org.javersion.path.PropertyPath;
 public class ObjectSerializer<O> {
 
     private final SchemaRoot schemaRoot;
-    
+
     public ObjectSerializer(Class<O> clazz) {
         this.schemaRoot = DescribeContext.DEFAULT.describeSchema(clazz);
     }
-    
+
     public ObjectSerializer(Class<O> clazz, TypeMappings typeMappings) {
         this.schemaRoot = new DescribeContext(typeMappings).describeSchema(clazz);
     }
@@ -39,4 +39,5 @@ public class ObjectSerializer<O> {
     public O read(Map<PropertyPath, Object> properties) {
         return (O) new ReadContext(schemaRoot, properties).getObject();
     }
+
 }
