@@ -25,19 +25,19 @@ public class DiffTest {
     }
 
     @Test
-    public void Null_Is_Meaningfull_Against_Value() {
+    public void Null_Is_Meaningful_Against_Value() {
         Map<Object, Object> diff = diff(map(1,1), map(1,null));
         assertThat(diff, equalTo(map(1, null)));
     }
 
     @Test
-    public void Null_Is_Meaningfull_Against_Value2() {
+    public void Null_Is_Meaningful_Against_Value2() {
         Map<Object, Object> diff = diff(map(1,1, 2,2), map(1,null));
         assertThat(diff, equalTo(map(1, null, 2,null)));
     }
 
     @Test
-    public void Missin_Value_Is_Null() {
+    public void Missing_Value_Is_Null() {
         Map<Object, Object> diff = diff(map(1,1, 2,2), map());
         assertThat(diff, equalTo(map(1,null, 2,null)));
     }

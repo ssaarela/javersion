@@ -23,19 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.javersion.object.mapping.DateTimeMapping;
-import org.javersion.object.mapping.EnumTypeMapping;
-import org.javersion.object.mapping.ListTypeMapping;
-import org.javersion.object.mapping.MapTypeMapping;
-import org.javersion.object.mapping.ObjectTypeMapping;
-import org.javersion.object.mapping.PrimitiveTypeMapping;
-import org.javersion.object.mapping.ReferenceTypeMapping;
-import org.javersion.object.mapping.SetTypeMapping;
-import org.javersion.object.mapping.SimpleTypeMapping;
-import org.javersion.object.mapping.StringTypeMapping;
-import org.javersion.object.mapping.TypeMapping;
-import org.javersion.object.mapping.VersionableReferenceTypeMapping;
-import org.javersion.object.mapping.VersionableTypeMapping;
+import org.javersion.object.mapping.*;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
@@ -75,12 +63,13 @@ public class TypeMappings {
     }
 
     public static final List<TypeMapping> DEFAULT_MAPPINGS =
-            ImmutableList.<TypeMapping>of(
+            ImmutableList.of(
                     new VersionableReferenceTypeMapping(),
                     new VersionableTypeMapping(),
                     new ListTypeMapping(),
                     new SetTypeMapping(),
                     new MapTypeMapping(),
+                    new CollectionTypeMapping(),
                     DATE_TIME,
                     ENUM,
                     BIG_INTEGER,
@@ -154,8 +143,8 @@ public class TypeMappings {
                 classes.add(Check.notNull(root, "root"));
             }
 
-            public Builder withFactory(TypeMapping factory) {
-                return register().withMapping(factory);
+            public Builder withTypeMapping(TypeMapping typeMapping) {
+                return register().withMapping(typeMapping);
             }
 
             public <N> HierarchyBuilder<N> withClass(Class<N> root) {
@@ -185,7 +174,7 @@ public class TypeMappings {
                     builder = builder.withMapping(new ReferenceTypeMapping(rootType, alias));
                 }
                 Iterable<TypeDescriptor> types = Iterables.transform(classes, TypeDescriptors.DEFAULT.getTypeDescriptor);
-                return builder.withMapping(new ObjectTypeMapping<R>(rootType, types));
+                return builder.withMapping(new ObjectTypeMapping<>(rootType, types));
             }
 
             public TypeMappings build() {

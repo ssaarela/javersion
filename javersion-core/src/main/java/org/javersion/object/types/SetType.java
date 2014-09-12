@@ -27,16 +27,18 @@ import com.google.common.collect.Sets;
 
 public class SetType implements ValueType {
 
+    private final static String CONSTANT = "Set";
+
     private final IdentifiableType identifiableType;
-    
+
     public SetType(IdentifiableType identifiableType) {
         this.identifiableType = Check.notNull(identifiableType, "keyType");
     }
-    
+
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         prepareElements(propertyTree, context);
-        return Sets.newLinkedHashSetWithExpectedSize((Integer) value);
+        return Sets.newLinkedHashSetWithExpectedSize(propertyTree.getChildren().size());
     }
 
     private void prepareElements(PropertyTree propertyTree, ReadContext context) {
@@ -57,8 +59,8 @@ public class SetType implements ValueType {
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         Set<?> set = (Set<?>) object;
-        context.put(path, set.size());
-        
+        context.put(path, CONSTANT);
+
         for (Object element : set) {
             String key = identifiableType.toString(element);
             context.serialize(path.index(key), element);

@@ -22,5 +22,4 @@ public class MergeObject<T> {
         this.conflicts = conflicts;
     }
 
-
 }
