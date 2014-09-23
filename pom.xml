@@ -10,6 +10,5 @@
 
   <modules>
     <module>javersion-core</module>
-    <module>javersion-perf-test</module>
   </modules>
 </project>
