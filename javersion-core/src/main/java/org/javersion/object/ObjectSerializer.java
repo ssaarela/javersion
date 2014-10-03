@@ -32,7 +32,7 @@ public class ObjectSerializer<O> {
     }
 
     public Map<PropertyPath, Object> toPropertyMap(O object) {
-        return new WriteContext(schemaRoot, object).toMap();
+        return new WriteContext(schemaRoot, object).getMap();
     }
 
     @SuppressWarnings("unchecked")

@@ -30,15 +30,15 @@ import com.google.common.collect.Maps;
 public class WriteContext {
 
     private final Object root;
-    
+
     private final SchemaRoot schemaRoot;
 
     private final Deque<QueueItem<PropertyPath, Object>> queue = new ArrayDeque<>();
-    
+
     private final IdentityHashMap<Object, PropertyPath> objects = Maps.newIdentityHashMap();
-    
+
     private final Map<PropertyPath, Object> properties = Maps.newLinkedHashMap();
-    
+
     protected WriteContext(SchemaRoot schemaRoot, Object root) {
         this.root = root;
         this.schemaRoot = schemaRoot;
@@ -47,8 +47,8 @@ public class WriteContext {
     public void serialize(PropertyPath path, Object object) {
         queue.add(new QueueItem<PropertyPath, Object>(path, object));
     }
-    
-    public Map<PropertyPath, Object> toMap() {
+
+    public Map<PropertyPath, Object> getMap() {
         serialize(PropertyPath.ROOT, root);
         QueueItem<PropertyPath, Object> currentItem;
         while ((currentItem = queue.pollFirst()) != null) {
@@ -70,27 +70,27 @@ public class WriteContext {
         }
         return unmodifiableMap(properties);
     }
-    
+
     private Schema getSchema(PropertyPath path) {
         return schemaRoot.get(path);
     }
 
     private void illegalReferenceException(PropertyPath path, Object value) {
         throw new IllegalArgumentException(format(
-                "Multiple references to the same object: \"%s\"@\"%s\"", 
-                value, 
+                "Multiple references to the same object: \"%s\"@\"%s\"",
+                value,
                 path));
     }
-    
+
     public void put(PropertyPath path, Object value) {
         if (properties.containsKey(path)) {
             throw new IllegalArgumentException("Duplicate value for " + path);
         }
         properties.put(path, value);
     }
-    
+
     public SchemaRoot getRootMapping() {
         return schemaRoot;
     }
-    
+
 }
