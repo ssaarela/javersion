@@ -29,9 +29,9 @@ public class CollectionTest {
     public void Write_And_Read_Owner_With_Pets() {
         Owner owner = new Owner();
         owner.pets = Lists.newArrayList(new Pet("Mirri"), null, new Pet("Musti"));
-        Map<PropertyPath, Object> map = serializer.write(owner);
+        Map<PropertyPath, Object> map = serializer.toPropertyMap(owner);
 
-        owner = serializer.read(map);
+        owner = serializer.fromPropertyMap(map);
         assertThat(owner.pets, hasSize(3));
 
         Iterator<Pet> iter = owner.pets.iterator();

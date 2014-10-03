@@ -28,26 +28,26 @@ public class ListTest {
             .withClass(Pet.class)
             .havingSubClasses(Dog.class, Cat.class)
             .build();
-    
+
     private final ObjectSerializer<Owner> serializer = new ObjectSerializer<>(Owner.class, typeMappings);
 
     @Test
     public void Write_And_Read_Owner_With_Cats_And_Dogs() {
         Owner owner = new Owner();
         owner.pets = Lists.newArrayList(new Cat("Mirri"), new Dog("Musti"), null);
-        Map<PropertyPath, Object> map = serializer.write(owner);
-        
-        owner = serializer.read(map);
+        Map<PropertyPath, Object> map = serializer.toPropertyMap(owner);
+
+        owner = serializer.fromPropertyMap(map);
         assertThat(owner.pets, hasSize(3));
-        
+
         assertThat(owner.pets.get(0), instanceOf(Cat.class));
         assertThat(owner.pets.get(0).name, equalTo("Mirri"));
         assertThat(((Cat) owner.pets.get(0)).meow, equalTo(true));
-        
+
         assertThat(owner.pets.get(1), instanceOf(Dog.class));
         assertThat(owner.pets.get(1).name, equalTo("Musti"));
         assertThat(((Dog) owner.pets.get(1)).bark, equalTo(true));
-        
+
         assertThat(owner.pets.get(2), nullValue());
     }
 

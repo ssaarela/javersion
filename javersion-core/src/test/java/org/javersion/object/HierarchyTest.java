@@ -42,7 +42,7 @@ public class HierarchyTest {
         root.child = new Tree("child");
         root.child.child = new Tree("grandchild");
 
-        Map<PropertyPath, Object> properties = treeSerializer.write(root);
+        Map<PropertyPath, Object> properties = treeSerializer.toPropertyMap(root);
 
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, Tree.class,
@@ -58,7 +58,7 @@ public class HierarchyTest {
 
         assertThat(properties, equalTo(expectedProperties));
 
-        root = treeSerializer.read(properties);
+        root = treeSerializer.fromPropertyMap(properties);
         assertThat(root.name, equalTo("root"));
         assertThat(root.child.name, equalTo("child"));
         assertThat(root.child.child.name, equalTo("grandchild"));
@@ -72,14 +72,14 @@ public class HierarchyTest {
         root.child = new Tree("child");
         root.child.child = root;
 
-        treeSerializer.write(root);
+        treeSerializer.toPropertyMap(root);
     }
 
     @Test
     public void Null_References_Are_Not_Same() {
         BiTree biTree = new BiTree();
 
-        biTreeSerializer.write(biTree);
+        biTreeSerializer.toPropertyMap(biTree);
     }
 
     public static Map<PropertyPath, Object> properties(Object... keysAndValues) {

@@ -37,7 +37,7 @@ public class ObjectVersionManager<O, M> {
 
     public ObjectVersionBuilder<M> buildVersion(O object) {
         long id = versionGraph.isEmpty() ? 1l : versionGraph.getTip().getRevision() + 1;
-        ObjectVersionBuilder<M> builder = new ObjectVersionBuilder<M>(this, serializer.write(object), id);
+        ObjectVersionBuilder<M> builder = new ObjectVersionBuilder<M>(this, serializer.toPropertyMap(object), id);
         builder.parents(heads);
         return builder;
     }
@@ -54,7 +54,7 @@ public class ObjectVersionManager<O, M> {
     }
 
     private O toObject(Merge<PropertyPath, Object> merge) {
-        return serializer.read(merge.getProperties());
+        return serializer.fromPropertyMap(merge.getProperties());
     }
 
     Merge<PropertyPath, Object> mergeRevisions(Iterable<Long> revisions) {

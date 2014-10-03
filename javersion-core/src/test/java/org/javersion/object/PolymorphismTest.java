@@ -20,7 +20,7 @@ public class PolymorphismTest {
             this.name = name;
         }
     }
-    
+
     public static class Dog extends Pet {
         boolean bark = true;
         @SuppressWarnings("unused")
@@ -29,7 +29,7 @@ public class PolymorphismTest {
             super(name);
         }
     }
-    
+
     public static class Cat extends Pet {
         boolean meow = true;
         @SuppressWarnings("unused")
@@ -43,36 +43,36 @@ public class PolymorphismTest {
     public static class Owner {
         private Pet pet;
     }
-    
-    
+
+
     private TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Pet.class)
             .havingSubClasses(Dog.class, Cat.class)
             .build();
-    
+
     private final ObjectSerializer<Owner> serializer = new ObjectSerializer<>(Owner.class, typeMappings);
-    
+
     @Test
     public void Write_And_Read_Owner_With_Dog() {
         Owner owner = new Owner();
         owner.pet = new Dog("Musti");
-        
-        Map<PropertyPath, Object> map = serializer.write(owner);
-        
-        owner = serializer.read(map);
+
+        Map<PropertyPath, Object> map = serializer.toPropertyMap(owner);
+
+        owner = serializer.fromPropertyMap(map);
         assertThat(owner.pet, instanceOf(Dog.class));
         assertThat(owner.pet.name, equalTo("Musti"));
         assertThat(((Dog) owner.pet).bark, equalTo(true));
     }
-    
+
     @Test
     public void Write_And_Read_Owner_With_Cat() {
         Owner owner = new Owner();
         owner.pet = new Cat("Mirri");
-        
-        Map<PropertyPath, Object> map = serializer.write(owner);
-        
-        owner = serializer.read(map);
+
+        Map<PropertyPath, Object> map = serializer.toPropertyMap(owner);
+
+        owner = serializer.fromPropertyMap(map);
         assertThat(owner.pet, instanceOf(Cat.class));
         assertThat(owner.pet.name, equalTo("Mirri"));
         assertThat(((Cat) owner.pet).meow, equalTo(true));

@@ -10,11 +10,11 @@ public abstract class JsonToken<T> implements Serializable {
         OBJECT, ARRAY, NUMBER, BOOLEAN, STRING, NULL
     }
 
+    private JsonToken() {}
+
     public abstract T value();
 
     public abstract Type type();
-
-    private JsonToken() {}
 
     @Override
     public boolean equals(Object obj) {

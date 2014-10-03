@@ -19,13 +19,13 @@ public class ReferencesTest {
     public static class Node {
 
         @Id public Integer id;
-        
+
         public Node left;
 
         public Node right;
 
         public Node() {}
-        
+
         public Node(int id) {
             this.id = id;
         }
@@ -45,14 +45,14 @@ public class ReferencesTest {
             }
         }
     }
-    
+
     public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
             .asReferenceWithAlias("nodes")
             .build();
-    
+
     private final ObjectSerializer<Node> nodeSerializer = new ObjectSerializer<>(Node.class, typeMappings);
-    
+
     @Test
     public void Node_Cycles_Read_And_Write() {
         Node root = new Node(1);
@@ -60,9 +60,9 @@ public class ReferencesTest {
         root.right = root;
         root.left.left = root;
         root.left.right = root.left;
-        
-        Map<PropertyPath, Object> properties = nodeSerializer.write(root);
-        
+
+        Map<PropertyPath, Object> properties = nodeSerializer.toPropertyMap(root);
+
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, "1",
 
@@ -70,16 +70,16 @@ public class ReferencesTest {
                 property("@REF@.nodes[1].id"), 1,
                 property("@REF@.nodes[1].left"), "2",
                 property("@REF@.nodes[1].right"), "1",
-        
+
                 property("@REF@.nodes[2]"), Node.class,
                 property("@REF@.nodes[2].id"), 2,
                 property("@REF@.nodes[2].left"), "1",
                 property("@REF@.nodes[2].right"), "2"
         );
-        
+
         assertThat(properties.entrySet(), everyItem(isIn(expectedProperties.entrySet())));
-        
-        root = nodeSerializer.read(properties);
+
+        root = nodeSerializer.fromPropertyMap(properties);
         assertThat(root.id, equalTo(1));
         assertThat(root.left.id, equalTo(2));
         assertThat(root.right, sameInstance(root));

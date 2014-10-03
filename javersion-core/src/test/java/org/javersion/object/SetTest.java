@@ -22,7 +22,7 @@ public class SetTest {
     public static class NodeSet {
         private Set<Node> nodes = Sets.newLinkedHashSet();
     }
-    
+
     public static class NodeExt extends Node {
         Set<NodeExt> nodes = Sets.newLinkedHashSet();
     }
@@ -34,9 +34,9 @@ public class SetTest {
             .build();
 
     private final ObjectSerializer<NodeSet> nodeSetSerializer = new ObjectSerializer<>(NodeSet.class, typeMappings);
-    
+
     private final ObjectSerializer<NodeExt> nodeExtSerializer = new ObjectSerializer<>(NodeExt.class, typeMappings);
-    
+
     @Test
     public void Write_And_Read_NodeSet() {
         NodeSet nodeSet = new NodeSet();
@@ -46,13 +46,13 @@ public class SetTest {
         node1.right = node2;
         node2.left = node1;
         node2.right = node2;
-        
+
         nodeSet.nodes.add(node1);
         nodeSet.nodes.add(node2);
 
-        Map<PropertyPath, Object> map = nodeSetSerializer.write(nodeSet);
-        
-        nodeSet = nodeSetSerializer.read(map);
+        Map<PropertyPath, Object> map = nodeSetSerializer.toPropertyMap(nodeSet);
+
+        nodeSet = nodeSetSerializer.fromPropertyMap(map);
         assertThat(nodeSet.nodes, hasSize(2));
         Iterator<Node> iter = nodeSet.nodes.iterator();
         node1 = iter.next();
@@ -64,18 +64,18 @@ public class SetTest {
         assertThat(node2.left, sameInstance(node1));
         assertThat(node2.right, sameInstance(node2));
     }
-    
+
     @Test
     public void NodeExt_Containing_Itself_In_a_Set() {
         NodeExt nodeExt = new NodeExt();
         nodeExt.id = 789;
         nodeExt.nodes.add(nodeExt);
 
-        Map<PropertyPath, Object> map = nodeExtSerializer.write(nodeExt);
-        
-        nodeExt = nodeExtSerializer.read(map);
+        Map<PropertyPath, Object> map = nodeExtSerializer.toPropertyMap(nodeExt);
+
+        nodeExt = nodeExtSerializer.fromPropertyMap(map);
         assertThat(nodeExt.id, equalTo(789));
         assertThat(nodeExt.nodes, equalTo(singleton(nodeExt)));
     }
-    
+
 }

@@ -36,15 +36,15 @@ public class MapTest {
             return "KeyValue#" + id;
         }
     }
-    
+
     @Versionable
     public static class Mab {
         public Map<String, Integer> primitives = Maps.newLinkedHashMap();
         public Map<KeyValue, KeyValue> objects = Maps.newLinkedHashMap();
     }
-    
+
     private final ObjectSerializer<Mab> serializer = new ObjectSerializer<>(Mab.class);
-    
+
     @Test
     public void Write_Read_Map() {
         Mab mab = new Mab();
@@ -55,28 +55,28 @@ public class MapTest {
         mab.objects.put(kv, kv);
         mab.objects.put(new KeyValue(789), new KeyValue(234));
         mab.objects.put(new KeyValue(890), null);
-        
-        Map<PropertyPath, Object> map = serializer.write(mab);
-        
-        mab = serializer.read(map);
+
+        Map<PropertyPath, Object> map = serializer.toPropertyMap(mab);
+
+        mab = serializer.fromPropertyMap(map);
         assertThat(mab.primitives, equalTo(map("123", 456, "null", null)));
         assertThat(mab.objects, equalTo(map(kv, kv, new KeyValue(789), new KeyValue(234), new KeyValue(890), null)));
     }
-    
+
     @SuppressWarnings("unused")
     private static <K, V> Map<K, V> map(K k, V v) {
         Map<K, V> map = Maps.newLinkedHashMap();
         map.put(k, v);
         return map;
     }
-    
+
     private static <K, V> Map<K, V> map(K k1, V v1, K k2, V v2) {
         Map<K, V> map = Maps.newLinkedHashMap();
         map.put(k1, v1);
         map.put(k2, v2);
         return map;
     }
-    
+
     private static <K, V> Map<K, V> map(K k1, V v1, K k2, V v2, K k3, V v3) {
         Map<K, V> map = Maps.newLinkedHashMap();
         map.put(k1, v1);

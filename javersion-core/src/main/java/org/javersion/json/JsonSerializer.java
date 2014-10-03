@@ -15,7 +15,7 @@ import com.google.gson.stream.JsonWriter;
 
 public class JsonSerializer {
 
-    public Map<PropertyPath, JsonToken<?>> write(String json) {
+    public Map<PropertyPath, JsonToken<?>> toPropertyMap(String json) {
         Map<PropertyPath, JsonToken<?>> map = newLinkedHashMap();
         try (JsonReader jsonReader = new JsonReader(new StringReader(json))) {
             toMap(PropertyPath.ROOT, jsonReader, map);
@@ -25,7 +25,7 @@ public class JsonSerializer {
         return map;
     }
 
-    public String read(Map<PropertyPath, JsonToken<?>> map) {
+    public String fromPropertyMap(Map<PropertyPath, JsonToken<?>> map) {
         PropertyTree tree = PropertyTree.build(map.keySet());
         StringWriter stringWriter = new StringWriter();
         try (JsonWriter jsonWriter = new JsonWriter(stringWriter)) {

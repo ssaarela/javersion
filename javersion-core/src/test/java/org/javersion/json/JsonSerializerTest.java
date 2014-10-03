@@ -26,9 +26,9 @@ public class JsonSerializerTest {
 
     @Test
     public void empty_object() {
-        Map<PropertyPath, JsonToken<?>> map = serializer.write("{}");
+        Map<PropertyPath, JsonToken<?>> map = serializer.toPropertyMap("{}");
         assertThat(map, equalTo(map(ROOT, Obj.VALUE)));
-        assertThat(serializer.read(map), equalTo("{}"));
+        assertThat(serializer.fromPropertyMap(map), equalTo("{}"));
     }
 
     @Test
@@ -63,8 +63,8 @@ public class JsonSerializerTest {
     }
 
     private void assertSerializationRoundTrip(String json) {
-        Map<PropertyPath, JsonToken<?>> map = serializer.write(json);
-        assertThat(serializer.read(map), equalTo(json));
+        Map<PropertyPath, JsonToken<?>> map = serializer.toPropertyMap(json);
+        assertThat(serializer.fromPropertyMap(map), equalTo(json));
     }
 
     private String toJson(Object src) {

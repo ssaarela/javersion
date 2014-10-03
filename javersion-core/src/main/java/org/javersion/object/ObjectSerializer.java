@@ -31,12 +31,12 @@ public class ObjectSerializer<O> {
         this.schemaRoot = new DescribeContext(typeMappings).describeSchema(clazz);
     }
 
-    public Map<PropertyPath, Object> write(O object) {
+    public Map<PropertyPath, Object> toPropertyMap(O object) {
         return new WriteContext(schemaRoot, object).toMap();
     }
 
     @SuppressWarnings("unchecked")
-    public O read(Map<PropertyPath, Object> properties) {
+    public O fromPropertyMap(Map<PropertyPath, Object> properties) {
         return (O) new ReadContext(schemaRoot, properties).getObject();
     }
 

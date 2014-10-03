@@ -82,11 +82,11 @@ public class PrimitiveTest {
     }
 
     private void assertPropertiesRoundTrip(Primitives primitives) {
-        Map<PropertyPath, Object> properties = primitivesSerializer.write(primitives);
+        Map<PropertyPath, Object> properties = primitivesSerializer.toPropertyMap(primitives);
         Map<PropertyPath, Object> expectedProperties = getProperties(primitives);
 
         assertThat(properties, equalTo(expectedProperties));
-        primitives = primitivesSerializer.read(properties);
+        primitives = primitivesSerializer.fromPropertyMap(properties);
         assertThat(getProperties(primitives), equalTo(expectedProperties));
     }
 
