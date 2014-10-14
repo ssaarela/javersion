@@ -32,19 +32,19 @@ public abstract class AbstractVersionGraph<K, V,
                           T extends Version<K, V>,
                           This extends AbstractVersionGraph<K, V, T, This, B>,
                           B extends AbstractVersionGraphBuilder<K, V, T, This, B>>
-        implements Function<Long, VersionNode<K, V, T>> {
+        implements Function<Revision, VersionNode<K, V, T>> {
 
-    public final PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes;
+    public final PersistentSortedMap<Revision, VersionNode<K, V, T>> versionNodes;
 
     public AbstractVersionGraph() {
-        this(PersistentTreeMap.<Long, VersionNode<K, V, T>> empty());
+        this(PersistentTreeMap.<Revision, VersionNode<K, V, T>> empty());
     }
 
     protected AbstractVersionGraph(AbstractVersionGraphBuilder<K, V, T, This, B> builder) {
         this(builder.versionNodes.toPersistentMap());
     }
 
-    protected AbstractVersionGraph(PersistentSortedMap<Long, VersionNode<K, V, T>> versionNodes) {
+    protected AbstractVersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, T>> versionNodes) {
         this.versionNodes = versionNodes;
     }
 
@@ -65,11 +65,11 @@ public abstract class AbstractVersionGraph<K, V,
     protected abstract B newBuilder();
 
     @Override
-    public VersionNode<K, V, T> apply(Long input) {
+    public VersionNode<K, V, T> apply(Revision input) {
         return input != null ? getVersionNode(input) : null;
     }
 
-    public VersionNode<K, V, T> getVersionNode(long revision) {
+    public VersionNode<K, V, T> getVersionNode(Revision revision) {
         VersionNode<K, V, T> node = versionNodes.get(revision);
         if (node == null) {
             throw new VersionNotFoundException(revision);
@@ -85,7 +85,7 @@ public abstract class AbstractVersionGraph<K, V,
         return new BranchMerge<K, V>(mergedBranches);
     }
 
-    public final Merge<K, V> mergeRevisions(Iterable<Long> revisions) {
+    public final Merge<K, V> mergeRevisions(Iterable<Revision> revisions) {
         return new VersionMerge<>(transform(revisions, this));
     }
 

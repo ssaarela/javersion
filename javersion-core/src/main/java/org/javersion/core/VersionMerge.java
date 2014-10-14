@@ -18,20 +18,20 @@ package org.javersion.core;
 import java.util.Set;
 
 public class VersionMerge<K, V> extends Merge<K, V> {
-    
-    private Set<Long> heads;
-    
+
+    private Set<Revision> heads;
+
     public <T extends Version<K, V>> VersionMerge(Iterable<VersionNode<K, V, T>> nodes) {
         super(new MergeBuilder<K, V>(toMergeNodes(nodes)));
     }
 
     @Override
-    public Set<Long> getMergeHeads() {
+    public Set<Revision> getMergeHeads() {
         return heads;
     }
 
     @Override
-    protected void setMergeHeads(Set<Long> heads) {
+    protected void setMergeHeads(Set<Revision> heads) {
         this.heads = heads;
     }
 

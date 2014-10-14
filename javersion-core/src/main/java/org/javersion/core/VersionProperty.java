@@ -17,16 +17,16 @@ package org.javersion.core;
 
 public final class VersionProperty<V> {
 
-    public final long revision;
-    
+    public final Revision revision;
+
     public final V value;
 
-    public VersionProperty(long revision, V value) {
+    public VersionProperty(Revision revision, V value) {
         this.revision = revision;
         this.value = value;
     }
-    
+
     public String toString() {
-        return String.valueOf(value) + "#" + revision;
+        return String.valueOf(value) + "@" + revision;
     }
 }

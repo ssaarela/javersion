@@ -18,7 +18,7 @@ package org.javersion.core;
 import java.util.Set;
 
 public class BranchMerge<K, V> extends Merge<K, V> {
-    
+
     private static class Builder<K, V> extends MergeBuilder<K, V> {
 
         public Builder(Iterable<? extends Merge<K, V>> nodes) {
@@ -28,22 +28,22 @@ public class BranchMerge<K, V> extends Merge<K, V> {
         protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
             return false;
         }
-        
+
     }
-    
-    private Set<Long> heads;
-    
+
+    private Set<Revision> heads;
+
     public <T extends Version<K, V>> BranchMerge(Iterable<? extends Merge<K, V>> versions) {
         super(new Builder<K, V>(versions));
     }
 
     @Override
-    public Set<Long> getMergeHeads() {
+    public Set<Revision> getMergeHeads() {
         return heads;
     }
 
     @Override
-    protected void setMergeHeads(Set<Long> heads) {
+    protected void setMergeHeads(Set<Revision> heads) {
         this.heads = heads;
     }
 
