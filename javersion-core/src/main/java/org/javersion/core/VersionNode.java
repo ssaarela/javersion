@@ -24,13 +24,13 @@ import org.javersion.util.PersistentSortedMap;
 import com.google.common.collect.ImmutableSet;
 
 public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V> {
-    
+
     public final T version;
 
     public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
 
     public VersionNode(T version, Iterable<VersionNode<K, V, T>> parents, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads) {
-        super(new MergeBuilder<K, V>().mergeAll(toMergeNodes(parents)).overwrite(version));
+        super(new MergeBuilder<K, V>(toMergeNodes(parents)).overwrite(version));
 
         this.version = version;
 
@@ -43,15 +43,15 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V
         mutableHeads.put(new BranchAndRevision(this), this);
         this.heads = mutableHeads.toPersistentMap();
     }
-    
+
     public long getRevision() {
         return version.revision;
     }
-    
+
     public String getBranch() {
         return version.branch;
     }
-    
+
     public Map<K, VersionProperty<V>> getVersionProperties() {
         return version.getVersionProperties();
     }
@@ -60,7 +60,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V
     public Set<Long> getMergeHeads() {
         return ImmutableSet.of(version.revision);
     }
-    
+
     @Override
     public int hashCode() {
         return Long.hashCode(version.revision);
@@ -70,7 +70,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V
     public boolean equals(Object obj) {
         return obj == this;
     }
-    
+
     @Override
     public String toString() {
         return version.toString();

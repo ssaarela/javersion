@@ -19,7 +19,6 @@ import org.javersion.core.Version;
 
 public class PropertiesVersion extends Version<String, String> {
 
-    
     public PropertiesVersion(Builder builder) {
         super(builder);
     }
