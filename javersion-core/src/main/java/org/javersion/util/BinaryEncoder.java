@@ -1,7 +1,6 @@
 package org.javersion.util;
 
 import static java.lang.String.format;
-import static java.util.Arrays.copyOfRange;
 import static java.util.Arrays.fill;
 
 import java.util.Arrays;
@@ -43,8 +42,6 @@ public abstract class BinaryEncoder {
 
         private int maxChar = -1;
 
-        private int minChar = Integer.MAX_VALUE;
-
         private final char[] numberToChar;
 
         private int[] charToNumber;
@@ -55,7 +52,7 @@ public abstract class BinaryEncoder {
 
         public Builder(char... chars) {
             numberToChar = Arrays.copyOf(chars, chars.length);
-            minMax(chars);
+            setMaxChar(chars);
             charToNumber = new int[maxChar + 1];
             fill(charToNumber, -1);
             for (int i=0; i < chars.length; i++) {
@@ -72,7 +69,7 @@ public abstract class BinaryEncoder {
 
         public Builder withAliasesFor(char ch, char... aliases) {
             int number = charToNumber[ch];
-            minMax(aliases);
+            setMaxChar(aliases);
             ensureCharToNumberSize();
             for (char alias : aliases) {
                 verify(alias);
@@ -93,7 +90,7 @@ public abstract class BinaryEncoder {
             Check.that(aliases.length() <= numberToChar.length,
                     "Expected positional aliases length to be same or less as main chars. Use space to skip.");
             char[] chars = aliases.toCharArray();
-            minMax(chars);
+            setMaxChar(chars);
             ensureCharToNumberSize();
             for (int i=0; i < chars.length; i++) {
                 char alias = chars[i];
@@ -106,28 +103,21 @@ public abstract class BinaryEncoder {
         }
 
         public NumberEncoder buildNumberEncoder() {
-            return new NumberEncoder(numberToChar, getOptimizedCharToNumber(), minChar);
+            return new NumberEncoder(numberToChar, charToNumber);
         }
 
         public BaseEncoder buildBaseEncoder() {
-            return new BaseEncoder(numberToChar, getOptimizedCharToNumber(), minChar);
-        }
-
-        private int[] getOptimizedCharToNumber() {
-            return copyOfRange(charToNumber, minChar, maxChar + 1);
+            return new BaseEncoder(numberToChar, charToNumber);
         }
 
         private void verify(char ch) {
             Check.that(charToNumber[ch] == -1, "Duplicate mapping for %s", ch);
         }
-        private void minMax(char[] chars) {
+        private void setMaxChar(char[] chars) {
             for (int i=0; i < chars.length; i++) {
                 int ch = chars[i];
                 if (maxChar < ch) {
                     maxChar = ch;
-                }
-                if (minChar > ch) {
-                    minChar = ch;
                 }
             }
         }
@@ -145,15 +135,12 @@ public abstract class BinaryEncoder {
 
     private final int[] charToNumber;
 
-    private final int charToNumberOffset;
-
-    private BinaryEncoder(char[] numberToChar, int[] charToNumber, int charToNumberOffset) {
+    private BinaryEncoder(char[] numberToChar, int[] charToNumber) {
         Check.notNull(numberToChar, "toChar");
         Check.notNull(charToNumber, "charToNumber");
 
         this.numberToChar = numberToChar;
         this.charToNumber = charToNumber;
-        this.charToNumberOffset = charToNumberOffset;
 
         int radix = numberToChar.length;
         Check.that(Integer.bitCount(radix) == 1, "radix should be ^2");
@@ -191,10 +178,12 @@ public abstract class BinaryEncoder {
 
         byte[] bytes = new byte[byteLen];
         while (charIndex >= 0 && charIndex < charLen) {
-            int charToNumberIndex = str.charAt(charIndex) - charToNumberOffset;
+            int charToNumberIndex = str.charAt(charIndex);
             checkWithinCharToNumberRange(str, charIndex, charToNumberIndex);
+
             int number = charToNumber[charToNumberIndex];
             checkNumber(str, charIndex, number);
+
             setNumber(number, bytes, bitIndex);
             bitIndex = getNextBitIndex(bitIndex);
             charIndex = getNextCharIndex(charIndex);
@@ -209,7 +198,7 @@ public abstract class BinaryEncoder {
     }
 
     private void checkWithinCharToNumberRange(String str, int charIndex, int charToNumberIndex) {
-        if (charToNumberIndex < 0 || charToNumberIndex >= charToNumber.length) {
+        if (charToNumberIndex >= charToNumber.length) {
             throwIllegalCharacterException(str, charIndex);
         }
     }
@@ -316,8 +305,8 @@ public abstract class BinaryEncoder {
 
     private static final class NumberEncoder extends BinaryEncoder {
 
-        public NumberEncoder(char[] numberToChar, int[] charToNumber, int numberToCharOffset) {
-            super(numberToChar, charToNumber, numberToCharOffset);
+        public NumberEncoder(char[] numberToChar, int[] charToNumber) {
+            super(numberToChar, charToNumber);
             for (int i = 1; i < numberToChar.length; i++) {
                 Check.that(numberToChar[i-1] < numberToChar[i],
                         "Expected alphabet to be in lexical order! Got %s before %s", numberToChar[i-1], numberToChar[i]);
@@ -347,8 +336,8 @@ public abstract class BinaryEncoder {
 
     private static final class BaseEncoder extends BinaryEncoder {
 
-        public BaseEncoder(char[] numberToChar, int[] charToNumber, int numberToCharOffset) {
-            super(numberToChar, charToNumber, numberToCharOffset);
+        public BaseEncoder(char[] numberToChar, int[] charToNumber) {
+            super(numberToChar, charToNumber);
         }
 
         @Override
