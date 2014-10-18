@@ -11,10 +11,9 @@ public abstract class BinaryEncoder {
      */
     public static final BinaryEncoder BASE32;
 
-    public static final BinaryEncoder BASE32_NUMBER;
-
     /**
-     * Douglas Crockford's Base32 alternative.
+     * Douglas Crockford's Base32 alternative. Result is comparable as
+     * alphabet is in lexical order.
      */
     public static final BinaryEncoder BASE32_CD;
 
@@ -29,12 +28,11 @@ public abstract class BinaryEncoder {
         builder = new  Builder("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")
                   .withAliases("abcdefghijklmnopqrstuvwxyz");
         BASE32 = builder.buildBaseEncoder();
-        BASE32_NUMBER = builder.buildNumberEncoder();
 
         builder = new  Builder("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
                   .withAliases("          abcdefghjkmnpqrstvwxyz")
-                 .withAliasesFor('0', "oO")
-                 .withAliasesFor('1', "iIlL");
+                  .withAliasesFor('0', "oO")
+                  .withAliasesFor('1', "iIlL");
         BASE32_CD = builder.buildBaseEncoder();
         BASE32_CD_NUMBER = builder.buildNumberEncoder();
     }
@@ -296,6 +294,10 @@ public abstract class BinaryEncoder {
 
         public NumberEncoder(char[] numberToChar, int[] charToNumber, int numberToCharOffset) {
             super(numberToChar, charToNumber, numberToCharOffset);
+            for (int i = 1; i < numberToChar.length; i++) {
+                Check.that(numberToChar[i-1] < numberToChar[i],
+                        "Expected alphabet to be in lexical order! Got %s before %s", numberToChar[i-1], numberToChar[i]);
+            }
         }
 
         @Override
