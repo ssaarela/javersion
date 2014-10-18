@@ -132,25 +132,32 @@ public class BinaryEncoderTest {
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void detect_illegal_chars_below_range() {
+        BASE32.decode("A1B");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void detect_illegal_chars_above_range() {
+        BASE32.decode("A{B");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void detect_illegal_chars_within_range() {
+        BASE32.decode("A=B");
+    }
+
     @Test
-    public void base32() throws UnsupportedEncodingException {
-        final String text = "Base32 is a notation for encoding arbitrary byte data using a restricted set of symbols which can be conveniently used by " +
-                "humans and processed by old computer systems which only recognize restricted character sets. It comprises a symbol set made up of 32 " +
-                "different characters, as well as an algorithm for encoding arbitrary strings using 8-bit characters into the Base32 alphabet. This uses " +
-                "more than one 5-bit Base32 symbol for each 8-bit input character, and thus also specifies requirements on the allowed lengths of Base32 " +
-                "strings (which must be multiples of 40 bits). The Base64 system, in contrast, is closely related but uses a larger set of 64 symbols.";
+    public void base32_no_padding() throws UnsupportedEncodingException {
+        final String text = "Base32 is a notation for encoding arbitrary byte data using a restricted set of symbols which can be conveniently used by humans " +
+                "and processed by old computer systems which only recognize restricted character sets.";
 
         final String base32 = BASE32.encode(text.getBytes(UTF_8));
         // Verified with http://online-calculators.appspot.com/base32/
 
-        assertThat(base32).isEqualTo("IJQXGZJTGIQGS4ZAMEQG433UMF2GS33OEBTG64RAMVXGG33ENFXGOIDBOJRGS5DSMFZHSIDCPF2GKIDEMF2GCIDVONUW4ZZAMEQHEZLTORZGSY3UMVSCA4" +
-                "3FOQQG6ZRAON4W2YTPNRZSA53INFRWQIDDMFXCAYTFEBRW63TWMVXGSZLOORWHSIDVONSWIIDCPEQGQ5LNMFXHGIDBNZSCA4DSN5RWK43TMVSCAYTZEBXWYZBAMNXW24DVORSXEIDTP" +
-                "FZXIZLNOMQHO2DJMNUCA33ONR4SA4TFMNXWO3TJPJSSA4TFON2HE2LDORSWIIDDNBQXEYLDORSXEIDTMV2HGLRAJF2CAY3PNVYHE2LTMVZSAYJAON4W2YTPNQQHGZLUEBWWCZDFEB2X" +
-                "AIDPMYQDGMRAMRUWMZTFOJSW45BAMNUGC4TBMN2GK4TTFQQGC4ZAO5SWY3BAMFZSAYLOEBQWYZ3POJUXI2DNEBTG64RAMVXGG33ENFXGOIDBOJRGS5DSMFZHSIDTORZGS3THOMQHK43" +
-                "JNZTSAOBNMJUXIIDDNBQXEYLDORSXE4ZANFXHI3ZAORUGKICCMFZWKMZSEBQWY4DIMFRGK5BOEBKGQ2LTEB2XGZLTEBWW64TFEB2GQYLOEBXW4ZJAGUWWE2LUEBBGC43FGMZCA43ZNV" +
-                "RG63BAMZXXEIDFMFRWQIBYFVRGS5BANFXHA5LUEBRWQYLSMFRXIZLSFQQGC3TEEB2GQ5LTEBQWY43PEBZXAZLDNFTGSZLTEBZGK4LVNFZGK3LFNZ2HGIDPNYQHI2DFEBQWY3DPO5SWI" +
-                "IDMMVXGO5DIOMQG6ZRAIJQXGZJTGIQHG5DSNFXGO4ZAFB3WQ2LDNAQG25LTOQQGEZJANV2WY5DJOBWGK4ZAN5TCANBQEBRGS5DTFEXCAVDIMUQEEYLTMU3DIIDTPFZXIZLNFQQGS3RA" +
-                "MNXW45DSMFZXILBANFZSAY3MN5ZWK3DZEBZGK3DBORSWIIDCOV2CA5LTMVZSAYJANRQXEZ3FOIQHGZLUEBXWMIBWGQQHG6LNMJXWY4ZO");
+        assertThat(base32).isEqualTo("IJQXGZJTGIQGS4ZAMEQG433UMF2GS33OEBTG64RAMVXGG33ENFXGOIDBOJRGS5DSMFZHSIDCPF2GKIDEMF2GCIDVONUW4ZZAMEQHEZLTORZGSY3UMVSCA43" +
+                "FOQQG6ZRAON4W2YTPNRZSA53INFRWQIDDMFXCAYTFEBRW63TWMVXGSZLOORWHSIDVONSWIIDCPEQGQ5LNMFXHGIDBNZSCA4DSN5RWK43TMVSCAYTZEBXWYZBAMNXW24DVORSXEIDTPFZ" +
+                "XIZLNOMQHO2DJMNUCA33ONR4SA4TFMNXWO3TJPJSSA4TFON2HE2LDORSWIIDDNBQXEYLDORSXEIDTMV2HGLQ");
 
         final byte[] bytes = BASE32.decode(base32.toLowerCase());
         assertThat(new String(bytes, UTF_8)).isEqualTo(text);

@@ -1,6 +1,8 @@
 package org.javersion.util;
 
+import static java.lang.String.format;
 import static java.util.Arrays.copyOfRange;
+import static java.util.Arrays.fill;
 
 import java.util.Arrays;
 
@@ -55,6 +57,7 @@ public abstract class BinaryEncoder {
             numberToChar = Arrays.copyOf(chars, chars.length);
             minMax(chars);
             charToNumber = new int[maxChar + 1];
+            fill(charToNumber, -1);
             for (int i=0; i < chars.length; i++) {
                 char ch = chars[i];
                 verify(ch);
@@ -79,9 +82,11 @@ public abstract class BinaryEncoder {
         }
 
         private void ensureCharToNumberSize() {
-            if (charToNumber.length <= maxChar) {
+            int oldSize = charToNumber.length;
+            if (oldSize <= maxChar) {
                 charToNumber = Arrays.copyOf(charToNumber, maxChar + 1);
             }
+            fill(charToNumber, oldSize, charToNumber.length, -1);
         }
 
         public Builder withAliases(String aliases) {
@@ -113,7 +118,7 @@ public abstract class BinaryEncoder {
         }
 
         private void verify(char ch) {
-            Check.that(charToNumber[ch] == 0, "Duplicate mapping for %s", ch);
+            Check.that(charToNumber[ch] == -1, "Duplicate mapping for %s", ch);
         }
         private void minMax(char[] chars) {
             for (int i=0; i < chars.length; i++) {
@@ -186,12 +191,31 @@ public abstract class BinaryEncoder {
 
         byte[] bytes = new byte[byteLen];
         while (charIndex >= 0 && charIndex < charLen) {
-            int number = charToNumber[str.charAt(charIndex) - charToNumberOffset];
+            int charToNumberIndex = str.charAt(charIndex) - charToNumberOffset;
+            checkWithinCharToNumberRange(str, charIndex, charToNumberIndex);
+            int number = charToNumber[charToNumberIndex];
+            checkNumber(str, charIndex, number);
             setNumber(number, bytes, bitIndex);
             bitIndex = getNextBitIndex(bitIndex);
             charIndex = getNextCharIndex(charIndex);
         }
         return bytes;
+    }
+
+    private void checkNumber(String str, int charIndex, int number) {
+        if (number < 0) {
+            throwIllegalCharacterException(str, charIndex);
+        }
+    }
+
+    private void checkWithinCharToNumberRange(String str, int charIndex, int charToNumberIndex) {
+        if (charToNumberIndex < 0 || charToNumberIndex >= charToNumber.length) {
+            throwIllegalCharacterException(str, charIndex);
+        }
+    }
+
+    private void throwIllegalCharacterException(String str, int index) {
+        throw new IllegalArgumentException(format("Illegal character %s at %s", str.charAt(index), index));
     }
 
     public String encodeLong(long l) {
