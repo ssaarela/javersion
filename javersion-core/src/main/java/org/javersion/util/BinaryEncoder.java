@@ -1,11 +1,14 @@
 package org.javersion.util;
 
 import static java.lang.String.format;
+import static java.util.Arrays.copyOf;
 import static java.util.Arrays.fill;
 
-import java.util.Arrays;
-
 public abstract class BinaryEncoder {
+
+    public static final BinaryEncoder HEX;
+
+    public static final BinaryEncoder HEX_ALIASED;
 
     /**
      * No-padding Base32 encoder.
@@ -23,8 +26,26 @@ public abstract class BinaryEncoder {
      */
     public static final BinaryEncoder BASE32_CD_NUMBER;
 
+    /**
+     * No-padding Base64 encoder.
+     */
+    public static final BinaryEncoder BASE64;
+
+    public static final BinaryEncoder BASE64_URL;
+
+    public static final BinaryEncoder NUMBER_BASE64_URL;
+
+
     static {
         Builder builder;
+
+        builder = new  Builder("0123456789ABCDEF")
+                  .withAliases("          abcdef");
+        HEX = builder.buildUnsignedNumberEncoder();
+
+        builder.withAliasesFor('0', "oO")
+               .withAliasesFor('1', "iIl");
+        HEX_ALIASED = builder.buildUnsignedNumberEncoder();
 
         builder = new  Builder("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")
                   .withAliases("abcdefghijklmnopqrstuvwxyz");
@@ -35,7 +56,16 @@ public abstract class BinaryEncoder {
                   .withAliasesFor('0', "oO")
                   .withAliasesFor('1', "iIlL");
         BASE32_CD = builder.buildBaseEncoder();
-        BASE32_CD_NUMBER = builder.buildNumberEncoder();
+        BASE32_CD_NUMBER = builder.buildUnsignedNumberEncoder();
+
+        builder = new Builder("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
+        BASE64 = builder.buildBaseEncoder();
+
+        builder = new Builder("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_");
+        BASE64_URL = builder.buildBaseEncoder();
+
+        builder = new Builder("-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz");
+        NUMBER_BASE64_URL = builder.buildUnsignedNumberEncoder();
     }
 
     public static final class Builder {
@@ -51,7 +81,7 @@ public abstract class BinaryEncoder {
         }
 
         public Builder(char... chars) {
-            numberToChar = Arrays.copyOf(chars, chars.length);
+            numberToChar = copyOf(chars, chars.length);
             setMaxChar(chars);
             charToNumber = new int[maxChar + 1];
             fill(charToNumber, -1);
@@ -81,7 +111,7 @@ public abstract class BinaryEncoder {
         private void ensureCharToNumberSize() {
             int oldSize = charToNumber.length;
             if (oldSize <= maxChar) {
-                charToNumber = Arrays.copyOf(charToNumber, maxChar + 1);
+                charToNumber = copyOf(charToNumber, maxChar + 1);
             }
             fill(charToNumber, oldSize, charToNumber.length, -1);
         }
@@ -102,8 +132,12 @@ public abstract class BinaryEncoder {
             return this;
         }
 
-        public NumberEncoder buildNumberEncoder() {
+        public NumberEncoder buildUnsignedNumberEncoder() {
             return new NumberEncoder(numberToChar, charToNumber);
+        }
+
+        public NumberEncoder buildSignedNumberEncoder() {
+            return new SignedNumberEncoder(numberToChar, charToNumber);
         }
 
         public BaseEncoder buildBaseEncoder() {
@@ -139,8 +173,8 @@ public abstract class BinaryEncoder {
         Check.notNull(numberToChar, "toChar");
         Check.notNull(charToNumber, "charToNumber");
 
-        this.numberToChar = numberToChar;
-        this.charToNumber = charToNumber;
+        this.numberToChar = copyOf(numberToChar, numberToChar.length);
+        this.charToNumber = copyOf(charToNumber, charToNumber.length);
 
         int radix = numberToChar.length;
         Check.that(Integer.bitCount(radix) == 1, "radix should be ^2");
@@ -303,7 +337,7 @@ public abstract class BinaryEncoder {
         return (byte) ((index == 7 ? l : ((l >>> (56 - 8 * index)))) & BYTE_MASK);
     }
 
-    private static final class NumberEncoder extends BinaryEncoder {
+    private static class NumberEncoder extends BinaryEncoder {
 
         public NumberEncoder(char[] numberToChar, int[] charToNumber) {
             super(numberToChar, charToNumber);
@@ -334,7 +368,34 @@ public abstract class BinaryEncoder {
         }
     }
 
-    private static final class BaseEncoder extends BinaryEncoder {
+    private static class SignedNumberEncoder extends  NumberEncoder {
+
+        public SignedNumberEncoder(char[] numberToChar, int[] charToNumber) {
+            super(numberToChar, charToNumber);
+        }
+
+        @Override
+        public String encodeLong(long l) {
+            return super.encodeLong(l - Long.MIN_VALUE);
+        }
+
+        @Override
+        public String encodeInt(int i) {
+            return super.encodeInt(i - Integer.MIN_VALUE);
+        }
+
+        @Override
+        public long decodeLong(String str) {
+            return super.decodeLong(str) + Long.MIN_VALUE;
+        }
+
+        @Override
+        public int decodeInt(String str) {
+            return super.decodeInt(str) + Integer.MIN_VALUE;
+        }
+    }
+
+    private static class BaseEncoder extends BinaryEncoder {
 
         public BaseEncoder(char[] numberToChar, int[] charToNumber) {
             super(numberToChar, charToNumber);
