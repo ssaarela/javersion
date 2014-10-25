@@ -19,7 +19,7 @@ public class BinaryEncoderTest {
 
     private static final Builder BASE8 = new Builder("01234567");
 
-    private static final BinaryEncoder number8 = BASE8.buildNumberEncoder();
+    private static final BinaryEncoder number8 = BASE8.buildUnsignedNumberEncoder();
 
     private static final BinaryEncoder base8 = BASE8.buildBaseEncoder();
 
