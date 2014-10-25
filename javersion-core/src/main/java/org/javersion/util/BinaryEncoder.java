@@ -186,20 +186,114 @@ public abstract class BinaryEncoder {
     }
 
     public String encode(byte[] bytes) {
-        int byteLen = bytes.length;
-        int charLen = charLen(byteLen);
+        final int byteLen = bytes.length;
+        final int bitLen = 8 * byteLen;
+        final int remainder = bitLen % encodingBitLen;
+        final int charLen = bitLen / encodingBitLen + (remainder == 0 ? 0 : 1);
+        final char[] chars = new char[charLen];
 
-        int bitIndex = getFirstBitIndex(byteLen);
-        int charIndex = getFirstCharIndex(charLen);
+        int offset = getStartOffset(remainder);
 
-        char[] chars = new char[charLen];
-        while (charIndex >= 0 && charIndex < charLen) {
-            int num = getNumber(bytes, bitIndex);
-            chars[charIndex] = numberToChar[num];
-            bitIndex = getNextBitIndex(bitIndex);
-            charIndex = getNextCharIndex(charIndex);
+        int byteIndex=0, charIndex=0,  bits=0, byteCount, bitCount, charCount;
+        while (byteIndex < byteLen) {
+            byteCount = Math.min(3, byteLen - byteIndex);
+            switch (byteCount) {
+                case 3:
+                    bits |= (bytes[byteIndex+2] & BYTE_MASK) << (8 - offset);
+                case 2:
+                    bits |= (bytes[byteIndex+1] & BYTE_MASK) << (16 - offset);
+                case 1:
+                    bits |= (bytes[byteIndex] & BYTE_MASK) << (24 - offset);
+            }
+            bitCount = (8 * byteCount + offset);
+            charCount = bitCount / encodingBitLen;
+            offset = bitCount % encodingBitLen;
+            if (byteCount < 3 && offset != 0) {
+                charCount++;
+            }
+            switch (charCount) {
+                case 16:
+                    chars[charIndex + 15] = numberToChar[getNumber(bits, encodingBitLen * 15)];
+                case 15:
+                    chars[charIndex + 14] = numberToChar[getNumber(bits, encodingBitLen * 14)];
+                case 14:
+                    chars[charIndex + 13] = numberToChar[getNumber(bits, encodingBitLen * 13)];
+                case 13:
+                    chars[charIndex + 12] = numberToChar[getNumber(bits, encodingBitLen * 12)];
+                case 12:
+                    chars[charIndex + 11] = numberToChar[getNumber(bits, encodingBitLen * 11)];
+                case 11:
+                    chars[charIndex + 10] = numberToChar[getNumber(bits, encodingBitLen * 10)];
+                case 10:
+                    chars[charIndex + 9] = numberToChar[getNumber(bits, encodingBitLen * 9)];
+                case 9:
+                    chars[charIndex + 8] = numberToChar[getNumber(bits, encodingBitLen * 8)];
+                case 8:
+                    chars[charIndex + 7] = numberToChar[getNumber(bits, encodingBitLen * 7)];
+                case 7:
+                    chars[charIndex + 6] = numberToChar[getNumber(bits, encodingBitLen * 6)];
+                case 6:
+                    chars[charIndex + 5] = numberToChar[getNumber(bits, encodingBitLen * 5)];
+                case 5:
+                    chars[charIndex + 4] = numberToChar[getNumber(bits, encodingBitLen * 4)];
+                case 4:
+                    chars[charIndex + 3] = numberToChar[getNumber(bits, encodingBitLen * 3)];
+                case 3:
+                    chars[charIndex + 2] = numberToChar[getNumber(bits, encodingBitLen * 2)];
+                case 2:
+                    chars[charIndex + 1] = numberToChar[getNumber(bits, encodingBitLen)];
+                case 1:
+                    chars[charIndex] = numberToChar[getNumber(bits, 0)];
+            }
+            bits <<= (charCount * encodingBitLen);
+            byteIndex += byteCount;
+            charIndex += charCount;
         }
         return new String(chars);
+    }
+
+    private static int ceil(int x, int y) {
+        return 1 + ((x - 1) / 3);
+    }
+
+    int getNumber(int bits, int index) {
+        assert index >= 0 && index <= 32 - encodingBitLen;
+        int shift = 32 - encodingBitLen - index;
+        return (bits >>> shift) & mask;
+    }
+
+    private int getNumber(final byte[] bytes, final int index) {
+        int loByte = index / 8;
+        int toBit = index + encodingBitLen;
+        int hiByte = (toBit - 1) / 8;
+        int loShift = toBit % 8;
+        int hiShift = (loShift == 0 ? 0 : 8 - loShift);
+        int number = 0;
+
+        if (hiByte < bytes.length) {
+            // NOTE >>> doesn't work with bytes
+            number = bytes[hiByte] & BYTE_MASK;
+            number >>>= hiShift;
+        }
+        if (hiByte != loByte && index >= 0) {
+            number |= (bytes[loByte] << loShift);
+        }
+        return number & mask;
+    }
+
+    private void setNumber(final int number, final byte[] bytes, final int index) {
+        int loByte = index / 8;
+        int toBit = index + encodingBitLen;
+        int hiByte = (toBit - 1) / 8;
+        int loShift = toBit % 8;
+        int hiShift = (loShift == 0 ? 0 : 8 - loShift);
+
+        if (hiByte < bytes.length) {
+            bytes[hiByte] |= number << hiShift;
+        }
+        if (hiByte != loByte && index >= 0) {
+            bytes[loByte] |= number >>> loShift;
+        }
     }
 
     public byte[] decode(String str) {
@@ -264,45 +358,13 @@ public abstract class BinaryEncoder {
     private int charLen(int byteLen) {
         int bitLen = byteLen * 8;
         int charLen = bitLen / encodingBitLen;
-        if (byteLen % encodingBitLen != 0) {
+        if (bitLen % encodingBitLen != 0) {
             return charLen + 1;
         }
         return charLen;
     }
 
-    private int getNumber(final byte[] bytes, final int index) {
-        int loByte = index / 8;
-        int toBit = index + encodingBitLen;
-        int hiByte = (toBit - 1) / 8;
-        int loShift = toBit % 8;
-        int hiShift = (loShift == 0 ? 0 : 8 - loShift);
-        int number = 0;
-
-        if (hiByte < bytes.length) {
-            // NOTE >>> doesn't work with bytes
-            number = bytes[hiByte] & BYTE_MASK;
-            number >>>= hiShift;
-        }
-        if (hiByte != loByte && index >= 0) {
-            number |= (bytes[loByte] << loShift);
-        }
-        return number & mask;
-    }
-
-    private void setNumber(final int number, final byte[] bytes, final int index) {
-        int loByte = index / 8;
-        int toBit = index + encodingBitLen;
-        int hiByte = (toBit - 1) / 8;
-        int loShift = toBit % 8;
-        int hiShift = (loShift == 0 ? 0 : 8 - loShift);
-
-        if (hiByte < bytes.length) {
-            bytes[hiByte] |= number << hiShift;
-        }
-        if (hiByte != loByte && index >= 0) {
-            bytes[loByte] |= number >>> loShift;
-        }
-    }
+    abstract int getStartOffset(int remainder);
 
     abstract int getFirstBitIndex(int byteLen);
 
@@ -345,6 +407,11 @@ public abstract class BinaryEncoder {
                 Check.that(numberToChar[i-1] < numberToChar[i],
                         "Expected alphabet to be in lexical order! Got %s before %s", numberToChar[i-1], numberToChar[i]);
             }
+        }
+
+        @Override
+        int getStartOffset(int remainder) {
+            return remainder == 0 ? 0 : encodingBitLen - remainder;
         }
 
         @Override
@@ -399,6 +466,11 @@ public abstract class BinaryEncoder {
 
         public BaseEncoder(char[] numberToChar, int[] charToNumber) {
             super(numberToChar, charToNumber);
+        }
+
+        @Override
+        int getStartOffset(int remainder) {
+            return 0;
         }
 
         @Override
