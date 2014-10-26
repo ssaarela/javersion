@@ -30,6 +30,10 @@ public class BinaryEncoderTest {
 
     private static final BinaryEncoder BASE8 = BUILDER.buildBaseEncoder();
 
+    private static final Base64.Encoder JAVA_BASE64_ENCODER = Base64.getEncoder().withoutPadding();
+
+    private static final Base64.Decoder JAVA_BASE64_DECODER = Base64.getDecoder();
+
     @Test
     public void short_one() {
         assertThat(NUMBER8.encode(twoBytes("0-000-000-0  00-000-001"))).isEqualTo("000001");
@@ -80,23 +84,6 @@ public class BinaryEncoderTest {
         byte[] bytes = NUMBER8.decode("20000000001");
         assertThat(bytes).isEqualTo(fourBytes("10000000 00000000 00000000 00000001"));
         assertThat(BASE8.decode("40000000002")).isEqualTo(bytes);
-    }
-
-    @Test
-    public void get_byte() {
-        assertThat(getByte(1, 7)).isEqualTo((byte) 1);
-        assertThat(getByte(1, 0)).isEqualTo((byte) 0);
-        assertThat(getByte(-1, 0)).isEqualTo((byte) -1);
-        assertThat(getByte(-1, 2)).isEqualTo((byte) -1);
-        assertThat(getByte(-1, 4)).isEqualTo((byte) -1);
-        assertThat(getByte(-1, 6)).isEqualTo((byte) -1);
-    }
-
-    @Test
-    public void set_byte() {
-        assertThat(setByte(1, 7, 0)).isEqualTo(1l);
-        assertThat(setByte(Byte.MIN_VALUE, 0, 0)).isEqualTo(Long.MIN_VALUE);
-        assertThat(setByte(Byte.MIN_VALUE, 0, 1)).isEqualTo(Long.MIN_VALUE + 1);
     }
 
     @Test
@@ -184,23 +171,56 @@ public class BinaryEncoderTest {
         time = nanoTime() - start;
         System.out.println("Encode/decode bytes, nanos per round: " + (time/rounds));
         // ~6050
-        // Bytes.Array.getNumber optimization -> ~5650
+        // encode through Bytes -> ~5650
+        // decode through Bytes -> ~6000
 
-        runLongBase32(rounds);
+        runLongBase64(rounds);
         start = nanoTime();
-        runLongBase32(rounds);
+        runLongBase64(rounds);
         time = nanoTime() - start;
         System.out.println("Encode/decode long, nanos per round: " + (time/rounds));
         // ~375
-        // Bytes.Long.getNumber -> ~280
+        // encode through Bytes -> ~280
+        // decode through Bytes -> ~210
 
-        runIntBase32(rounds);
+        runIntBase64(rounds);
         start = nanoTime();
-        runIntBase32(rounds);
+        runIntBase64(rounds);
         time = nanoTime() - start;
         System.out.println("Encode/decode int, nanos per round: " + (time/rounds));
         // ~265
-        // Bytes.Integer.getNumber -> ~200
+        // encode through Bytes -> ~200
+        // decode through Bytes -> ~160
+    }
+
+    @Test
+    public void compare_base64_performance() {
+        final int rounds = 100000;
+        long start, time;
+
+        run_compare_base64_java(rounds);
+        start = nanoTime();
+        run_compare_base64_java(rounds);
+        time = nanoTime() - start;
+        System.out.println("My encode/decode bytes, nanos per round: " + (time/rounds));
+
+        run_compare_base64_my(rounds);
+        start = nanoTime();
+        run_compare_base64_my(rounds);
+        time = nanoTime() - start;
+        System.out.println("My encode/decode bytes, nanos per round: " + (time/rounds));
+    }
+
+    private void run_compare_base64_my(int rounds) {
+        for (int i=0; i < rounds; i++) {
+            BASE64.decode(BASE64.encode(TEXT_BYTES));
+        }
+    }
+
+    private void run_compare_base64_java(int rounds) {
+        for (int i=0; i < rounds; i++) {
+            JAVA_BASE64_DECODER.decode(JAVA_BASE64_ENCODER.encodeToString(TEXT_BYTES));
+        }
     }
 
     private void runBase64(int rounds) {
@@ -210,7 +230,7 @@ public class BinaryEncoderTest {
         }
     }
 
-    private void runLongBase32(int rounds) {
+    private void runLongBase64(int rounds) {
         for (int i=0; i < rounds; i++) {
             long val = 123 * (456 + i);
             BASE64.decodeLong(BASE64.encodeLong(val));
@@ -218,7 +238,7 @@ public class BinaryEncoderTest {
         }
     }
 
-    private void runIntBase32(int rounds) {
+    private void runIntBase64(int rounds) {
         for (int i=0; i < rounds; i++) {
             int val = 123 * (456 + i);
             BASE64.decodeInt(BASE64.encodeInt(val));

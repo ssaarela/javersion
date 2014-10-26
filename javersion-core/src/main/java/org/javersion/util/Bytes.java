@@ -1,18 +1,22 @@
 package org.javersion.util;
 
-public interface Bytes {
+abstract class Bytes {
 
-    public static final int BYTE_MASK = 255;
+    static final int BYTE_MASK = 255;
 
-    public static class Array implements Bytes {
+    static class Array extends Bytes {
 
         private final byte[] bytes;
 
-        public Array(byte[] bytes) {
+        Array(int length) {
+            this(new byte[length]);
+        }
+
+        Array(byte[] bytes) {
             this.bytes = bytes;
         }
 
-        public int getNumber(int index, int encodingBitLen) {
+        int getNumber(int index, int encodingBitLen) {
             int hiByte = (index + encodingBitLen - 1) / 8;
             int shift = (index + encodingBitLen) % 8;
             int number;
@@ -32,22 +36,45 @@ public interface Bytes {
         }
 
         @Override
-        public int length() {
+        void setNumber(int number, int index, int encodingBitLen) {
+            int hiByte = (index + encodingBitLen - 1) / 8;
+            int shift = (index + encodingBitLen) % 8;
+            if (shift == 0) {
+                bytes[hiByte] |= number;
+            } else {
+                if (hiByte < bytes.length) {
+                    bytes[hiByte] |= number << (8 - shift);
+                }
+                if (shift < encodingBitLen && hiByte > 0) {
+                    bytes[hiByte - 1] |= number >>> shift;
+                }
+            }
+        }
+
+        @Override
+        int length() {
             return bytes.length;
         }
 
+        byte[] getBytes() {
+            return bytes;
+        }
     }
 
-    public static class Integer implements Bytes {
+    static class Integer extends Bytes {
 
-        private final int i;
+        private int i;
 
-        public Integer(int i) {
+        Integer() {
+            this(0);
+        }
+
+        Integer(int i) {
             this.i = i;
         }
 
         @Override
-        public int getNumber(int index, int encodingBitLen) {
+        int getNumber(int index, int encodingBitLen) {
             int number = i;
             int shift = 32 - encodingBitLen - index;
             if (shift > 0) {
@@ -59,25 +86,39 @@ public interface Bytes {
         }
 
         @Override
-        public int length() {
+        void setNumber(int number, int index, int encodingBitLen) {
+            int shift = 32 - encodingBitLen - index;
+            if (shift > 0) {
+                i |= number << shift;
+            } else {
+                i |= number >>> -shift;
+            }
+        }
+
+        @Override
+        int length() {
             return 4;
+        }
+
+        int getInt() {
+            return i;
         }
     }
 
-    public static class Long implements Bytes {
+    static class Long extends Bytes {
 
-        private final long l;
+        private long l;
 
-        public Long(long l) {
+        Long(long l) {
             this.l = l;
         }
 
-        public Long(int i1, int i2) {
+        Long(int i1, int i2) {
             l = (((long) i1) << 32) | i2;
         }
 
         @Override
-        public int getNumber(int index, int encodingBitLen) {
+        int getNumber(int index, int encodingBitLen) {
             long number = l;
             int shift = 64 - encodingBitLen - index;
             if (shift > 0) {
@@ -89,12 +130,28 @@ public interface Bytes {
         }
 
         @Override
-        public int length() {
+        void setNumber(int number, int index, int encodingBitLen) {
+            int shift = 64 - encodingBitLen - index;
+            if (shift > 0) {
+                l |= ((long) number) << shift;
+            } else {
+                l |= number >>> -shift;
+            }
+        }
+
+        @Override
+        int length() {
             return 8;
+        }
+
+        long getLong() {
+            return l;
         }
     }
 
-    public int getNumber(int index, int encodingBitLen);
+    abstract int getNumber(int index, int encodingBitLen);
 
-    public int length();
+    abstract void setNumber(int number, int index, int encodingBitLen);
+
+    abstract int length();
 }

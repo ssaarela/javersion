@@ -4,6 +4,9 @@ import static java.lang.String.format;
 import static java.util.Arrays.copyOf;
 import static java.util.Arrays.fill;
 
+/**
+ * Configurable BinaryEncoder
+ */
 public abstract class BinaryEncoder {
 
     public static final BinaryEncoder HEX;
@@ -157,10 +160,6 @@ public abstract class BinaryEncoder {
         }
     }
 
-    private static final String[] EMPTY_ARGS = new String[0];
-
-    private static final int BYTE_MASK = 255;
-
     protected final int encodingBitLen;
 
     private final byte mask;
@@ -189,60 +188,8 @@ public abstract class BinaryEncoder {
         return encode(new Bytes.Array(bytes));
     }
 
-    public String encode(Bytes bytes) {
-        int byteLen = bytes.length();
-        int charLen = charLen(byteLen);
-
-        int bitIndex = getFirstBitIndex(byteLen);
-        int charIndex = getFirstCharIndex(charLen);
-
-        char[] chars = new char[charLen];
-        while (charIndex >= 0 && charIndex < charLen) {
-            int num = bytes.getNumber(bitIndex, encodingBitLen);
-            chars[charIndex] = numberToChar[num];
-            bitIndex = getNextBitIndex(bitIndex);
-            charIndex = getNextCharIndex(charIndex);
-        }
-        return new String(chars);
-    }
-
     public byte[] decode(String str) {
-        int charLen = str.length();
-        int bitLen = charLen * encodingBitLen;
-        int byteLen = bitLen / 8;
-
-        int bitIndex = getFirstBitIndex(byteLen);
-        int charIndex = getFirstCharIndex(charLen);
-
-        byte[] bytes = new byte[byteLen];
-        while (charIndex >= 0 && charIndex < charLen) {
-            int charToNumberIndex = str.charAt(charIndex);
-            checkWithinCharToNumberRange(str, charIndex, charToNumberIndex);
-
-            int number = charToNumber[charToNumberIndex];
-            checkNumber(str, charIndex, number);
-
-            setNumber(number, bytes, bitIndex);
-            bitIndex = getNextBitIndex(bitIndex);
-            charIndex = getNextCharIndex(charIndex);
-        }
-        return bytes;
-    }
-
-    private void checkNumber(String str, int charIndex, int number) {
-        if (number < 0) {
-            throwIllegalCharacterException(str, charIndex);
-        }
-    }
-
-    private void checkWithinCharToNumberRange(String str, int charIndex, int charToNumberIndex) {
-        if (charToNumberIndex >= charToNumber.length) {
-            throwIllegalCharacterException(str, charIndex);
-        }
-    }
-
-    private void throwIllegalCharacterException(String str, int index) {
-        throw new IllegalArgumentException(format("Illegal character %s at %s", str.charAt(index), index));
+        return decode(str, new Bytes.Array(str.length() * encodingBitLen / 8)).getBytes();
     }
 
     public String encodeLong(long l) {
@@ -254,39 +201,62 @@ public abstract class BinaryEncoder {
     }
 
     public long decodeLong(String str) {
-        byte[] bytes = decode(str);
-        Check.that(bytes.length == 8, "Expected 8 bytes", EMPTY_ARGS);
-        return append(bytes, 8, 0, 0);
+        return decode(str, new Bytes.Long(0)).getLong();
     }
 
     public int decodeInt(String str) {
-        byte[] bytes = decode(str);
-        Check.that(bytes.length == 4, "Expected 4 bytes", EMPTY_ARGS);
-        return (int) append(bytes, 4, 0, 0);
+        return decode(str, new Bytes.Integer(0)).getInt();
+    }
+
+    String encode(Bytes bytes) {
+        int byteLen = bytes.length();
+        int charLen = charLen(byteLen);
+
+        int bitIndex = getFirstBitIndex(byteLen);
+        int charIndex = getFirstCharIndex(charLen);
+
+        char[] chars = new char[charLen];
+        while (charIndex >= 0 && charIndex < charLen) {
+            int num = bytes.getNumber(bitIndex, encodingBitLen);
+
+            chars[charIndex] = numberToChar[num];
+            bitIndex = getNextBitIndex(bitIndex);
+            charIndex = getNextCharIndex(charIndex);
+        }
+        return new String(chars);
+    }
+
+    <T extends Bytes> T decode(String str, T bytes) {
+        int charLen = str.length();
+
+        int bitIndex = getFirstBitIndex(bytes.length());
+        int charIndex = getFirstCharIndex(charLen);
+
+        while (charIndex >= 0 && charIndex < charLen) {
+            int charToNumberIndex = str.charAt(charIndex);
+            if (charToNumberIndex >= charToNumber.length) {
+                throwIllegalCharacterException(str, charIndex);
+            }
+
+            int number = charToNumber[charToNumberIndex];
+            if (number < 0) {
+                throwIllegalCharacterException(str, charIndex);
+            }
+
+            bytes.setNumber(number, bitIndex, encodingBitLen);
+            bitIndex = getNextBitIndex(bitIndex);
+            charIndex = getNextCharIndex(charIndex);
+        }
+        return bytes;
+    }
+
+    private void throwIllegalCharacterException(String str, int index) {
+        throw new IllegalArgumentException(format("Illegal character %s at %s", str.charAt(index), index));
     }
 
     private int charLen(int byteLen) {
-        int bitLen = byteLen * 8;
-        int charLen = bitLen / encodingBitLen;
-        if (bitLen % encodingBitLen != 0) {
-            return charLen + 1;
-        }
-        return charLen;
-    }
-
-    private void setNumber(final int number, final byte[] bytes, final int index) {
-        int loByte = index / 8;
-        int toBit = index + encodingBitLen;
-        int hiByte = (toBit - 1) / 8;
-        int loShift = toBit % 8;
-        int hiShift = (loShift == 0 ? 0 : 8 - loShift);
-
-        if (hiByte < bytes.length) {
-            bytes[hiByte] |= number << hiShift;
-        }
-        if (hiByte != loByte && index >= 0) {
-            bytes[loByte] |= number >>> loShift;
-        }
+        // ceil
+        return 1 + ((byteLen * 8 - 1) / encodingBitLen);
     }
 
     abstract int getFirstBitIndex(int byteLen);
@@ -297,30 +267,6 @@ public abstract class BinaryEncoder {
 
     abstract int getNextCharIndex(int currentCharIndex);
 
-
-    static byte[] append(long val, int byteCount, int byOffset, byte[] intoBytes) {
-        int byteOffset = 8 - byteCount;
-        for (int i = (byOffset + byteCount - 1); i >= byOffset; i--) {
-            intoBytes[i] = getByte(val, (i - byOffset + byteOffset));
-        }
-        return intoBytes;
-    }
-
-    static long append(byte[] bytes, int byteCount, int byOffset, long intoVal) {
-        int byteOffset = 8 - byteCount;
-        for (int i= byOffset + byteCount - 1; i >= byOffset; i--) {
-            intoVal = setByte((bytes[i] & BYTE_MASK), (i - byOffset + byteOffset), intoVal);
-        }
-        return intoVal;
-    }
-
-    static long setByte(long b, int index, long into) {
-        return into | (index == 7 ? b : ((b << (56 - 8 * index))));
-    }
-
-    static byte getByte(long l, int index) {
-        return (byte) ((index == 7 ? l : ((l >>> (56 - 8 * index)))) & BYTE_MASK);
-    }
 
     private static class NumberEncoder extends BinaryEncoder {
 
