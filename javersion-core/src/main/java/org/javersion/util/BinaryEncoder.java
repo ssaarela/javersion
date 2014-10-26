@@ -40,12 +40,12 @@ public abstract class BinaryEncoder {
      * Douglas Crockford's Base32 alternative. Result is comparable as
      * alphabet is in lexical order.
      */
-    public static final BinaryEncoder BASE32_CD;
+    public static final BinaryEncoder BASE32_CROCKFORD;
 
     /**
      * Number encoder using Crockford's alphabet.
      */
-    public static final BinaryEncoder BASE32_CD_NUMBER;
+    public static final BinaryEncoder BASE32_CROCKFORD_NUMBER;
 
     /**
      * No-padding Base64 encoder.
@@ -76,8 +76,8 @@ public abstract class BinaryEncoder {
                   .withAliases("          abcdefghjkmnpqrstvwxyz")
                   .withAliasesFor('0', "oO")
                   .withAliasesFor('1', "iIlL");
-        BASE32_CD = builder.buildBaseEncoder();
-        BASE32_CD_NUMBER = builder.buildUnsignedNumberEncoder();
+        BASE32_CROCKFORD = builder.buildBaseEncoder();
+        BASE32_CROCKFORD_NUMBER = builder.buildUnsignedNumberEncoder();
 
         builder = new Builder("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
         BASE64 = builder.buildBaseEncoder();

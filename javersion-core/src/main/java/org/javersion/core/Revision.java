@@ -4,6 +4,8 @@ import static java.lang.System.currentTimeMillis;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.javersion.util.BinaryEncoder;
+
 import com.eaio.uuid.UUIDGen;
 
 /**
@@ -19,6 +21,8 @@ import com.eaio.uuid.UUIDGen;
  */
 public final class Revision implements Comparable<Revision> {
 
+    private static final BinaryEncoder ENCODER = BinaryEncoder.BASE32_CROCKFORD_NUMBER;
+
     public static final Revision MIN_VALUE = new Revision(0, 0);
 
     public static final Revision MAX_VALUE = new Revision(-1, -1);
@@ -28,6 +32,14 @@ public final class Revision implements Comparable<Revision> {
     private final long timeSeq;
 
     private final long node;
+
+    public Revision(String rev) {
+        if (rev.length() != 27) {
+            throw new IllegalArgumentException("Expected string of length 27");
+        }
+        this.timeSeq = ENCODER.decodeLong(rev.substring(0, 13));
+        this.node = ENCODER.decodeLong(rev.substring(14, 27));
+    }
 
     public Revision() {
         this(newUniqueTime(), NODE);
@@ -59,6 +71,14 @@ public final class Revision implements Comparable<Revision> {
     public int compareTo(Revision other) {
         int compare = compareUnsigned(this.timeSeq, other.timeSeq);
         return (compare == 0 ? compareUnsigned(this.node, other.node) : compare);
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder(27)
+                .append(ENCODER.encodeLong(timeSeq))
+                .append('-')
+                .append(ENCODER.encodeLong(node)).toString();
     }
 
     public static int compareUnsigned(long x, long y) {
