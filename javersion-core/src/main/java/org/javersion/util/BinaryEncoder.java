@@ -5,7 +5,25 @@ import static java.util.Arrays.copyOf;
 import static java.util.Arrays.fill;
 
 /**
- * Configurable BinaryEncoder
+ * Configurable binary encoder:
+ * <ul>
+ *     <li>Configurable charset of length n^2.</li>
+ *     <li>Configurable aliases (e.g. 1 l i for I).</li>
+ *     <li>Configurable direction: leftover zeros first as in binary format of numbers or at the end as in base encoders.
+ *         Encoding numbers in reverse retains the numeric order.</li>
+ *     <li>Configurable signed/unsigned encoding for numeric encoders.</li>
+ *     <li>Fluent builder for defining encoders.</li>
+ * </ul>
+ * Reverse encoding is especially useful for text-based indexing.
+ *
+ * DISCLAIMER:
+ * <ul>
+ *     <li>Flexibility comes with a price: any specialized encoder will be faster (e.g.
+ *     Java's Base64 is roughly twice as fast).</li>
+ *     <li>Numbers are encoded by bytes, so the length of the result is constant for the type of number.</li>
+ *     <li>Splitting result into lines of some max length is not supported.</li>
+ *     <li>Padding is not supported.</li>
+ * </ul>
  */
 public abstract class BinaryEncoder {
 
@@ -160,6 +178,7 @@ public abstract class BinaryEncoder {
         }
     }
 
+
     protected final int encodingBitLen;
 
     final byte mask;
@@ -222,9 +241,9 @@ public abstract class BinaryEncoder {
     }
 
 
-    private static class NumberEncoder extends BinaryEncoder {
+    public static class NumberEncoder extends BinaryEncoder {
 
-        public NumberEncoder(char[] numberToChar, int[] charToNumber) {
+        private NumberEncoder(char[] numberToChar, int[] charToNumber) {
             super(numberToChar, charToNumber);
             for (int i = 1; i < numberToChar.length; i++) {
                 Check.that(numberToChar[i-1] < numberToChar[i],
@@ -270,9 +289,9 @@ public abstract class BinaryEncoder {
         }
     }
 
-    private static class SignedNumberEncoder extends  NumberEncoder {
+    public static class SignedNumberEncoder extends  NumberEncoder {
 
-        public SignedNumberEncoder(char[] numberToChar, int[] charToNumber) {
+        private SignedNumberEncoder(char[] numberToChar, int[] charToNumber) {
             super(numberToChar, charToNumber);
         }
 
@@ -297,9 +316,9 @@ public abstract class BinaryEncoder {
         }
     }
 
-    private static class BaseEncoder extends BinaryEncoder {
+    public static class BaseEncoder extends BinaryEncoder {
 
-        public BaseEncoder(char[] numberToChar, int[] charToNumber) {
+        private BaseEncoder(char[] numberToChar, int[] charToNumber) {
             super(numberToChar, charToNumber);
         }
 

@@ -175,7 +175,7 @@ public class BinaryEncoderTest {
         // ~6050
         // encode through Bytes -> ~5650
         // decode through Bytes -> ~6000
-        // while-to-for-loop optimization -> ~5300
+        // while-to-for-loop optimization -> ~5200
 
         runIntBase64(rounds);
         start = nanoTime();
@@ -203,19 +203,19 @@ public class BinaryEncoderTest {
         final int rounds = 10000;
         long start, time;
 
-        run_compare_base64_my(rounds);
-        start = nanoTime();
-        run_compare_base64_my(rounds);
-        time = nanoTime() - start;
-        System.out.println("My encode/decode bytes, nanos per round: " + (time/rounds));
-        // ~2800
-
         run_compare_base64_java(rounds);
         start = nanoTime();
         run_compare_base64_java(rounds);
         time = nanoTime() - start;
         System.out.println("Java encode/decode bytes, nanos per round: " + (time/rounds));
         // ~1400
+
+        run_compare_base64_my(rounds);
+        start = nanoTime();
+        run_compare_base64_my(rounds);
+        time = nanoTime() - start;
+        System.out.println("My encode/decode bytes, nanos per round: " + (time/rounds));
+        // ~2800
     }
 
     private void run_compare_base64_my(int rounds) {
