@@ -168,6 +168,12 @@ public class BinaryEncoderTest {
     }
 
     @Test
+    public void two_ints_combined_to_long() {
+        String res = BASE32.encode(new Bytes.Long(-1));
+        assertThat(BASE32.encode(new Bytes.Long(-1, -1))).isEqualTo(res);
+    }
+
+    @Test
     public void performance() {
         final int rounds = 100000;
         long start, time;
@@ -177,7 +183,8 @@ public class BinaryEncoderTest {
         runBase64(rounds);
         time = nanoTime() - start;
         System.out.println("Encode/decode bytes, nanos per round: " + (time/rounds));
-        // ~6000
+        // ~6050
+        // Bytes.Array.getNumber optimization -> ~5650
 
         runLongBase32(rounds);
         start = nanoTime();

@@ -13,20 +13,20 @@ public interface Bytes {
         }
 
         public int getNumber(int index, int encodingBitLen) {
-            int loByte = index / 8;
-            int toBit = index + encodingBitLen;
-            int hiByte = (toBit - 1) / 8;
-            int loShift = toBit % 8;
-            int hiShift = (loShift == 0 ? 0 : 8 - loShift);
-            int number = 0;
-
-            if (hiByte < bytes.length) {
-                // NOTE >>> doesn't work with bytes
-                number = bytes[hiByte] & BYTE_MASK;
-                number >>>= hiShift;
-            }
-            if (hiByte != loByte && index >= 0) {
-                number |= (bytes[loByte] << loShift);
+            int hiByte = (index + encodingBitLen - 1) / 8;
+            int shift = (index + encodingBitLen) % 8;
+            int number;
+            if (shift == 0) {
+                number = bytes[hiByte];
+            } else {
+                if (hiByte < bytes.length) {
+                    number = (bytes[hiByte] & BYTE_MASK) >>> (8 - shift);
+                } else {
+                    number = 0;
+                }
+                if (shift < encodingBitLen && hiByte > 0) {
+                    number |= bytes[hiByte - 1] << shift;
+                }
             }
             return number & ((1 << encodingBitLen) - 1);
         }
@@ -73,7 +73,7 @@ public interface Bytes {
         }
 
         public Long(int i1, int i2) {
-            this.l = i1 << 32 | i2;
+            l = (((long) i1) << 32) | i2;
         }
 
         @Override
