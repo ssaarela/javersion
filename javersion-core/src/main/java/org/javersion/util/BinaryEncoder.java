@@ -162,11 +162,11 @@ public abstract class BinaryEncoder {
 
     protected final int encodingBitLen;
 
-    private final byte mask;
+    final byte mask;
 
-    private final char[] numberToChar;
+    final char[] numberToChar;
 
-    private final int[] charToNumber;
+    final int[] charToNumber;
 
     private BinaryEncoder(char[] numberToChar, int[] charToNumber) {
         Check.notNull(numberToChar, "toChar");
@@ -208,64 +208,18 @@ public abstract class BinaryEncoder {
         return decode(str, new Bytes.Integer(0)).getInt();
     }
 
-    String encode(Bytes bytes) {
-        int byteLen = bytes.length();
-        int charLen = charLen(byteLen);
+    abstract String encode(Bytes bytes);
 
-        int bitIndex = getFirstBitIndex(byteLen);
-        int charIndex = getFirstCharIndex(charLen);
+    abstract <T extends Bytes> T decode(String str, T bytes);
 
-        char[] chars = new char[charLen];
-        while (charIndex >= 0 && charIndex < charLen) {
-            int num = bytes.getNumber(bitIndex, encodingBitLen);
-
-            chars[charIndex] = numberToChar[num];
-            bitIndex = getNextBitIndex(bitIndex);
-            charIndex = getNextCharIndex(charIndex);
-        }
-        return new String(chars);
-    }
-
-    <T extends Bytes> T decode(String str, T bytes) {
-        int charLen = str.length();
-
-        int bitIndex = getFirstBitIndex(bytes.length());
-        int charIndex = getFirstCharIndex(charLen);
-
-        while (charIndex >= 0 && charIndex < charLen) {
-            int charToNumberIndex = str.charAt(charIndex);
-            if (charToNumberIndex >= charToNumber.length) {
-                throwIllegalCharacterException(str, charIndex);
-            }
-
-            int number = charToNumber[charToNumberIndex];
-            if (number < 0) {
-                throwIllegalCharacterException(str, charIndex);
-            }
-
-            bytes.setNumber(number, bitIndex, encodingBitLen);
-            bitIndex = getNextBitIndex(bitIndex);
-            charIndex = getNextCharIndex(charIndex);
-        }
-        return bytes;
-    }
-
-    private void throwIllegalCharacterException(String str, int index) {
+    void throwIllegalCharacterException(String str, int index) {
         throw new IllegalArgumentException(format("Illegal character %s at %s", str.charAt(index), index));
     }
 
-    private int charLen(int byteLen) {
+    int charLen(int byteLen) {
         // ceil
         return 1 + ((byteLen * 8 - 1) / encodingBitLen);
     }
-
-    abstract int getFirstBitIndex(int byteLen);
-
-    abstract int getFirstCharIndex(int charLen);
-
-    abstract int getNextBitIndex(int currentBitIndex);
-
-    abstract int getNextCharIndex(int currentCharIndex);
 
 
     private static class NumberEncoder extends BinaryEncoder {
@@ -279,23 +233,40 @@ public abstract class BinaryEncoder {
         }
 
         @Override
-        int getFirstBitIndex(int byteLen) {
-            return (byteLen * 8) - encodingBitLen;
+        String encode(Bytes bytes) {
+            int charLen = charLen(bytes.length());
+
+            char[] chars = new char[charLen];
+            for (int bitIndex = (bytes.length() * 8) - encodingBitLen, charIndex = charLen - 1;
+                 charIndex >= 0;
+                 bitIndex -= encodingBitLen, charIndex--) {
+                int num = bytes.getNumber(bitIndex, encodingBitLen);
+
+                chars[charIndex] = numberToChar[num];
+            }
+            return new String(chars);
         }
 
         @Override
-        int getFirstCharIndex(int charLen) {
-            return charLen - 1;
-        }
+        <T extends Bytes> T decode(String str, T bytes) {
+            int charLen = str.length();
 
-        @Override
-        int getNextBitIndex(int currentBitIndex) {
-            return currentBitIndex - encodingBitLen;
-        }
+            for (int bitIndex = (bytes.length() * 8) - encodingBitLen, charIndex = charLen - 1;
+                 charIndex >= 0;
+                 bitIndex -= encodingBitLen, charIndex--) {
+                int charToNumberIndex = str.charAt(charIndex);
+                if (charToNumberIndex >= charToNumber.length) {
+                    throwIllegalCharacterException(str, charIndex);
+                }
 
-        @Override
-        int getNextCharIndex(int currentCharIndex) {
-            return currentCharIndex - 1;
+                int number = charToNumber[charToNumberIndex];
+                if (number < 0) {
+                    throwIllegalCharacterException(str, charIndex);
+                }
+
+                bytes.setNumber(number, bitIndex, encodingBitLen);
+            }
+            return bytes;
         }
     }
 
@@ -333,23 +304,40 @@ public abstract class BinaryEncoder {
         }
 
         @Override
-        int getFirstBitIndex(int byteLen) {
-            return 0;
+        String encode(Bytes bytes) {
+            int charLen = charLen(bytes.length());
+
+            char[] chars = new char[charLen];
+            for (int bitIndex = 0, charIndex = 0;
+                    charIndex < charLen;
+                    bitIndex += encodingBitLen, charIndex++) {
+                int num = bytes.getNumber(bitIndex, encodingBitLen);
+
+                chars[charIndex] = numberToChar[num];
+            }
+            return new String(chars);
         }
 
         @Override
-        int getFirstCharIndex(int charLen) {
-            return 0;
-        }
+        <T extends Bytes> T decode(String str, T bytes) {
+            int charLen = str.length();
 
-        @Override
-        int getNextBitIndex(int currentBitIndex) {
-            return currentBitIndex + encodingBitLen;
-        }
+            for (int bitIndex = 0, charIndex = 0;
+                 charIndex < charLen;
+                 bitIndex += encodingBitLen, charIndex++) {
+                int charToNumberIndex = str.charAt(charIndex);
+                if (charToNumberIndex >= charToNumber.length) {
+                    throwIllegalCharacterException(str, charIndex);
+                }
 
-        @Override
-        int getNextCharIndex(int currentCharIndex) {
-            return currentCharIndex + 1;
+                int number = charToNumber[charToNumberIndex];
+                if (number < 0) {
+                    throwIllegalCharacterException(str, charIndex);
+                }
+
+                bytes.setNumber(number, bitIndex, encodingBitLen);
+            }
+            return bytes;
         }
     }
 

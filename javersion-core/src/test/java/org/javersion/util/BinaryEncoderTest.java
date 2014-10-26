@@ -162,6 +162,8 @@ public class BinaryEncoderTest {
 
     @Test
     public void performance() {
+        // NOTE: It seems that the order in which these tests are run affects more than actual optimizations... GC?
+
         final int rounds = 100000;
         long start, time;
 
@@ -173,15 +175,7 @@ public class BinaryEncoderTest {
         // ~6050
         // encode through Bytes -> ~5650
         // decode through Bytes -> ~6000
-
-        runLongBase64(rounds);
-        start = nanoTime();
-        runLongBase64(rounds);
-        time = nanoTime() - start;
-        System.out.println("Encode/decode long, nanos per round: " + (time/rounds));
-        // ~375
-        // encode through Bytes -> ~280
-        // decode through Bytes -> ~210
+        // while-to-for-loop optimization -> ~5300
 
         runIntBase64(rounds);
         start = nanoTime();
@@ -191,24 +185,37 @@ public class BinaryEncoderTest {
         // ~265
         // encode through Bytes -> ~200
         // decode through Bytes -> ~160
+        // while-to-for-loop optimization -> ~140
+
+        runLongBase64(rounds);
+        start = nanoTime();
+        runLongBase64(rounds);
+        time = nanoTime() - start;
+        System.out.println("Encode/decode long, nanos per round: " + (time/rounds));
+        // ~375
+        // encode through Bytes -> ~280
+        // decode through Bytes -> ~210
+        // while-to-for-loop optimization -> ~200
     }
 
     @Test
     public void compare_base64_performance() {
-        final int rounds = 100000;
+        final int rounds = 10000;
         long start, time;
 
-        run_compare_base64_java(rounds);
+        run_compare_base64_my(rounds);
         start = nanoTime();
-        run_compare_base64_java(rounds);
+        run_compare_base64_my(rounds);
         time = nanoTime() - start;
         System.out.println("My encode/decode bytes, nanos per round: " + (time/rounds));
+        // ~2800
 
-        run_compare_base64_my(rounds);
+        run_compare_base64_java(rounds);
         start = nanoTime();
-        run_compare_base64_my(rounds);
+        run_compare_base64_java(rounds);
         time = nanoTime() - start;
-        System.out.println("My encode/decode bytes, nanos per round: " + (time/rounds));
+        System.out.println("Java encode/decode bytes, nanos per round: " + (time/rounds));
+        // ~1400
     }
 
     private void run_compare_base64_my(int rounds) {
