@@ -123,9 +123,9 @@ public class BinaryEncoderTest {
         for (int i=0; i < 32-8; i++) {
             prev = current;
             int val = step << i;
-            current = NUMBER8.encodeLong(val);
+            current = NUMBER8.encodeInt(val);
             assertOrder(prev, current, i);
-            assertThat(NUMBER8.decodeLong(current)).isEqualTo(val);
+            assertThat(NUMBER8.decodeInt(current)).isEqualTo(val);
             assertThat(BASE8.decodeInt(BASE8.encodeInt(val))).isEqualTo(val);
         }
         assertOrder(prev, current, 64 - 8);
@@ -177,21 +177,23 @@ public class BinaryEncoderTest {
         runBase64(rounds);
         time = nanoTime() - start;
         System.out.println("Encode/decode bytes, nanos per round: " + (time/rounds));
-        // 5782 - 6000 - 6180
+        // ~6000
 
         runLongBase32(rounds);
         start = nanoTime();
         runLongBase32(rounds);
         time = nanoTime() - start;
         System.out.println("Encode/decode long, nanos per round: " + (time/rounds));
-        // 350 - 375 - 405
+        // ~375
+        // Bytes.Long.getNumber -> ~280
 
         runIntBase32(rounds);
         start = nanoTime();
         runIntBase32(rounds);
         time = nanoTime() - start;
         System.out.println("Encode/decode int, nanos per round: " + (time/rounds));
-        // 252 - 265 - 291
+        // ~265
+        // Bytes.Integer.getNumber -> ~200
     }
 
     private void runBase64(int rounds) {
@@ -244,28 +246,6 @@ public class BinaryEncoderTest {
         assertOrder(SIGNED_NUMBER8, -1, 0);
         assertOrder(SIGNED_NUMBER8, 0, 1);
         assertOrder(SIGNED_NUMBER8, 1, Long.MAX_VALUE);
-    }
-
-    @Test
-    public void get_number() {
-        int val = parseInt("11101111 00011111 00100011 01000101");
-        assertThat(BASE8.getNumber(val, 0)).isEqualTo(7);
-        assertThat(BASE8.getNumber(val, 8)).isEqualTo(0);
-        assertThat(BASE8.getNumber(val, 16)).isEqualTo(1);
-        assertThat(BASE8.getNumber(val, 24)).isEqualTo(2);
-        assertThat(BASE8.getNumber(val, 29)).isEqualTo(5);
-    }
-
-    @Test(expected = AssertionError.class)
-    public void get_number_underflow() {
-        int val = parseInt("11101111 00011111 00100011 01000101");
-        BASE8.getNumber(val, -1);
-    }
-
-    @Test(expected = AssertionError.class)
-    public void get_number_overflow() {
-        int val = parseInt("11101111 00011111 00100011 01000101");
-        BASE8.getNumber(val, 30);
     }
 
     private static int parseInt(String bits) {
