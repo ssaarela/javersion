@@ -270,7 +270,8 @@ public class BinaryEncoderTest {
     public void unsinged_comparison() {
         assertOrder(NUMBER8, 0, 1);
         assertOrder(NUMBER8, 1, Long.MAX_VALUE);
-        assertOrder(NUMBER8, Long.MAX_VALUE, Long.MIN_VALUE);
+        assertThat(Long.MAX_VALUE + 1).isEqualTo(Long.MIN_VALUE);
+        assertOrder(NUMBER8, Long.MAX_VALUE, Long.MAX_VALUE + 1);
         assertOrder(NUMBER8, Long.MIN_VALUE, -1);
     }
 
