@@ -15,6 +15,7 @@
  */
 package org.javersion.core;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static com.google.common.collect.Maps.transformValues;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Function;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -65,7 +67,13 @@ public class Version<K, V> {
 
     @Override
     public String toString() {
-        return "#" + revision;
+        return toStringHelper(this)
+                .add("revision", revision)
+                .add("branch", branch)
+                .add("parentRevisions", parentRevisions)
+                .add("type", type)
+                .add("changeset", changeset)
+                .toString();
     }
 
     public static class Builder<K, V, B extends Builder<K, V, B>> {
