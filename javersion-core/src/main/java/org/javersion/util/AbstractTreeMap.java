@@ -30,9 +30,9 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 
-public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, This>> 
+public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, This>>
         extends AbstractRedBlackTree<K, Node<K, V>, This> implements Iterable<Map.Entry<K, V>> {
-    
+
     protected AbstractTreeMap() {
         super();
     }
@@ -42,7 +42,7 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     }
 
     public abstract int size();
-    
+
     protected abstract Node<K, V> root();
 
     protected UpdateContext<Entry<K, V>> updateContext() {
@@ -51,17 +51,17 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     protected UpdateContext<Entry<K, V>> updateContext(Merger<Entry<K, V>> merger) {
         return new UpdateContext<Entry<K, V>>(1, merger);
     }
-    
+
     public V get(Object key) {
         Node<K, V> node = find(root(), key);
         return node != null ? node.value : null;
     }
-    
+
     public V max() {
         Node<K, V> max = findMax(root());
         return max != null ? max.value : null;
     }
-    
+
     public V min() {
         Node<K, V> min = findMin(root());
         return min != null ? min.value : null;
@@ -75,7 +75,15 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     @SuppressWarnings("unchecked")
     public This assocAll(Map<? extends K, ? extends V> map) {
         final UpdateContext<Entry<K, V>> context = updateContext();
-        return doAddAll(context, root(), transform(map.entrySet(), new EntryToNode(context)));
+        return (This) doAddAll(context, root(), transform(map.entrySet(), (entry) -> entryToNode(entry, context)));
+    }
+
+    private Node entryToNode(Entry<? extends K, ? extends V> entry, UpdateContext<Entry<K, V>> context) {
+        if (entry instanceof Node) {
+            return (Node) entry;
+        } else {
+            return new Node(context, entry.getKey(), entry.getValue(), RED);
+        }
     }
 
     public This dissoc(Object keyObj) {
@@ -84,7 +92,7 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
 
     public This assocAll(Iterable<Entry<K, V>> entries) {
         final UpdateContext<Entry<K, V>> context = updateContext();
-        return doAddAll(context, root(), entries);
+        return (This) doAddAll(context, root(), transform(entries, (entry) -> entryToNode(entry, context)));
     }
 
     public This merge(K key, V value, Merger<Entry<K, V>> merger) {
@@ -92,15 +100,14 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         return doAdd(context, root(), new Node<K, V>(context, key, value, RED));
     }
 
-    @SuppressWarnings("unchecked")
     public This mergeAll(Map<? extends K, ? extends V> map, Merger<Entry<K, V>> merger) {
         final UpdateContext<Entry<K, V>> context = updateContext(merger);
-        return doAddAll(context, root(), transform(map.entrySet(), new EntryToNode(context)));
+        return (This) doAddAll(context, root(), transform(map.entrySet(), (entry) -> entryToNode(entry, context)));
     }
 
     public This mergeAll(Iterable<Entry<K, V>> entries, Merger<Entry<K, V>> merger) {
         final UpdateContext<Entry<K, V>> context = updateContext(merger);
-        return doAddAll(context, root(), entries);
+        return (This) doAddAll(context, root(), transform(entries, (entry) -> entryToNode(entry, context)));
     }
 
     public This dissoc(Object key, Merger<Entry<K, V>> merger) {
@@ -121,11 +128,11 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     public Iterator<Map.Entry<K, V>> iterator(boolean asc) {
         return Iterators.transform(doIterator(root(), true), MapUtils.<K, V>mapEntryFunction());
     }
-    
+
     public Iterable<Map.Entry<K, V>> range(K from, K to) {
         return range(from, true, to, false, true);
     }
-    
+
     public Iterable<Map.Entry<K, V>> range(K from, K to, boolean asc) {
         return range(from, true, to, false, asc);
     }
@@ -138,7 +145,7 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         return new Iterable<Map.Entry<K,V>>() {
             @Override
             public Iterator<Entry<K, V>> iterator() {
-                return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive), 
+                return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive),
                         MapUtils.<K, V>mapEntryFunction());
             }
         };
@@ -147,7 +154,7 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     public Iterable<K> keys() {
         return Iterables.transform(this, MapUtils.<K>mapKeyFunction());
     }
-    
+
     public Iterable<V> values() {
         return Iterables.transform(this, MapUtils.<V>mapValueFunction());
     }
@@ -157,53 +164,33 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         return root == null ? "NIL" : root.toString();
     }
 
-    @SuppressWarnings("rawtypes")
-    private static final class EntryToNode implements Function {
-        private final UpdateContext context;
-
-        private EntryToNode(UpdateContext context) {
-            this.context = context;
-        }
-
-        @SuppressWarnings("unchecked")
-        @Override
-        public Object apply(Object input) {
-            if (input instanceof Node) {
-                return (Node) input;
-            } else {
-                Entry entry = (Entry) input;
-                return new Node(context, entry.getKey(), entry.getValue(), RED);
-            }
-        }
-    }
-
     static class Node<K, V> extends AbstractRedBlackTree.Node<K, Node<K,V>> implements Map.Entry<K, V>{
         V value;
-        
+
         public Node(UpdateContext<? super Node<K, V>> context, K key, V value, Color color) {
             this(context, key, value, color, null, null);
         }
-        
+
         public Node(UpdateContext<? super Node<K, V>> context, K key, V value, Color color, Node<K, V> left, Node<K, V> right) {
             super(context, key, color, left, right);
             this.value = value;
         }
-        
+
         @Override
         public K getKey() {
             return key;
         }
-        
+
         @Override
         public V getValue() {
             return value;
         }
-        
+
         @Override
         public Node<K, V> self() {
             return this;
         }
-        
+
         @Override
         public V setValue(V value) {
             throw new UnsupportedOperationException();
@@ -230,7 +217,7 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
                 return node;
             }
         }
-        
+
         @Override
         protected StringBuilder label(StringBuilder sb) {
             sb.append(color).append('(').append(key).append(':').append(value).append(')');

@@ -18,6 +18,7 @@ package org.javersion.util;
 import static com.google.common.base.Objects.equal;
 import static java.lang.System.arraycopy;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -30,24 +31,24 @@ import com.google.common.collect.UnmodifiableIterator;
 public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends AbstractHashTrie<K, E, This>> {
 
     public abstract int size();
-    
+
     public boolean isEmpty() {
         return size() == 0;
     }
-    
+
     @SuppressWarnings("unchecked")
     protected This self() {
         return (This) this;
     }
-    
+
     protected abstract This doReturn(Node<K, E> newRoot, int newSize);
-    
+
     protected abstract Node<K, E> root();
 
     protected E find(Object key) {
         return root().find(key);
     }
-    
+
     public boolean containsKey(Object key) {
         return root().find(key) != null;
     }
@@ -55,18 +56,18 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
     protected final Iterator<E> doIterator() {
         return root().iterator();
     }
-    
+
     private This commitAndReturn(UpdateContext<? super E> updateContext, Node<K, E> newRoot, int newSize) {
         commit(updateContext);
         return doReturn(newRoot, newSize);
     }
-    
+
     protected final This doAdd(UpdateContext<? super E> updateContext, E newEntry) {
         Node<K, E> newRoot = root().assoc(updateContext, newEntry);
         return commitAndReturn(updateContext, newRoot, size() + updateContext.getChangeAndReset());
     }
 
-    @SuppressWarnings("rawtypes") 
+    @SuppressWarnings("rawtypes")
     protected final This doAddAll(UpdateContext<? super E> updateContext, Iterator entries) {
         Node<K, E> newRoot = root();
         int size = size();
@@ -76,21 +77,21 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             newRoot = newRoot.assoc(updateContext, entry);
             size += updateContext.getChangeAndReset();
         }
-        
+
         return commitAndReturn(updateContext, newRoot, size);
     }
-        
+
     protected final This doRemove(UpdateContext<? super E> updateContext, Object key) {
         Node<K, E> newRoot = root().dissoc(updateContext, key);
         return commitAndReturn(updateContext, newRoot, size() + updateContext.getChangeAndReset());
     }
-    
+
     protected void commit(UpdateContext<?> updateContext) {
         updateContext.commit();
     }
-    
+
     static abstract class Node<K, E extends Entry<K, E>> implements Iterable<E> {
-        
+
         static final int SHIFT_INCREMENT = 5;
 
         E find(Object key) {
@@ -104,7 +105,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         Node<K, E> dissoc(UpdateContext<? super E>  currentContext, Object key) {
             return dissocInternal(currentContext, 0, hash(key), key);
         }
-        
+
         static int hash(Object key) {
             return key == null ? 0 : key.hashCode();
         }
@@ -116,44 +117,44 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         static int bit(int hash, int shift) {
             return 1 << bitIndex(hash, shift);
         }
-        
+
         static int bitIndex(int hash, int shift) {
             // xx xxxxx xxxxx xxxxx xxxxx NNNNN xxxxx   >>> 5
             // 00 00000 00000 00000 00000 00000 NNNNN   & 0x01f
             // return number (NNNNN) between 0..31
             return (hash >>> shift) & 0x01f;
         }
-        
-        
+
+
         abstract E findInternal(int shift, int hash, Object key);
 
         abstract Node<K, E> assocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, E newEntry);
 
         abstract Node<K, E> dissocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, Object key);
-        
+
     }
-    
+
     @SuppressWarnings("rawtypes")
-    private static final Iterator<Entry> EMTPY_ITER = Iterators.emptyIterator();
-    
+    private static final Iterator<Entry> EMTPY_ITER = Collections.emptyIterator();
+
     @SuppressWarnings("rawtypes")
     static final Node EMPTY_NODE = new Node() {
-        
+
         @Override
         public Iterator<Entry> iterator() {
             return EMTPY_ITER;
         }
-        
+
         @Override
         Entry findInternal(int shift, int hash, Object key) {
             return null;
         }
-        
+
         @Override
         Node dissocInternal(UpdateContext  currentContext, int shift, int hash, Object key) {
             return this;
         }
-        
+
         @SuppressWarnings("unchecked")
         @Override
         Node assocInternal(UpdateContext  currentContext, int shift, int hash, Entry newEntry) {
@@ -166,23 +167,23 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             }
         }
     };
-    
+
     protected static abstract class Entry<K, E extends Entry<K, E>> extends Node<K, E> {
-        
-        final K key; 
-        
+
+        final K key;
+
         public Entry(K key) {
-            this.key = key; 
+            this.key = key;
         }
-        
+
         public int getHash() {
             return hash(key);
         }
-     
+
         public String toString() {
             return "" + key;
         }
-        
+
         @SuppressWarnings("unchecked")
         protected E self() {
             return (E) this;
@@ -212,7 +213,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             }
             return this;
         }
-        
+
         @Override
         public E findInternal(int shift, int hash, Object key) {
             if (equal(this.key, key)) {
@@ -226,14 +227,14 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             return Iterators.singletonIterator(self());
         }
     }
-    
-    
+
+
     static final class HashNode<K, E extends Entry<K, E>> extends Node<K, E> {
-        
+
         final UpdateContext<? super E>  updateContext;
-        
-        private int bitmap; 
-        
+
+        private int bitmap;
+
         private Node<K, E>[] children;
 
         HashNode(UpdateContext<? super E>  contextReference) {
@@ -244,7 +245,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         HashNode(UpdateContext<? super E>  contextReference, int expectedSize) {
             this(contextReference, 0, new Node[expectedSize < 32 ? expectedSize : 32]);
         }
-        
+
         HashNode(UpdateContext<? super E>  contextReference, int bitmap, Node<K, E>[] children) {
             this.updateContext = contextReference;
             this.bitmap = bitmap;
@@ -297,7 +298,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                 return editable;
             }
         }
-        
+
         @Override
         public E findInternal(int shift, int hash, Object key) {
             int bit = bit(hash, shift);
@@ -308,7 +309,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             Node<K, E> nodeOrEntry = children[index];
             return nodeOrEntry.findInternal(shift + SHIFT_INCREMENT, hash, key);
         }
-        
+
 
         @SuppressWarnings("unchecked")
         private Node<K, E> insert(UpdateContext<? super E>  currentContext, int index, E newEntry, int bit) {
@@ -329,7 +330,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             if (index < childCount) {
                 arraycopy(children, index, newChildren, index + 1, childCount - index);
             }
-            
+
             newChildren[index] = newEntry;
 
             if (childCount == 31) {
@@ -340,7 +341,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                 this.bitmap |= bit;
                 this.children = newChildren;
                 return this;
-            } 
+            }
             else {
                 return new HashNode<K, E>(currentContext, bitmap | bit, newChildren);
             }
@@ -372,16 +373,16 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                     newChildren[childCount - 1] = null;
                 }
             }
-            
+
             if (editInPlace) {
                 this.bitmap = bitmap ^ bit;
                 return this;
-            } 
+            }
             else {
                 return new HashNode<K, E>(currentContext, bitmap ^ bit, newChildren);
             }
         }
-        
+
         static int newSizeForInsert(UpdateContext<?>  currentContext, int currentChildCount) {
             if (currentContext.expectedUpdates() == 1) {
                 return currentChildCount + 1;
@@ -389,7 +390,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                 return currentChildCount < 16 ? 2*(currentChildCount + 1) : 32;
             }
         }
-        
+
         private HashNode<K, E> cloneForReplace(UpdateContext<? super E>  currentContext) {
             if (this.updateContext.isSameAs(currentContext)) {
                 return this;
@@ -402,7 +403,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
         public Iterator<E> iterator() {
             return new ArrayIterator<K, E>(children, childCount());
         }
-        
+
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("#{");
@@ -422,11 +423,11 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
     }
 
     static final class ArrayNode<K, E extends Entry<K, E>> extends Node<K, E> {
-        
+
         final UpdateContext<? super E>  updateContext;
-        
+
         private Node<K, E>[] children;
-        
+
         private int childCount;
 
         ArrayNode(UpdateContext<? super E>  contextReference, Node<K, E>[] children, int childCount) {
@@ -489,7 +490,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                 return new ArrayNode<K, E>(currentContext, newChildren, newChildCount);
             }
         }
-        
+
         private Node<K, E> toBitmapNode(UpdateContext<? super E>  currentContext, int newChildCount, int removedIndex) {
             @SuppressWarnings("unchecked")
             Node<K, E>[] newChildren = new Node[newChildCount];
@@ -524,11 +525,11 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             return new ArrayIterator<K, E>(children);
         }
     }
-    
+
     static final class CollisionNode<K, E extends Entry<K, E>> extends Node<K, E> {
-        
+
         final int hash;
-        
+
         private E[] entries;
 
         @SuppressWarnings("unchecked")
@@ -566,7 +567,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                         return new CollisionNode<K, E>(newEntries);
                     }
                 }
-                
+
                 currentContext.insert(newEntry);
 
                 E[] newEntries = (E[]) new Entry[entries.length + 1];
@@ -574,9 +575,9 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                 newEntries[entries.length] = newEntry;
                 return new CollisionNode<K, E>(newEntries);
             }
-            
-            
-            Node<K, E>[] newChildren = (currentContext.expectedUpdates() == 1 
+
+
+            Node<K, E>[] newChildren = (currentContext.expectedUpdates() == 1
                     ? new Node[] { this, null } : new Node[] { this, null, null, null });
 
             Node<K, E> newNode = new HashNode<K, E>(currentContext, bit(this.hash, shift), newChildren);
@@ -589,7 +590,7 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
                 for (int i=0; i < entries.length; i++) {
                     if (equal(entries[i].key, key)) {
                         currentContext.delete(entries[i]);
-    
+
                         if (entries.length == 2) {
                             if (i == 1) {
                                 return entries[0];
@@ -609,12 +610,12 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             }
             return this;
         }
-        
+
         @Override
         public Iterator<E> iterator() {
             return new ArrayIterator<K, E>(entries);
         }
-        
+
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("[");
@@ -632,26 +633,26 @@ public abstract class AbstractHashTrie<K, E extends Entry<K, E>, This extends Ab
             return sb.toString();
         }
     }
-    
+
     static class ArrayIterator<K, E extends Entry<K, E>> extends UnmodifiableIterator<E> {
-        
+
         private final Node<K, E>[] array;
-        
+
         private final int limit;
-        
+
         private Iterator<E> subIterator;
-        
+
         private int pos = 0;
-        
+
         public ArrayIterator(Node<K, E>[] array) {
             this(array, array.length);
         }
-        
+
         public ArrayIterator(Node<K, E>[] array, int limit) {
             this.array = array;
             this.limit = limit;
         }
-        
+
         @Override
         public boolean hasNext() {
             if (subIterator != null) {
