@@ -12,7 +12,7 @@ import com.google.common.collect.Maps;
 
 public class MapTest {
 
-    @Versionable(byReferenceAlias="kv")
+    @Versionable(alias="kv", reference = true)
     public static class KeyValue {
         @Id public int id;
         @SuppressWarnings("unused")

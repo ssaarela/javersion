@@ -14,6 +14,8 @@ import com.google.common.collect.Maps;
 
 public class HierarchyTest {
 
+    public static final String TREE_ALIAS = "HierarchyTest$Tree";
+
     @Versionable
     public static class Tree {
         public String name;
@@ -45,12 +47,12 @@ public class HierarchyTest {
         Map<PropertyPath, Object> properties = treeSerializer.toPropertyMap(root);
 
         Map<PropertyPath, Object> expectedProperties = properties(
-                ROOT, Tree.class,
+                ROOT, TREE_ALIAS,
                 property("name"), "root",
-                property("child"), Tree.class,
+                property("child"), TREE_ALIAS,
 
                 property("child.name"), "child",
-                property("child.child"), Tree.class,
+                property("child.child"), TREE_ALIAS,
 
                 property("child.child.name"), "grandchild",
                 property("child.child.child"), null

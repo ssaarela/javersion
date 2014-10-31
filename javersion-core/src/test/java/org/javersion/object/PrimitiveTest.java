@@ -98,7 +98,7 @@ public class PrimitiveTest {
 
     private static Map<PropertyPath, Object> getProperties(Object object) {
         Map<PropertyPath, Object> expectedProperties = Maps.newHashMap();
-        expectedProperties.put(ROOT, object.getClass());
+        expectedProperties.put(ROOT, "PrimitiveTest$Primitives");
 
         for (FieldDescriptor field : TypeDescriptors.getTypeDescriptor(Primitives.class).getFields().values()) {
             expectedProperties.put(property(field.getName()), field.get(object));

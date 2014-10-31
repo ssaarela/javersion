@@ -16,6 +16,8 @@ import org.junit.Test;
 
 public class ReferencesTest {
 
+    public static final String NODE_ALIAS = "ReferencesTest$Node";
+
     public static class Node {
 
         @Id public Integer id;
@@ -66,12 +68,12 @@ public class ReferencesTest {
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, "1",
 
-                property("@REF@.nodes[1]"), Node.class,
+                property("@REF@.nodes[1]"), NODE_ALIAS,
                 property("@REF@.nodes[1].id"), 1,
                 property("@REF@.nodes[1].left"), "2",
                 property("@REF@.nodes[1].right"), "1",
 
-                property("@REF@.nodes[2]"), Node.class,
+                property("@REF@.nodes[2]"), NODE_ALIAS,
                 property("@REF@.nodes[2].id"), 2,
                 property("@REF@.nodes[2].left"), "1",
                 property("@REF@.nodes[2].right"), "2"

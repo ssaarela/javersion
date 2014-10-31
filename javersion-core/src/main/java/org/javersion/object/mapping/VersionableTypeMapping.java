@@ -24,17 +24,25 @@ import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableBiMap;
+
 public class VersionableTypeMapping implements TypeMapping {
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         return localTypeDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
     }
-    
-    
+
+
     @Override
     public  ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return ObjectTypeMapping.describe(path, type.getRawType(), asList(type), context);
+        String alias = getAlias(type.getAnnotation(Versionable.class), type);
+        return ObjectTypeMapping.describe(path, ImmutableBiMap.of(alias, type), context);
     }
-    
+
+    static String getAlias(Versionable versionable, TypeDescriptor type) {
+        return ObjectTypeMapping.getAlias(versionable.alias(), type);
+    }
+
 }

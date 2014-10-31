@@ -57,8 +57,8 @@ public class ReadContext {
                 while (queueIsNotEmpty()) {
                     PropertyTree propertyTree = nextQueueItem();
                     Schema schema = schemaRoot.get(propertyTree.path);
-                    Object target = objects.get(propertyTree.path);
-                    schema.bind(propertyTree, target, this);
+                    Object object = objects.get(propertyTree.path);
+                    schema.bind(propertyTree, object, this);
                 }
             }
             return result;
@@ -121,4 +121,7 @@ public class ReadContext {
         }
     }
 
+    public Object getValue(PropertyTree propertyTree) {
+        return properties.get(propertyTree.path);
+    }
 }

@@ -29,20 +29,19 @@ import org.javersion.util.Check;
 public class ReferenceTypeMapping implements TypeMapping {
 
     private static final String REFERENCES = "@REF@";
-    
+
     private final String alias;
-    
-    private final Class<?> rootType;
-    
-    public ReferenceTypeMapping(Class<?> rootType, String alias) {
-        this.rootType = Check.notNull(rootType, "rootType");
+
+    private final ObjectTypeMapping<?> objectTypeMapping;
+
+    public ReferenceTypeMapping(String alias, ObjectTypeMapping<?> objectTypeMapping) {
         this.alias = Check.notNullOrEmpty(alias, "alias");
+        this.objectTypeMapping = Check.notNull(objectTypeMapping, "objectTypeMapping");
     }
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return rootType != null 
-                && localTypeDescriptor.typeDescriptor.isSubTypeOf(rootType)
+        return objectTypeMapping.applies(path, localTypeDescriptor)
                 && isReferencePath(alias, path);
     }
 
@@ -50,13 +49,13 @@ public class ReferenceTypeMapping implements TypeMapping {
     public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
         return describeReference(path, type, alias, context);
     }
-    
+
     public static boolean isReferencePath(String alias, PropertyPath path) {
         return path instanceof Root
                 || path instanceof SubPath
                 && !targetPath(alias).equals(((SubPath) path).parent);
     }
-    
+
     private static SubPath targetPath(String alias) {
         return PropertyPath.ROOT.property(REFERENCES).property(alias);
     }

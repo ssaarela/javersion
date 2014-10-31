@@ -18,18 +18,20 @@ package org.javersion.object.types;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 
+import com.google.common.collect.BiMap;
+
 public class IdentifiableObjectType<O> extends ObjectType<O> implements IdentifiableType {
 
     private final FieldDescriptor idField;
-    
+
     private final IdentifiableType idType;
-    
-    public IdentifiableObjectType(Class<O> rootType, Iterable<TypeDescriptor> types, FieldDescriptor idField, IdentifiableType idType) {
-        super(rootType, types);
+
+    public IdentifiableObjectType(BiMap<String, TypeDescriptor> typesByAlias, FieldDescriptor idField, IdentifiableType idType) {
+        super(typesByAlias);
         this.idField = idField;
         this.idType = idType;
     }
-    
+
     @Override
     public String toString(Object object) {
         return idType.toString(idField.get(object));

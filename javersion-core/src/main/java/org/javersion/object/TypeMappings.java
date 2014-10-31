@@ -29,10 +29,7 @@ import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
 import org.javersion.util.Check;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 
 public class TypeMappings {
 
@@ -125,6 +122,10 @@ public class TypeMappings {
             return new HierarchyBuilder<>(root);
         }
 
+        public <R> HierarchyBuilder<R> withClass(Class<R> root, String alias) {
+            return new HierarchyBuilder<>(root, alias);
+        }
+
         public TypeMappings build() {
             return new TypeMappings(Iterables.concat(mappings, defaultMappings));
         }
@@ -132,15 +133,23 @@ public class TypeMappings {
 
         public final class HierarchyBuilder<R> {
 
-            protected String alias;
+            protected String rootAlias;
 
-            protected final Class<? extends R> rootType;
+            protected boolean reference;
 
-            protected Set<Class<? extends R>> classes = Sets.newHashSet();
+            protected BiMap<String, TypeDescriptor> typesByAlias = HashBiMap.create();
 
             public HierarchyBuilder(Class<R> root) {
-                this.rootType = root;
-                classes.add(Check.notNull(root, "root"));
+                this(root, null);
+            }
+
+            public HierarchyBuilder(Class<R> root, String alias) {
+                Check.notNull(root, "root");
+                rootAlias = register(root, alias);
+            }
+
+            private TypeDescriptor getTypeDescriptor(Class<?> clazz) {
+                return TypeDescriptors.DEFAULT.getTypeDescriptor.apply(clazz);
             }
 
             public Builder withTypeMapping(TypeMapping typeMapping) {
@@ -151,30 +160,57 @@ public class TypeMappings {
                 return register().withClass(root);
             }
 
+            public <N> HierarchyBuilder<N> withClass(Class<N> root, String alias) {
+                return register().withClass(root, alias);
+            }
 
             @SafeVarargs
             public final HierarchyBuilder<R> havingSubClasses(Class<? extends R>... subClasses) {
                 return havingSubClasses(ImmutableList.copyOf(subClasses));
             }
 
-            public final HierarchyBuilder<R> havingSubClasses(Collection<Class<? extends R>> subClasses) {
-                classes.addAll(subClasses);
+            public final HierarchyBuilder<R> havingSubClasses(Iterable<Class<? extends R>> subClasses) {
+                for (Class<? extends R> clazz : subClasses) {
+                    register(clazz, null);
+                }
+                return this;
+            }
+
+            public HierarchyBuilder<R> havingSubClass(Class<? extends R> clazz, String alias) {
+                register(clazz, null);
+                return this;
+            }
+
+            public HierarchyBuilder<R> asReference() {
+                this.reference = true;
                 return this;
             }
 
             public HierarchyBuilder<R> asReferenceWithAlias(String alias) {
                 Check.notNullOrEmpty(alias, "alias");
-                this.alias = alias;
+                this.rootAlias = alias;
+                this.reference = true;
                 return this;
+            }
+
+            private String register(Class<?> clazz, String alias) {
+                return register(getTypeDescriptor(clazz), alias);
+            }
+
+            private String register(TypeDescriptor type, String alias) {
+                alias = ObjectTypeMapping.getAlias(alias, type);
+                typesByAlias.put(alias, type);
+                return alias;
             }
 
             Builder register() {
                 Builder builder = Builder.this;
-                if (!isNullOrEmpty(alias)) {
-                    builder = builder.withMapping(new ReferenceTypeMapping(rootType, alias));
+                ObjectTypeMapping<R> objectTypeMapping = new ObjectTypeMapping<>(typesByAlias);
+                if (reference) {
+                    // NOTE: ReferenceTypeMapping has higher priority and thus must be registered before ObjectTypeMapping
+                    builder = builder.withMapping(new ReferenceTypeMapping(rootAlias, objectTypeMapping));
                 }
-                Iterable<TypeDescriptor> types = Iterables.transform(classes, TypeDescriptors.DEFAULT.getTypeDescriptor);
-                return builder.withMapping(new ObjectTypeMapping<>(rootType, types));
+                return builder.withMapping(objectTypeMapping);
             }
 
             public TypeMappings build() {

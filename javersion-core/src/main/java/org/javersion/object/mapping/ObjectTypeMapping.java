@@ -20,6 +20,7 @@ import java.util.Set;
 import org.javersion.object.DescribeContext;
 import org.javersion.object.Id;
 import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.Versionable;
 import org.javersion.object.types.IdentifiableObjectType;
 import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.ObjectType;
@@ -30,41 +31,39 @@ import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 public class ObjectTypeMapping<O> implements TypeMapping {
-    
-    private final Set<TypeDescriptor> types;
-    
-    private final Class<? extends O> rootType;
-    
-    public ObjectTypeMapping() {
-        this.rootType = null;
-        this.types = null;
-    }
-    public ObjectTypeMapping(Class<? extends O> rootType, Iterable<TypeDescriptor> types) {
-        this.rootType = Check.notNull(rootType, "rootType");
-        Check.notNullOrEmpty(types, "types");
 
-        this.types = ImmutableSet.copyOf(types);
+    private final BiMap<String, TypeDescriptor> typesByAlias;
+
+    public ObjectTypeMapping(BiMap<String, TypeDescriptor> typesByAlias) {
+        this.typesByAlias = typesByAlias;
     }
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return types.contains(localTypeDescriptor.typeDescriptor);
+        for (TypeDescriptor typeDescriptor : typesByAlias.values()) {
+            if (typeDescriptor.equals(localTypeDescriptor.typeDescriptor)) {
+                return true;
+            }
+        }
+        return false;
     }
-    
+
     @Override
     public  synchronized ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return describe(path, rootType, types, context);
+        return describe(path, typesByAlias, context);
     }
-    
-    public static ValueType describe(PropertyPath path, Class<?> rootType, Iterable<TypeDescriptor> allTypes, DescribeContext context) {
+
+    public static ValueType describe(PropertyPath path, BiMap<String, TypeDescriptor> typesByAlias, DescribeContext context) {
         Set<FieldDescriptor> uniqueFields = Sets.newHashSet();
         FieldDescriptor idField = null;
         IdentifiableType idType = null;
-        for (TypeDescriptor type : allTypes) {
+        for (TypeDescriptor type : typesByAlias.values()) {
             for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
                 if (uniqueFields.add(fieldDescriptor)) {
                     SubPath subPath = path.property(fieldDescriptor.getName());
@@ -78,10 +77,21 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             }
         }
         if (idField != null) {
-            return new IdentifiableObjectType<>(rootType, allTypes, idField, idType);
+            return new IdentifiableObjectType<>(typesByAlias, idField, idType);
         } else {
-            return new ObjectType<>(rootType, allTypes);
+            return new ObjectType<>(typesByAlias);
         }
     }
-    
+
+    public static String getAlias(TypeDescriptor type) {
+        return type.getSimpleName();
+    }
+
+    public static String getAlias(String aliasOrEmpty, TypeDescriptor type) {
+        if (!Strings.isNullOrEmpty(aliasOrEmpty)) {
+            return aliasOrEmpty;
+        }
+        return getAlias(type);
+    }
+
 }

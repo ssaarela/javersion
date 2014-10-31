@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.zip.ZipEntry;
 
 import org.javersion.util.Check;
 
@@ -109,7 +110,13 @@ public abstract class AbstractTypeDescriptor<
     }
 
     public String getSimpleName() {
-        return getRawType().getSimpleName();
+        String fqn = getRawType().getName();
+        int i = fqn.lastIndexOf('.');
+        if (i > 0) {
+            return fqn.substring(i + 1);
+        } else {
+            return fqn;
+        }
     }
 
     public boolean hasField(String fieldName) {

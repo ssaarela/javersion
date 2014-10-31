@@ -26,5 +26,6 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Documented
 public @interface Versionable {
-    String byReferenceAlias() default "";
+    String alias() default "";
+    boolean reference() default false;
 }

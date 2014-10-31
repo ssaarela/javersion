@@ -24,20 +24,24 @@ import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
+import com.google.common.base.Strings;
+import static org.javersion.object.mapping.VersionableTypeMapping.getAlias;
+
 public class VersionableReferenceTypeMapping implements TypeMapping {
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        Versionable versionable = localTypeDescriptor.typeDescriptor.getAnnotation(Versionable.class);
-        return versionable != null 
-                && !isNullOrEmpty(versionable.byReferenceAlias())
-                && ReferenceTypeMapping.isReferencePath(versionable.byReferenceAlias(), path);
+        TypeDescriptor type = localTypeDescriptor.typeDescriptor;
+        Versionable versionable = type.getAnnotation(Versionable.class);
+        return versionable != null
+                && versionable.reference()
+                && ReferenceTypeMapping.isReferencePath(getAlias(versionable, type), path);
     }
 
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
         Versionable versionable = type.getAnnotation(Versionable.class);
-        return ReferenceTypeMapping.describeReference(path, type, versionable.byReferenceAlias(), context);
+        return ReferenceTypeMapping.describeReference(path, type, getAlias(versionable, type), context);
     }
 
 }
