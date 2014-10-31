@@ -19,11 +19,11 @@ public class VersionNotFoundException extends IllegalArgumentException {
 
     private static final long serialVersionUID = 1L;
 
-    public final long revision;
-    
-    public VersionNotFoundException(long revision) {
+    public final Revision revision;
+
+    public VersionNotFoundException(Revision revision) {
         super(String.format("revision#%s not found", revision));
         this.revision = revision;
     }
-    
+
 }

@@ -15,6 +15,7 @@
  */
 package org.javersion.core;
 
+import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static com.google.common.collect.Maps.transformValues;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Function;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -41,11 +43,11 @@ public class Version<K, V> {
 
     };
 
-    public final long revision;
+    public final Revision revision;
 
     public final String branch;
 
-    public final Set<Long> parentRevisions;
+    public final Set<Revision> parentRevisions;
 
     public final Map<K, V> changeset;
 
@@ -65,24 +67,34 @@ public class Version<K, V> {
 
     @Override
     public String toString() {
-        return "#" + revision;
+        return toStringHelper(this)
+                .add("revision", revision)
+                .add("branch", branch)
+                .add("parentRevisions", parentRevisions)
+                .add("type", type)
+                .add("changeset", changeset)
+                .toString();
     }
 
     public static class Builder<K, V, B extends Builder<K, V, B>> {
 
-        private static Set<Long> EMPTY_PARENTS = ImmutableSet.of();
+        private static final Set<Revision> EMPTY_PARENTS = ImmutableSet.of();
 
-        protected final long revision;
+        protected final Revision revision;
 
         protected VersionType type = VersionType.NORMAL;
 
         protected String branch = DEFAULT_BRANCH;
 
-        protected Set<Long> parentRevisions = EMPTY_PARENTS;
+        protected Set<Revision> parentRevisions = EMPTY_PARENTS;
 
         protected Map<K, V> changeset = ImmutableMap.of();
 
-        public Builder(long revision) {
+        public Builder() {
+            this(new Revision());
+        }
+
+        public Builder(Revision revision) {
             this.revision = revision;
         }
 
@@ -96,11 +108,11 @@ public class Version<K, V> {
             return self();
         }
 
-        public B parents(Long... parentRevisions) {
+        public B parents(Revision... parentRevisions) {
             return parents(copyOf(parentRevisions));
         }
 
-        public B parents(Set<Long> parentRevisions) {
+        public B parents(Set<Revision> parentRevisions) {
             this.parentRevisions = notNull(parentRevisions, "parentRevisions");
             return self();
         }

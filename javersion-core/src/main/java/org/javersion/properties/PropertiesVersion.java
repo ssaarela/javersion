@@ -15,6 +15,7 @@
  */
 package org.javersion.properties;
 
+import org.javersion.core.Revision;
 import org.javersion.core.Version;
 
 public class PropertiesVersion extends Version<String, String> {
@@ -25,7 +26,11 @@ public class PropertiesVersion extends Version<String, String> {
 
     public static class Builder extends Version.Builder<String, String, Builder> {
 
-        public Builder(long revision) {
+        public Builder() {
+            super();
+        }
+
+        public Builder(Revision revision) {
             super(revision);
         }
 

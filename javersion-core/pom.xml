@@ -15,11 +15,18 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>eaio.com</id>
+      <url>http://eaio.com/maven2</url>
+    </repository>
+  </repositories>
+
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>15.0</version>
+      <version>18.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.findbugs</groupId>
@@ -40,6 +47,11 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.3</version>
+    </dependency>
+    <dependency>
+      <groupId>com.eaio.uuid</groupId>
+      <artifactId>uuid</artifactId>
+      <version>3.4</version>
     </dependency>
 
     <dependency>
@@ -66,6 +78,12 @@
       <version>3.3.2</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-guava</artifactId>
+      <version>1.2.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -83,7 +101,7 @@
         <!-- Usage: mvn compile org.pitest:pitest-maven:mutationCoverage -->
         <groupId>org.pitest</groupId>
         <artifactId>pitest-maven</artifactId>
-        <version>1.0.0</version>
+        <version>1.1.0</version>
         <configuration>
           <jvmArgs>
             <value>-XX:-UseSplitVerifier</value>

@@ -51,7 +51,7 @@ public abstract class Merge<K, V> {
 
     public final PersistentHashMap<K, VersionProperty<V>> mergedProperties;
 
-    public final PersistentHashSet<Long> mergedRevisions;
+    public final PersistentHashSet<Revision> mergedRevisions;
 
     public final Multimap<K, VersionProperty<V>> conflicts;
 
@@ -62,9 +62,9 @@ public abstract class Merge<K, V> {
         setMergeHeads(mergeBuilder.getHeads());
     }
 
-    public abstract Set<Long> getMergeHeads();
+    public abstract Set<Revision> getMergeHeads();
 
-    protected abstract void setMergeHeads(Set<Long> heads);
+    protected abstract void setMergeHeads(Set<Revision> heads);
 
     public Map<K, V> diff(Map<K, V> newProperties) {
         return Diff.diff(getPropertiesAsPlainMap(), newProperties);

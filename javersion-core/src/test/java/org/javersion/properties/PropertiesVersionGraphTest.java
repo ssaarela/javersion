@@ -31,6 +31,7 @@ import java.util.Set;
 
 import org.javersion.core.BranchAndRevision;
 import org.javersion.core.Merge;
+import org.javersion.core.Revision;
 import org.javersion.core.VersionType;
 import org.javersion.properties.PropertiesVersionGraph;
 import org.javersion.properties.PropertiesVersion;
@@ -46,24 +47,31 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
 public class PropertiesVersionGraphTest {
-    
-    private static final Set<Long> EMPTY_REVISIONS = setOf();
-    
+
+    private static final Set<Revision> EMPTY_REVISIONS = setOf();
+
     private static final Map<String, String> EMPTY_PROPERTIES = mapOf();
-    
-    private static final String ALT_BRANCH = "alt-branch"; 
-    
+
+    private static final String ALT_BRANCH = "alt-branch";
+
+    private static final Revision[] REV = new Revision[50];
+
+    static {
+        for (int i=0; i < REV.length; i++) {
+            REV[i] = new Revision();
+        }
+    }
     /**
      * <pre>
      * default
      *    alt-branch
      * 1    firstName: "John", lastName: "Doe"
-     * | \   
+     * | \
      * 2  |  status: "Single"
      * |  |
      * |  3  mood: "Lonely"
      * |  |
-     * |  4  lastName: "Foe", status: "Just married", mood: "Ecstatic", married: "2013-10-12" 
+     * |  4  lastName: "Foe", status: "Just married", mood: "Ecstatic", married: "2013-10-12"
      * |  |
      * 5 /   mood: "Ecstatic"
      * |/
@@ -77,7 +85,7 @@ public class PropertiesVersionGraphTest {
      * </pre>
      */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
-            when(version(1l)
+            when(version(REV[1])
                 .changeset(mapOf(
                         "firstName", "John",
                         "lastName", "Doe")))
@@ -86,13 +94,13 @@ public class PropertiesVersionGraphTest {
                         "lastName", "Doe")),
 
             then("Empty merge")
-                .expectAllHeads(setOf(1l))
+                .expectAllHeads(setOf(REV[1]))
                 .mergeRevisions(EMPTY_REVISIONS)
                 .expectProperties(EMPTY_PROPERTIES),
-                
 
-            when(version(2l)
-                .parents(setOf(1l))
+
+            when(version(REV[2])
+                .parents(setOf(REV[1]))
                 .changeset(mapOf(
                         "status", "Single")))
                 .expectProperties(mapOf(
@@ -101,13 +109,13 @@ public class PropertiesVersionGraphTest {
                         "status", "Single")), // 2
 
 
-            when(version(3l)
+            when(version(REV[3])
                 .branch(ALT_BRANCH)
-                .parents(setOf(1l))
+                .parents(setOf(REV[1]))
                 .changeset(mapOf(
                         "mood", "Lonely")))
-                .expectAllHeads(setOf(2l, 3l))
-                .mergeRevisions(setOf(3l, 2l))
+                .expectAllHeads(setOf(REV[2], REV[3]))
+                .mergeRevisions(setOf(REV[3], REV[2]))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Doe", // 1
@@ -115,16 +123,16 @@ public class PropertiesVersionGraphTest {
                         "mood", "Lonely")), // 3
 
 
-            when(version(4l)
+            when(version(REV[4])
                 .branch(ALT_BRANCH)
-                .parents(setOf(3l))
+                .parents(setOf(REV[3]))
                 .changeset(mapOf(
                         "lastName", "Foe",
                         "status", "Just married",
                         "mood", "Ecstatic",
                         "married", "2013-10-12")))
-                .expectAllHeads(setOf(2l, 4l))
-                .mergeRevisions(setOf(4l))
+                .expectAllHeads(setOf(REV[2], REV[4]))
+                .mergeRevisions(setOf(REV[4]))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
@@ -133,8 +141,8 @@ public class PropertiesVersionGraphTest {
                         "married", "2013-10-12")), // 4
 
             then("Merge with ancestor")
-                .mergeRevisions(setOf(3l, 4l))
-                .expectMergeHeads(setOf(4l))
+                .mergeRevisions(setOf(REV[3], REV[4]))
+                .expectMergeHeads(setOf(REV[4]))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
@@ -143,8 +151,8 @@ public class PropertiesVersionGraphTest {
                         "married", "2013-10-12")), // 4
 
             then("Merge with concurrent older version")
-                .mergeRevisions(setOf(2l, 4l))
-                .expectMergeHeads(setOf(2l, 4l))
+                .mergeRevisions(setOf(REV[2], REV[4]))
+                .expectMergeHeads(setOf(REV[2], REV[4]))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
@@ -156,8 +164,8 @@ public class PropertiesVersionGraphTest {
                         )),
 
             then("Merge with concurrent older version, ignore order")
-                .mergeRevisions(setOf(4l, 2l))
-                .expectMergeHeads(setOf(2l, 4l))
+                .mergeRevisions(setOf(REV[4], REV[2]))
+                .expectMergeHeads(setOf(REV[2], REV[4]))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
@@ -166,15 +174,15 @@ public class PropertiesVersionGraphTest {
                         "married", "2013-10-12")) // 4
                 .expectConflicts(multimapOf(
                         "status", "Single" // 2
-                        )),                
+                        )),
 
 
-            when(version(5l)
-                .parents(setOf(2l))
+            when(version(REV[5])
+                .parents(setOf(REV[2]))
                 .changeset(mapOf(
                         "mood", "Ecstatic")))
-                .expectAllHeads(setOf(5l, 4l))
-                .mergeRevisions(setOf(4l, 5l))
+                .expectAllHeads(setOf(REV[5], REV[4]))
+                .mergeRevisions(setOf(REV[4], REV[5]))
                 .expectProperties(mapOf(
                         "firstName", "John",
                         "lastName", "Foe",
@@ -183,20 +191,20 @@ public class PropertiesVersionGraphTest {
                         "married", "2013-10-12")) // 4
                 .expectConflicts(multimapOf(
                         "status", "Single" // 2
-                        )),  
-                        
+                        )),
+
             then("Merge default branch")
                 .mergeBranches(setOf(DEFAULT_BRANCH))
-                .expectMergeHeads(setOf(5l))
+                .expectMergeHeads(setOf(REV[5]))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Doe", // 1
                         "status", "Single", // 2
                         "mood", "Ecstatic")), // 5
-                        
+
             then("Merge alt-branch")
                 .mergeBranches(setOf(ALT_BRANCH))
-                .expectMergeHeads(setOf(4l))
+                .expectMergeHeads(setOf(REV[4]))
                 .expectProperties(mapOf(
                         "firstName", "John", // 1
                         "lastName", "Foe", // 4
@@ -205,34 +213,12 @@ public class PropertiesVersionGraphTest {
                         "married", "2013-10-12")), // 4
 
 
-            when(version(6l)
-                .parents(setOf(5l, 4l))
+            when(version(REV[6])
+                .parents(setOf(REV[5], REV[4]))
                 .changeset(mapOf(
                         "mood", null,
                         "married", null)))
-                .expectAllHeads(setOf(6l, 4l))
-                .expectProperties(mapOf(
-                        "firstName", "John",
-                        "lastName", "Foe",
-                        "status", "Just married")) // 4
-                .expectConflicts(multimapOf(
-                        "status", "Single" // 2 - unresolved conflict
-                        )),
-                        
-                        
-            then("Merge alt-branch - should not have changed")
-                .mergeBranches(setOf(ALT_BRANCH))
-                .expectMergeHeads(setOf(4l))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Foe", // 4
-                        "status", "Just married", // 4
-                        "mood", "Ecstatic", // 4
-                        "married", "2013-10-12")), // 4
-                        
-            then("Merge alt-branch and default")
-                .mergeBranches(setOf(ALT_BRANCH, DEFAULT_BRANCH))
-                .expectMergeHeads(setOf(6l))
+                .expectAllHeads(setOf(REV[6], REV[4]))
                 .expectProperties(mapOf(
                         "firstName", "John",
                         "lastName", "Foe",
@@ -241,9 +227,31 @@ public class PropertiesVersionGraphTest {
                         "status", "Single" // 2 - unresolved conflict
                         )),
 
-                        
-            when(version(7l)
-                .parents(setOf(6l)))
+
+            then("Merge alt-branch - should not have changed")
+                .mergeBranches(setOf(ALT_BRANCH))
+                .expectMergeHeads(setOf(REV[4]))
+                .expectProperties(mapOf(
+                        "firstName", "John", // 1
+                        "lastName", "Foe", // 4
+                        "status", "Just married", // 4
+                        "mood", "Ecstatic", // 4
+                        "married", "2013-10-12")), // 4
+
+            then("Merge alt-branch and default")
+                .mergeBranches(setOf(ALT_BRANCH, DEFAULT_BRANCH))
+                .expectMergeHeads(setOf(REV[6]))
+                .expectProperties(mapOf(
+                        "firstName", "John",
+                        "lastName", "Foe",
+                        "status", "Just married")) // 4
+                .expectConflicts(multimapOf(
+                        "status", "Single" // 2 - unresolved conflict
+                        )),
+
+
+            when(version(REV[7])
+                .parents(setOf(REV[6])))
                 .expectProperties(mapOf(
                         "firstName", "John",
                         "lastName", "Foe",
@@ -251,10 +259,10 @@ public class PropertiesVersionGraphTest {
                 .expectConflicts(multimapOf(
                         "status", "Single" // 2 - still unresolved conflict
                         )),
-                        
-                        
-            when(version(8l)
-                .parents(setOf(7l))
+
+
+            when(version(REV[8])
+                .parents(setOf(REV[7]))
                 .changeset(mapOf(
                         "status", "Married"
                         )))
@@ -262,21 +270,21 @@ public class PropertiesVersionGraphTest {
                         "firstName", "John",
                         "lastName", "Foe",
                         "status", "Married")),
-            
 
-            when(version(9l)
+
+            when(version(REV[9])
                 .changeset(mapOf(
                         "status", "New beginning"))
                 .type(VersionType.ROOT))
                 .expectProperties(mapOf(
                         "status", "New beginning")) // 4 and 5 - not conflicting!
             );
-    
-    
+
+
     @Test
     public void Sequential_Updates() {
         PropertiesVersionGraph versionGraph = PropertiesVersionGraph.init();
-        long revision = -1;
+        Revision revision = null;
         for (VersionExpectation expectation : EXPECTATIONS) {
             if (expectation.version != null) {
                 revision = expectation.version.revision;
@@ -286,7 +294,7 @@ public class PropertiesVersionGraphTest {
             assertMergeExpectations(versionGraph, revision, expectation);
         }
     }
-    
+
     static List<List<VersionExpectation>> getBulkExpectations() {
         List<List<VersionExpectation>> bulks = Lists.newArrayList();
         for (int i=1; i<= EXPECTATIONS.size(); i++) {
@@ -297,7 +305,7 @@ public class PropertiesVersionGraphTest {
 
     @Test
     public void Bulk_Load() {
-        Long revision = null;
+        Revision revision = null;
         for (List<VersionExpectation> expectations : getBulkExpectations()) {
             VersionExpectation lastExpectation = expectations.get(expectations.size() - 1);
             if (lastExpectation.getRevision() != null) {
@@ -314,10 +322,10 @@ public class PropertiesVersionGraphTest {
             List<VersionExpectation> expectations) {
         return filter(transform(expectations, getVersion), notNull());
     }
-    
-    private void assertGraphExpectations(PropertiesVersionGraph versionGraph, long revision, VersionExpectation expectation) {
+
+    private void assertGraphExpectations(PropertiesVersionGraph versionGraph, Revision revision, VersionExpectation expectation) {
         if (expectation.expectedHeads != null) {
-            Set<Long> heads = new HashSet<>();
+            Set<Revision> heads = new HashSet<>();
             for (BranchAndRevision leaf : versionGraph.getHeads().keys()) {
                 heads.add(leaf.revision);
             }
@@ -327,7 +335,7 @@ public class PropertiesVersionGraphTest {
         }
     }
 
-    private void assertMergeExpectations(PropertiesVersionGraph versionGraph, long revision, VersionExpectation expectation) {
+    private void assertMergeExpectations(PropertiesVersionGraph versionGraph, Revision revision, VersionExpectation expectation) {
         try {
             Merge<String, String> merge;
             if (expectation.mergeBranches != null) {
@@ -335,24 +343,24 @@ public class PropertiesVersionGraphTest {
             } else {
                 merge = versionGraph.mergeRevisions(expectation.mergeRevisions);
             }
-            assertThat(title("mergeHeads", revision, expectation), 
-                    merge.getMergeHeads(), 
+            assertThat(title("mergeHeads", revision, expectation),
+                    merge.getMergeHeads(),
                     equalTo(expectation.expectedMergeHeads));
-            
-            assertThat(title("properties", revision, expectation), 
-                    merge.getProperties(), 
+
+            assertThat(title("properties", revision, expectation),
+                    merge.getProperties(),
                     equalTo(expectation.expectedProperties));
-            
-            assertThat(title("conflicts", revision, expectation), 
+
+            assertThat(title("conflicts", revision, expectation),
                     Multimaps.transformValues(merge.conflicts, merge.getVersionPropertyValue),
                     equalTo(expectation.expectedConflicts));
         } catch (RuntimeException e) {
             throw new AssertionError(title("merge", revision, expectation), e);
         }
     }
-    
-    private static String title(String assertLabel, long revision, VersionExpectation expectation) {
-        return assertLabel + " of #" + revision + (expectation.title != null ? ": " + expectation.title : "");
+
+    private static String title(String assertLabel, Revision revision, VersionExpectation expectation) {
+        return assertLabel + " of " + revision + (expectation.title != null ? ": " + expectation.title : "");
     }
 
     public static Function<VersionExpectation, PropertiesVersion> getVersion = new Function<VersionExpectation, PropertiesVersion>() {
@@ -361,16 +369,16 @@ public class PropertiesVersionGraphTest {
             return input.version;
         }
     };
-    
+
     public static class VersionExpectation {
         public final String title;
         public final PropertiesVersion version;
-        public Set<Long> mergeRevisions = ImmutableSet.of();
+        public Set<Revision> mergeRevisions = ImmutableSet.of();
         public Iterable<String> mergeBranches;
         public Map<String, String> expectedProperties;
         public Multimap<String, String> expectedConflicts = ImmutableMultimap.of();
-        public Set<Long> expectedMergeHeads;
-        public Set<Long> expectedHeads;
+        public Set<Revision> expectedMergeHeads;
+        public Set<Revision> expectedHeads;
         public VersionExpectation(String title) {
             this(null, title);
         }
@@ -385,10 +393,10 @@ public class PropertiesVersionGraphTest {
             }
             this.expectedMergeHeads = mergeRevisions;
         }
-        public Long getRevision() {
+        public Revision getRevision() {
             return version != null ? version.revision : null;
         }
-        public VersionExpectation mergeRevisions(Set<Long> mergeRevisions) {
+        public VersionExpectation mergeRevisions(Set<Revision> mergeRevisions) {
             this.mergeRevisions = mergeRevisions;
             this.expectedMergeHeads = mergeRevisions;
             return this;
@@ -401,11 +409,11 @@ public class PropertiesVersionGraphTest {
             this.expectedProperties = expectedProperties;
             return this;
         }
-        public VersionExpectation expectMergeHeads(Set<Long> expectedRevisions) {
+        public VersionExpectation expectMergeHeads(Set<Revision> expectedRevisions) {
             this.expectedMergeHeads = expectedRevisions;
             return this;
         }
-        public VersionExpectation expectAllHeads(Set<Long> expectedHeads) {
+        public VersionExpectation expectAllHeads(Set<Revision> expectedHeads) {
             this.expectedHeads = expectedHeads;
             return this;
         }
@@ -414,11 +422,11 @@ public class PropertiesVersionGraphTest {
             return this;
         }
     }
-    
-    public static PropertiesVersion.Builder version(long rev) {
+
+    public static PropertiesVersion.Builder version(Revision rev) {
         return new PropertiesVersion.Builder(rev);
     }
-    
+
     public static VersionExpectation when(PropertiesVersion.Builder builder) {
         return new VersionExpectation(builder.build());
     }
@@ -430,7 +438,7 @@ public class PropertiesVersionGraphTest {
     public static <T> Set<T> setOf(T... revs) {
         return ImmutableSet.copyOf(revs);
     }
-    
+
     public static Map<String, String> mapOf(String... entries) {
         Map<String, String> map = Maps.newHashMap();
         for (int i=0; i+1 < entries.length; i+=2) {
@@ -446,5 +454,5 @@ public class PropertiesVersionGraphTest {
         }
         return map;
     }
-    
+
 }

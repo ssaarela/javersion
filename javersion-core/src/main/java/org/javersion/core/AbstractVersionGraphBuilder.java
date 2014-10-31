@@ -25,38 +25,38 @@ import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
 
-public abstract class AbstractVersionGraphBuilder<K, 
-                               V, 
-                               T extends Version<K, V>, 
+public abstract class AbstractVersionGraphBuilder<K,
+                               V,
+                               T extends Version<K, V>,
                                G extends AbstractVersionGraph<K, V, T, G, B>,
                                B extends AbstractVersionGraphBuilder<K, V, T, G, B>> {
 
     PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
-    
-    MutableSortedMap<Long, VersionNode<K, V, T>> versionNodes;
 
-    private Function<Long, VersionNode<K, V, T>> revisionToVersionNode = new Function<Long, VersionNode<K, V, T>>() {
+    MutableSortedMap<Revision, VersionNode<K, V, T>> versionNodes;
+
+    private Function<Revision, VersionNode<K, V, T>> revisionToVersionNode = new Function<Revision, VersionNode<K, V, T>>() {
         @Override
-        public VersionNode<K, V, T> apply(Long input) {
+        public VersionNode<K, V, T> apply(Revision input) {
             return getVersionNode(Check.notNull(input, "input"));
         }
     };
 
-    
+
     protected AbstractVersionGraphBuilder() {
         reset();
     }
-    
+
     protected AbstractVersionGraphBuilder(G parentGraph) {
         this.versionNodes = parentGraph.versionNodes.toMutableMap();
         this.heads = parentGraph.getHeads();
     }
-    
+
     private void reset() {
         this.versionNodes = new MutableTreeMap<>();
         this.heads = PersistentTreeMap.empty();
     }
-    
+
     public final void add(T version) {
         Check.notNull(version, "version");
         if (version.type == VersionType.ROOT) {
@@ -67,12 +67,12 @@ public abstract class AbstractVersionGraphBuilder<K,
         heads = versionNode.heads;
         versionNodes.put(version.revision, versionNode);
     }
-    
-    Iterable<VersionNode<K, V, T>> revisionsToNodes(Iterable<Long> revisions) {
+
+    Iterable<VersionNode<K, V, T>> revisionsToNodes(Iterable<Revision> revisions) {
         return transform(revisions, revisionToVersionNode);
     }
 
-    private VersionNode<K, V, T> getVersionNode(long revision) {
+    private VersionNode<K, V, T> getVersionNode(Revision revision) {
         VersionNode<K, V, T> node = versionNodes.get(revision);
         if (node == null) {
             throw new VersionNotFoundException(revision);

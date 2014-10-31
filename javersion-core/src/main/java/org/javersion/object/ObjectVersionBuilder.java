@@ -16,8 +16,7 @@ public class ObjectVersionBuilder<M> extends Version.Builder<PropertyPath, Objec
 
     protected M meta;
 
-    public ObjectVersionBuilder(ObjectVersionManager<?, M> manager, Map<PropertyPath, Object> properties, long revision) {
-        super(revision);
+    public ObjectVersionBuilder(ObjectVersionManager<?, M> manager, Map<PropertyPath, Object> properties) {
         this.manager = manager;
         this.properties = properties;
     }

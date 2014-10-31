@@ -20,30 +20,30 @@ import org.javersion.util.Check;
 public class BranchAndRevision implements Comparable<BranchAndRevision>{
 
     public static BranchAndRevision min(String branch) {
-        return new BranchAndRevision(branch, Long.MIN_VALUE);
+        return new BranchAndRevision(branch, Revision.MIN_VALUE);
     }
 
     public static BranchAndRevision max(String branch) {
-        return new BranchAndRevision(branch, Long.MAX_VALUE);
+        return new BranchAndRevision(branch, Revision.MAX_VALUE);
     }
-    
-    
+
+
     public final String branch;
-    
-    public final long revision;
+
+    public final Revision revision;
 
     public BranchAndRevision(VersionNode<?, ?, ?> versionNode) {
         this(versionNode.getBranch(), versionNode.getRevision());
     }
 
-    private BranchAndRevision(String branch, long revision) {
+    private BranchAndRevision(String branch, Revision revision) {
         this.branch = Check.notNullOrEmpty(branch, "branch");
         this.revision = revision;
     }
 
     @Override
     public int hashCode() {
-        return Long.hashCode(revision);
+        return revision.hashCode();
     }
 
     @Override
@@ -62,9 +62,9 @@ public class BranchAndRevision implements Comparable<BranchAndRevision>{
     public int compareTo(BranchAndRevision other) {
         int cmpr = branch.compareTo(other.branch);
         if (cmpr == 0) {
-            return Long.compare(revision, other.revision);
+            return revision.compareTo(other.revision);
         }
         return cmpr;
     }
-    
+
 }

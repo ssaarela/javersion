@@ -44,7 +44,7 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V
         this.heads = mutableHeads.toPersistentMap();
     }
 
-    public long getRevision() {
+    public Revision getRevision() {
         return version.revision;
     }
 
@@ -57,13 +57,13 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V
     }
 
     @Override
-    public Set<Long> getMergeHeads() {
+    public Set<Revision> getMergeHeads() {
         return ImmutableSet.of(version.revision);
     }
 
     @Override
     public int hashCode() {
-        return Long.hashCode(version.revision);
+        return version.revision.hashCode();
     }
 
     @Override
@@ -77,6 +77,6 @@ public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V
     }
 
     @Override
-    protected void setMergeHeads(Set<Long> heads) {}
+    protected void setMergeHeads(Set<Revision> heads) {}
 
 }

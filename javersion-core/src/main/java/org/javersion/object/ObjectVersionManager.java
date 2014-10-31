@@ -7,13 +7,14 @@ import java.util.Collection;
 import java.util.Set;
 
 import org.javersion.core.Merge;
+import org.javersion.core.Revision;
 import org.javersion.path.PropertyPath;
 
 public class ObjectVersionManager<O, M> {
 
     private ObjectVersionGraph<M> versionGraph;
 
-    private Set<Long> heads = of();
+    private Set<Revision> heads = of();
 
     private final ObjectSerializer<O> serializer;
 
@@ -36,8 +37,7 @@ public class ObjectVersionManager<O, M> {
     }
 
     public ObjectVersionBuilder<M> buildVersion(O object) {
-        long id = versionGraph.isEmpty() ? 1l : versionGraph.getTip().getRevision() + 1;
-        ObjectVersionBuilder<M> builder = new ObjectVersionBuilder<M>(this, serializer.toPropertyMap(object), id);
+        ObjectVersionBuilder<M> builder = new ObjectVersionBuilder<M>(this, serializer.toPropertyMap(object));
         builder.parents(heads);
         return builder;
     }
@@ -57,7 +57,7 @@ public class ObjectVersionManager<O, M> {
         return serializer.fromPropertyMap(merge.getProperties());
     }
 
-    Merge<PropertyPath, Object> mergeRevisions(Iterable<Long> revisions) {
+    Merge<PropertyPath, Object> mergeRevisions(Iterable<Revision> revisions) {
         return versionGraph.mergeRevisions(revisions);
     }
 

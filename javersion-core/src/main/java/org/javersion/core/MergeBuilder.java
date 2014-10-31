@@ -43,11 +43,11 @@ public class MergeBuilder<K, V> {
 
     private MutableHashMap<K, VersionProperty<V>> mergedProperties = new MutableHashMap<>();
 
-    private MutableHashSet<Long> mergedRevisions = new MutableHashSet<>();
+    private MutableHashSet<Revision> mergedRevisions = new MutableHashSet<>();
 
     private final ArrayListMultimap<K, VersionProperty<V>> conflicts = ArrayListMultimap.create();
 
-    private final Set<Long> heads = Sets.newHashSet();
+    private final Set<Revision> heads = Sets.newHashSet();
 
     public MergeBuilder() {
     }
@@ -62,7 +62,7 @@ public class MergeBuilder<K, V> {
         return mergedProperties.toPersistentMap();
     }
 
-    public PersistentHashSet<Long> getMergedRevisions() {
+    public PersistentHashSet<Revision> getMergedRevisions() {
         ensureInitialized();
         locked = true;
         return mergedRevisions.toPersistentSet();
@@ -74,7 +74,7 @@ public class MergeBuilder<K, V> {
         return ImmutableMultimap.copyOf(conflicts);
     }
 
-    public Set<Long> getHeads() {
+    public Set<Revision> getHeads() {
         ensureInitialized();
         locked = true;
         return ImmutableSet.copyOf(heads);
@@ -169,7 +169,7 @@ public class MergeBuilder<K, V> {
     }
 
     protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
-        return oldValue.revision < newValue.revision;
+        return oldValue.revision.compareTo(newValue.revision) < 0;
     }
 
     private void ensureInitialized() {
