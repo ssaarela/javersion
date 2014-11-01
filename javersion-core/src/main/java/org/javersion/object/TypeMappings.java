@@ -30,19 +30,11 @@ import org.javersion.reflect.TypeDescriptors;
 import org.javersion.util.Check;
 
 import com.google.common.collect.*;
+import static org.javersion.object.mapping.PrimitiveTypeMapping.*;
 
 public class TypeMappings {
 
     public static TypeMapping STRING = new StringTypeMapping();
-
-    public static TypeMapping CHAR = new PrimitiveTypeMapping(Character.class, char.class);
-    public static TypeMapping BYTE = new PrimitiveTypeMapping(Byte.class, byte.class);
-    public static TypeMapping SHORT = new PrimitiveTypeMapping(Short.class, short.class);
-    public static TypeMapping INTEGER = new PrimitiveTypeMapping(Integer.class, int.class);
-    public static TypeMapping LONG = new PrimitiveTypeMapping(Long.class, long.class);
-    public static TypeMapping FLOAT = new PrimitiveTypeMapping(Float.class, float.class);
-    public static TypeMapping DOUBLE = new PrimitiveTypeMapping(Double.class, double.class);
-    public static TypeMapping BOOLEAN = new PrimitiveTypeMapping(Boolean.class, boolean.class);
 
     public static TypeMapping BIG_INTEGER = new SimpleTypeMapping(BigInteger.class);
     public static TypeMapping BIG_DECIMAL = new SimpleTypeMapping(BigDecimal.class);
@@ -72,7 +64,7 @@ public class TypeMappings {
                     BIG_INTEGER,
                     BIG_DECIMAL,
                     STRING,
-                    INTEGER,
+                    INT,
                     LONG,
                     DOUBLE,
                     BOOLEAN,

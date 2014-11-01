@@ -15,23 +15,84 @@
  */
 package org.javersion.object.mapping;
 
+import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.types.PrimitiveValueType;
+import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
-public class PrimitiveTypeMapping extends SimpleTypeMapping {
-    
+public abstract class PrimitiveTypeMapping implements TypeMapping {
+
     private final Class<?> primitiveType;
 
-    public PrimitiveTypeMapping(Class<?> wrapperType, Class<?> primitiveType) {
-        super(wrapperType);
+    private final Class<?> wrapperType;
+
+    private PrimitiveTypeMapping(Class<?> wrapperType, Class<?> primitiveType) {
+        this.wrapperType = wrapperType;
         this.primitiveType = primitiveType;
     }
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
-        return super.applies(path, localTypeDescriptor) || typeDescriptor.getRawType().equals(primitiveType);
+        Class<?> clazz = localTypeDescriptor.typeDescriptor.getRawType();
+        return wrapperType.equals(clazz) || primitiveType.equals(clazz);
     }
+
+    public static final PrimitiveTypeMapping LONG = new PrimitiveTypeMapping(Long.class, long.class) {
+        @Override
+        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+            return PrimitiveValueType.LONG;
+        }
+    };
+
+    public static final PrimitiveTypeMapping INT = new PrimitiveTypeMapping(Integer.class, int.class) {
+        @Override
+        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+            return PrimitiveValueType.INT;
+        }
+    };
+
+    public static final PrimitiveTypeMapping SHORT = new PrimitiveTypeMapping(Short.class, short.class) {
+        @Override
+        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+            return PrimitiveValueType.SHORT;
+        }
+    };
+
+    public static final PrimitiveTypeMapping BYTE = new PrimitiveTypeMapping(Byte.class, byte.class) {
+        @Override
+        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+            return PrimitiveValueType.BYTE;
+        }
+    };
+
+    public static final PrimitiveTypeMapping BOOLEAN = new PrimitiveTypeMapping(Boolean.class, boolean.class) {
+        @Override
+        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+            return PrimitiveValueType.BOOLEAN;
+        }
+    };
+
+    public static final PrimitiveTypeMapping DOUBLE = new PrimitiveTypeMapping(Double.class, double.class) {
+        @Override
+        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+            return PrimitiveValueType.DOUBLE;
+        }
+    };
+
+    public static final PrimitiveTypeMapping FLOAT = new PrimitiveTypeMapping(Float.class, float.class) {
+        @Override
+        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+            return PrimitiveValueType.FLOAT;
+        }
+    };
+
+    public static final PrimitiveTypeMapping CHAR = new PrimitiveTypeMapping(Character.class, char.class) {
+        @Override
+        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+            return PrimitiveValueType.CHAR;
+        }
+    };
 
 }

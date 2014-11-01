@@ -15,23 +15,15 @@
  */
 package org.javersion.object.mapping;
 
+import static org.javersion.object.types.StringValueType.STRING;
+
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
-import org.javersion.object.types.SimpleValueType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
 public class StringTypeMapping implements TypeMapping {
-
-    public static final ValueType STRING_TYPE = new SimpleValueType() {
-        
-        @Override
-        public String toString(Object object) {
-            return (String) object;
-        }
-        
-    };
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
@@ -40,7 +32,7 @@ public class StringTypeMapping implements TypeMapping {
 
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return STRING_TYPE;
+        return STRING;
     }
 
 }

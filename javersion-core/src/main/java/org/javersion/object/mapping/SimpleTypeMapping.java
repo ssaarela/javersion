@@ -26,12 +26,12 @@ import org.javersion.util.Check;
 public class SimpleTypeMapping implements TypeMapping {
 
     public final Class<?> type;
-    
+
     public final ValueType valueType;
-    
+
     public SimpleTypeMapping(Class<?> type) {
         this.type = Check.notNull(type, "type");
-        this.valueType = new SimpleValueType();
+        this.valueType = new SimpleValueType(type);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class SimpleTypeMapping implements TypeMapping {
     public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
         return valueType;
     }
-    
+
     public ValueType getValueType() {
         return valueType;
     }
