@@ -16,7 +16,7 @@ import org.junit.Test;
 
 public class ReferencesTest {
 
-    public static final String NODE_ALIAS = "ReferencesTest$Node";
+    public static final Object NODE_ALIAS = Persistent.object("ReferencesTest$Node");
 
     public static class Node {
 

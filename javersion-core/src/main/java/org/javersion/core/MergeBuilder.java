@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
-public class MergeBuilder<K, V> {
+public class MergeBuilder<K, V, M> {
 
     private boolean first = true;
 
@@ -52,7 +52,7 @@ public class MergeBuilder<K, V> {
     public MergeBuilder() {
     }
 
-    public MergeBuilder(Iterable<? extends Merge<K, V>> nodes) {
+    public MergeBuilder(Iterable<? extends Merge<K, V, M>> nodes) {
         mergeAll(nodes);
     }
 
@@ -80,7 +80,7 @@ public class MergeBuilder<K, V> {
         return ImmutableSet.copyOf(heads);
     }
 
-    public final MergeBuilder<K, V> overwrite(Version<K, V> version) {
+    public final MergeBuilder<K, V, M> overwrite(Version<K, V, M> version) {
         Check.notNull(version, "version");
         ensureNotLocked();
         ensureInitialized();
@@ -100,14 +100,14 @@ public class MergeBuilder<K, V> {
         Check.that(!locked, "MergeHelper is locked");
     }
 
-    public final MergeBuilder<K, V> mergeAll(final Iterable<? extends Merge<K, V>> nodes) {
-        for (Merge<K, V> node : nodes) {
+    public final MergeBuilder<K, V, M> mergeAll(final Iterable<? extends Merge<K, V, M>> nodes) {
+        for (Merge<K, V, M> node : nodes) {
             merge(node);
         }
         return this;
     }
 
-    public final MergeBuilder<K, V> merge(final Merge<K, V> node) {
+    public final MergeBuilder<K, V, M> merge(final Merge<K, V, M> node) {
         Check.notNull(node, "node");
         ensureNotLocked();
 
@@ -121,7 +121,7 @@ public class MergeBuilder<K, V> {
         return this;
     }
 
-    private void nextVersion(final Merge<K, V> node) {
+    private void nextVersion(final Merge<K, V, M> node) {
         Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
             @Override
             public boolean merge(
@@ -162,7 +162,7 @@ public class MergeBuilder<K, V> {
         heads.removeAll(node.mergedRevisions.asSet());
     }
 
-    private void firstVersion(final Merge<K, V> node) {
+    private void firstVersion(final Merge<K, V, M> node) {
         first = false;
         mergedProperties = node.mergedProperties.toMutableMap();
         mergedRevisions = node.mergedRevisions.toMutableSet();

@@ -1,17 +1,12 @@
 package org.javersion.object;
 
-import static java.lang.Double.doubleToRawLongBits;
-import static java.lang.Float.floatToRawIntBits;
 import static org.hamcrest.Matchers.equalTo;
-import static org.javersion.object.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
 import org.javersion.path.PropertyPath;
-import org.javersion.reflect.FieldDescriptor;
-import org.javersion.reflect.TypeDescriptors;
 import org.junit.Test;
 
 import com.google.common.collect.Maps;
@@ -96,7 +91,6 @@ public class PrimitiveTest {
         assertThat(getProperties(primitives), equalTo(expectedProperties));
     }
 
-
     @Test
     public void Primitive_Defaults() {
         assertPropertiesRoundTrip(new Primitives());
@@ -104,11 +98,11 @@ public class PrimitiveTest {
 
     private static Map<PropertyPath, Object> getProperties(Primitives primitives) {
         Map<PropertyPath, Object> expectedProperties = Maps.newHashMap();
-        expectedProperties.put(ROOT, "PrimitiveTest$Primitives");
+        expectedProperties.put(ROOT, Persistent.object("PrimitiveTest$Primitives"));
         expectedProperties.put(ROOT.property("string"), primitives.string);
 
-        expectedProperties.put(ROOT.property("booleanPrimitive"), primitives.booleanPrimitive ? 1l : 0l);
-        expectedProperties.put(ROOT.property("booleanWrapper"), primitives.booleanWrapper == null ? null : primitives.booleanWrapper ? 1l : 0l);
+        expectedProperties.put(ROOT.property("booleanPrimitive"), primitives.booleanPrimitive);
+        expectedProperties.put(ROOT.property("booleanWrapper"), primitives.booleanWrapper);
 
         expectedProperties.put(ROOT.property("bytePrimitive"), (long) primitives.bytePrimitive);
         expectedProperties.put(ROOT.property("byteWrapper"), primitives.byteWrapper == null ? null : primitives.byteWrapper.longValue());
@@ -122,11 +116,11 @@ public class PrimitiveTest {
         expectedProperties.put(ROOT.property("longPrimitive"), primitives.longPrimitive);
         expectedProperties.put(ROOT.property("longWrapper"), primitives.longWrapper == null ? null : primitives.longWrapper);
 
-        expectedProperties.put(ROOT.property("floatPrimitive"), (long) floatToRawIntBits(primitives.floatPrimitive));
-        expectedProperties.put(ROOT.property("floatWrapper"), primitives.floatWrapper == null ? null : (long) floatToRawIntBits(primitives.floatWrapper));
+        expectedProperties.put(ROOT.property("floatPrimitive"), (double) primitives.floatPrimitive);
+        expectedProperties.put(ROOT.property("floatWrapper"), primitives.floatWrapper == null ? null : primitives.floatWrapper.doubleValue());
 
-        expectedProperties.put(ROOT.property("doublePrimitive"), doubleToRawLongBits(primitives.doublePrimitive));
-        expectedProperties.put(ROOT.property("doubleWrapper"), primitives.doubleWrapper == null ? null : doubleToRawLongBits(primitives.doubleWrapper));
+        expectedProperties.put(ROOT.property("doublePrimitive"), primitives.doublePrimitive);
+        expectedProperties.put(ROOT.property("doubleWrapper"), primitives.doubleWrapper == null ? null : primitives.doubleWrapper);
 
         expectedProperties.put(ROOT.property("charPrimitive"), Character.toString(primitives.charPrimitive));
         expectedProperties.put(ROOT.property("charWrapper"), primitives.charWrapper == null ? null : primitives.charWrapper.toString());

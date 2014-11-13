@@ -23,19 +23,19 @@ import org.javersion.util.PersistentSortedMap;
 
 import com.google.common.collect.ImmutableSet;
 
-public final class VersionNode<K, V, T extends Version<K, V>> extends Merge<K, V> {
+public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
-    public final T version;
+    public final Version<K, V, M> version;
 
-    public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
+    public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;
 
-    public VersionNode(T version, Iterable<VersionNode<K, V, T>> parents, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads) {
-        super(new MergeBuilder<K, V>(toMergeNodes(parents)).overwrite(version));
+    public VersionNode(Version<K, V, M> version, Iterable<VersionNode<K, V, M>> parents, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads) {
+        super(new MergeBuilder<K, V, M>(toMergeNodes(parents)).overwrite(version));
 
         this.version = version;
 
-        MutableSortedMap<BranchAndRevision, VersionNode<K, V, T>> mutableHeads = heads.toMutableMap();
-        for (VersionNode<K, V, T> parent : parents) {
+        MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads = heads.toMutableMap();
+        for (VersionNode<K, V, M> parent : parents) {
             if (parent.version.branch.equals(version.branch)) {
                 mutableHeads.remove(new BranchAndRevision(parent));
             }

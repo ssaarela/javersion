@@ -18,12 +18,9 @@ package org.javersion.object;
 import org.javersion.core.Version;
 import org.javersion.path.PropertyPath;
 
-public class ObjectVersion<M> extends Version<PropertyPath, Object> {
-
-    public final M meta;
+public class ObjectVersion<M> extends Version<PropertyPath, Object, M> {
 
     public ObjectVersion(ObjectVersionBuilder<M> builder) {
         super(builder);
-        this.meta = builder.meta;
     }
 }

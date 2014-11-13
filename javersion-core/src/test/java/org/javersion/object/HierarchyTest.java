@@ -14,7 +14,7 @@ import com.google.common.collect.Maps;
 
 public class HierarchyTest {
 
-    public static final String TREE_ALIAS = "HierarchyTest$Tree";
+    public static final Object TREE_ALIAS = Persistent.object("HierarchyTest$Tree");
 
     @Versionable
     public static class Tree {

@@ -28,35 +28,34 @@ import org.javersion.util.PersistentTreeMap;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
-public abstract class AbstractVersionGraph<K, V,
-                          T extends Version<K, V>,
-                          This extends AbstractVersionGraph<K, V, T, This, B>,
-                          B extends AbstractVersionGraphBuilder<K, V, T, This, B>>
-        implements Function<Revision, VersionNode<K, V, T>> {
+public abstract class AbstractVersionGraph<K, V, M,
+                          This extends AbstractVersionGraph<K, V, M, This, B>,
+                          B extends AbstractVersionGraphBuilder<K, V, M, This, B>>
+        implements Function<Revision, VersionNode<K, V, M>> {
 
-    public final PersistentSortedMap<Revision, VersionNode<K, V, T>> versionNodes;
+    public final PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes;
 
     public AbstractVersionGraph() {
-        this(PersistentTreeMap.<Revision, VersionNode<K, V, T>> empty());
+        this(PersistentTreeMap.<Revision, VersionNode<K, V, M>> empty());
     }
 
-    protected AbstractVersionGraph(AbstractVersionGraphBuilder<K, V, T, This, B> builder) {
+    protected AbstractVersionGraph(AbstractVersionGraphBuilder<K, V, M, This, B> builder) {
         this(builder.versionNodes.toPersistentMap());
     }
 
-    protected AbstractVersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, T>> versionNodes) {
+    protected AbstractVersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes) {
         this.versionNodes = versionNodes;
     }
 
-    public final This commit(T version) {
+    public final This commit(Version<K, V, M> version) {
         B builder = newBuilder();
         builder.add(version);
         return builder.build();
     }
 
-    public final This commit(Iterable<T> versions) {
+    public final This commit(Iterable<Version<K, V, M>> versions) {
         B builder = newBuilder();
-        for (T version : versions) {
+        for (Version<K, V, M> version : versions) {
             builder.add(version);
         }
         return builder.build();
@@ -65,36 +64,36 @@ public abstract class AbstractVersionGraph<K, V,
     protected abstract B newBuilder();
 
     @Override
-    public VersionNode<K, V, T> apply(Revision input) {
+    public VersionNode<K, V, M> apply(Revision input) {
         return input != null ? getVersionNode(input) : null;
     }
 
-    public VersionNode<K, V, T> getVersionNode(Revision revision) {
-        VersionNode<K, V, T> node = versionNodes.get(revision);
+    public VersionNode<K, V, M> getVersionNode(Revision revision) {
+        VersionNode<K, V, M> node = versionNodes.get(revision);
         if (node == null) {
             throw new VersionNotFoundException(revision);
         }
         return node;
     }
 
-    public final Merge<K, V> mergeBranches(Iterable<String> branches) {
-        List<VersionMerge<K, V>> mergedBranches = Lists.newArrayList();
+    public final Merge<K, V, M> mergeBranches(Iterable<String> branches) {
+        List<VersionMerge<K, V, M>> mergedBranches = Lists.newArrayList();
         for (String branch : branches) {
-            mergedBranches.add(new VersionMerge<>(getHeads(branch)));
+            mergedBranches.add(new VersionMerge<K, V, M>(getHeads(branch)));
         }
-        return new BranchMerge<K, V>(mergedBranches);
+        return new BranchMerge<K, V, M>(mergedBranches);
     }
 
-    public final Merge<K, V> mergeRevisions(Iterable<Revision> revisions) {
-        return new VersionMerge<>(transform(revisions, this));
+    public final Merge<K, V, M> mergeRevisions(Iterable<Revision> revisions) {
+        return new VersionMerge<K, V, M>(transform(revisions, this));
     }
 
-    public Iterable<VersionNode<K, V, T>> getHeads(String branch) {
+    public Iterable<VersionNode<K, V, M>> getHeads(String branch) {
         return transform(getHeads().range(min(branch), max(branch)),
-                MapUtils.<VersionNode<K, V, T>>mapValueFunction());
+                MapUtils.<VersionNode<K, V, M>>mapValueFunction());
     }
 
-    public PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> getHeads() {
+    public PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> getHeads() {
         if (versionNodes.isEmpty()) {
             return PersistentTreeMap.empty();
         }
@@ -105,7 +104,7 @@ public abstract class AbstractVersionGraph<K, V,
         return versionNodes.isEmpty();
     }
 
-    public VersionNode<K, V, T> getTip() {
+    public VersionNode<K, V, M> getTip() {
         return versionNodes.getLastEntry().getValue();
     }
 }

@@ -18,13 +18,13 @@ package org.javersion.properties;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
 
-public class PropertiesVersion extends Version<String, String> {
+public class PropertiesVersion extends Version<String, String, Void> {
 
     public PropertiesVersion(Builder builder) {
         super(builder);
     }
 
-    public static class Builder extends Version.Builder<String, String, Builder> {
+    public static class Builder extends Version.Builder<String, String, Void, Builder> {
 
         public Builder() {
             super();

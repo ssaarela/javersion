@@ -19,18 +19,18 @@ import org.javersion.core.AbstractVersionGraph;
 import org.javersion.core.AbstractVersionGraphBuilder;
 import org.javersion.properties.PropertiesVersionGraph.Builder;
 
-public final class PropertiesVersionGraph extends AbstractVersionGraph<String, String, PropertiesVersion, PropertiesVersionGraph, Builder> {
-    
+public final class PropertiesVersionGraph extends AbstractVersionGraph<String, String, Void, PropertiesVersionGraph, Builder> {
+
     public static PropertiesVersionGraph init() {
         return new PropertiesVersionGraph();
     }
-    
+
     public static PropertiesVersionGraph init(PropertiesVersion version) {
         Builder builder = new Builder();
         builder.add(version);
         return builder.build();
     }
-    
+
     public static PropertiesVersionGraph init(Iterable<PropertiesVersion> versions) {
         Builder builder = new Builder();
         for (PropertiesVersion version : versions) {
@@ -51,13 +51,13 @@ public final class PropertiesVersionGraph extends AbstractVersionGraph<String, S
     protected Builder newBuilder() {
         return new Builder(this);
     }
-    
-    static class Builder extends AbstractVersionGraphBuilder<String, String, PropertiesVersion, PropertiesVersionGraph, Builder> {
+
+    static class Builder extends AbstractVersionGraphBuilder<String, String, Void, PropertiesVersionGraph, Builder> {
 
         protected Builder() {
             super();
         }
-        
+
         protected Builder(PropertiesVersionGraph parentGraph) {
             super(parentGraph);
         }

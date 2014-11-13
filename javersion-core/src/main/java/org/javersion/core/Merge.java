@@ -29,12 +29,12 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
-public abstract class Merge<K, V> {
+public abstract class Merge<K, V, M> {
 
-    protected static <K, V, T extends Version<K, V>> Iterable<Merge<K, V>> toMergeNodes(Iterable<VersionNode<K, V, T>> nodes) {
-        return Iterables.transform(nodes, new Function<VersionNode<K, V, T>, Merge<K, V>>() {
+    protected static <K, V, M> Iterable<Merge<K, V, M>> toMergeNodes(Iterable<VersionNode<K, V, M>> nodes) {
+        return Iterables.transform(nodes, new Function<VersionNode<K, V, M>, Merge<K, V, M>>() {
             @Override
-            public Merge<K, V> apply(VersionNode<K, V, T> input) {
+            public Merge<K, V, M> apply(VersionNode<K, V, M> input) {
                 return input;
             }
         });
@@ -55,7 +55,7 @@ public abstract class Merge<K, V> {
 
     public final Multimap<K, VersionProperty<V>> conflicts;
 
-    protected Merge(MergeBuilder<K, V> mergeBuilder) {
+    protected Merge(MergeBuilder<K, V, M> mergeBuilder) {
         this.mergedProperties = mergeBuilder.getMergedProperties();
         this.mergedRevisions = mergeBuilder.getMergedRevisions();
         this.conflicts = mergeBuilder.getConflicts();

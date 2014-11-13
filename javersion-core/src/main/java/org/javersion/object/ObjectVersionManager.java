@@ -42,22 +42,22 @@ public class ObjectVersionManager<O, M> {
         return builder;
     }
 
-    public MergeObject<O> mergeObject(String... branches) {
+    public MergeObject<O, M> mergeObject(String... branches) {
         return mergeObject(asList(branches));
     }
 
-    public MergeObject<O> mergeObject(Collection<String> branches) {
-        Merge<PropertyPath, Object> merge = versionGraph.mergeBranches(branches);
-        MergeObject<O> mergeObject = new MergeObject<>(toObject(merge), merge);
+    public MergeObject<O, M> mergeObject(Collection<String> branches) {
+        Merge<PropertyPath, Object, M> merge = versionGraph.mergeBranches(branches);
+        MergeObject<O, M> mergeObject = new MergeObject<>(toObject(merge), merge);
         heads = merge.getMergeHeads();
         return mergeObject;
     }
 
-    private O toObject(Merge<PropertyPath, Object> merge) {
+    private O toObject(Merge<PropertyPath, Object, M> merge) {
         return serializer.fromPropertyMap(merge.getProperties());
     }
 
-    Merge<PropertyPath, Object> mergeRevisions(Iterable<Revision> revisions) {
+    Merge<PropertyPath, Object, M> mergeRevisions(Iterable<Revision> revisions) {
         return versionGraph.mergeRevisions(revisions);
     }
 

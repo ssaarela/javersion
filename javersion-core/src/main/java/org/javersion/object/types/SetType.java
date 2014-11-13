@@ -17,6 +17,7 @@ package org.javersion.object.types;
 
 import java.util.Set;
 
+import org.javersion.object.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
@@ -27,7 +28,7 @@ import com.google.common.collect.Sets;
 
 public class SetType implements ValueType {
 
-    private final static String CONSTANT = "Set";
+    private final static Persistent.Object CONSTANT = Persistent.object("Set");
 
     private final IdentifiableType identifiableType;
 

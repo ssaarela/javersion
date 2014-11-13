@@ -2,16 +2,24 @@ package org.javersion.store;
 
 import javax.annotation.Nullable;
 
+import org.javersion.core.AbstractVersionGraph;
+import org.javersion.core.AbstractVersionGraphBuilder;
+import org.javersion.core.Revision;
 import org.javersion.core.Version;
 
-public interface VersionStore<I, K, V> {
+public interface VersionStore<I,
+        K, V, M,
+        G extends AbstractVersionGraph<K, V, M, G, B>,
+        B extends AbstractVersionGraphBuilder<K, V, M, G, B>> {
 
-    public void append(I id, Version<K, V> version);
+    long getNode();
 
-    public void append(I id, Iterable<Version<K, V>> versions);
+    void append(I id, Version<K, V, M> version);
 
-    public Iterable<Version<K, V>> load(I id);
+    void append(I id, Iterable<Version<K, V, M>> versions);
 
-    public Iterable<Version<K, V>> load(I id, @Nullable Long sinceRevision, @Nullable Long untilRevision);
+    G load(I id);
+
+    G load(I id, @Nullable Revision revision);
 
 }

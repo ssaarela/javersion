@@ -19,14 +19,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.javersion.object.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 
 public class CollectionType implements ValueType {
-
-    private static final String CONSTANT = "Collection";
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
@@ -45,7 +44,7 @@ public class CollectionType implements ValueType {
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         @SuppressWarnings("rawtypes")
         Collection list = (Collection) object;
-        context.put(path, CONSTANT);
+        context.put(path, Persistent.array());
         int i=0;
         for (Object element : list) {
             context.serialize(path.index(i++), element);

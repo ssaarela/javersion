@@ -29,9 +29,9 @@ public final class Revision implements Comparable<Revision> {
 
     private static final long NODE = UUIDGen.getClockSeqAndNode();
 
-    private final long timeSeq;
+    public final long timeSeq;
 
-    private final long node;
+    public final long node;
 
     public Revision(String rev) {
         if (rev.length() != 27) {

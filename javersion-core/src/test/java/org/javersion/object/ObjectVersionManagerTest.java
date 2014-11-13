@@ -55,8 +55,8 @@ public class ObjectVersionManagerTest {
         defaultMergeNoConflicts(expected);
     }
 
-    private MergeObject<Product> defaultMergeNoConflicts(Product expected) {
-        MergeObject<Product> mergeObject = versionManager.mergeObject(DEFAULT_BRANCH);
+    private MergeObject<Product, Void> defaultMergeNoConflicts(Product expected) {
+        MergeObject<Product, Void> mergeObject = versionManager.mergeObject(DEFAULT_BRANCH);
         Product actual = mergeObject.object;
         if (expected != null) {
             assertThat(actual, not(sameInstance(expected)));
@@ -113,7 +113,7 @@ public class ObjectVersionManagerTest {
         Revision r3 = versionManager.buildVersion(product).parents(r1).build().revision;
 
         // Merged
-        MergeObject<Product> mergeObject = versionManager.mergeObject(Version.DEFAULT_BRANCH);
+        MergeObject<Product, Void> mergeObject = versionManager.mergeObject(Version.DEFAULT_BRANCH);
         assertThat(mergeObject.merge.getMergeHeads(), equalTo(set(r2, r3)));
         assertThat(mergeObject.merge.getConflicts().isEmpty(), equalTo(true));
 

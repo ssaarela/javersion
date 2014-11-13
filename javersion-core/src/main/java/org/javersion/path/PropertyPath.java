@@ -33,7 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 public abstract class PropertyPath implements Iterable<SubPath> {
-    
+
     private static final ANTLRErrorListener ERROR_LISTERNER = new BaseErrorListener() {
         @Override
         public void syntaxError(Recognizer<?, ?> recognizer,
@@ -47,13 +47,13 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     };
 
     private static final String EMPTY_STRING = "";
-    
+
     private static final char ESC = '\\';
-    
+
     private static final Set<Character> ESCAPED_CHARS = ImmutableSet.of('\\', '.', '[', ']');
-    
+
     public static final Root ROOT = Root.ROOT;
-    
+
     public static PropertyPath parse(String path) {
         PropertyPathParser parser = new PropertyPathParser(
                 new CommonTokenStream(
@@ -62,7 +62,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         parser.removeErrorListeners();
         parser.addErrorListener(ERROR_LISTERNER);
         return parser.root().accept(new PropertyPathBaseVisitor<PropertyPath>() {
-            
+
             private PropertyPath parent;
 
             @Override
@@ -70,7 +70,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
                 parent = ROOT;
                 return super.visitRoot(ctx);
             }
-            
+
             @Override
             public PropertyPath visitIndex(@NotNull PropertyPathParser.IndexContext ctx) {
                 String name = ctx.getText();
@@ -97,31 +97,31 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     }
 
     PropertyPath() {}
-    
+
     public Property property(String name) {
         return new Property(this, name);
     }
-    
+
     public Index index(long index) {
         return index(Long.toString(index));
     }
-    
+
     public Index index(String index) {
         return new Index(this, index);
     }
-    
+
     public Iterator<SubPath> iterator() {
         return asList().iterator();
     }
-    
+
     public List<SubPath> asList() {
         return fullPath != null ? fullPath : (fullPath = getFullPath());
     }
-    
+
     public boolean isRoot() {
         return false;
     }
-    
+
     public boolean startsWith(PropertyPath other) {
         if (other.isRoot()) {
             return true;
@@ -134,7 +134,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             return thisPath.size() >= otherSize && thisPath.get(otherSize - 1).equals(otherPath.get(otherSize - 1));
         }
     }
-    
+
     public PropertyPath toSchemaPath() {
         PropertyPath schemaPath = ROOT;
         for (PropertyPath path : this) {
@@ -144,29 +144,29 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     }
 
     public abstract String toString();
-    
+
     public abstract boolean equals(Object obj);
-    
+
     public abstract int hashCode();
-    
+
     public abstract String getName();
-    
+
 
     abstract List<SubPath> getFullPath();
-    
+
     abstract PropertyPath normalize(PropertyPath newParent);
 
-    
+
     private volatile List<SubPath> fullPath;
 
     public static final class Root extends PropertyPath {
 
         private static final Root ROOT = new Root();
-        
+
         private static final List<SubPath> FULL_PATH = ImmutableList.<SubPath>of();
-        
+
         private Root() {}
-        
+
         List<SubPath> getFullPath() {
             return FULL_PATH;
         }
@@ -175,7 +175,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         public boolean equals(Object obj) {
             return obj == this;
         }
-        
+
         @Override
         public String toString() {
             return EMPTY_STRING;
@@ -185,7 +185,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         public int hashCode() {
             return 1;
         }
-        
+
         public boolean isRoot() {
             return true;
         }
@@ -201,15 +201,15 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
     }
-    
+
     public static abstract class SubPath extends PropertyPath {
-        
+
         public final PropertyPath parent;
-        
+
         private SubPath(PropertyPath parent) {
             this.parent = checkNotNull(parent, "parent");
         }
-        
+
         List<SubPath> getFullPath() {
             List<SubPath> parentPath = parent.getFullPath();
             ImmutableList.Builder<SubPath> pathBuilder = ImmutableList.builder();
@@ -219,7 +219,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
     }
-    
+
     private static void validate(String name) {
         if (name.length() > 0) {
             char firstChar = name.charAt(0);
@@ -228,11 +228,11 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             }
         }
     }
-    
+
     public static final class Property extends SubPath {
 
         public final String name;
-        
+
         private Property(PropertyPath parent, String name) {
             super(parent);
             Check.notNullOrEmpty(name, "name");
@@ -259,8 +259,9 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder().append(parent.toString());
+            StringBuilder sb = new StringBuilder();
             if (!parent.isRoot()) {
+                sb.append(parent.toString());
                 sb.append('.');
             }
             return sb.append(escape(name)).toString();
@@ -277,11 +278,11 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
     }
-    
+
     public static final class Index extends SubPath {
-        
+
         public final String index;
-        
+
         private Index(PropertyPath parent, String index) {
             super(parent);
             this.index = Check.notNull(index, "index");
@@ -314,14 +315,14 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         public String getName() {
             return index;
         }
-        
+
         @Override
         Index normalize(PropertyPath newParent) {
             return parent.equals(newParent) && EMPTY_STRING.equals(index) ? this : new Index(newParent, EMPTY_STRING);
         }
-        
+
     }
-    
+
     static String unescape(String str) {
         StringBuilder sb = new StringBuilder(str.length());
         boolean escape = false;
@@ -336,7 +337,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
         return sb.toString();
     }
-    
+
     static String escape(String str) {
         StringBuilder sb = new StringBuilder(str.length() + 4);
         for (int i=0; i < str.length(); i++) {

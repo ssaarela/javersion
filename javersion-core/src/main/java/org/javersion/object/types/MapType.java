@@ -2,6 +2,7 @@ package org.javersion.object.types;
 
 import java.util.Map;
 
+import org.javersion.object.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
@@ -12,7 +13,7 @@ import com.google.common.collect.Maps;
 
 public class MapType implements ValueType {
 
-    private static final String CONSTANT = "Map";
+    public static final Persistent.Object CONSTANT = Persistent.object("Map");
 
     public static final String KEY = "@KEY@";
 

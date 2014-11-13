@@ -25,19 +25,17 @@ import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
 
-public abstract class AbstractVersionGraphBuilder<K,
-                               V,
-                               T extends Version<K, V>,
-                               G extends AbstractVersionGraph<K, V, T, G, B>,
-                               B extends AbstractVersionGraphBuilder<K, V, T, G, B>> {
+public abstract class AbstractVersionGraphBuilder<K, V, M,
+                               G extends AbstractVersionGraph<K, V, M, G, B>,
+                               B extends AbstractVersionGraphBuilder<K, V, M, G, B>> {
 
-    PersistentSortedMap<BranchAndRevision, VersionNode<K, V, T>> heads;
+    PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;
 
-    MutableSortedMap<Revision, VersionNode<K, V, T>> versionNodes;
+    MutableSortedMap<Revision, VersionNode<K, V, M>> versionNodes;
 
-    private Function<Revision, VersionNode<K, V, T>> revisionToVersionNode = new Function<Revision, VersionNode<K, V, T>>() {
+    private Function<Revision, VersionNode<K, V, M>> revisionToVersionNode = new Function<Revision, VersionNode<K, V, M>>() {
         @Override
-        public VersionNode<K, V, T> apply(Revision input) {
+        public VersionNode<K, V, M> apply(Revision input) {
             return getVersionNode(Check.notNull(input, "input"));
         }
     };
@@ -57,23 +55,23 @@ public abstract class AbstractVersionGraphBuilder<K,
         this.heads = PersistentTreeMap.empty();
     }
 
-    public final void add(T version) {
+    public final void add(Version<K, V, M> version) {
         Check.notNull(version, "version");
         if (version.type == VersionType.ROOT) {
             reset();
         }
-        Iterable<VersionNode<K, V, T>> parents = revisionsToNodes(version.parentRevisions);
-        VersionNode<K, V, T> versionNode = new VersionNode<K, V, T>(version, parents, heads);
+        Iterable<VersionNode<K, V, M>> parents = revisionsToNodes(version.parentRevisions);
+        VersionNode<K, V, M> versionNode = new VersionNode<K, V, M>(version, parents, heads);
         heads = versionNode.heads;
         versionNodes.put(version.revision, versionNode);
     }
 
-    Iterable<VersionNode<K, V, T>> revisionsToNodes(Iterable<Revision> revisions) {
+    Iterable<VersionNode<K, V, M>> revisionsToNodes(Iterable<Revision> revisions) {
         return transform(revisions, revisionToVersionNode);
     }
 
-    private VersionNode<K, V, T> getVersionNode(Revision revision) {
-        VersionNode<K, V, T> node = versionNodes.get(revision);
+    private VersionNode<K, V, M> getVersionNode(Revision revision) {
+        VersionNode<K, V, M> node = versionNodes.get(revision);
         if (node == null) {
             throw new VersionNotFoundException(revision);
         }

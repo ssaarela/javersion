@@ -17,11 +17,11 @@ package org.javersion.core;
 
 import java.util.Set;
 
-public class BranchMerge<K, V> extends Merge<K, V> {
+public class BranchMerge<K, V, M> extends Merge<K, V, M> {
 
-    private static class Builder<K, V> extends MergeBuilder<K, V> {
+    private static class Builder<K, V, M> extends MergeBuilder<K, V, M> {
 
-        public Builder(Iterable<? extends Merge<K, V>> nodes) {
+        public Builder(Iterable<? extends Merge<K, V, M>> nodes) {
             super(nodes);
         }
 
@@ -33,8 +33,8 @@ public class BranchMerge<K, V> extends Merge<K, V> {
 
     private Set<Revision> heads;
 
-    public <T extends Version<K, V>> BranchMerge(Iterable<? extends Merge<K, V>> versions) {
-        super(new Builder<K, V>(versions));
+    public <T extends Version<K, V, M>> BranchMerge(Iterable<? extends Merge<K, V, M>> versions) {
+        super(new Builder<K, V, M>(versions));
     }
 
     @Override

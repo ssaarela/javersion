@@ -26,11 +26,10 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Function;
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-public class Version<K, V> {
+public class Version<K, V, M> {
 
     public static final String DEFAULT_BRANCH = "default";
 
@@ -53,12 +52,15 @@ public class Version<K, V> {
 
     public final VersionType type;
 
-    protected Version(Builder<K, V, ?> builder) {
+    public final M meta;
+
+    protected Version(Builder<K, V, M, ?> builder) {
         this.revision = builder.revision;
         this.branch = builder.branch;
         this.type = builder.type;
         this.parentRevisions = copyOf(builder.parentRevisions);
         this.changeset = unmodifiableMap(newLinkedHashMap(builder.changeset));
+        this.meta = builder.meta;
     }
 
     public Map<K, VersionProperty<V>> getVersionProperties() {
@@ -76,7 +78,7 @@ public class Version<K, V> {
                 .toString();
     }
 
-    public static class Builder<K, V, B extends Builder<K, V, B>> {
+    public static class Builder<K, V, M, This extends Builder<K, V, M, This>> {
 
         private static final Set<Revision> EMPTY_PARENTS = ImmutableSet.of();
 
@@ -90,6 +92,8 @@ public class Version<K, V> {
 
         protected Map<K, V> changeset = ImmutableMap.of();
 
+        protected M meta;
+
         public Builder() {
             this(new Revision());
         }
@@ -98,36 +102,41 @@ public class Version<K, V> {
             this.revision = revision;
         }
 
-        public B type(VersionType versionType) {
+        public This type(VersionType versionType) {
             this.type = notNull(versionType, "type");
             return self();
         }
 
-        public B branch(String branch) {
+        public This branch(String branch) {
             this.branch = notNull(branch, "branch");
             return self();
         }
 
-        public B parents(Revision... parentRevisions) {
+        public This parents(Revision... parentRevisions) {
             return parents(copyOf(parentRevisions));
         }
 
-        public B parents(Set<Revision> parentRevisions) {
+        public This parents(Set<Revision> parentRevisions) {
             this.parentRevisions = notNull(parentRevisions, "parentRevisions");
             return self();
         }
 
-        public B changeset(Map<K, V> changeset) {
+        public This changeset(Map<K, V> changeset) {
             this.changeset = notNull(changeset, "changeset");
             return self();
         }
 
-        @SuppressWarnings("unchecked")
-        protected B self() {
-            return (B) this;
+        public This meta(M meta) {
+            this.meta = meta;
+            return self();
         }
 
-        public Version<K, V> build() {
+        @SuppressWarnings("unchecked")
+        protected This self() {
+            return (This) this;
+        }
+
+        public Version<K, V, M> build() {
             return new Version<>(this);
         }
 

@@ -337,7 +337,7 @@ public class PropertiesVersionGraphTest {
 
     private void assertMergeExpectations(PropertiesVersionGraph versionGraph, Revision revision, VersionExpectation expectation) {
         try {
-            Merge<String, String> merge;
+            Merge<String, String, Void> merge;
             if (expectation.mergeBranches != null) {
                 merge = versionGraph.mergeBranches(expectation.mergeBranches);
             } else {

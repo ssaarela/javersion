@@ -18,7 +18,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-            return (Long) value;
+            return ((Number) value).longValue();
         }
 
         @Override
@@ -32,7 +32,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-            return ((Long) value).intValue();
+            return ((Number) value).intValue();
         }
 
         @Override
@@ -46,7 +46,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-            return ((Long) value).shortValue();
+            return ((Number) value).shortValue();
         }
 
         @Override
@@ -60,7 +60,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-            return ((Long) value).byteValue();
+            return ((Number) value).byteValue();
         }
 
         @Override
@@ -72,18 +72,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
     public static final PrimitiveValueType BOOLEAN = new PrimitiveValueType() {
 
-        private final Long ONE = 1l;
-
-        private final Long ZERO = 0l;
-
         @Override
         public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-            return ((Long) value).longValue() == 0l ? FALSE : TRUE;
+            return (Boolean) value;
         }
 
         @Override
         public void serialize(PropertyPath path, Object object, WriteContext context) {
-            context.put(path, ((Boolean) object).booleanValue() ? ONE : ZERO);
+            context.put(path, (Boolean) object);
         }
 
     };
@@ -92,12 +88,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-            return Double.longBitsToDouble((Long) value);
+            return ((Number) value).doubleValue();
         }
 
         @Override
         public void serialize(PropertyPath path, Object object, WriteContext context) {
-            context.put(path, doubleToRawLongBits((Double) object));
+            context.put(path, (Double) object);
         }
 
     };
@@ -106,12 +102,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-            return Float.intBitsToFloat(((Long) value).intValue());
+            return ((Number) value).floatValue();
         }
 
         @Override
         public void serialize(PropertyPath path, Object object, WriteContext context) {
-            context.put(path, Long.valueOf(floatToRawIntBits((Float) object)));
+            context.put(path, ((Float) object).doubleValue());
         }
 
     };

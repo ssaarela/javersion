@@ -2,7 +2,6 @@ package org.javersion.json;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
-import static org.javersion.json.JsonToken.Obj;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.junit.Assert.assertThat;
 
@@ -11,9 +10,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.javersion.object.Persistent;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -26,9 +27,16 @@ public class JsonSerializerTest {
 
     @Test
     public void empty_object() {
-        Map<PropertyPath, JsonToken<?>> map = serializer.toPropertyMap("{}");
-        assertThat(map, equalTo(map(ROOT, Obj.VALUE)));
+        Map<PropertyPath, Object> map = serializer.toPropertyMap("{}");
+        assertThat(map, equalTo(ImmutableMap.of(ROOT, Persistent.object())));
         assertThat(serializer.fromPropertyMap(map), equalTo("{}"));
+    }
+
+    @Test
+    public void type_field() {
+        Map<PropertyPath, Object> map = serializer.toPropertyMap(toJson(map("_type", "MyType")));
+        assertThat(map, equalTo(ImmutableMap.of(ROOT, Persistent.object("MyType"))));
+        assertThat(serializer.fromPropertyMap(map), equalTo("{\"_type\":\"MyType\"}"));
     }
 
     @Test
@@ -53,7 +61,9 @@ public class JsonSerializerTest {
 
     @Test
     public void empty_array() {
-        assertSerializationRoundTrip("[]");
+        Map<PropertyPath, Object> map = serializer.toPropertyMap("[]");
+        assertThat(map, equalTo(ImmutableMap.of(ROOT, Persistent.array())));
+        assertThat(serializer.fromPropertyMap(map), equalTo("[]"));
     }
 
     @Test
@@ -63,7 +73,7 @@ public class JsonSerializerTest {
     }
 
     private void assertSerializationRoundTrip(String json) {
-        Map<PropertyPath, JsonToken<?>> map = serializer.toPropertyMap(json);
+        Map<PropertyPath, Object> map = serializer.toPropertyMap(json);
         assertThat(serializer.fromPropertyMap(map), equalTo(json));
     }
 
@@ -71,8 +81,8 @@ public class JsonSerializerTest {
         return gson.toJson(src);
     }
 
-    private static Map<PropertyPath, JsonToken<?>> map(PropertyPath k1, JsonToken<?> v1) {
-        Map<PropertyPath, JsonToken<?>> map = Maps.newHashMap();
+    private static Map<PropertyPath, String> map(PropertyPath k1, String v1) {
+        Map<PropertyPath, String> map = Maps.newHashMap();
         map.put(k1, v1);
         return map;
     }

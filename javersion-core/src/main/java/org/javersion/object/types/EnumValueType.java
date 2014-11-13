@@ -25,7 +25,7 @@ public class EnumValueType implements ValueType {
 
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
-        context.put(path, object.toString());
+        context.put(path, ((Enum) object).name());
     }
 
     @Override

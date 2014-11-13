@@ -17,16 +17,17 @@ package org.javersion.object;
 
 import org.javersion.core.AbstractVersionGraph;
 import org.javersion.core.AbstractVersionGraphBuilder;
+import org.javersion.core.Version;
 import org.javersion.path.PropertyPath;
 import org.javersion.object.ObjectVersionGraph.Builder;
 
-public final class ObjectVersionGraph<M> extends AbstractVersionGraph<PropertyPath, Object, ObjectVersion<M>, ObjectVersionGraph<M>, Builder<M>> {
+public final class ObjectVersionGraph<M> extends AbstractVersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
 
     public static <M> ObjectVersionGraph<M> init() {
         return new ObjectVersionGraph<M>();
     }
 
-    public static <M> ObjectVersionGraph<M> init(ObjectVersion<M> version) {
+    public static <M> ObjectVersionGraph<M> init(Version<PropertyPath, Object, M> version) {
         Builder<M> builder = new Builder<M>();
         builder.add(version);
         return builder.build();
@@ -53,7 +54,7 @@ public final class ObjectVersionGraph<M> extends AbstractVersionGraph<PropertyPa
         return new Builder<M>(this);
     }
 
-    public static class Builder<M> extends AbstractVersionGraphBuilder<PropertyPath, Object, ObjectVersion<M>, ObjectVersionGraph<M>, Builder<M>> {
+    public static class Builder<M> extends AbstractVersionGraphBuilder<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
 
         protected Builder() {
             super();

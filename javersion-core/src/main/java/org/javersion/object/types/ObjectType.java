@@ -17,6 +17,7 @@ package org.javersion.object.types;
 
 import java.util.Map;
 
+import org.javersion.object.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
@@ -53,7 +54,7 @@ public class ObjectType<O> implements ValueType {
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        String alias = (String) value;
+        String alias = ((Persistent.Object) value).type;
         TypeDescriptor typeDescriptor = Check.notNull$(typesByAlias.get(alias), "Unsupported type: %s", alias);
         return typeDescriptor.newInstance();
     }
@@ -78,7 +79,7 @@ public class ObjectType<O> implements ValueType {
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         String alias = aliasByClass.get(object.getClass());
-        context.put(path, alias);
+        context.put(path, Persistent.object(alias));
         TypeDescriptor typeDescriptor = typesByAlias.get(alias);
         for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {
             Object value = fieldDescriptor.get(object);
