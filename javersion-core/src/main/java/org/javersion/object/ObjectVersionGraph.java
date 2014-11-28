@@ -15,13 +15,13 @@
  */
 package org.javersion.object;
 
-import org.javersion.core.AbstractVersionGraph;
-import org.javersion.core.AbstractVersionGraphBuilder;
+import org.javersion.core.VersionGraph;
+import org.javersion.core.VersionGraphBuilder;
 import org.javersion.core.Version;
 import org.javersion.path.PropertyPath;
 import org.javersion.object.ObjectVersionGraph.Builder;
 
-public final class ObjectVersionGraph<M> extends AbstractVersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
+public final class ObjectVersionGraph<M> extends VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
 
     public static <M> ObjectVersionGraph<M> init() {
         return new ObjectVersionGraph<M>();
@@ -33,9 +33,9 @@ public final class ObjectVersionGraph<M> extends AbstractVersionGraph<PropertyPa
         return builder.build();
     }
 
-    public static <M> ObjectVersionGraph<M> init(Iterable<ObjectVersion<M>> versions) {
+    public static <M> ObjectVersionGraph<M> init(Iterable<? extends Version<PropertyPath, Object, M>> versions) {
         Builder<M> builder = new Builder<M>();
-        for (ObjectVersion<M> version : versions) {
+        for (Version<PropertyPath, Object, M> version : versions) {
             builder.add(version);
         }
         return builder.build();
@@ -54,9 +54,9 @@ public final class ObjectVersionGraph<M> extends AbstractVersionGraph<PropertyPa
         return new Builder<M>(this);
     }
 
-    public static class Builder<M> extends AbstractVersionGraphBuilder<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
+    public static class Builder<M> extends VersionGraphBuilder<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
 
-        protected Builder() {
+        public Builder() {
             super();
         }
 
@@ -65,7 +65,7 @@ public final class ObjectVersionGraph<M> extends AbstractVersionGraph<PropertyPa
         }
 
         @Override
-        protected ObjectVersionGraph<M> build() {
+        public ObjectVersionGraph<M> build() {
             return new ObjectVersionGraph<M>(this);
         }
     }

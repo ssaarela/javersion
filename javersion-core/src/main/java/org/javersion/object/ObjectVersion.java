@@ -23,4 +23,5 @@ public class ObjectVersion<M> extends Version<PropertyPath, Object, M> {
     public ObjectVersion(ObjectVersionBuilder<M> builder) {
         super(builder);
     }
+
 }

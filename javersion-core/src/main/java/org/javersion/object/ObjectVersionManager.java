@@ -36,8 +36,8 @@ public class ObjectVersionManager<O, M> {
         return this;
     }
 
-    public ObjectVersionBuilder<M> buildVersion(O object) {
-        ObjectVersionBuilder<M> builder = new ObjectVersionBuilder<M>(this, serializer.toPropertyMap(object));
+    public ObjectVersionBuilder<M> versionBuilder(O object) {
+        ObjectVersionBuilder<M> builder = new ManagedObjectVersionBuilder<M>(this, serializer.toPropertyMap(object));
         builder.parents(heads);
         return builder;
     }

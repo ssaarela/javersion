@@ -34,9 +34,9 @@ public final class Persistent {
         public static final Map<Class<?>, Type> TYPES_BY_CLASS;
 
         static {
-            ImmutableMap.Builder builder = ImmutableMap.builder();
+            ImmutableMap.Builder<Class<?>, Type> builder = ImmutableMap.builder();
             for (Type type : Type.values()) {
-                builder.put(type, type.clazz);
+                builder.put(type.clazz, type);
             }
             TYPES_BY_CLASS = builder.build();
         }

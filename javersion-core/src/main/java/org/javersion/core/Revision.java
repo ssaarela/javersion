@@ -42,10 +42,14 @@ public final class Revision implements Comparable<Revision> {
     }
 
     public Revision() {
-        this(newUniqueTime(), NODE);
+        this(NODE, newUniqueTime());
     }
 
-    public Revision(long timeSeq, long node) {
+    public Revision(long node) {
+        this(node, newUniqueTime());
+    }
+
+    public Revision(long node, long timeSeq) {
         this.timeSeq = timeSeq;
         this.node = node;
     }

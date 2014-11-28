@@ -25,9 +25,9 @@ import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
 
-public abstract class AbstractVersionGraphBuilder<K, V, M,
-                               G extends AbstractVersionGraph<K, V, M, G, B>,
-                               B extends AbstractVersionGraphBuilder<K, V, M, G, B>> {
+public abstract class VersionGraphBuilder<K, V, M,
+                               G extends VersionGraph<K, V, M, G, B>,
+                               B extends VersionGraphBuilder<K, V, M, G, B>> {
 
     PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;
 
@@ -41,11 +41,11 @@ public abstract class AbstractVersionGraphBuilder<K, V, M,
     };
 
 
-    protected AbstractVersionGraphBuilder() {
+    protected VersionGraphBuilder() {
         reset();
     }
 
-    protected AbstractVersionGraphBuilder(G parentGraph) {
+    protected VersionGraphBuilder(G parentGraph) {
         this.versionNodes = parentGraph.versionNodes.toMutableMap();
         this.heads = parentGraph.getHeads();
     }
@@ -78,6 +78,6 @@ public abstract class AbstractVersionGraphBuilder<K, V, M,
         return node;
     }
 
-    protected abstract G build();
+    public abstract G build();
 
 }

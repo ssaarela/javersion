@@ -15,11 +15,11 @@
  */
 package org.javersion.properties;
 
-import org.javersion.core.AbstractVersionGraph;
-import org.javersion.core.AbstractVersionGraphBuilder;
+import org.javersion.core.VersionGraph;
+import org.javersion.core.VersionGraphBuilder;
 import org.javersion.properties.PropertiesVersionGraph.Builder;
 
-public final class PropertiesVersionGraph extends AbstractVersionGraph<String, String, Void, PropertiesVersionGraph, Builder> {
+public final class PropertiesVersionGraph extends VersionGraph<String, String, Void, PropertiesVersionGraph, Builder> {
 
     public static PropertiesVersionGraph init() {
         return new PropertiesVersionGraph();
@@ -52,7 +52,7 @@ public final class PropertiesVersionGraph extends AbstractVersionGraph<String, S
         return new Builder(this);
     }
 
-    static class Builder extends AbstractVersionGraphBuilder<String, String, Void, PropertiesVersionGraph, Builder> {
+    static class Builder extends VersionGraphBuilder<String, String, Void, PropertiesVersionGraph, Builder> {
 
         protected Builder() {
             super();
@@ -63,7 +63,7 @@ public final class PropertiesVersionGraph extends AbstractVersionGraph<String, S
         }
 
         @Override
-        protected PropertiesVersionGraph build() {
+        public PropertiesVersionGraph build() {
             return new PropertiesVersionGraph(this);
         }
     }

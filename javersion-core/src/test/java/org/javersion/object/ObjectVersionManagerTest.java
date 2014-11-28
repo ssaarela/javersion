@@ -2,7 +2,6 @@ package org.javersion.object;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.sameInstance;
@@ -40,7 +39,7 @@ public class ObjectVersionManagerTest {
 
     @Test
     public void Save_Null() {
-        ObjectVersion<Void> version = versionManager.buildVersion(null).build();
+        ObjectVersion<Void> version = versionManager.versionBuilder(null).build();
         assertThat(version.changeset.entrySet(), empty());
 
         defaultMergeNoConflicts(null);
@@ -49,7 +48,7 @@ public class ObjectVersionManagerTest {
     @Test
     public void Save_Empty() {
         Product expected = new Product();
-        ObjectVersion<Void> version = versionManager.buildVersion(expected).build();
+        ObjectVersion<Void> version = versionManager.versionBuilder(expected).build();
         assertThat(version.changeset.size(), equalTo(1));
 
         defaultMergeNoConflicts(expected);
@@ -74,24 +73,24 @@ public class ObjectVersionManagerTest {
         product.status = IN_STOCK;
         product.statusDate = new DateTime();
 
-        ObjectVersion<Void> version = versionManager.buildVersion(product).build();
+        ObjectVersion<Void> version = versionManager.versionBuilder(product).build();
         assertThat(version.changeset.size(), equalTo(5));
         defaultMergeNoConflicts(product);
 
         product.price = new BigDecimal("2.0");
-        version = versionManager.buildVersion(product).build();
+        version = versionManager.versionBuilder(product).build();
         assertThat(version.changeset.size(), equalTo(1));
         defaultMergeNoConflicts(product);
 
         product.name = "nextgen";
         product.status = PRE_ORDER;
         product.statusDate = new DateTime();
-        version = versionManager.buildVersion(product).build();
+        version = versionManager.versionBuilder(product).build();
         assertThat(version.changeset.size(), equalTo(3));
         defaultMergeNoConflicts(product);
 
         product.name = null;
-        version = versionManager.buildVersion(product).build();
+        version = versionManager.versionBuilder(product).build();
         assertThat(version.changeset.size(), equalTo(1));
         defaultMergeNoConflicts(product);
     }
@@ -102,15 +101,15 @@ public class ObjectVersionManagerTest {
         Product product = new Product();
         product.name = "name";
         product.price = new BigDecimal("1.0");
-        Revision r1 = versionManager.buildVersion(product).build().revision;
+        Revision r1 = versionManager.versionBuilder(product).build().revision;
 
         // Second version, new name
         product.name = "name2";
-        Revision r2 = versionManager.buildVersion(product).build().revision;
+        Revision r2 = versionManager.versionBuilder(product).build().revision;
 
         // Concurrent version, new price
         product.price = new BigDecimal("2.0");
-        Revision r3 = versionManager.buildVersion(product).parents(r1).build().revision;
+        Revision r3 = versionManager.versionBuilder(product).parents(r1).build().revision;
 
         // Merged
         MergeObject<Product, Void> mergeObject = versionManager.mergeObject(Version.DEFAULT_BRANCH);

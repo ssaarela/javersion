@@ -15,6 +15,7 @@
  */
 package org.javersion.core;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Maps.newLinkedHashMap;
@@ -23,9 +24,11 @@ import static java.util.Collections.unmodifiableMap;
 import static org.javersion.util.Check.notNull;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.google.common.base.Function;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -67,6 +70,32 @@ public class Version<K, V, M> {
         return transformValues(changeset, toVersionProperties);
     }
 
+    public int hashCode() {
+        int hashCode = revision.hashCode();
+        hashCode = 31*hashCode + (branch==null ? 0 : branch.hashCode());
+        hashCode = 31*hashCode + (parentRevisions==null ? 0 : parentRevisions.hashCode());
+        hashCode = 31*hashCode + (changeset==null ? 0 : changeset.hashCode());
+        hashCode = 31*hashCode + (type==null ? 0 : type.hashCode());
+        hashCode = 31*hashCode + (meta==null ? 0 : meta.hashCode());
+        return hashCode;
+    }
+
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof Version) {
+            Version<?, ?, ?> other = (Version<?, ?, ?>) obj;
+            return Objects.equals(this.revision, other.revision)
+                    && Objects.equals(this.branch, other.branch)
+                    && Objects.equals(this.parentRevisions, other.parentRevisions)
+                    && Objects.equals(this.changeset, other.changeset)
+                    && Objects.equals(this.type, other.type)
+                    && Objects.equals(this.meta, other.meta);
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public String toString() {
         return toStringHelper(this)
@@ -82,7 +111,7 @@ public class Version<K, V, M> {
 
         private static final Set<Revision> EMPTY_PARENTS = ImmutableSet.of();
 
-        protected final Revision revision;
+        protected Revision revision;
 
         protected VersionType type = VersionType.NORMAL;
 
@@ -117,12 +146,12 @@ public class Version<K, V, M> {
         }
 
         public This parents(Set<Revision> parentRevisions) {
-            this.parentRevisions = notNull(parentRevisions, "parentRevisions");
+            this.parentRevisions = (parentRevisions != null ? parentRevisions : EMPTY_PARENTS);
             return self();
         }
 
         public This changeset(Map<K, V> changeset) {
-            this.changeset = notNull(changeset, "changeset");
+            this.changeset = (changeset != null ? changeset : ImmutableMap.of());
             return self();
         }
 
@@ -137,6 +166,9 @@ public class Version<K, V, M> {
         }
 
         public Version<K, V, M> build() {
+            if (revision == null) {
+                revision = new Revision();
+            }
             return new Version<>(this);
         }
 

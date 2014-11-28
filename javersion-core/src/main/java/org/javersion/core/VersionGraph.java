@@ -28,22 +28,22 @@ import org.javersion.util.PersistentTreeMap;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
-public abstract class AbstractVersionGraph<K, V, M,
-                          This extends AbstractVersionGraph<K, V, M, This, B>,
-                          B extends AbstractVersionGraphBuilder<K, V, M, This, B>>
+public abstract class VersionGraph<K, V, M,
+                          This extends VersionGraph<K, V, M, This, B>,
+                          B extends VersionGraphBuilder<K, V, M, This, B>>
         implements Function<Revision, VersionNode<K, V, M>> {
 
     public final PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes;
 
-    public AbstractVersionGraph() {
+    public VersionGraph() {
         this(PersistentTreeMap.<Revision, VersionNode<K, V, M>> empty());
     }
 
-    protected AbstractVersionGraph(AbstractVersionGraphBuilder<K, V, M, This, B> builder) {
+    protected VersionGraph(VersionGraphBuilder<K, V, M, This, B> builder) {
         this(builder.versionNodes.toPersistentMap());
     }
 
-    protected AbstractVersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes) {
+    protected VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes) {
         this.versionNodes = versionNodes;
     }
 
