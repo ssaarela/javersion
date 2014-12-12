@@ -47,20 +47,20 @@ public class MapTest {
 
     @Test
     public void Write_Read_Map() {
-        Mab mab = new Mab();
-        mab.primitives.put("123", 456);
-        mab.primitives.put("null", null);
+        Mab map = new Mab();
+        map.primitives.put("123", 456);
+        map.primitives.put("null", null);
 
         KeyValue kv = new KeyValue(567);
-        mab.objects.put(kv, kv);
-        mab.objects.put(new KeyValue(789), new KeyValue(234));
-        mab.objects.put(new KeyValue(890), null);
+        map.objects.put(kv, kv);
+        map.objects.put(new KeyValue(789), new KeyValue(234));
+        map.objects.put(new KeyValue(890), null);
 
-        Map<PropertyPath, Object> map = serializer.toPropertyMap(mab);
+        Map<PropertyPath, Object> properties = serializer.toPropertyMap(map);
 
-        mab = serializer.fromPropertyMap(map);
-        assertThat(mab.primitives, equalTo(map("123", 456, "null", null)));
-        assertThat(mab.objects, equalTo(map(kv, kv, new KeyValue(789), new KeyValue(234), new KeyValue(890), null)));
+        map = serializer.fromPropertyMap(properties);
+        assertThat(map.primitives, equalTo(map("123", 456, "null", null)));
+        assertThat(map.objects, equalTo(map(kv, kv, new KeyValue(789), new KeyValue(234), new KeyValue(890), null)));
     }
 
     @SuppressWarnings("unused")

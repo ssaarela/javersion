@@ -4,6 +4,8 @@ import static com.mysema.query.group.GroupBy.groupBy;
 import static java.sql.Connection.TRANSACTION_READ_COMMITTED;
 import static java.util.Collections.singleton;
 import static java.util.Map.Entry;
+import static org.javersion.store.ObjectVersionStoreJdbc.ConfigProp.NODE;
+import static org.javersion.store.ObjectVersionStoreJdbc.ConfigProp.ORDINAL;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -35,11 +37,13 @@ import com.mysema.query.dml.StoreClause;
 import com.mysema.query.group.Group;
 import com.mysema.query.group.GroupBy;
 import com.mysema.query.sql.Configuration;
+import com.mysema.query.sql.SQLExpressions;
 import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.sql.SQLTemplates;
 import com.mysema.query.sql.dml.SQLInsertClause;
 import com.mysema.query.sql.types.EnumByNameType;
+import com.mysema.query.types.Expression;
 import com.mysema.query.types.MappingProjection;
 import com.mysema.query.types.Path;
 import com.mysema.query.types.QTuple;
@@ -50,9 +54,14 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         ObjectVersionGraph<M>,
         ObjectVersionGraph.Builder<M>> {
 
+    public static enum ConfigProp {
+        NODE, ORDINAL
+    }
+
     public static Configuration configuration(SQLTemplates templates) {
         Configuration configuration = new Configuration(templates);
         configuration.register("VERSION", "TYPE", new EnumByNameType<VersionType>(VersionType.class));
+        configuration.register("REPOSITORY", "KEY", new EnumByNameType<ConfigProp>(ConfigProp.class));
         return configuration;
     }
 
@@ -78,6 +87,8 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
             return store.set(revisionSeq, revision.timeSeq).set(revisionNode, revision.node);
         }
     }
+
+    private static final Expression<Long> nextOrdinal = SQLExpressions.nextval("version_ordinal_seq");
 
     private static final QVersion qVersion = QVersion.version;
 
@@ -108,15 +119,15 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         this.queryFactory = new SQLQueryFactory(configuration(templates), () -> connectionHolder.get());
 
         try (Connection connection = txBegin()) {
-            Long node = queryFactory.from(qRepository).where(qRepository.key.eq("node")).singleResult(qRepository.val);
+            Long node = queryFactory.from(qRepository).where(qRepository.key.eq(NODE)).singleResult(qRepository.val);
             if (node == null) {
                 node = UUIDGen.getClockSeqAndNode();
                 queryFactory
                         .insert(qRepository)
-                        .set(qRepository.key, "node")
+                        .set(qRepository.key, NODE)
                         .set(qRepository.val, node)
                         .addBatch()
-                        .set(qRepository.key, "ordinal")
+                        .set(qRepository.key, ORDINAL)
                         .set(qRepository.val, maxOrdinalQuery())
                         .execute();
             }
@@ -164,7 +175,6 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
     @Override
     public void append(String docId, Iterable<Version<PropertyPath, Object, M>> versions) {
         try (Connection connection = txBegin()) {
-            long ordinal = getLastOrdinal(false);
             String tx = null;
 
             SQLInsertClause versionBatch = queryFactory.insert(qVersion);
@@ -175,7 +185,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
                 if (tx == null) {
                     tx = version.revision.toString();
                 }
-                addVersion(docId, version, tx, ++ordinal, versionBatch);
+                addVersion(docId, version, tx, versionBatch);
                 addParents(version, parentBatch);
                 addProperties(version, propertyBatch);
             }
@@ -195,21 +205,19 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         }
     }
 
-    private long getLastOrdinal(boolean forUpdate) {
-        SQLQuery qry = queryFactory
+    private long getLastOrdinalForUpdate() {
+        Long lastOrdinal = queryFactory
                 .from(qRepository)
-                .where(qRepository.key.eq("ordinal"));
-        if (forUpdate) {
-            qry.forUpdate();
-        }
-        Long ordinal = qry.singleResult(qRepository.val);
-        return ordinal != null ? ordinal : 0;
+                .where(qRepository.key.eq(ORDINAL))
+                .forUpdate()
+                .singleResult(qRepository.val);
+        return lastOrdinal != null ? lastOrdinal : 0;
     }
 
     @Override
     public void commit() {
         try (Connection connection = txBegin()) {
-            long repositoryOrdinal = getLastOrdinal(true);
+            long repositoryOrdinal = getLastOrdinalForUpdate();
 
             List<String> txs = new ArrayList<>();
             for (Map.Entry<String, Long> entry : findUncommittedTransactions().entrySet()) {
@@ -228,7 +236,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
             queryFactory
                     .update(qRepository)
-                    .where(qRepository.key.eq("ordinal"))
+                    .where(qRepository.key.eq(ORDINAL))
                     .set(qRepository.val, maxOrdinalQuery())
                     .execute();
             txCommit();
@@ -273,7 +281,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
             switch (Persistent.Type.valueOf(value.getClass())) {
                 case OBJECT:
                     type = 'O';
-                    str = value.toString();
+                    str = ((Persistent.Object) value).type;
                     break;
                 case ARRAY:
                     type = 'A';
@@ -316,12 +324,12 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         }
     }
 
-    private void addVersion(String docId, Version<PropertyPath, Object, M> version, String tx, long ordinal, SQLInsertClause versionBatch) {
+    private void addVersion(String docId, Version<PropertyPath, Object, M> version, String tx, SQLInsertClause versionBatch) {
         versionRevision
                 .populate(version.revision, versionBatch)
                 .set(qVersion.docId, docId)
                 .set(qVersion.tx, tx)
-                .set(qVersion.ordinal, ordinal)
+                .set(qVersion.ordinal, nextOrdinal)
                 .set(qVersion.type, version.type)
                 .set(qVersion.branch, version.branch)
                 .addBatch();

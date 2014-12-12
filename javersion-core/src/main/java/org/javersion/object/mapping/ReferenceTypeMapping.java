@@ -28,7 +28,7 @@ import org.javersion.util.Check;
 
 public class ReferenceTypeMapping implements TypeMapping {
 
-    private static final String REFERENCES = "@REF@";
+    private static final String REFERENCES = "@REF";
 
     private final String alias;
 

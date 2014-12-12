@@ -21,6 +21,8 @@ create table version (
   constraint version_type_fk foreign key (type) references version_type (name)
 );
 
+create sequence version_ordinal_seq start with 1 increment by 1 no cycle;
+
 create table version_parent (
   child_revision_seq bigint not null,
   child_revision_node bigint not null,
@@ -56,7 +58,7 @@ create table version_property (
 );
 
 create table repository (
-  -- node, ordinal
+  -- NODE, ORDINAL
   key varchar(32) not null,
   val bigint
 );

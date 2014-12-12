@@ -25,4 +25,9 @@ public class DateTimeType extends AbstractScalarType {
         return Long.toString(((DateTime) object).getMillis());
     }
 
+    @Override
+    public Object fromString(String str) {
+        return new DateTime(Long.valueOf(str));
+    }
+
 }

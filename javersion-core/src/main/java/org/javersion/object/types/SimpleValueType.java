@@ -1,6 +1,9 @@
 package org.javersion.object.types;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
@@ -21,11 +24,19 @@ public class SimpleValueType extends AbstractScalarType {
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        return constructor.newInstance(value);
+        return constructor.newInstance(value.toString());
     }
 
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         context.put(path, object.toString());
+    }
+
+    @Override
+    public Object fromString(String str) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        if (isNullOrEmpty(str)) {
+            return null;
+        }
+        return constructor.newInstance(str);
     }
 }

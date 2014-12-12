@@ -8,13 +8,14 @@ import java.util.Set;
 
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
+import org.javersion.core.VersionGraph;
 import org.javersion.path.PropertyPath;
 
 public class ObjectVersionManager<O, M> {
 
-    private ObjectVersionGraph<M> versionGraph;
+    private VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ?> versionGraph;
 
-    private Set<Revision> heads = of();
+    private Set<Revision> heads;
 
     private final ObjectSerializer<O> serializer;
 
@@ -32,7 +33,11 @@ public class ObjectVersionManager<O, M> {
     }
 
     public ObjectVersionManager<O, M> init(Iterable<ObjectVersion<M>> versions) {
-        this.versionGraph = ObjectVersionGraph.init(versions);
+        return init(ObjectVersionGraph.init(versions));
+    }
+
+    public ObjectVersionManager<O, M> init(VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ?> versionGraph) {
+        this.versionGraph = versionGraph;
         return this;
     }
 

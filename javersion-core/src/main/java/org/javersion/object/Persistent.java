@@ -86,6 +86,10 @@ public final class Persistent {
         public int hashCode() {
             return Array.class.hashCode();
         }
+        @Override
+        public String toString() {
+            return "Array()";
+        }
     }
 
     public static final class Object {
@@ -108,10 +112,9 @@ public final class Persistent {
         public int hashCode() {
             return type.hashCode();
         }
-
         @Override
         public String toString() {
-            return type;
+            return "Object(" + type + ")";
         }
     }
 

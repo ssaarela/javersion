@@ -20,4 +20,10 @@ public class StringValueType extends AbstractScalarType {
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         context.put(path, (String) object);
     }
+
+    @Override
+    public Object fromString(String str) {
+        return str;
+    }
+
 }

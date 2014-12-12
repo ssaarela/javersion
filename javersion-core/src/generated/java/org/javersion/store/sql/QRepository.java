@@ -27,7 +27,7 @@ public class QRepository extends RelationalPathSpatial<QRepository> {
 
     public static final QRepository repository = new QRepository("REPOSITORY");
 
-    public final StringPath key = createString("key");
+    public final EnumPath<org.javersion.store.ObjectVersionStoreJdbc.ConfigProp> key = createEnum("key", org.javersion.store.ObjectVersionStoreJdbc.ConfigProp.class);
 
     public final NumberPath<Long> val = createNumber("val", Long.class);
 
@@ -53,7 +53,7 @@ public class QRepository extends RelationalPathSpatial<QRepository> {
 
     public void addMetadata() {
         addMetadata(key, ColumnMetadata.named("KEY").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
-        addMetadata(val, ColumnMetadata.named("VAL").withIndex(2).ofType(Types.BIGINT).withSize(19).notNull());
+        addMetadata(val, ColumnMetadata.named("VAL").withIndex(2).ofType(Types.BIGINT).withSize(19));
     }
 
 }

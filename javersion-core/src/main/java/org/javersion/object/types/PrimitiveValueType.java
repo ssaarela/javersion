@@ -1,5 +1,6 @@
 package org.javersion.object.types;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static java.lang.Double.doubleToRawLongBits;
@@ -9,6 +10,8 @@ import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
+
+import com.google.common.base.Strings;
 
 public abstract class PrimitiveValueType extends AbstractScalarType {
 
@@ -26,6 +29,13 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
             context.put(path, (Long) object);
         }
 
+        @Override
+        public Object fromString(String str) {
+            if (isNullOrEmpty(str)) {
+                return null;
+            }
+            return Long.valueOf(str);
+        }
     };
 
     public static final PrimitiveValueType INT = new PrimitiveValueType() {
@@ -38,6 +48,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         @Override
         public void serialize(PropertyPath path, Object object, WriteContext context) {
             context.put(path, ((Integer) object).longValue());
+        }
+
+        @Override
+        public Object fromString(String str) {
+            if (isNullOrEmpty(str)) {
+                return null;
+            }
+            return Integer.valueOf(str);
         }
 
     };
@@ -54,6 +72,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
             context.put(path, ((Short) object).longValue());
         }
 
+        @Override
+        public Object fromString(String str) {
+            if (isNullOrEmpty(str)) {
+                return null;
+            }
+            return Short.valueOf(str);
+        }
+
     };
 
     public static final PrimitiveValueType BYTE = new PrimitiveValueType() {
@@ -66,6 +92,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         @Override
         public void serialize(PropertyPath path, Object object, WriteContext context) {
             context.put(path, ((Byte) object).longValue());
+        }
+
+        @Override
+        public Object fromString(String str) {
+            if (isNullOrEmpty(str)) {
+                return null;
+            }
+            return Byte.valueOf(str);
         }
 
     };
@@ -82,6 +116,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
             context.put(path, (Boolean) object);
         }
 
+        @Override
+        public Object fromString(String str) {
+            if (isNullOrEmpty(str)) {
+                return null;
+            }
+            return Boolean.valueOf(str);
+        }
+
     };
 
     public static final PrimitiveValueType DOUBLE = new PrimitiveValueType() {
@@ -94,6 +136,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         @Override
         public void serialize(PropertyPath path, Object object, WriteContext context) {
             context.put(path, (Double) object);
+        }
+
+        @Override
+        public Object fromString(String str) {
+            if (isNullOrEmpty(str)) {
+                return null;
+            }
+            return Double.valueOf(str);
         }
 
     };
@@ -110,6 +160,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
             context.put(path, ((Float) object).doubleValue());
         }
 
+        @Override
+        public Object fromString(String str) {
+            if (isNullOrEmpty(str)) {
+                return null;
+            }
+            return Float.valueOf(str);
+        }
+
     };
 
     public static final PrimitiveValueType CHAR = new PrimitiveValueType() {
@@ -122,6 +180,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         @Override
         public void serialize(PropertyPath path, Object object, WriteContext context) {
             context.put(path, object.toString());
+        }
+
+        @Override
+        public Object fromString(String str) {
+            if (isNullOrEmpty(str)) {
+                return null;
+            }
+            return Character.valueOf(str.charAt(0));
         }
 
     };
