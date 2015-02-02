@@ -21,11 +21,8 @@ import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 import static org.javersion.util.AbstractRedBlackTree.Mirror.LEFT;
 import static org.javersion.util.AbstractRedBlackTree.Mirror.RIGHT;
 
-import java.util.ArrayDeque;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.function.Consumer;
 
 import org.javersion.util.AbstractRedBlackTree.Node;
 
@@ -571,7 +568,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             this.asc = asc;
         }
 
-        protected abstract void push(N node);
+        protected abstract void pushAll(N node);
 
         @Override
         public boolean hasNext() {
@@ -584,7 +581,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
                 throw new NoSuchElementException();
             }
             N result = stack.pop();
-            push(asc ? result.right : result.left);
+            pushAll(asc ? result.right : result.left);
             return result;
         }
 
@@ -594,10 +591,10 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
 
         public RBIterator(N root, boolean asc) {
             super(asc);
-            push(root);
+            pushAll(root);
         }
 
-        protected void push(N node) {
+        protected void pushAll(N node) {
             while (node != null) {
                 stack.push(node);
                 node = (asc ? node.left : node.right);
@@ -620,11 +617,11 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             this.fromInclusive = fromInclusive;
             this.to = to;
             this.toInclusive = toInclusive;
-            push(root);
+            pushAll(root);
         }
 
         @Override
-        protected void push(N node) {
+        protected void pushAll(N node) {
             while (node != null) {
                 boolean fromIncluded = fromIncluded(node.key);
                 boolean toIncluded = toIncluded(node.key);
@@ -650,6 +647,109 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         private boolean isIncluded(K key1, K key2, boolean inclusive) {
             int cmpr = comparator.compare(key1, key2);
             return cmpr < 0 || inclusive && cmpr == 0;
+        }
+    }
+
+    static class RBSpliterator<K, N extends Node<K, N>> implements Spliterator<N> {
+
+        N root;
+        int size;
+        Deque<N> stack = new ArrayDeque<N>();
+        final int characteristics;
+        final Comparator<? super K> comparator;
+
+        public RBSpliterator(N root, Comparator<? super K> comparator, int size) {
+            this.root = requireNonNull(root, "root");
+            this.comparator = requireNonNull(comparator, "comparator");
+            this.size = size;
+            this.characteristics = ORDERED | SORTED | DISTINCT | SIZED | IMMUTABLE;
+        }
+
+        private RBSpliterator(Comparator<? super K> comparator, int size, int characteristics) {
+            this.comparator = comparator;
+            this.size = size;
+            this.characteristics = nonSized(characteristics);
+        }
+
+        private static int nonSized(int characteristics) {
+            return characteristics & ~SIZED;
+        }
+
+        private void init() {
+            if (root != null) {
+                pushAll(root);
+                root = null;
+            }
+        }
+
+        protected void pushAll(N node) {
+            while (node != null) {
+                stack.addFirst(node);
+                node = (asc ? node.left : node.right);
+            }
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super N> action) {
+            init();
+            if (stack.isEmpty()) {
+                return false;
+            }
+            N result = stack.removeFirst();
+            action.accept(result);
+            pushAll(result.right);
+            return true;
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super N> action) {
+            if (root != null) {
+                stack.addFirst(root);
+            }
+            while (!stack.isEmpty()) {
+                forEach(stack.removeFirst(), action);
+            }
+        }
+
+        private void forEach(N node, Consumer<? super N> action) {
+            if (node.left != null) {
+                forEach(node.left, action);
+            }
+            action.accept(node);
+            if (node.right != null) {
+                forEach(node.right, action);
+            }
+        }
+
+        @Override
+        public Spliterator<N> trySplit() {
+            init();
+            if (stack.size() < 2) {
+                return null;
+            }
+            N mid = stack.removeLast();
+            RBSpliterator<K, N> prefix = new RBSpliterator<K, N>(comparator, size / 2, characteristics);
+            prefix.stack = this.stack;
+
+            this.stack = new ArrayDeque<>();
+            this.stack.push(mid);
+            this.size = this.size - prefix.size;
+            return prefix;
+        }
+
+        @Override
+        public long estimateSize() {
+            return size;
+        }
+
+        @Override
+        public int characteristics() {
+            return characteristics;
+        }
+
+        @Override
+        public Comparator<? super N> getComparator() {
+            return (a, b) -> comparator.compare(a.key, b.key);
         }
     }
 }
