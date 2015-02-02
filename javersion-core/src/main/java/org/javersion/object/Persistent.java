@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 public final class Persistent {
 
     public static enum Type {
+        NULL(Void.class),
         OBJECT(Object.class),
         ARRAY(Array.class),
         STRING(String.class),
@@ -41,7 +42,8 @@ public final class Persistent {
             TYPES_BY_CLASS = builder.build();
         }
 
-        public static Type valueOf(Class<?> clazz) {
+        public static Type of(java.lang.Object object) {
+            Class<?> clazz = object != null ? object.getClass() : Void.class;
             return TYPES_BY_CLASS.get(clazz);
         }
 
@@ -52,16 +54,6 @@ public final class Persistent {
     }
 
     public static final String GENERIC_TYPE = "Map";
-
-    public static final Set<Class<?>> TYPES = ImmutableSet.of(
-            Object.class,
-            Array.class,
-            String.class,
-            Boolean.class,
-            Long.class,
-            Double.class,
-            BigDecimal.class
-    );
 
 
     public static Object object() {

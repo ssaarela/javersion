@@ -28,7 +28,7 @@ import com.google.common.collect.Sets;
 
 public class SetType implements ValueType {
 
-    private final static Persistent.Object CONSTANT = Persistent.object("Set");
+    private final static Persistent.Array CONSTANT = Persistent.array();
 
     private final IdentifiableType identifiableType;
 

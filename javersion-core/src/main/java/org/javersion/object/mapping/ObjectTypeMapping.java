@@ -33,12 +33,21 @@ import org.javersion.util.Check;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 public class ObjectTypeMapping<O> implements TypeMapping {
 
     private final BiMap<String, TypeDescriptor> typesByAlias;
+
+    public ObjectTypeMapping(TypeDescriptor typeDescriptor) {
+        this(getAlias(typeDescriptor), typeDescriptor);
+    }
+
+    public ObjectTypeMapping(String alias, TypeDescriptor typeDescriptor) {
+        this(ImmutableBiMap.of(alias, typeDescriptor));
+    }
 
     public ObjectTypeMapping(BiMap<String, TypeDescriptor> typesByAlias) {
         this.typesByAlias = typesByAlias;
@@ -47,7 +56,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         for (TypeDescriptor typeDescriptor : typesByAlias.values()) {
-            if (typeDescriptor.equals(localTypeDescriptor.typeDescriptor)) {
+            if (typeDescriptor.getRawType().equals(localTypeDescriptor.typeDescriptor.getRawType())) {
                 return true;
             }
         }

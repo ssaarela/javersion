@@ -27,6 +27,8 @@ import org.javersion.path.PropertyTree;
 
 public class CollectionType implements ValueType {
 
+    private final static Persistent.Array CONSTANT = Persistent.array();
+
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         Collection<PropertyTree> children = propertyTree.getChildren();
@@ -44,7 +46,7 @@ public class CollectionType implements ValueType {
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         @SuppressWarnings("rawtypes")
         Collection list = (Collection) object;
-        context.put(path, Persistent.array());
+        context.put(path, CONSTANT);
         int i=0;
         for (Object element : list) {
             context.serialize(path.index(i++), element);

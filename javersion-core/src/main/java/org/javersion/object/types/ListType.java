@@ -29,6 +29,8 @@ import org.javersion.path.PropertyTree;
 
 public class ListType implements ValueType {
 
+    private final static Persistent.Array CONSTANT = Persistent.array();
+
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         Map<String, PropertyTree> children = propertyTree.getChildrenMap();
@@ -64,7 +66,7 @@ public class ListType implements ValueType {
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         @SuppressWarnings("rawtypes")
         List list = (List) object;
-        context.put(path, Persistent.array());
+        context.put(path, CONSTANT);
         int i=0;
         for (Object element : list) {
             context.serialize(path.index(i++), element);

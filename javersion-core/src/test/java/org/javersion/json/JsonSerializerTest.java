@@ -27,16 +27,16 @@ public class JsonSerializerTest {
 
     @Test
     public void empty_object() {
-        Map<PropertyPath, Object> map = serializer.toPropertyMap("{}");
+        Map<PropertyPath, Object> map = serializer.parse("{}").properties;
         assertThat(map, equalTo(ImmutableMap.of(ROOT, Persistent.object())));
-        assertThat(serializer.fromPropertyMap(map), equalTo("{}"));
+        assertThat(serializer.serialize(map), equalTo("{}"));
     }
 
     @Test
     public void type_field() {
-        Map<PropertyPath, Object> map = serializer.toPropertyMap(toJson(map("_type", "MyType")));
+        Map<PropertyPath, Object> map = serializer.parse(toJson(map("_type", "MyType"))).properties;
         assertThat(map, equalTo(ImmutableMap.of(ROOT, Persistent.object("MyType"))));
-        assertThat(serializer.fromPropertyMap(map), equalTo("{\"_type\":\"MyType\"}"));
+        assertThat(serializer.serialize(map), equalTo("{\"_type\":\"MyType\"}"));
     }
 
     @Test
@@ -61,9 +61,9 @@ public class JsonSerializerTest {
 
     @Test
     public void empty_array() {
-        Map<PropertyPath, Object> map = serializer.toPropertyMap("[]");
+        Map<PropertyPath, Object> map = serializer.parse("[]").properties;
         assertThat(map, equalTo(ImmutableMap.of(ROOT, Persistent.array())));
-        assertThat(serializer.fromPropertyMap(map), equalTo("[]"));
+        assertThat(serializer.serialize(map), equalTo("[]"));
     }
 
     @Test
@@ -73,8 +73,8 @@ public class JsonSerializerTest {
     }
 
     private void assertSerializationRoundTrip(String json) {
-        Map<PropertyPath, Object> map = serializer.toPropertyMap(json);
-        assertThat(serializer.fromPropertyMap(map), equalTo(json));
+        Map<PropertyPath, Object> map = serializer.parse(json).properties;
+        assertThat(serializer.serialize(map), equalTo(json));
     }
 
     private String toJson(Object src) {

@@ -37,6 +37,8 @@ public class ObjectType<O> implements ValueType {
 
     protected final Map<Class<?>, String> aliasByClass;
 
+    private final TypeDescriptor defaultType;
+
     @SuppressWarnings("unchecked")
     public ObjectType(String alias, TypeDescriptor type) {
         this(ImmutableBiMap.of(alias, type));
@@ -50,10 +52,18 @@ public class ObjectType<O> implements ValueType {
             builder.put(entry.getValue().getRawType(), entry.getKey());
         }
         aliasByClass = builder.build();
+        if (typesByAlias.size() == 1) {
+            defaultType = typesByAlias.values().iterator().next();
+        } else {
+            defaultType = null;
+        }
     }
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
+        if (defaultType != null) {
+            return defaultType.newInstance();
+        }
         String alias = ((Persistent.Object) value).type;
         TypeDescriptor typeDescriptor = Check.notNull$(typesByAlias.get(alias), "Unsupported type: %s", alias);
         return typeDescriptor.newInstance();

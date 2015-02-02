@@ -274,41 +274,42 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         // type:
         // n=null, O=object, A=array, s=string,
         // b=boolean, l=long, d=double, D=bigdecimal
-        char type = 'n';
+        char type;
         String str = null;
         Long nbr = null;
-        if (value != null) {
-            switch (Persistent.Type.valueOf(value.getClass())) {
-                case OBJECT:
-                    type = 'O';
-                    str = ((Persistent.Object) value).type;
-                    break;
-                case ARRAY:
-                    type = 'A';
-                    break;
-                case STRING:
-                    type = 's';
-                    str = (String) value;
-                    break;
-                case BOOLEAN:
-                    type = 'b';
-                    nbr = ((Boolean) value).booleanValue() ? 1l : 0l;
-                    break;
-                case LONG:
-                    type = 'l';
-                    nbr = (Long) value;
-                    break;
-                case DOUBLE:
-                    type = 'd';
-                    nbr = Double.doubleToRawLongBits((Double) value);
-                    break;
-                case BIG_DECIMAL:
-                    type = 'D';
-                    str = value.toString();
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unsupported type: " + value.getClass());
-            }
+        switch (Persistent.Type.of(value)) {
+            case NULL:
+                type = 'n';
+                break;
+            case OBJECT:
+                type = 'O';
+                str = ((Persistent.Object) value).type;
+                break;
+            case ARRAY:
+                type = 'A';
+                break;
+            case STRING:
+                type = 's';
+                str = (String) value;
+                break;
+            case BOOLEAN:
+                type = 'b';
+                nbr = ((Boolean) value).booleanValue() ? 1l : 0l;
+                break;
+            case LONG:
+                type = 'l';
+                nbr = (Long) value;
+                break;
+            case DOUBLE:
+                type = 'd';
+                nbr = Double.doubleToRawLongBits((Double) value);
+                break;
+            case BIG_DECIMAL:
+                type = 'D';
+                str = value.toString();
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported type: " + value.getClass());
         }
         propertyBatch
                 .set(qProperty.type, Character.toString(type))

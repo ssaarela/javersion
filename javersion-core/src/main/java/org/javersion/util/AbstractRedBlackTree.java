@@ -35,8 +35,6 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         @SuppressWarnings("unchecked")
         @Override
         public int compare(Comparable left, Comparable right) {
-            Check.notNull(left, "left");
-            Check.notNull(right, "right");
             return left.compareTo(right);
         }
     };

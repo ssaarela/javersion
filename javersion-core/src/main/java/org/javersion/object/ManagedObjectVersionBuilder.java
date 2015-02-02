@@ -20,9 +20,8 @@ public class ManagedObjectVersionBuilder<M> extends ObjectVersionBuilder<M> {
 
     @Override
     public ObjectVersion<M> build() {
-        Merge<PropertyPath, Object, M> merge = manager.mergeRevisions(parentRevisions);
-        changeset(diff(merge.getProperties(), newProperties));
-        ObjectVersion<M> version = new ObjectVersion<>(this);
+        changeset(newProperties, manager.getVersionGraph());
+        ObjectVersion<M> version = super.build();
         manager.commit(version);
         return version;
     }

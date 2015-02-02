@@ -121,7 +121,12 @@ public class ReadContext {
         }
     }
 
-    public Object getValue(PropertyTree propertyTree) {
-        return properties.get(propertyTree.path);
+    public Object getProperty(PropertyTree propertyTree) {
+        return getProperty(propertyTree.path);
     }
+
+    public Object getProperty(PropertyPath path) {
+        return properties.get(path);
+    }
+
 }

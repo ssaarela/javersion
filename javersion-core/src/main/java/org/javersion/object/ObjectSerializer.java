@@ -21,7 +21,7 @@ import org.javersion.path.PropertyPath;
 
 public class ObjectSerializer<O> {
 
-    private final SchemaRoot schemaRoot;
+    public final SchemaRoot schemaRoot;
 
     public ObjectSerializer(Class<O> clazz) {
         this.schemaRoot = DescribeContext.DEFAULT.describeSchema(clazz);

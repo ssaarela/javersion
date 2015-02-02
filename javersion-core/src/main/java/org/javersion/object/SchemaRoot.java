@@ -19,9 +19,9 @@ import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 
 public class SchemaRoot extends Schema  {
-    
+
     SchemaRoot() {}
-    
+
     public Schema get(PropertyPath path) {
         Check.notNull(path, "path");
         Schema currentMapping = this;
@@ -32,11 +32,6 @@ public class SchemaRoot extends Schema  {
             }
         }
         return currentMapping;
-    }
-
-    @Override
-    void lock() {
-        super.lock();
     }
 
 }

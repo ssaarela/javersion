@@ -71,4 +71,11 @@ public class ObjectVersionManager<O, M> {
         heads = of(version.revision);
     }
 
+    public VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ?> getVersionGraph() {
+        return versionGraph;
+    }
+
+    public Set<Revision> getHeads() {
+        return heads;
+    }
 }

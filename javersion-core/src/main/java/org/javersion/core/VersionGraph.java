@@ -16,9 +16,11 @@
 package org.javersion.core;
 
 import static com.google.common.collect.Iterables.transform;
+import static java.util.Arrays.asList;
 import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.javersion.util.MapUtils;
@@ -76,12 +78,20 @@ public abstract class VersionGraph<K, V, M,
         return node;
     }
 
+    public final Merge<K, V, M> mergeBranches(String... branches) {
+        return mergeBranches(asList(branches));
+    }
+
     public final Merge<K, V, M> mergeBranches(Iterable<String> branches) {
         List<VersionMerge<K, V, M>> mergedBranches = Lists.newArrayList();
         for (String branch : branches) {
             mergedBranches.add(new VersionMerge<K, V, M>(getHeads(branch)));
         }
         return new BranchMerge<K, V, M>(mergedBranches);
+    }
+
+    public final Merge<K, V, M> mergeRevisions(Revision... revisions) {
+        return mergeRevisions(asList(revisions));
     }
 
     public final Merge<K, V, M> mergeRevisions(Iterable<Revision> revisions) {

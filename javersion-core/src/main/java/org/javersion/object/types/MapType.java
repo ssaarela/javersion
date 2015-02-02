@@ -13,7 +13,7 @@ import com.google.common.collect.Maps;
 
 public class MapType implements ValueType {
 
-    public static final Persistent.Object CONSTANT = Persistent.object("Map");
+    public static final Persistent.Object CONSTANT = Persistent.object();
 
     public static final String KEY = "@KEY";
 
@@ -25,16 +25,15 @@ public class MapType implements ValueType {
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object mapSize, ReadContext context) throws Exception {
-        prepareKeysAndValues(propertyTree, context);
+        prepareKeys(propertyTree, context);
         return Maps.newHashMapWithExpectedSize(propertyTree.getChildren().size());
     }
 
-    private void prepareKeysAndValues(PropertyTree propertyTree, ReadContext context) {
+    private void prepareKeys(PropertyTree propertyTree, ReadContext context) {
         for (PropertyTree entryPath : propertyTree.getChildren()) {
             if (!isScalar()) {
                 context.prepareObject(entryPath.get(KEY));
             }
-            context.prepareObject(entryPath);
         }
     }
 

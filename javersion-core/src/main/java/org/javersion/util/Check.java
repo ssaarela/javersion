@@ -36,41 +36,44 @@ public class Check {
     public static void that(boolean expression, String messageFormat, Object... args) {
         checkArgument(expression, messageFormat, args);
     }
-    
+
     public static <T extends Iterable<?>> T notNullOrEmpty(T reference, String fieldName) {
         return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
     }
-    
+
     public static <T extends Iterable<?>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
         checkArgument(!(reference == null || !reference.iterator().hasNext()), messageFormat, args);
         return reference;
     }
-    
+
     public static <T extends Collection<?>> T notNullOrEmpty(T reference, String fieldName) {
         return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
     }
-    
+
     public static <T extends Collection<?>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
         checkArgument(!(reference == null || reference.isEmpty()), messageFormat, args);
         return reference;
     }
-    
+
     public static <K, V, T extends Map<K, V>> T notNullOrEmpty(T reference, String fieldName) {
         return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
     }
-    
+
     public static <K, V, T extends Map<K, V>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
         checkArgument(!(reference == null || reference.isEmpty()), messageFormat, args);
         return reference;
     }
-    
+
     public static String notNullOrEmpty(String reference, String fieldName) {
-        return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
+        if (reference == null || reference.length() == 0) {
+            throw new IllegalArgumentException(String.format(NOT_NULL_OR_EMPTY_FMT, fieldName, reference));
+        }
+        return reference;
     }
-    
+
     public static String notNullOrEmpty$(String reference, String messageFormat, Object... args) {
         checkArgument(!(reference == null || reference.length() == 0), messageFormat, args);
         return reference;
     }
-    
+
 }

@@ -37,7 +37,7 @@ public class PropertyTree {
                 PropertyTree childTree = getOrCreate(subpath, nodes);
                 if (parentTree != null) {
                     parentTree.children.put(subpath.getName(), childTree);
-                } 
+                }
                 parentTree = childTree;
             }
         }
@@ -52,42 +52,35 @@ public class PropertyTree {
         }
         return childTree;
     }
-    
+
     public final PropertyPath path;
-    
+
     private Map<String, PropertyTree> children = Maps.newLinkedHashMap();
-    
+
     private PropertyTree(PropertyPath path) {
         this.path = path;
     }
-    
+
     public String getName() {
         return path.getName();
     }
-    
+
     public Collection<PropertyTree> getChildren() {
         return unmodifiableCollection(children.values());
     }
-    
+
     public Map<String, PropertyTree> getChildrenMap() {
         return unmodifiableMap(children);
     }
-    
+
     public PropertyTree get(String childNode) {
         return children.get(childNode);
     }
-//    public List<PropertyTree> postOrder() {
-//        List<PropertyTree> postOrder = Lists.newArrayList();
-//        postOrder.add(this);
-//        for (int i = 0; i < postOrder.size(); i++) {
-//            PropertyTree current = postOrder.get(i);
-//            postOrder.addAll(current.getChildren());
-//        }
-//        return Lists.reverse(postOrder);
-//    }
+
     public boolean hasChildren() {
         return !children.isEmpty();
     }
+
     public PropertyTree get(PropertyPath path) {
         PropertyTree match = this;
         for (PropertyPath node : path) {

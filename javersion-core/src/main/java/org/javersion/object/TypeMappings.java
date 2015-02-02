@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.javersion.core.Revision;
+import org.javersion.core.VersionProperty;
 import org.javersion.object.mapping.*;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
@@ -59,6 +61,8 @@ public class TypeMappings {
                     new SetTypeMapping(),
                     new MapTypeMapping(),
                     new CollectionTypeMapping(),
+                    new SimpleTypeMapping(Revision.class),
+                    new PropertyPathTypeMapping(),
                     DATE_TIME,
                     ENUM,
                     BIG_INTEGER,

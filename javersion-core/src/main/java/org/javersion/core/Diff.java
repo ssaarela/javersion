@@ -23,7 +23,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.javersion.path.PropertyPath;
+
 public class Diff {
+
+    public static <K, V> Map<K, V> diff(Merge<K, V, ?> from, Map<K, V> to) {
+        Map<K, V> diff = diff(from.getProperties(), to);
+        from.conflicts.keySet().stream().forEach(k -> {
+            if (!diff.containsKey(k) && to.containsKey(k)) {
+                diff.put(k, to.get(k));
+            }
+        });
+        return diff;
+    }
 
     public static <K, V> Map<K, V> diff(Map<K, V> from, Map<K, V> to) {
         notNull(from, "from");
