@@ -17,6 +17,9 @@ package org.javersion.util;
 
 import static com.google.common.collect.Iterables.transform;
 import static org.javersion.util.AbstractRedBlackTree.Color.RED;
+import static org.javersion.util.MapUtils.mapEntryFunction;
+import static org.javersion.util.MapUtils.mapKeyFunction;
+import static org.javersion.util.MapUtils.mapValueFunction;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -146,17 +149,17 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
             @Override
             public Iterator<Entry<K, V>> iterator() {
                 return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive),
-                        MapUtils.<K, V>mapEntryFunction());
+                        mapEntryFunction());
             }
         };
     }
 
     public Iterable<K> keys() {
-        return Iterables.transform(this, MapUtils.<K>mapKeyFunction());
+        return Iterables.transform(this, mapKeyFunction());
     }
 
     public Iterable<V> values() {
-        return Iterables.transform(this, MapUtils.<V>mapValueFunction());
+        return Iterables.transform(this, mapValueFunction());
     }
 
     public String toString() {

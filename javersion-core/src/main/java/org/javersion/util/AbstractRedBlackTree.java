@@ -15,6 +15,7 @@
  */
 package org.javersion.util;
 
+import static java.util.Objects.requireNonNull;
 import static org.javersion.util.AbstractRedBlackTree.Color.BLACK;
 import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 import static org.javersion.util.AbstractRedBlackTree.Mirror.LEFT;
@@ -51,7 +52,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
     }
 
     public AbstractRedBlackTree(Comparator<? super K> comparator) {
-        this.comparator = Check.notNull(comparator, "comparator");
+        this.comparator = requireNonNull(comparator, "comparator");
     }
 
     public abstract int size();
@@ -340,6 +341,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
     }
 
     static enum Color {
+        // TODO: Abstract methods for contract
         RED {
             @Override
             <K, N extends Node<K, N>> N balanceInsert(UpdateContext<? super N> currentContext, N parent, N child, Mirror mirror) {
@@ -396,6 +398,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
     }
 
     static enum Mirror {
+        // TODO: Abstract methods for contract
         RIGHT {
             @Override
             <K, N extends Node<K, N>> N leftOf(N node) {
@@ -410,7 +413,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
                 node.right = left;
             }
             @Override
-            <K, N extends Node<K, N>> void setRigthOf(N node, N right) {
+            <K, N extends Node<K, N>> void setRightOf(N node, N right) {
                 node.left = right;
             }
             @Override
@@ -432,12 +435,12 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         <K, N extends Node<K, N>> void setLeftOf(N node, N left) {
             node.left = left;
         }
-        <K, N extends Node<K, N>> void setRigthOf(N node, N right) {
+        <K, N extends Node<K, N>> void setRightOf(N node, N right) {
             node.right = right;
         }
         <K, N extends Node<K, N>> void children(N node, N left, N right) {
             setLeftOf(node, left);
-            setRigthOf(node, right);
+            setRightOf(node, right);
         }
         <K, N extends Node<K, N>> N add(UpdateContext<? super N> currentContext, N self, N node, Comparator<? super K> comparator) {
             N left = leftOf(self);
@@ -486,6 +489,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         return node != null && node.color == RED;
     }
 
+    // TODO: Refactor into LEFT.balanceDelete -method
     private static <K, N extends Node<K, N>> N balanceLeftDel(UpdateContext<? super N> currentContext, N node, N left, N right) {
         if (isRed(left)) {
             return node.edit(currentContext, RED, left.blacken(currentContext), right);
@@ -504,6 +508,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     }
 
+    // TODO: Refactor into RIGHT.balanceDelete -method
     private static <K, N extends Node<K, N>> N balanceRightDel(UpdateContext<? super N> currentContext, N node, N left, N right) {
         if (isRed(right)) {
             return node.edit(currentContext, RED, left, right.blacken(currentContext));
@@ -522,6 +527,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     }
 
+    // TODO: Refactor into LEFT.balance -method
     private static <K, N extends Node<K, N>> N balanceLeft(UpdateContext<? super N> currentContext, N node, N left, N right) {
         if (isRed(left) && isRed(left.left)) {
             N newRight = node.edit(currentContext, BLACK, left.right, right);
@@ -538,6 +544,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     }
 
+    // TODO: Refactor into RIGHT.balance -method
     private static <K, N extends Node<K, N>> N balanceRight(UpdateContext<? super N> currentContext, N node, N left, N right) {
         if (isRed(right) && isRed(right.right)) {
             N newLeft= node.edit(currentContext, BLACK, left, right.left);
