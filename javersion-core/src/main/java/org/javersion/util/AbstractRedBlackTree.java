@@ -650,25 +650,31 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
     }
 
-    static class RBSpliterator<K, N extends Node<K, N>> implements Spliterator<N> {
+    static abstract class RBSpliterator<T, N extends Node<?, N>> implements Spliterator<T> {
 
-        N root;
-        int size;
-        Deque<N> stack = new ArrayDeque<N>();
-        final int characteristics;
-        final Comparator<? super K> comparator;
+        private N root;
+        private int sizeEstimate;
+        private Deque<N> stack;
+        private final int characteristics;
 
-        public RBSpliterator(N root, Comparator<? super K> comparator, int size) {
+        protected RBSpliterator(N root, int size, int additionalCharacteristics) {
             this.root = requireNonNull(root, "root");
-            this.comparator = requireNonNull(comparator, "comparator");
-            this.size = size;
-            this.characteristics = ORDERED | SORTED | DISTINCT | SIZED | IMMUTABLE;
+            stack = new ArrayDeque<N>();
+            this.sizeEstimate = size;
+            this.characteristics = ordered(sized(additionalCharacteristics));
         }
 
-        private RBSpliterator(Comparator<? super K> comparator, int size, int characteristics) {
-            this.comparator = comparator;
-            this.size = size;
-            this.characteristics = nonSized(characteristics);
+        protected RBSpliterator(int sizeEstimate, int additionalCharacteristics) {
+            this.sizeEstimate = sizeEstimate;
+            this.characteristics = ordered(nonSized(additionalCharacteristics));
+        }
+
+        private static int sized(int characteristics) {
+            return characteristics | SIZED;
+        }
+
+        private static int ordered(int characteristics) {
+            return characteristics | ORDERED;
         }
 
         private static int nonSized(int characteristics) {
@@ -685,61 +691,97 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         protected void pushAll(N node) {
             while (node != null) {
                 stack.addFirst(node);
-                node = (asc ? node.left : node.right);
+                node = node.left;
             }
         }
 
         @Override
-        public boolean tryAdvance(Consumer<? super N> action) {
+        public boolean tryAdvance(Consumer<? super T> action) {
             init();
             if (stack.isEmpty()) {
                 return false;
             }
             N result = stack.removeFirst();
-            action.accept(result);
+            action.accept(apply(result));
             pushAll(result.right);
             return true;
         }
 
         @Override
-        public void forEachRemaining(Consumer<? super N> action) {
+        public void forEachRemaining(Consumer<? super T> action) {
             if (root != null) {
-                stack.addFirst(root);
-            }
-            while (!stack.isEmpty()) {
-                forEach(stack.removeFirst(), action);
+                forEach(root, action);
+                root = null;
+            } else {
+                while (!stack.isEmpty()) {
+                    N next = stack.removeFirst();
+                    action.accept(apply(next));
+                    if (next.right != null) {
+                        forEach(next.right, action);
+                    }
+                }
             }
         }
 
-        private void forEach(N node, Consumer<? super N> action) {
+        private void forEach(N node, Consumer<? super T> action) {
             if (node.left != null) {
                 forEach(node.left, action);
             }
-            action.accept(node);
+            action.accept(apply(node));
             if (node.right != null) {
                 forEach(node.right, action);
             }
         }
 
         @Override
-        public Spliterator<N> trySplit() {
-            init();
+        public Spliterator<T> trySplit() {
+            if (root != null) {
+                return splitRoot();
+            } else {
+                return splitStack();
+            }
+        }
+
+        private Spliterator<T> splitRoot() {
+            if (root.left == null || root.right == null) {
+                return null;
+            }
+            RBSpliterator<T, N> prefix = split();
+            prefix.stack = new ArrayDeque<>();
+            prefix.root = root.left;
+
+            this.stack.push(root);
+            this.root = null;
+
+            return prefix;
+        }
+
+        private Spliterator<T> splitStack() {
             if (stack.size() < 2) {
                 return null;
             }
             N mid = stack.removeLast();
-            RBSpliterator<K, N> prefix = new RBSpliterator<K, N>(comparator, size / 2, characteristics);
+            RBSpliterator<T, N> prefix = split();
             prefix.stack = this.stack;
 
             this.stack = new ArrayDeque<>();
             this.stack.push(mid);
-            this.size = this.size - prefix.size;
+
             return prefix;
         }
 
+        private RBSpliterator<T, N> split() {
+            return newSpliterator(sizeEstimate >>>= 1);
+
+        }
+
+        protected abstract RBSpliterator<T, N> newSpliterator(int sizeEstimate);
+
+        protected abstract T apply(N node);
+
         @Override
         public long estimateSize() {
-            return size;
+            return sizeEstimate;
         }
 
         @Override
@@ -747,9 +789,5 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             return characteristics;
         }
 
-        @Override
-        public Comparator<? super N> getComparator() {
-            return (a, b) -> comparator.compare(a.key, b.key);
-        }
     }
 }

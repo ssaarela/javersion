@@ -25,11 +25,11 @@ import org.javersion.util.AbstractHashTrie.Node;
 
 
 public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMap<K, V> {
-    
+
     private MMap<K, V> map;
-    
+
     private V previousValue;
-    
+
     private final Merger<Entry<K, V>> defaultMerger = new Merger<Map.Entry<K,V>>() {
 
         @Override
@@ -48,7 +48,7 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
             previousValue = oldEntry.getValue();
         }
     };
-    
+
     public MutableHashMap() {
         this.map = new MMap<K, V>();
     }
@@ -56,8 +56,8 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
     public MutableHashMap(int expectedSize) {
         this.map = new MMap<K, V>(expectedSize);
     }
-    
-    MutableHashMap(Node<K, AbstractHashMap.Entry<K, V>> root, int size) {
+
+    MutableHashMap(Node<K, AbstractHashMap.EntryNode<K, V>> root, int size) {
         this.map = new MMap<K, V>(root, size);
     }
 
@@ -89,8 +89,12 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
             public int size() {
                 return map.size();
             }
+
+            // TODO: clear, contains etc
         };
     }
+
+    // TODO: values(), keySet() with spliterator()
 
     @Override
     public V put(final K key, final V value) {
@@ -143,74 +147,74 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
         return map.toPersistentMap();
     }
 
-    
+
     private static class MMap<K, V> extends AbstractHashMap<K, V, MMap<K, V>> {
-        
+
         private final Thread owner = Thread.currentThread();
-        
+
         private UpdateContext<Map.Entry<K, V>>  updateContext;
-        
-        private Node<K, Entry<K, V>> root;
-        
+
+        private Node<K, EntryNode<K, V>> root;
+
         private int size;
-        
+
         @SuppressWarnings("unchecked")
         private MMap(int expectedSize) {
             this(expectedSize, EMPTY_NODE, 0);
         }
-        
+
         @SuppressWarnings("unchecked")
         private MMap() {
             this(EMPTY_NODE, 0);
         }
-    
-        private MMap(Node<K, Entry<K, V>> root, int size) {
+
+        private MMap(Node<K, EntryNode<K, V>> root, int size) {
             this(32, root, size);
         }
-        
-        private MMap(int expectedSize, Node<K, Entry<K, V>> root, int size) {
+
+        private MMap(int expectedSize, Node<K, EntryNode<K, V>> root, int size) {
             this.updateContext = new UpdateContext<Map.Entry<K, V>>(expectedSize);
             this.root = root;
             this.size = size;
         }
-    
+
         @Override
-        protected Node<K, Entry<K, V>> root() {
+        protected Node<K, EntryNode<K, V>> root() {
             verifyThread();
             return root;
         }
-    
+
         @Override
         protected MMap<K, V> self() {
             return this;
         }
-        
+
         public PersistentHashMap<K, V> toPersistentMap() {
             verifyThread();
             updateContext.commit();
             return PersistentHashMap.create(root, size);
         }
-        
+
         private void verifyThread() {
             if (owner != Thread.currentThread()) {
                 throw new IllegalStateException("MutableMap should only be accessed form the thread it was created in.");
             }
         }
-    
+
         @Override
         public int size() {
             verifyThread();
             return size;
         }
-    
+
         @SuppressWarnings("unchecked")
         @Override
-        protected MMap<K, V> doReturn(Node<K, Entry<K, V>> newRoot, int newSize) {
-            this.root = (Node<K, Entry<K, V>>) (newRoot == null ? EMPTY_NODE : newRoot);
+        protected MMap<K, V> doReturn(Node<K, EntryNode<K, V>> newRoot, int newSize) {
+            this.root = (Node<K, EntryNode<K, V>>) (newRoot == null ? EMPTY_NODE : newRoot);
             this.size = newSize;
             return this;
         }
-        
+
         @Override
         protected UpdateContext<Map.Entry<K, V>> updateContext(int expectedUpdates, Merger<Map.Entry<K, V>> merger) {
             verifyThread();
@@ -222,7 +226,7 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
             }
             return updateContext;
         }
-        
+
         @Override
         protected void commit(UpdateContext<?> updateContext) {
             // Nothing to do here

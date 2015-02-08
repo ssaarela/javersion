@@ -21,18 +21,18 @@ import java.util.Iterator;
 import org.javersion.util.AbstractHashTrie.Node;
 
 public class MutableHashSet<E> extends AbstractSet<E> implements MutableSet<E> {
-    
+
     private MSet<E> set;
-    
+
     public MutableHashSet() {
         this.set = new MSet<E>(32);
     }
-    
+
     public MutableHashSet(int expectedSize) {
         this.set = new MSet<E>(expectedSize);
     }
-    
-    MutableHashSet(Node<E, AbstractTrieSet.Entry<E>> root, int size) {
+
+    MutableHashSet(Node<E, AbstractTrieSet.EntryNode<E>> root, int size) {
         this.set = new MSet<E>(root, size);
     }
 
@@ -40,14 +40,14 @@ public class MutableHashSet<E> extends AbstractSet<E> implements MutableSet<E> {
     public boolean add(E e) {
         int size = set.size;
         set.conj(e);
-        return size != set.size; 
+        return size != set.size;
     }
-    
+
     @Override
     public boolean addAllFrom(Iterable<E> iterable) {
         int size = set.size;
         set.conjAll(iterable);
-        return size != set.size; 
+        return size != set.size;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class MutableHashSet<E> extends AbstractSet<E> implements MutableSet<E> {
     public int size() {
         return set.size();
     }
-    
+
     @Override
     public boolean remove(Object o) {
         int size = set.size;
@@ -85,77 +85,77 @@ public class MutableHashSet<E> extends AbstractSet<E> implements MutableSet<E> {
     }
 
     private static class MSet<E> extends AbstractTrieSet<E, MSet<E>> {
-        
+
         private final Thread owner = Thread.currentThread();
-        
-        private UpdateContext<Entry<E>> updateContext;
-        
-        private Node<E, Entry<E>> root;
-        
+
+        private UpdateContext<EntryNode<E>> updateContext;
+
+        private Node<E, EntryNode<E>> root;
+
         private int size;
-    
+
         private MSet(int expectedSize) {
             this(expectedSize, null, 0);
         }
-        
-        private MSet(Node<E, Entry<E>> root, int size) {
+
+        private MSet(Node<E, EntryNode<E>> root, int size) {
             this(32, root, size);
         }
-        
+
         @SuppressWarnings("unchecked")
-        private MSet(int expectedSize, Node<E, Entry<E>> root, int size) {
+        private MSet(int expectedSize, Node<E, EntryNode<E>> root, int size) {
             this.updateContext = new UpdateContext<>(expectedSize);
             this.root = root != null ? root : EMPTY_NODE;
             this.size = size;
         }
-        
+
         public PersistentHashSet<E> toPersistentSet() {
             verifyThread();
             updateContext.commit();
             return new PersistentHashSet<>(root, size);
         }
-    
+
         private void verifyThread() {
             if (owner != Thread.currentThread()) {
                 throw new IllegalStateException("MutableMap should only be accessed form the thread it was created in.");
             }
         }
-    
+
         @Override
         public int size() {
             verifyThread();
             return size;
         }
-    
+
         @Override
         @SuppressWarnings("unchecked")
-        protected MSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
+        protected MSet<E> doReturn(Node<E, EntryNode<E>> newRoot, int newSize) {
             verifyThread();
             root = newRoot != null ? newRoot : EMPTY_NODE;
             size = newSize;
             return this;
         }
-    
+
         @Override
-        protected Node<E, Entry<E>> root() {
+        protected Node<E, EntryNode<E>> root() {
             return root;
         }
-        
+
         @Override
-        protected UpdateContext<Entry<E>> updateContext(int expectedUpdates, Merger<Entry<E>> merger) {
+        protected UpdateContext<EntryNode<E>> updateContext(int expectedUpdates, Merger<EntryNode<E>> merger) {
             verifyThread();
             if (updateContext.isCommitted()) {
-                updateContext = new UpdateContext<Entry<E>>(expectedUpdates, merger);
+                updateContext = new UpdateContext<EntryNode<E>>(expectedUpdates, merger);
             } else {
                 updateContext.merger(merger);
             }
             return updateContext;
         }
-        
+
         @Override
         protected void commit(UpdateContext<?> updateContext) {
             // Nothing to do here
         }
-    
+
     }
 }

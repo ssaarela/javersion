@@ -17,17 +17,17 @@ package org.javersion.util;
 
 
 public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E>> implements PersistentSet<E> {
-    
-    private final Node<E, Entry<E>> root;
-    
+
+    private final Node<E, EntryNode<E>> root;
+
     private final int size;
 
     public PersistentHashSet() {
         this(null, 0);
     }
-    
+
     @SuppressWarnings("unchecked")
-    PersistentHashSet(Node<E, Entry<E>> root, int size) {
+    PersistentHashSet(Node<E, EntryNode<E>> root, int size) {
         this.root = root != null ? root : EMPTY_NODE;
         this.size = size;
     }
@@ -36,7 +36,7 @@ public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E
     public MutableHashSet<E> toMutableSet() {
         return new MutableHashSet<E>(root, size);
     }
-    
+
     @Override
     public ImmutableTrieSet<E> asSet() {
         return new ImmutableTrieSet<E>(this);
@@ -48,7 +48,7 @@ public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E
     }
 
     @Override
-    protected PersistentHashSet<E> doReturn(Node<E, Entry<E>> newRoot, int newSize) {
+    protected PersistentHashSet<E> doReturn(Node<E, EntryNode<E>> newRoot, int newSize) {
         if (newRoot == root) {
             return this;
         }
@@ -56,7 +56,7 @@ public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E
     }
 
     @Override
-    protected Node<E, Entry<E>> root() {
+    protected Node<E, EntryNode<E>> root() {
         return root;
     }
 }

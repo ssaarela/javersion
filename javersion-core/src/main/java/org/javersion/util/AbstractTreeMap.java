@@ -149,17 +149,17 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
             @Override
             public Iterator<Entry<K, V>> iterator() {
                 return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive),
-                        mapEntryFunction());
+                        MapUtils.<K, V>mapEntryFunction());
             }
         };
     }
 
     public Iterable<K> keys() {
-        return Iterables.transform(this, mapKeyFunction());
+        return Iterables.transform(this, MapUtils.<K>mapKeyFunction());
     }
 
     public Iterable<V> values() {
-        return Iterables.transform(this, mapValueFunction());
+        return Iterables.transform(this, MapUtils.<V>mapValueFunction());
     }
 
     public String toString() {
@@ -226,6 +226,92 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
             sb.append(color).append('(').append(key).append(':').append(value).append(')');
             return sb;
         }
+    }
+
+    static class EntrySpliterator<K, V> extends RBSpliterator<Map.Entry<K, V>, Node<K, V>> {
+
+        private final Comparator<? super K> comparator;
+
+        public EntrySpliterator(Node<K, V> root, int size, Comparator<? super K> comparator, boolean immutable) {
+            super(root, size, SORTED | DISTINCT | (immutable ? IMMUTABLE : 0));
+            this.comparator = comparator;
+        }
+
+        protected EntrySpliterator(int sizeEstimate, Comparator<? super K> comparator, boolean immutable) {
+            super(sizeEstimate, SORTED | DISTINCT | (immutable ? IMMUTABLE : 0));
+            this.comparator = comparator;
+        }
+
+        @Override
+        protected RBSpliterator<Entry<K, V>, Node<K, V>> newSpliterator(int sizeEstimate) {
+            return new EntrySpliterator<>(sizeEstimate, comparator, hasCharacteristics(IMMUTABLE));
+        }
+
+        @Override
+        protected Entry<K, V> apply(Node<K, V> node) {
+            return node;
+        }
+
+        @Override
+        public Comparator<? super Map.Entry<K, V>> getComparator() {
+            return Map.Entry.comparingByKey(comparator);
+        }
+    }
+
+    static class KeySpliterator<K, V> extends RBSpliterator<K, Node<K, V>> {
+
+        private final Comparator<? super K> comparator;
+
+        public KeySpliterator(Node<K, V> root, int size, Comparator<? super K> comparator, boolean immutable) {
+            super(root, size, SORTED | DISTINCT | (immutable ? IMMUTABLE : 0));
+            this.comparator = comparator;
+        }
+
+        protected KeySpliterator(int sizeEstimate, Comparator<? super K> comparator, boolean immutable) {
+            super(sizeEstimate, SORTED | DISTINCT | (immutable ? IMMUTABLE : 0));
+            this.comparator = comparator;
+        }
+
+        @Override
+        protected RBSpliterator<K, Node<K, V>> newSpliterator(int sizeEstimate) {
+            return new KeySpliterator<>(sizeEstimate, comparator, hasCharacteristics(IMMUTABLE));
+        }
+
+        @Override
+        protected K apply(Node<K, V> node) {
+            return node.key;
+        }
+
+        @Override
+        public Comparator<? super K> getComparator() {
+            return comparator;
+        }
+    }
+
+    static class ValueSpliterator<K, V> extends RBSpliterator<V, Node<K, V>> {
+
+        private final Comparator<? super K> comparator;
+
+        public ValueSpliterator(Node<K, V> root, int size, Comparator<? super K> comparator, boolean immutable) {
+            super(root, size, (immutable ? IMMUTABLE : 0));
+            this.comparator = comparator;
+        }
+
+        protected ValueSpliterator(int sizeEstimate, Comparator<? super K> comparator, boolean immutable) {
+            super(sizeEstimate, (immutable ? IMMUTABLE : 0));
+            this.comparator = comparator;
+        }
+
+        @Override
+        protected RBSpliterator<V, Node<K, V>> newSpliterator(int sizeEstimate) {
+            return new ValueSpliterator<>(sizeEstimate, comparator, hasCharacteristics(IMMUTABLE));
+        }
+
+        @Override
+        protected V apply(Node<K, V> node) {
+            return node.value;
+        }
+
     }
 
 }

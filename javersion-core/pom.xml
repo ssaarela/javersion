@@ -158,7 +158,7 @@
         <!-- Usage: mvn compile org.pitest:pitest-maven:mutationCoverage -->
         <groupId>org.pitest</groupId>
         <artifactId>pitest-maven</artifactId>
-        <version>1.1.0</version>
+        <version>1.1.4</version>
         <configuration>
           <jvmArgs>
             <value>-XX:-UseSplitVerifier</value>

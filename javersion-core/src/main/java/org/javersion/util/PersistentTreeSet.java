@@ -16,10 +16,14 @@
 package org.javersion.util;
 
 import static com.google.common.collect.Iterables.transform;
+import static java.util.Arrays.asList;
+import static java.util.Spliterators.emptySpliterator;
 import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import org.javersion.util.PersistentTreeSet.Node;
 
@@ -27,10 +31,10 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
 public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, PersistentTreeSet<E>> {
-    
+
     @SuppressWarnings("rawtypes")
     private static final PersistentTreeSet EMPTY = new PersistentTreeSet();
-    
+
     @SuppressWarnings("rawtypes")
     private static final Function GET_ELEMENT = new Function() {
         @Override
@@ -43,16 +47,24 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
     public static <E> PersistentTreeSet<E> empty() {
         return EMPTY;
     }
-    
+
     public static <E> PersistentTreeSet<E> empty(Comparator<? super E> comparator) {
         return new PersistentTreeSet<E>(comparator);
     }
-    
-    
+
+    public static <E extends Comparable<? super E>> PersistentTreeSet<E> of(E... elements) {
+        return new PersistentTreeSet<E>().conjAll(asList(elements));
+    }
+
+    public static <E> PersistentTreeSet<E> of(Comparator<? super E> comparator, E... elements) {
+        return new PersistentTreeSet<E>(comparator).conjAll(asList(elements));
+    }
+
+
     private final Node<E> root;
 
     private final int size;
-    
+
     private PersistentTreeSet() {
         super();
         root = null;
@@ -78,7 +90,7 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
     public boolean contains(E key) {
         return find(root, key) != null;
     }
-    
+
     Node<E> root() {
         return root;
     }
@@ -102,6 +114,22 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         return Iterators.transform(doIterator(root, true), GET_ELEMENT);
     }
 
+    public Spliterator<E> spliterator() {
+        if (root != null) {
+            return new ElementSpliterator<E>(root, size, comparator);
+        } else {
+            return emptySpliterator();
+        }
+    }
+
+    public Stream<E> stream() {
+        return StreamSupport.stream(spliterator(), false);
+    }
+
+    public Stream<E> parallelStream() {
+        return StreamSupport.stream(spliterator(), true);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     protected PersistentTreeSet<E> doReturn(Comparator<? super E> comparator, Node<E> newRoot, int newSize) {
@@ -113,9 +141,8 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         return new PersistentTreeSet<E>(comparator, newRoot, newSize);
     }
 
-    
     public String toString() {
-        return root == null ? "NIL" : root.toString();
+        return stream().map(Objects::toString).collect(Collectors.joining(", ", "[", "]"));
     }
 
     private static final class EntryToNode<E> implements Function<E, Node<E>> {
@@ -136,15 +163,15 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         public Node(UpdateContext<? super Node<E>> context, E key, Color color) {
             this(context, key, color, null, null);
         }
-        
+
         public Node(UpdateContext<? super Node<E>> context, E key, Color color, Node<E> left, Node<E> right) {
             super(context, key, color, left, right);
         }
-        
+
         public E getKey() {
             return key;
         }
-        
+
         @Override
         public Node<E> self() {
             return this;
@@ -159,5 +186,36 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         protected Node<E> replaceWith(UpdateContext<? super Node<E>> currentContext, Node<E> node) {
             return this;
         }
+    }
+
+    static class ElementSpliterator<E> extends RBSpliterator<E, Node<E>> {
+
+        private final Comparator<? super E> comparator;
+
+        public ElementSpliterator(Node<E> root, int size, Comparator<? super E> comparator) {
+            super(root, size, SORTED | DISTINCT | IMMUTABLE);
+            this.comparator = comparator;
+        }
+
+        protected ElementSpliterator(int sizeEstimate, Comparator<? super E> comparator) {
+            super(sizeEstimate, SORTED | DISTINCT | IMMUTABLE);
+            this.comparator = comparator;
+        }
+
+        @Override
+        protected RBSpliterator<E, Node<E>> newSpliterator(int sizeEstimate) {
+            return new ElementSpliterator(sizeEstimate, comparator);
+        }
+
+        @Override
+        protected E apply(Node<E> node) {
+            return node.key;
+        }
+
+        @Override
+        public Comparator<? super E> getComparator() {
+            return comparator;
+        }
+
     }
 }

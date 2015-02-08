@@ -15,8 +15,15 @@
  */
 package org.javersion.util;
 
+import static java.util.Spliterators.emptySpliterator;
+
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Spliterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import com.google.common.collect.Iterables;
 
 public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
 
@@ -24,10 +31,10 @@ public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
 
     PersistentMap<K, V> assocAll(Map<? extends K, ? extends V> map);
 
-    PersistentMap<K, V> assocAll(Iterable<Map.Entry<K, V>> entries);
+    PersistentMap<K, V> assocAll(Iterable<Entry<K, V>> entries);
 
-    PersistentMap<K, V> merge(K key, V value, Merger<Map.Entry<K, V>> merger);
-    
+    PersistentMap<K, V> merge(K key, V value, Merger<Entry<K, V>> merger);
+
     PersistentMap<K, V> mergeAll(Map<? extends K, ? extends V> map, Merger<Entry<K, V>> merger);
 
     PersistentMap<K, V> mergeAll(Iterable<Entry<K, V>> entries, Merger<Entry<K, V>> merger);
@@ -40,15 +47,50 @@ public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
 
     boolean containsKey(Object key);
 
-    Iterable<K> keys();
-    
-    Iterable<V> values();
-    
+    Spliterator<Entry<K, V>> spliterator();
+
+    Spliterator<K> keySpliterator();
+
+    Spliterator<V> valueSpliterator();
+
     int size();
-    
+
     boolean isEmpty();
-    
+
     MutableMap<K, V> toMutableMap();
-    
+
     Map<K, V> asMap();
+
+    default Iterable<K> keys() {
+        return Iterables.transform(this, (Entry<K, V> e) -> e.getKey());
+    }
+
+    default Iterable<V> values() {
+        return Iterables.transform(this, (Entry<K, V> e) -> e.getValue());
+    }
+
+    default Stream<Entry<K, V>> stream() {
+        return StreamSupport.stream(spliterator(), false);
+    }
+
+    default Stream<Entry<K, V>> parallelStream() {
+        return StreamSupport.stream(spliterator(), true);
+    }
+
+    default Stream<K> keyStream() {
+        return StreamSupport.stream(keySpliterator(), false);
+    }
+
+    default Stream<K> parallelKeyStream() {
+        return StreamSupport.stream(keySpliterator(), true);
+    }
+
+    default Stream<V> valueStream() {
+        return StreamSupport.stream(valueSpliterator(), false);
+    }
+
+    default Stream<V> parallelValueStream() {
+        return StreamSupport.stream(valueSpliterator(), true);
+    }
+
 }

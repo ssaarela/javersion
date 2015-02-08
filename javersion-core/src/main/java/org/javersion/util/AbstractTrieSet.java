@@ -21,20 +21,20 @@ import static com.google.common.collect.Iterators.transform;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.javersion.util.AbstractTrieSet.Entry;
+import org.javersion.util.AbstractTrieSet.EntryNode;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
 
-public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extends AbstractHashTrie<E, Entry<E>, S> implements Iterable<E> {
-    
+public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extends AbstractHashTrie<E, EntryNode<E>, S> implements Iterable<E> {
+
     @SuppressWarnings("rawtypes")
     private static final Function ELEMENT_TO_ENTRY = new Function() {
         @SuppressWarnings("unchecked")
         @Override
-        public Entry apply(Object input) {
-            return new Entry(input);
+        public EntryNode apply(Object input) {
+            return new EntryNode(input);
         }
     };
 
@@ -42,19 +42,19 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
     private static final Function ENTRY_TO_ELEMENT = new Function() {
         @Override
         public Object apply(Object input) {
-            return ((Entry) input).element();
+            return ((EntryNode) input).element();
         }
     };
 
     public S conj(E element) {
-        final UpdateContext<Entry<E>> updateContext = updateContext(1, null);
+        final UpdateContext<EntryNode<E>> updateContext = updateContext(1, null);
         try {
-            return doAdd(updateContext, new Entry<E>(element));
+            return doAdd(updateContext, new EntryNode<E>(element));
         } finally {
             commit(updateContext);
         }
     }
-    
+
     public S conjAll(final Collection<? extends E> elements) {
         return conjAll(elements, elements.size());
     }
@@ -62,36 +62,36 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
     public S conjAll(AbstractTrieSet<? extends E, ?> elements) {
         return conjAll(elements, elements.size());
     }
-    
+
     public S conjAll(final Iterable<? extends E> elements) {
         return conjAll(elements, 32);
     }
 
     @SuppressWarnings("unchecked")
     private S conjAll(final Iterable<? extends E> elements, int size) {
-        final UpdateContext<Entry<E>> updateContext = updateContext(size, null);
+        final UpdateContext<EntryNode<E>> updateContext = updateContext(size, null);
         try {
             return (S) doAddAll(updateContext, transform(elements.iterator(), ELEMENT_TO_ENTRY));
         } finally {
             commit(updateContext);
         }
     }
-    
+
     public S disjoin(Object element) {
-        final UpdateContext<Entry<E>> updateContext = updateContext(1, null);
+        final UpdateContext<EntryNode<E>> updateContext = updateContext(1, null);
         try {
             return doRemove(updateContext, element);
         } finally {
             commit(updateContext);
         }
     }
-    
+
     @SuppressWarnings("unchecked")
     public Iterator<E> iterator() {
         return Iterators.transform(doIterator(), ENTRY_TO_ELEMENT);
     }
-    
-    protected UpdateContext<Entry<E>> updateContext(int expectedSize, Merger<Entry<E>> merger) {
+
+    protected UpdateContext<EntryNode<E>> updateContext(int expectedSize, Merger<EntryNode<E>> merger) {
         return new UpdateContext<>(expectedSize, merger);
     }
 
@@ -99,20 +99,20 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
         return containsKey(o);
     }
 
-    public static final class Entry<E> extends AbstractHashTrie.Entry<E, Entry<E>> {
-        
-        public Entry(E element) {
+    public static final class EntryNode<E> extends AbstractHashTrie.EntryNode<E, EntryNode<E>> {
+
+        public EntryNode(E element) {
             super(element);
         }
-        
+
         public E element() {
             return key;
         }
-        
+
         @Override
-        public Node<E, Entry<E>> assocInternal(final UpdateContext<? super Entry<E>>  currentContext, final int shift, final int hash, final Entry<E> newEntry) {
+        public Node<E, EntryNode<E>> assocInternal(final UpdateContext<? super EntryNode<E>>  currentContext, final int shift, final int hash, final EntryNode<E> newEntry) {
             if (equal(this.key, newEntry.key)) {
-                currentContext.merge(this, newEntry); 
+                currentContext.merge(this, newEntry);
                 return this;
             } else {
                 return split(currentContext, shift, hash, newEntry);

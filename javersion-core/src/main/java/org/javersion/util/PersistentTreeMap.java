@@ -15,12 +15,17 @@
  */
 package org.javersion.util;
 
+import static java.util.Spliterators.emptySpliterator;
+
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Spliterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> implements PersistentSortedMap<K, V> {
-    
+
     @SuppressWarnings("rawtypes")
     public static final PersistentTreeMap EMPTY = new PersistentTreeMap();
 
@@ -28,32 +33,32 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
     public static <K, V> PersistentTreeMap<K, V> empty() {
         return EMPTY;
     }
-    
+
     public static <K, V> PersistentTreeMap<K, V> empty(Comparator<? super K> comparator) {
         return new PersistentTreeMap<K, V>(comparator);
     }
-    
+
     @SuppressWarnings("unchecked")
     public static <K, V> PersistentTreeMap<K, V> copyOf(Map<? extends K, ? extends V> map) {
         return ((PersistentTreeMap<K, V>) EMPTY).assocAll(map);
     }
-    
+
     public static <K, V> PersistentTreeMap<K, V> of() {
         return empty();
     }
-    
+
     @SuppressWarnings("unchecked")
     public static <K, V> PersistentTreeMap<K, V> of(K k1, V v1) {
         return (PersistentTreeMap<K, V>) EMPTY.assoc(k1, v1);
     }
-    
+
     public static <K, V> PersistentTreeMap<K, V> of(K k1, V v1, K k2, V v2) {
         MutableTreeMap<K, V> map = new MutableTreeMap<K, V>();
         map.put(k1, v1);
         map.put(k2, v2);
         return map.toPersistentMap();
     }
-    
+
     public static <K, V> PersistentTreeMap<K, V> of(K k1, V v1, K k2, V v2, K k3, V v3) {
         MutableTreeMap<K, V> map = new MutableTreeMap<K, V>();
         map.put(k1, v1);
@@ -61,12 +66,12 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
         map.put(k3, v3);
         return map.toPersistentMap();
     }
-    
-    
+
+
     private final Node<K, V> root;
 
     private final int size;
-    
+
     private PersistentTreeMap() {
         root = null;
         size = 0;
@@ -88,7 +93,7 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
     public int size() {
         return size;
     }
-    
+
     @Override
     protected Node<K, V> root() {
         return root;
@@ -127,6 +132,30 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
     @Override
     public Entry<K, V> getLastEntry() {
         return findMax(root);
+    }
+
+    public Spliterator<Entry<K, V>> spliterator() {
+        if (root != null) {
+            return new EntrySpliterator<K, V>(root, size, comparator, true);
+        } else {
+            return emptySpliterator();
+        }
+    }
+
+    public Spliterator<K> keySpliterator() {
+        if (root != null) {
+            return new KeySpliterator<K, V>(root, size, comparator, true);
+        } else {
+            return emptySpliterator();
+        }
+    }
+
+    public Spliterator<V> valueSpliterator() {
+        if (root != null) {
+            return new ValueSpliterator<K, V>(root, size, comparator, true);
+        } else {
+            return emptySpliterator();
+        }
     }
 
 }
