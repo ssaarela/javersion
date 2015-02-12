@@ -20,6 +20,9 @@ import static com.google.common.collect.Iterators.transform;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Objects;
+import java.util.Spliterator;
+import java.util.stream.Collectors;
 
 import org.javersion.util.AbstractTrieSet.EntryNode;
 
@@ -77,7 +80,7 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
         }
     }
 
-    public S disjoin(Object element) {
+    public S disj(Object element) {
         final UpdateContext<EntryNode<E>> updateContext = updateContext(1, null);
         try {
             return doRemove(updateContext, element);
@@ -120,4 +123,24 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
         }
     }
 
+    static class ElementSpliterator<E> extends NodeSpliterator<E, E, EntryNode<E>> {
+
+        public ElementSpliterator(Node<E, EntryNode<E>> node, int sizeEstimate, boolean immutable) {
+            super(node, sizeEstimate, DISTINCT | (immutable ? IMMUTABLE : 0));
+        }
+
+        public ElementSpliterator(Node<E, EntryNode<E>>[] array, int pos, int limit, int sizeEstimate, boolean immutable) {
+            super(array, pos, limit, sizeEstimate, DISTINCT | (immutable ? IMMUTABLE : 0));
+        }
+
+        @Override
+        protected NodeSpliterator<E, E, EntryNode<E>> newSubSpliterator(Node<E, EntryNode<E>>[] array, int pos, int limit, int sizeEstimate) {
+            return new ElementSpliterator<>(array, pos, limit, sizeEstimate, hasCharacteristics(IMMUTABLE));
+        }
+
+        @Override
+        protected E apply(EntryNode<E> entry) {
+            return entry.key;
+        }
+    }
 }

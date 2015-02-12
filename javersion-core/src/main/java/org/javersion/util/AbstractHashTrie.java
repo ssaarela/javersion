@@ -47,10 +47,6 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
 
     protected abstract Node<K, E> root();
 
-    protected E find(Object key) {
-        return root().find(key);
-    }
-
     public boolean containsKey(Object key) {
         return root().find(key) != null;
     }
@@ -187,10 +183,6 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
 
         public int getHash() {
             return hash(key);
-        }
-
-        public String toString() {
-            return "" + key;
         }
 
         @SuppressWarnings("unchecked")
@@ -423,22 +415,6 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
             return children;
         }
 
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("#{");
-            boolean first = true;
-            for (Node<K, E> child : children) {
-                if (child != null) {
-                    if (!first) {
-                        sb.append(", ");
-                    }
-                    first = false;
-                    sb.append(child);
-                }
-            }
-            sb.append("}");
-            return sb.toString();
-        }
     }
 
     static final class ArrayNode<K, E extends EntryNode<K, E>> extends Node<K, E> {
@@ -650,22 +626,6 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
             return entries;
         }
 
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("[");
-            boolean first = true;
-            for (E entry : entries) {
-                if (entry != null) {
-                    if (!first) {
-                        sb.append(", ");
-                    }
-                    first = false;
-                    sb.append(entry);
-                }
-            }
-            sb.append("]");
-            return sb.toString();
-        }
     }
 
     static class ArrayIterator<K, E extends EntryNode<K, E>> extends UnmodifiableIterator<E> {

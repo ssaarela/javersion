@@ -16,6 +16,10 @@
 package org.javersion.util;
 
 
+import java.util.Objects;
+import java.util.Spliterator;
+import java.util.stream.Collectors;
+
 public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E>> implements PersistentSet<E> {
 
     private final Node<E, EntryNode<E>> root;
@@ -38,13 +42,18 @@ public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E
     }
 
     @Override
-    public ImmutableTrieSet<E> asSet() {
-        return new ImmutableTrieSet<E>(this);
+    public ImmutableSet<E> asSet() {
+        return new ImmutableSet<E>(this);
     }
 
     @Override
     public int size() {
         return size;
+    }
+
+    @Override
+    public Spliterator<E> spliterator() {
+        return new ElementSpliterator<E>(root, size, true);
     }
 
     @Override
@@ -59,4 +68,10 @@ public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E
     protected Node<E, EntryNode<E>> root() {
         return root;
     }
+
+    @Override
+    public String toString() {
+        return stream().map(Objects::toString).collect(Collectors.joining(", ", "[", "]"));
+    }
+
 }

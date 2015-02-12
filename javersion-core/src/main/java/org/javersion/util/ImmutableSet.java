@@ -19,15 +19,15 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 
-class ImmutableTrieSet<E> extends AbstractSet<E> {
+class ImmutableSet<E> extends AbstractSet<E> {
 
-    private PersistentHashSet<E> set;
-    
-    ImmutableTrieSet(PersistentHashSet<E> set) {
+    private PersistentSet<E> set;
+
+    ImmutableSet(PersistentSet<E> set) {
         this.set = Check.notNull(set, "set");
     }
-    
-    public PersistentHashSet<E> toPersistentSet() {
+
+    public PersistentSet<E> toPersistentSet() {
         return set;
     }
 

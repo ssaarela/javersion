@@ -68,7 +68,7 @@ public class MutableHashSet<E> extends AbstractSet<E> implements MutableSet<E> {
     @Override
     public boolean remove(Object o) {
         int size = set.size;
-        set.disjoin(o);
+        set.disj(o);
         return size != set.size; // No need to verify thread again here
     }
 

@@ -22,15 +22,13 @@ import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import org.javersion.util.PersistentTreeSet.Node;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
-public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, PersistentTreeSet<E>> {
+public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, PersistentTreeSet<E>> implements PersistentSet<E> {
 
     @SuppressWarnings("rawtypes")
     private static final PersistentTreeSet EMPTY = new PersistentTreeSet();
@@ -49,7 +47,7 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
     }
 
     public static <E> PersistentTreeSet<E> empty(Comparator<? super E> comparator) {
-        return new PersistentTreeSet<E>(comparator);
+        return new PersistentTreeSet<>(comparator);
     }
 
     public static <E extends Comparable<? super E>> PersistentTreeSet<E> of(E... elements) {
@@ -57,7 +55,7 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
     }
 
     public static <E> PersistentTreeSet<E> of(Comparator<? super E> comparator, E... elements) {
-        return new PersistentTreeSet<E>(comparator).conjAll(asList(elements));
+        return new PersistentTreeSet<>(comparator).conjAll(asList(elements));
     }
 
 
@@ -87,7 +85,8 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         return size;
     }
 
-    public boolean contains(E key) {
+    @Override
+    public boolean contains(Object key) {
         return find(root, key) != null;
     }
 
@@ -95,18 +94,32 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         return root;
     }
 
+    @Override
+    public Set<E> asSet() {
+        return new ImmutableSet<>(this);
+    }
+
+    @Override
     public PersistentTreeSet<E> conj(E value) {
-        UpdateContext<Node<E>> context = new UpdateContext<Node<E>>(1);
-        return doAdd(context, root, new Node<E>(context, value, RED));
+        UpdateContext<Node<E>> context = new UpdateContext<>(1);
+        return doAdd(context, root, new Node<>(context, value, RED));
     }
 
-    public PersistentTreeSet<E> conjAll(Iterable<E> coll) {
-        final UpdateContext<Node<E>> context = new UpdateContext<Node<E>>(32);
-        return doAddAll(context, root, transform(coll, new EntryToNode<E>(context)));
+    @Override
+    public PersistentTreeSet<E> conjAll(Collection<? extends E> coll) {
+        final UpdateContext<Node<E>> context = new UpdateContext<>(32);
+        return doAddAll(context, root, transform(coll, new EntryToNode<>(context)));
     }
 
+    @Override
     public PersistentTreeSet<E> disj(Object keyObj) {
-        return doRemove(new UpdateContext<Node<E>>(1), root, keyObj);
+        return doRemove(new UpdateContext<>(1), root, keyObj);
+    }
+
+    @Override
+    public MutableSet<E> toMutableSet() {
+        // TODO
+        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -114,20 +127,13 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         return Iterators.transform(doIterator(root, true), GET_ELEMENT);
     }
 
+    @Override
     public Spliterator<E> spliterator() {
         if (root != null) {
             return new ElementSpliterator<E>(root, size, comparator);
         } else {
             return emptySpliterator();
         }
-    }
-
-    public Stream<E> stream() {
-        return StreamSupport.stream(spliterator(), false);
-    }
-
-    public Stream<E> parallelStream() {
-        return StreamSupport.stream(spliterator(), true);
     }
 
     @SuppressWarnings("unchecked")
@@ -138,7 +144,7 @@ public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, Persi
         } else if (newRoot == null) {
             return EMPTY;
         }
-        return new PersistentTreeSet<E>(comparator, newRoot, newSize);
+        return new PersistentTreeSet<>(comparator, newRoot, newSize);
     }
 
     public String toString() {
