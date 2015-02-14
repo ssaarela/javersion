@@ -17,11 +17,16 @@ package org.javersion.core;
 
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.javersion.util.MapUtils;
 import org.javersion.util.PersistentSortedMap;
@@ -116,5 +121,13 @@ public abstract class VersionGraph<K, V, M,
 
     public VersionNode<K, V, M> getTip() {
         return versionNodes.getLastEntry().getValue();
+    }
+
+    public Set<String> getBranches() {
+        return getHeads().keyStream().map(k -> k.branch).collect(toSet());
+    }
+
+    public List<Version<K, V, M>> getVersions() {
+        return versionNodes.valueStream().map(n -> n.version).collect(toList());
     }
 }

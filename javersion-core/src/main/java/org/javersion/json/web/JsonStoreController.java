@@ -15,18 +15,20 @@
  */
 package org.javersion.json.web;
 
-import static org.javersion.core.Diff.diff;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.javersion.core.IllegalVersionOrderException;
 import org.javersion.core.Merge;
+import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.json.JsonSerializer;
 import org.javersion.object.ObjectSerializer;
@@ -43,20 +45,62 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * GET: /objects/{objectId} - get default branch
+ * PUT: /objects/{objectId} - update default branch
+ *
+ * GET: /objects/{objectId}/{branch|revision}
+ * PUT: /objects/{objectId}/{branch|revision}
+ *
+ * GET: /versions/{objectId}
+ * PUT: /versions/{objectId} - rewrite
+ */
 @RestController
 public class JsonStoreController {
 
     @Inject
     ObjectVersionStoreJdbc<Void> objectVersionStore;
 
-    private final TypeMappings typeMappings = TypeMappings.builder().withMapping(new VersionPropertyMapping()).build();
+    private final TypeMappings typeMappings = TypeMappings.builder()
+            .withMapping(new VersionPropertyMapping())
+            .build();
 
     private final ObjectSerializer<VersionReference> metaSerializer = new ObjectSerializer<>(VersionReference.class, typeMappings);
 
     private JsonSerializer jsonSerializer = new JsonSerializer(metaSerializer.schemaRoot);
 
     @RequestMapping(value = "/objects/{objectId}", method = PUT)
-    public ResponseEntity<String> put(@PathVariable("objectId") String objectId, @RequestBody String json) {
+    public ResponseEntity<String> putObject(@PathVariable("objectId") String objectId, @RequestBody String json) {
+        return putObject(objectId, json, Version.DEFAULT_BRANCH);
+    }
+
+    @RequestMapping(value = "/objects/{objectId}/{branch}", method = PUT)
+    public ResponseEntity<String> putObjectOnBranch(@PathVariable("objectId") String objectId,
+                                            @PathVariable("branch") String branch,
+                                            @RequestBody String json) {
+        return putObject(objectId, json, branch);
+    }
+
+    @RequestMapping(value = "/objects/{objectId}", method = GET)
+    public ResponseEntity<String> getObject(@PathVariable("objectId") String objectId) {
+        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
+        if (versionGraph.isEmpty()) {
+            return new ResponseEntity<String>(NOT_FOUND);
+        }
+        return getResponse(objectId, versionGraph.mergeBranches(Version.DEFAULT_BRANCH));
+    }
+
+    @RequestMapping(value = "/objects/{objectId}/{branchOrRevision}", method = GET)
+    public ResponseEntity<String> getBranchOrRevision(@PathVariable("objectId") String objectId,
+                                                      @PathVariable("branchOrRevision") String branchOrRevision) {
+        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
+        if (versionGraph.isEmpty()) {
+            return new ResponseEntity<String>(NOT_FOUND);
+        }
+        return getResponse(objectId, versionGraph, branchOrRevision);
+    }
+
+    private ResponseEntity<String> putObject(String objectId, String json, String branch) {
         JsonSerializer.JsonPaths paths = jsonSerializer.parse(json);
         VersionReference ref = metaSerializer.fromPropertyMap(paths.meta);
         ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
@@ -64,24 +108,23 @@ public class JsonStoreController {
         if (ref != null) {
             versionBuilder.parents(ref._revs);
         }
+        versionBuilder.branch(branch);
         versionBuilder.changeset(paths.properties, versionGraph);
         ObjectVersion<Void> version = versionBuilder.build();
         objectVersionStore.append(objectId, version);
         objectVersionStore.commit();
-        return get(objectId);
+        return getObject(objectId);
     }
 
-    @RequestMapping(value = "/objects/{objectId}", method = GET)
-    public ResponseEntity<String> get(@PathVariable("objectId") String objectId) {
-        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
-        if (versionGraph.isEmpty()) {
-            return new ResponseEntity<String>(NOT_FOUND);
+    private ResponseEntity<String> getResponse(String objectId, ObjectVersionGraph<Void> versionGraph, String branchOrRevision) {
+        if (versionGraph.getBranches().contains(branchOrRevision)) {
+            return getResponse(objectId, versionGraph.mergeBranches(branchOrRevision));
+        } else {
+            return getResponse(objectId, versionGraph.mergeRevisions(new Revision(branchOrRevision)));
         }
-        return getResponse(objectId, versionGraph);
     }
 
-    private ResponseEntity<String> getResponse(String objectId, ObjectVersionGraph<Void> versionGraph) {
-        Merge<PropertyPath, Object, Void> merge = versionGraph.mergeBranches(Version.DEFAULT_BRANCH);
+    private ResponseEntity<String> getResponse(String objectId, Merge<PropertyPath, Object, Void> merge) {
         Map<PropertyPath, Object> properties = new HashMap<>(merge.getProperties());
         VersionReference ref = new VersionReference(objectId, merge.getMergeHeads(), merge.conflicts);
         properties.putAll(metaSerializer.toPropertyMap(ref));
