@@ -171,7 +171,7 @@ public class JsonSerializer {
 
     private boolean isIndexed(PropertyPath path) {
         if (schemaRoot != null) {
-            Schema schema = this.schemaRoot.get(path);
+            Schema schema = this.schemaRoot.find(path);
             return schema != null && schema.hasChild("");
         }
         return false;

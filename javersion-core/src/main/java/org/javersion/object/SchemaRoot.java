@@ -23,12 +23,20 @@ public class SchemaRoot extends Schema  {
     SchemaRoot() {}
 
     public Schema get(PropertyPath path) {
+        Schema schema = find(path);
+        if (schema == null) {
+            throw new IllegalArgumentException("Path not found: " + path);
+        }
+        return schema;
+    }
+
+    public Schema find(PropertyPath path) {
         Check.notNull(path, "path");
         Schema currentMapping = this;
         for (PropertyPath currentPath : path.toSchemaPath().asList()) {
             currentMapping = currentMapping.getChild(currentPath.getName());
             if (currentMapping == null) {
-                throw new IllegalArgumentException("Path not found: " + currentPath);
+                return null;
             }
         }
         return currentMapping;

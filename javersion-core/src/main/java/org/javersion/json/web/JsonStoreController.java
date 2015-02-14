@@ -15,18 +15,16 @@
  */
 package org.javersion.json.web;
 
+import static org.javersion.core.Version.DEFAULT_BRANCH;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.inject.Inject;
 
-import org.javersion.core.IllegalVersionOrderException;
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
@@ -43,7 +41,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * GET: /objects/{objectId} - get default branch
@@ -71,7 +72,7 @@ public class JsonStoreController {
 
     @RequestMapping(value = "/objects/{objectId}", method = PUT)
     public ResponseEntity<String> putObject(@PathVariable("objectId") String objectId, @RequestBody String json) {
-        return putObject(objectId, json, Version.DEFAULT_BRANCH);
+        return putObject(objectId, json, DEFAULT_BRANCH);
     }
 
     @RequestMapping(value = "/objects/{objectId}/{branch}", method = PUT)
@@ -82,22 +83,29 @@ public class JsonStoreController {
     }
 
     @RequestMapping(value = "/objects/{objectId}", method = GET)
-    public ResponseEntity<String> getObject(@PathVariable("objectId") String objectId) {
-        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
-        if (versionGraph.isEmpty()) {
-            return new ResponseEntity<String>(NOT_FOUND);
-        }
-        return getResponse(objectId, versionGraph.mergeBranches(Version.DEFAULT_BRANCH));
+    public ResponseEntity<String> getObject(@PathVariable("objectId") String objectId,
+                                            @RequestParam(value = "merge", required = false) Set<String> merge) {
+        return getObject(objectId, DEFAULT_BRANCH, merge);
     }
 
     @RequestMapping(value = "/objects/{objectId}/{branchOrRevision}", method = GET)
-    public ResponseEntity<String> getBranchOrRevision(@PathVariable("objectId") String objectId,
-                                                      @PathVariable("branchOrRevision") String branchOrRevision) {
+    public ResponseEntity<String> getObject(@PathVariable("objectId") String objectId,
+                                            @PathVariable("branchOrRevision") String branchOrRevision,
+                                            @RequestParam(value = "merge", required = false) Set<String> merge) {
         ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
         if (versionGraph.isEmpty()) {
             return new ResponseEntity<String>(NOT_FOUND);
         }
-        return getResponse(objectId, versionGraph, branchOrRevision);
+        return getResponse(objectId, versionGraph, branchOrRevision, merge);
+    }
+
+    @RequestMapping(value = "/versions/{objectId}", method = GET)
+    public List<Version<PropertyPath, Object, Void>> getVersions(@PathVariable("objectId") String objectId) {
+        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
+        if (versionGraph.isEmpty()) {
+            throw new RuntimeException("not found");
+        }
+        return versionGraph.getVersions();
     }
 
     private ResponseEntity<String> putObject(String objectId, String json, String branch) {
@@ -113,12 +121,17 @@ public class JsonStoreController {
         ObjectVersion<Void> version = versionBuilder.build();
         objectVersionStore.append(objectId, version);
         objectVersionStore.commit();
-        return getObject(objectId);
+        return getObject(objectId, branch, ImmutableSet.of());
     }
 
-    private ResponseEntity<String> getResponse(String objectId, ObjectVersionGraph<Void> versionGraph, String branchOrRevision) {
+    private ResponseEntity<String> getResponse(String objectId, ObjectVersionGraph<Void> versionGraph, String branchOrRevision, Set<String> merge) {
         if (versionGraph.getBranches().contains(branchOrRevision)) {
-            return getResponse(objectId, versionGraph.mergeBranches(branchOrRevision));
+            Set<String> branches = new LinkedHashSet<>();
+            branches.add(branchOrRevision);
+            if (merge != null) {
+                branches.addAll(merge);
+            }
+            return getResponse(objectId, versionGraph.mergeBranches(branches));
         } else {
             return getResponse(objectId, versionGraph.mergeRevisions(new Revision(branchOrRevision)));
         }
