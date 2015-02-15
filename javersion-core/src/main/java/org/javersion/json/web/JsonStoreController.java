@@ -116,6 +116,15 @@ public class JsonStoreController {
         return getObject(objectId, branchOrRevision, merge, false);
     }
 
+    @RequestMapping(value = "/versions/{objectId}", method = GET)
+    public List<Version<PropertyPath, Object, Void>> getVersions(@PathVariable("objectId") String objectId) {
+        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
+        if (versionGraph.isEmpty()) {
+            throw new RuntimeException("not found");
+        }
+        return versionGraph.getVersions();
+    }
+
     private ResponseEntity<String> getObject(String objectId,
                                             String branchOrRevision,
                                             Set<String> merge,
@@ -125,15 +134,6 @@ public class JsonStoreController {
             return new ResponseEntity<String>(NOT_FOUND);
         }
         return getResponse(objectId, versionGraph, branchOrRevision, merge, create);
-    }
-
-    @RequestMapping(value = "/versions/{objectId}", method = GET)
-    public List<Version<PropertyPath, Object, Void>> getVersions(@PathVariable("objectId") String objectId) {
-        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
-        if (versionGraph.isEmpty()) {
-            throw new RuntimeException("not found");
-        }
-        return versionGraph.getVersions();
     }
 
     private ResponseEntity<String> putObject(String objectId,
