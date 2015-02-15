@@ -1,5 +1,8 @@
 package org.javersion.json.web;
 
+import static org.javersion.object.Persistent.Type.ARRAY;
+import static org.javersion.object.Persistent.Type.OBJECT;
+
 import org.javersion.core.Revision;
 import org.javersion.core.VersionProperty;
 import org.javersion.object.DescribeContext;
@@ -23,8 +26,12 @@ public class VersionPropertyMapping implements TypeMapping {
             Object value = context.getProperty(propertyTree.get("value"));
             Persistent.Type type = Persistent.Type.valueOf((String) context.getProperty(propertyTree.get("type")));
 
-            if (type == Persistent.Type.OBJECT) {
-                value = Persistent.object(value.toString());
+            if (type == OBJECT) {
+                if (value != null) {
+                    value = Persistent.object(value.toString());
+                } else {
+                    value = Persistent.object();
+                }
             } else if (type == Persistent.Type.ARRAY) {
                 value = Persistent.array();
             }
@@ -40,8 +47,17 @@ public class VersionPropertyMapping implements TypeMapping {
             VersionProperty<?> versionProperty = (VersionProperty) object;
             context.put(path, Persistent.object());
             context.put(path.property("revision"), versionProperty.revision.toString());
-            context.put(path.property("value"), versionProperty.value);
-            context.put(path.property("type"), Persistent.Type.of(versionProperty.value).toString());
+
+            Persistent.Type type = Persistent.Type.of(versionProperty.value);
+            if (type == OBJECT) {
+                Persistent.Object obj = (Persistent.Object) versionProperty.value;
+                if (!obj.isGeneric()) {
+                    context.put(path.property("value"), obj.type);
+                }
+            } else if (type != ARRAY) {
+                context.put(path.property("value"), versionProperty.value);
+            }
+            context.put(path.property("type"), type.toString());
         }
 
         @Override

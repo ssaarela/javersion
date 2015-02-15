@@ -100,6 +100,9 @@ public final class Persistent {
                 return false;
             }
         }
+        public boolean isGeneric() {
+            return GENERIC_TYPE.equals(type);
+        }
         @Override
         public int hashCode() {
             return type.hashCode();
