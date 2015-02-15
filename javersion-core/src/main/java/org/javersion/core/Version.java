@@ -145,6 +145,10 @@ public class Version<K, V, M> {
             return parents(copyOf(parentRevisions));
         }
 
+        public This parents(Iterable<Revision> parentRevisions) {
+            return parents(copyOf(parentRevisions));
+        }
+
         public This parents(Set<Revision> parentRevisions) {
             this.parentRevisions = (parentRevisions != null ? parentRevisions : EMPTY_PARENTS);
             return self();

@@ -15,16 +15,20 @@
  */
 package org.javersion.core;
 
+import static com.google.common.collect.Iterables.getFirst;
+import static com.google.common.collect.Iterables.isEmpty;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
+import static org.javersion.util.MapUtils.mapValueFunction;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,6 +37,7 @@ import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 public abstract class VersionGraph<K, V, M,
@@ -104,8 +109,11 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public Iterable<VersionNode<K, V, M>> getHeads(String branch) {
-        return transform(getHeads().range(min(branch), max(branch)),
-                MapUtils.<VersionNode<K, V, M>>mapValueFunction());
+        return transform(getHeads().range(min(branch), max(branch)), mapValueFunction());
+    }
+
+    public VersionNode<K, V, M> getHead(String branch) {
+        return getFirst(transform(getHeads().range(min(branch), max(branch), false), mapValueFunction()), null);
     }
 
     public PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> getHeads() {
@@ -120,6 +128,9 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public VersionNode<K, V, M> getTip() {
+        if (isEmpty()) {
+            return null;
+        }
         return versionNodes.getLastEntry().getValue();
     }
 

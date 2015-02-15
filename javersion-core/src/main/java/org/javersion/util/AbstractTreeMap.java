@@ -148,8 +148,7 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         return new Iterable<Map.Entry<K,V>>() {
             @Override
             public Iterator<Entry<K, V>> iterator() {
-                return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive),
-                        MapUtils.<K, V>mapEntryFunction());
+                return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive),  MapUtils.<K, V>mapEntryFunction());
             }
         };
     }
