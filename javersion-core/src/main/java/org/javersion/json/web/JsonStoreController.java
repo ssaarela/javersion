@@ -75,7 +75,7 @@ public class JsonStoreController {
 
     private final ObjectSerializer<VersionReference> metaSerializer = new ObjectSerializer<>(VersionReference.class, typeMappings);
 
-    private JsonSerializer jsonSerializer = new JsonSerializer(metaSerializer.schemaRoot);
+    private final JsonSerializer jsonSerializer = new JsonSerializer(new JsonSerializer.Config(false, false, ""), metaSerializer.schemaRoot);
 
     public JsonStoreController() {
         this(new JsonStoreConfig());

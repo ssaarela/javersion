@@ -40,6 +40,6 @@ public class VersionReference {
     public VersionReference(String _id, Set<Revision> _revs, Multimap<PropertyPath, VersionProperty<Object>> conflicts) {
         this._id = _id;
         this._revs = _revs;
-        this._conflicts = conflicts.asMap();
+        this._conflicts = conflicts.isEmpty() ? null : conflicts.asMap();
     }
 }

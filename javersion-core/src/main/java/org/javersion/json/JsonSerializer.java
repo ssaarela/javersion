@@ -48,23 +48,44 @@ public class JsonSerializer {
         public Map<PropertyPath, Object> properties = new LinkedHashMap<>();
     }
 
+    public static class Config {
+        public boolean serializeNulls = true;
+        public boolean lenient = false;
+        public String indent = "";
+
+        public Config() {}
+
+        public Config(boolean serializeNulls, boolean lenient, String indent) {
+            this.serializeNulls = serializeNulls;
+            this.lenient = lenient;
+            this.indent = indent;
+        }
+    }
+
     public static final String TYPE_FIELD = "_type";
 
     public static final String META_PREFIX = "_";
 
     private final SchemaRoot schemaRoot;
 
+    private final Config config;
+
     public JsonSerializer() {
         this(null);
     }
 
     public JsonSerializer(SchemaRoot schemaRoot) {
+        this(new Config(), schemaRoot);
+    }
+
+    public JsonSerializer(Config config, SchemaRoot schemaRoot) {
+        this.config = config;
         this.schemaRoot = schemaRoot;
     }
 
     public JsonPaths parse(String json) {
         JsonPaths paths = new JsonPaths();
-        try (JsonReader jsonReader = new JsonReader(new StringReader(json))) {
+        try (JsonReader jsonReader = newJsonReader(json)) {
             toMap(PropertyPath.ROOT, jsonReader, paths.meta, paths.properties);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -72,15 +93,29 @@ public class JsonSerializer {
         return paths;
     }
 
+    private JsonReader newJsonReader(String json) {
+        JsonReader reader = new JsonReader(new StringReader(json));
+        reader.setLenient(config.lenient);
+        return reader;
+    }
+
     public String serialize(Map<PropertyPath, Object> map) {
         PropertyTree tree = PropertyTree.build(map.keySet());
         StringWriter stringWriter = new StringWriter();
-        try (JsonWriter jsonWriter = new JsonWriter(stringWriter)) {
+        try (JsonWriter jsonWriter = newJsonWriter(stringWriter)) {
             toJson(tree, map, jsonWriter);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return stringWriter.toString();
+    }
+
+    private JsonWriter newJsonWriter(StringWriter stringWriter) {
+        JsonWriter writer = new JsonWriter(stringWriter);
+        writer.setIndent(config.indent);
+        writer.setLenient(config.lenient);
+        writer.setSerializeNulls(config.serializeNulls);
+        return writer;
     }
 
     private void toJson(PropertyTree tree, Map<PropertyPath, Object> map, JsonWriter writer) throws IOException {
