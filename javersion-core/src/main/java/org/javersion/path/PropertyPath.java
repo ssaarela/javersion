@@ -15,26 +15,34 @@
  */
 package org.javersion.path;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Integer.parseInt;
+import static org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript;
+import static org.apache.commons.lang3.StringEscapeUtils.unescapeEcmaScript;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.tree.RuleNode;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.parser.PropertyPathBaseVisitor;
 import org.javersion.path.parser.PropertyPathLexer;
 import org.javersion.path.parser.PropertyPathParser;
-import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 public abstract class PropertyPath implements Iterable<SubPath> {
 
-    private static final ANTLRErrorListener ERROR_LISTERNER = new BaseErrorListener() {
+    private static class SilentParseException extends RuntimeException {
+        public SilentParseException() {
+            super(null, null, false, false);
+        }
+    }
+
+    private static final ANTLRErrorListener BASIC_ERROR_LISTENER = new BaseErrorListener() {
         @Override
         public void syntaxError(Recognizer<?, ?> recognizer,
                                 Object offendingSymbol,
@@ -46,46 +54,55 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
     };
 
+    private static final ANTLRErrorListener SILENT_ERROR_LISTENER = new BaseErrorListener() {
+        @Override
+        public void syntaxError(Recognizer<?, ?> recognizer,
+                                Object offendingSymbol,
+                                int line,
+                                int charPositionInLine,
+                                String msg,
+                                RecognitionException e) {
+            throw new SilentParseException();
+        }
+    };
+
     private static final String EMPTY_STRING = "";
-
-    private static final char ESC = '\\';
-
-    private static final Set<Character> ESCAPED_CHARS = ImmutableSet.of('\\', '.', '[', ']');
 
     public static final Root ROOT = Root.ROOT;
 
     public static PropertyPath parse(String path) {
-        PropertyPathParser parser = new PropertyPathParser(
-                new CommonTokenStream(
-                        new PropertyPathLexer(
-                                new ANTLRInputStream(path))));
-        parser.removeErrorListeners();
-        parser.addErrorListener(ERROR_LISTERNER);
-        return parser.root().accept(new PropertyPathBaseVisitor<PropertyPath>() {
+        checkNotNull(path);
+        if (path.length() == 0) {
+            return ROOT;
+        }
+        return newParser(path, false).parsePath().accept(new PropertyPathBaseVisitor<PropertyPath>() {
 
-            private PropertyPath parent;
+            private PropertyPath parent = ROOT;
 
             @Override
-            public PropertyPath visitRoot(@NotNull PropertyPathParser.RootContext ctx) {
-                parent = ROOT;
-                return super.visitRoot(ctx);
+            public PropertyPath visitIndex(PropertyPathParser.IndexContext ctx) {
+                return parent = new Index(parent, parseInt(ctx.getText()));
             }
 
             @Override
-            public PropertyPath visitIndex(@NotNull PropertyPathParser.IndexContext ctx) {
-                String name = ctx.getText();
-                if (name.length() > 2) {
-                    name = name.substring(1, name.length()-1);
-                }
-                parent = parent.index(unescape(name));
-                return super.visitIndex(ctx);
+            public PropertyPath visitKey(PropertyPathParser.KeyContext ctx) {
+                String keyLiteral = ctx.getText();
+                return parent = new Key(parent, unescapeEcmaScript(keyLiteral.substring(1, keyLiteral.length() - 1)));
             }
 
             @Override
-            public PropertyPath visitProperty(@NotNull PropertyPathParser.PropertyContext ctx) {
-                String name = ctx.getText();
-                parent = parent.property(unescape(name));
-                return super.visitProperty(ctx);
+            public PropertyPath visitProperty(PropertyPathParser.PropertyContext ctx) {
+                return parent = new Property(parent, ctx.getText());
+            }
+
+            @Override
+            public PropertyPath visitAnyIndex(PropertyPathParser.AnyIndexContext ctx) {
+                return parent = new AnyIndex(parent);
+            }
+
+            @Override
+            public PropertyPath visitAnyKey(PropertyPathParser.AnyKeyContext ctx) {
+                return parent = new AnyKey(parent);
             }
 
             @Override
@@ -99,15 +116,58 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     PropertyPath() {}
 
     public Property property(String name) {
-        return new Property(this, name);
+        return newParser(name, false).parseProperty().accept(new PropertyPathBaseVisitor<Property>() {
+
+            @Override
+            public Property visitProperty(PropertyPathParser.PropertyContext ctx) {
+                return new Property(PropertyPath.this, ctx.getText());
+            }
+
+            @Override
+            protected boolean shouldVisitNextChild(RuleNode node, Property currentResult) {
+                return currentResult == null;
+            }
+
+        });
     }
 
-    public Index index(long index) {
-        return index(Long.toString(index));
-    }
-
-    public Index index(String index) {
+    public final Index index(int index) {
+        checkArgument(index >= 0, "index should be >= 0");
         return new Index(this, index);
+    }
+
+    public final Key key(String index) {
+        checkNotNull(index);
+        return new Key(this, index);
+    }
+
+    public final AnyIndex anyIndex() {
+        return new AnyIndex(this);
+    }
+
+    public final AnyKey anyKey() {
+        return new AnyKey(this);
+    }
+
+    public final SubPath propertyOrKey(String string) {
+        checkNotNull(string);
+        try {
+            return newParser(string, true).parseProperty().accept(new PropertyPathBaseVisitor<SubPath>() {
+
+                @Override
+                public SubPath visitProperty(PropertyPathParser.PropertyContext ctx) {
+                    return new Property(PropertyPath.this, ctx.getText());
+                }
+
+                @Override
+                protected boolean shouldVisitNextChild(RuleNode node, SubPath currentResult) {
+                    return currentResult == null;
+                }
+
+            });
+        } catch (SilentParseException e) {
+            return new Key(this, string);
+        }
     }
 
     public Iterator<SubPath> iterator() {
@@ -138,7 +198,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     public PropertyPath toSchemaPath() {
         PropertyPath schemaPath = ROOT;
         for (PropertyPath path : this) {
-            schemaPath = path.normalize(schemaPath);
+            schemaPath = path.toSchemaPath(schemaPath);
         }
         return schemaPath;
     }
@@ -154,7 +214,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     abstract List<SubPath> getFullPath();
 
-    abstract PropertyPath normalize(PropertyPath newParent);
+    abstract PropertyPath toSchemaPath(PropertyPath newParent);
 
 
     private volatile List<SubPath> fullPath;
@@ -196,7 +256,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
         @Override
-        Root normalize(PropertyPath newParent) {
+        Root toSchemaPath(PropertyPath newParent) {
             return ROOT;
         }
 
@@ -220,23 +280,12 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     }
 
-    private static void validate(String name) {
-        if (name.length() > 0) {
-            char firstChar = name.charAt(0);
-            if (ESCAPED_CHARS.contains(firstChar) && firstChar != ESC) {
-                throw new IllegalArgumentException("Illegal start of name: " + firstChar);
-            }
-        }
-    }
-
     public static final class Property extends SubPath {
 
         public final String name;
 
         private Property(PropertyPath parent, String name) {
             super(parent);
-            Check.notNullOrEmpty(name, "name");
-            validate(name);
             this.name = name;
         }
 
@@ -264,7 +313,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
                 sb.append(parent.toString());
                 sb.append('.');
             }
-            return sb.append(escape(name)).toString();
+            return sb.append(name).toString();
         }
 
         @Override
@@ -273,20 +322,102 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
         @Override
-        Property normalize(PropertyPath newParent) {
+        Property toSchemaPath(PropertyPath newParent) {
             return parent.equals(newParent) ? this : new Property(newParent, name);
         }
 
     }
 
+    public static final class AnyIndex extends SubPath {
+
+        public static final String ID = "[]";
+
+        private AnyIndex(PropertyPath parent) {
+            super(parent);
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder().append(parent.toString()).append(ID).toString();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof AnyIndex) {
+                AnyIndex other = (AnyIndex) obj;
+                return parent.equals(other.parent);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * parent.hashCode() + -1;
+        }
+
+        @Override
+        public String getName() {
+            return ID;
+        }
+
+        @Override
+        PropertyPath toSchemaPath(PropertyPath newParent) {
+            return parent.equals(newParent) ? this : new AnyKey(newParent);
+        }
+    }
+
+    public static final class AnyKey extends SubPath {
+
+        public static final String ID = "{}";
+
+        private AnyKey(PropertyPath parent) {
+            super(parent);
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder().append(parent.toString()).append(ID).toString();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof AnyKey) {
+                AnyKey other = (AnyKey) obj;
+                return parent.equals(other.parent);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * parent.hashCode() + -2;
+        }
+
+        @Override
+        public String getName() {
+            return ID;
+        }
+
+        @Override
+        AnyKey toSchemaPath(PropertyPath newParent) {
+            return parent.equals(newParent) ? this : new AnyKey(newParent);
+        }
+    }
+
     public static final class Index extends SubPath {
 
-        public final String index;
+        public final int index;
 
-        private Index(PropertyPath parent, String index) {
+        private Index(PropertyPath parent, int index) {
             super(parent);
-            this.index = Check.notNull(index, "index");
-            validate(index);
+            checkArgument(index >= 0, "index should be >= 0");
+            this.index = index;
         }
 
         @Override
@@ -295,7 +426,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
                 return true;
             } else if (obj instanceof Index) {
                 Index other = (Index) obj;
-                return this.index.equals(other.index) && parent.equals(other.parent);
+                return this.index == other.index && parent.equals(other.parent);
             } else {
                 return false;
             }
@@ -303,51 +434,76 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public int hashCode() {
-            return 31 * parent.hashCode() + index.hashCode();
+            return 31 * parent.hashCode() + index;
         }
 
         @Override
         public String toString() {
-            return new StringBuilder().append(parent.toString()).append('[').append(escape(index)).append(']').toString();
+            return new StringBuilder().append(parent.toString()).append('[').append(index).append(']').toString();
         }
 
         @Override
         public String getName() {
-            return index;
+            return Integer.toString(index);
         }
 
         @Override
-        Index normalize(PropertyPath newParent) {
-            return parent.equals(newParent) && EMPTY_STRING.equals(index) ? this : new Index(newParent, EMPTY_STRING);
+        SubPath toSchemaPath(PropertyPath newParent) {
+            return new AnyIndex(newParent);
         }
 
     }
 
-    static String unescape(String str) {
-        StringBuilder sb = new StringBuilder(str.length());
-        boolean escape = false;
-        for (int i=0; i < str.length(); i++) {
-            char ch = str.charAt(i);
-            if (!escape && ch == ESC) {
-                escape = true;
+    public static final class Key extends SubPath {
+
+        public final String key;
+
+        private Key(PropertyPath parent, String key) {
+            super(parent);
+            this.key = key;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof Key) {
+                Key other = (Key) obj;
+                return this.key.equals(other.key) && parent.equals(other.parent);
             } else {
-                sb.append(ch);
-                escape = false;
+                return false;
             }
         }
-        return sb.toString();
+
+        @Override
+        public int hashCode() {
+            return 31 * parent.hashCode() + key.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder().append(parent.toString()).append("[\"").append(escapeEcmaScript(key)).append("\"]").toString();
+        }
+
+        @Override
+        public String getName() {
+            return key;
+        }
+
+        @Override
+        SubPath toSchemaPath(PropertyPath newParent) {
+            return new AnyKey(newParent);
+        }
     }
 
-    static String escape(String str) {
-        StringBuilder sb = new StringBuilder(str.length() + 4);
-        for (int i=0; i < str.length(); i++) {
-            char ch = str.charAt(i);
-            if (ESCAPED_CHARS.contains(ch)) {
-                sb.append(ESC);
-            }
-            sb.append(ch);
-        }
-        return sb.toString();
+    private static PropertyPathParser newParser(String input, boolean silent) {
+        PropertyPathLexer lexer = new PropertyPathLexer(new ANTLRInputStream(input));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(silent ? SILENT_ERROR_LISTENER: BASIC_ERROR_LISTENER);
+        PropertyPathParser parser = new PropertyPathParser(new CommonTokenStream(lexer));
+        parser.removeErrorListeners();
+        parser.addErrorListener(silent ? SILENT_ERROR_LISTENER: BASIC_ERROR_LISTENER);
+        return parser;
     }
 
 }

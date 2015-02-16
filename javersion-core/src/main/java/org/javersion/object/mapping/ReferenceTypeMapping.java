@@ -28,7 +28,7 @@ import org.javersion.util.Check;
 
 public class ReferenceTypeMapping implements TypeMapping {
 
-    private static final String REFERENCES = "@REF";
+    private static final String REFERENCES = "$REF";
 
     private final String alias;
 
@@ -61,7 +61,7 @@ public class ReferenceTypeMapping implements TypeMapping {
     }
 
     public static ValueType describeReference(PropertyPath path, TypeDescriptor type, String alias, DescribeContext context) {
-        IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath(alias).index(""), type);
+        IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath(alias).anyKey(), type);
         return new ReferenceType(identifiableType, targetPath(alias));
     }
 }

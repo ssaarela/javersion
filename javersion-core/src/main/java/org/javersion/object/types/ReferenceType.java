@@ -23,27 +23,27 @@ import org.javersion.util.Check;
 
 
 public final class ReferenceType implements ValueType, IdentifiableType {
-    
+
     private final IdentifiableType identifiableType;
-    
+
     private final PropertyPath targetRoot;
-    
+
     public ReferenceType(IdentifiableType identifiableType, PropertyPath targetRoot) {
         this.identifiableType = Check.notNull(identifiableType, "keyType");
         this.targetRoot = Check.notNull(targetRoot, "targetRoot");
     }
-    
+
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         String id = identifiableType.toString(object);
         context.put(path, id);
-        context.serialize(targetRoot.index(id), object);
+        context.serialize(targetRoot.key(id), object);
     }
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         String id = (String) value;
-        return context.prepareObject(targetRoot.index(id));
+        return context.prepareObject(targetRoot.key(id));
     }
 
     @Override

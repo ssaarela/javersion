@@ -15,7 +15,7 @@ public class MapType implements ValueType {
 
     public static final Persistent.Object CONSTANT = Persistent.object();
 
-    public static final String KEY = "@KEY";
+    public static final String KEY = "$KEY";
 
     private final IdentifiableType keyType;
 
@@ -64,7 +64,7 @@ public class MapType implements ValueType {
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             Object key = entry.getKey();
             Object value = entry.getValue();
-            SubPath entryPath = path.index(keyType.toString(key));
+            SubPath entryPath = path.key(keyType.toString(key));
             if (!isScalar()) {
                 context.serialize(entryPath.property(KEY), key);
             }

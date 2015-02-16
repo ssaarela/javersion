@@ -55,7 +55,6 @@ public final class Persistent {
 
     public static final String GENERIC_TYPE = "Map";
 
-
     public static Object object() {
         return object(GENERIC_TYPE);
     }

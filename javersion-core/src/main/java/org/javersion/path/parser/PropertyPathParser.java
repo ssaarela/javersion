@@ -1,18 +1,4 @@
-/*
- * Copyright 2013 Samppa Saarela
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Generated from /Users/samppa/Personal/javersion/javersion-core/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
 package org.javersion.path.parser;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -25,248 +11,551 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class PropertyPathParser extends Parser {
-    protected static final DFA[] _decisionToDFA;
-    protected static final PredictionContextCache _sharedContextCache =
-        new PredictionContextCache();
-    public static final int
-        T__2=1, T__1=2, T__0=3, NAME=4;
-    public static final String[] tokenNames = {
-        "<INVALID>", "']'", "'.'", "'['", "NAME"
-    };
-    public static final int
-        RULE_root = 0, RULE_index = 1, RULE_property = 2;
-    public static final String[] ruleNames = {
-        "root", "index", "property"
-    };
+	static { RuntimeMetaData.checkVersion("4.5", RuntimeMetaData.VERSION); }
 
-    @Override
-    public String getGrammarFileName() { return "PropertyPath.g4"; }
+	protected static final DFA[] _decisionToDFA;
+	protected static final PredictionContextCache _sharedContextCache =
+		new PredictionContextCache();
+	public static final int
+		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, Identifier=6, Integer=7, Key=8;
+	public static final int
+		RULE_parsePath = 0, RULE_parseProperty = 1, RULE_property = 2, RULE_indexed = 3, 
+		RULE_index = 4, RULE_key = 5, RULE_anyIndex = 6, RULE_anyKey = 7;
+	public static final String[] ruleNames = {
+		"parsePath", "parseProperty", "property", "indexed", "index", "key", "anyIndex", 
+		"anyKey"
+	};
 
-    @Override
-    public String[] getTokenNames() { return tokenNames; }
+	private static final String[] _LITERAL_NAMES = {
+		null, "'.'", "'['", "']'", "'[]'", "'{}'"
+	};
+	private static final String[] _SYMBOLIC_NAMES = {
+		null, null, null, null, null, null, "Identifier", "Integer", "Key"
+	};
+	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
-    @Override
-    public String[] getRuleNames() { return ruleNames; }
+	/**
+	 * @deprecated Use {@link #VOCABULARY} instead.
+	 */
+	@Deprecated
+	public static final String[] tokenNames;
+	static {
+		tokenNames = new String[_SYMBOLIC_NAMES.length];
+		for (int i = 0; i < tokenNames.length; i++) {
+			tokenNames[i] = VOCABULARY.getLiteralName(i);
+			if (tokenNames[i] == null) {
+				tokenNames[i] = VOCABULARY.getSymbolicName(i);
+			}
 
-    @Override
-    public ATN getATN() { return _ATN; }
+			if (tokenNames[i] == null) {
+				tokenNames[i] = "<INVALID>";
+			}
+		}
+	}
 
-    public PropertyPathParser(TokenStream input) {
-        super(input);
-        _interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
-    }
-    public static class RootContext extends ParserRuleContext {
-        public IndexContext index(int i) {
-            return getRuleContext(IndexContext.class,i);
-        }
-        public PropertyContext property(int i) {
-            return getRuleContext(PropertyContext.class,i);
-        }
-        public List<IndexContext> index() {
-            return getRuleContexts(IndexContext.class);
-        }
-        public List<PropertyContext> property() {
-            return getRuleContexts(PropertyContext.class);
-        }
-        public RootContext(ParserRuleContext parent, int invokingState) {
-            super(parent, invokingState);
-        }
-        @Override public int getRuleIndex() { return RULE_root; }
-        @Override
-        public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitRoot(this);
-            else return visitor.visitChildren(this);
-        }
-    }
+	@Override
+	@Deprecated
+	public String[] getTokenNames() {
+		return tokenNames;
+	}
 
-    public final RootContext root() throws RecognitionException {
-        RootContext _localctx = new RootContext(_ctx, getState());
-        enterRule(_localctx, 0, RULE_root);
-        int _la;
-        try {
-            setState(21);
-            switch ( getInterpreter().adaptivePredict(_input,4,_ctx) ) {
-            case 1:
-                enterOuterAlt(_localctx, 1);
-                {
-                setState(8);
-                switch (_input.LA(1)) {
-                case NAME:
-                    {
-                    setState(6); property();
-                    }
-                    break;
-                case 3:
-                    {
-                    setState(7); index();
-                    }
-                    break;
-                case EOF:
-                    break;
-                default:
-                    throw new NoViableAltException(this);
-                }
-                }
-                break;
+	@Override
+	@NotNull
+	public Vocabulary getVocabulary() {
+		return VOCABULARY;
+	}
 
-            case 2:
-                enterOuterAlt(_localctx, 2);
-                {
-                setState(12);
-                switch (_input.LA(1)) {
-                case NAME:
-                    {
-                    setState(10); property();
-                    }
-                    break;
-                case 3:
-                    {
-                    setState(11); index();
-                    }
-                    break;
-                default:
-                    throw new NoViableAltException(this);
-                }
-                setState(17); 
-                _errHandler.sync(this);
-                _la = _input.LA(1);
-                do {
-                    {
-                    setState(17);
-                    switch (_input.LA(1)) {
-                    case 2:
-                        {
-                        setState(14); match(2);
-                        setState(15); property();
-                        }
-                        break;
-                    case 3:
-                        {
-                        setState(16); index();
-                        }
-                        break;
-                    default:
-                        throw new NoViableAltException(this);
-                    }
-                    }
-                    setState(19); 
-                    _errHandler.sync(this);
-                    _la = _input.LA(1);
-                } while ( _la==2 || _la==3 );
-                }
-                break;
-            }
-        }
-        catch (RecognitionException re) {
-            _localctx.exception = re;
-            _errHandler.reportError(this, re);
-            _errHandler.recover(this, re);
-        }
-        finally {
-            exitRule();
-        }
-        return _localctx;
-    }
+	@Override
+	public String getGrammarFileName() { return "PropertyPath.g4"; }
 
-    public static class IndexContext extends ParserRuleContext {
-        public TerminalNode NAME() { return getToken(PropertyPathParser.NAME, 0); }
-        public IndexContext(ParserRuleContext parent, int invokingState) {
-            super(parent, invokingState);
-        }
-        @Override public int getRuleIndex() { return RULE_index; }
-        @Override
-        public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitIndex(this);
-            else return visitor.visitChildren(this);
-        }
-    }
+	@Override
+	public String[] getRuleNames() { return ruleNames; }
 
-    public final IndexContext index() throws RecognitionException {
-        IndexContext _localctx = new IndexContext(_ctx, getState());
-        enterRule(_localctx, 2, RULE_index);
-        try {
-            setState(28);
-            switch ( getInterpreter().adaptivePredict(_input,5,_ctx) ) {
-            case 1:
-                enterOuterAlt(_localctx, 1);
-                {
-                setState(23); match(3);
-                setState(24); match(NAME);
-                setState(25); match(1);
-                }
-                break;
+	@Override
+	public String getSerializedATN() { return _serializedATN; }
 
-            case 2:
-                enterOuterAlt(_localctx, 2);
-                {
-                setState(26); match(3);
-                setState(27); match(1);
-                }
-                break;
-            }
-        }
-        catch (RecognitionException re) {
-            _localctx.exception = re;
-            _errHandler.reportError(this, re);
-            _errHandler.recover(this, re);
-        }
-        finally {
-            exitRule();
-        }
-        return _localctx;
-    }
+	@Override
+	public ATN getATN() { return _ATN; }
 
-    public static class PropertyContext extends ParserRuleContext {
-        public TerminalNode NAME() { return getToken(PropertyPathParser.NAME, 0); }
-        public PropertyContext(ParserRuleContext parent, int invokingState) {
-            super(parent, invokingState);
-        }
-        @Override public int getRuleIndex() { return RULE_property; }
-        @Override
-        public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitProperty(this);
-            else return visitor.visitChildren(this);
-        }
-    }
+	public PropertyPathParser(TokenStream input) {
+		super(input);
+		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
+	}
+	public static class ParsePathContext extends ParserRuleContext {
+		public TerminalNode EOF() { return getToken(PropertyPathParser.EOF, 0); }
+		public List<PropertyContext> property() {
+			return getRuleContexts(PropertyContext.class);
+		}
+		public PropertyContext property(int i) {
+			return getRuleContext(PropertyContext.class,i);
+		}
+		public List<IndexedContext> indexed() {
+			return getRuleContexts(IndexedContext.class);
+		}
+		public IndexedContext indexed(int i) {
+			return getRuleContext(IndexedContext.class,i);
+		}
+		public ParsePathContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_parsePath; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).enterParsePath(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).exitParsePath(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitParsePath(this);
+			else return visitor.visitChildren(this);
+		}
+	}
 
-    public final PropertyContext property() throws RecognitionException {
-        PropertyContext _localctx = new PropertyContext(_ctx, getState());
-        enterRule(_localctx, 4, RULE_property);
-        try {
-            enterOuterAlt(_localctx, 1);
-            {
-            setState(30); match(NAME);
-            }
-        }
-        catch (RecognitionException re) {
-            _localctx.exception = re;
-            _errHandler.reportError(this, re);
-            _errHandler.recover(this, re);
-        }
-        finally {
-            exitRule();
-        }
-        return _localctx;
-    }
+	public final ParsePathContext parsePath() throws RecognitionException {
+		ParsePathContext _localctx = new ParsePathContext(_ctx, getState());
+		enterRule(_localctx, 0, RULE_parsePath);
+		int _la;
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(18);
+			switch (_input.LA(1)) {
+			case Identifier:
+				{
+				setState(16); 
+				property();
+				}
+				break;
+			case T__1:
+			case T__3:
+			case T__4:
+				{
+				setState(17); 
+				indexed();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+			setState(25);
+			_errHandler.sync(this);
+			_la = _input.LA(1);
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__0) | (1L << T__1) | (1L << T__3) | (1L << T__4))) != 0)) {
+				{
+				setState(23);
+				switch (_input.LA(1)) {
+				case T__0:
+					{
+					setState(20); 
+					match(T__0);
+					setState(21); 
+					property();
+					}
+					break;
+				case T__1:
+				case T__3:
+				case T__4:
+					{
+					setState(22); 
+					indexed();
+					}
+					break;
+				default:
+					throw new NoViableAltException(this);
+				}
+				}
+				setState(27);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+			}
+			setState(28); 
+			match(EOF);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
 
-    public static final String _serializedATN =
-        "\3\uacf5\uee8c\u4f5d\u8b0d\u4a45\u78bd\u1b2f\u3378\3\6#\4\2\t\2\4\3\t"+
-        "\3\4\4\t\4\3\2\3\2\5\2\13\n\2\3\2\3\2\5\2\17\n\2\3\2\3\2\3\2\6\2\24\n"+
-        "\2\r\2\16\2\25\5\2\30\n\2\3\3\3\3\3\3\3\3\3\3\5\3\37\n\3\3\4\3\4\3\4\2"+
-        "\5\2\4\6\2\2&\2\27\3\2\2\2\4\36\3\2\2\2\6 \3\2\2\2\b\13\5\6\4\2\t\13\5"+
-        "\4\3\2\n\b\3\2\2\2\n\t\3\2\2\2\n\13\3\2\2\2\13\30\3\2\2\2\f\17\5\6\4\2"+
-        "\r\17\5\4\3\2\16\f\3\2\2\2\16\r\3\2\2\2\17\23\3\2\2\2\20\21\7\4\2\2\21"+
-        "\24\5\6\4\2\22\24\5\4\3\2\23\20\3\2\2\2\23\22\3\2\2\2\24\25\3\2\2\2\25"+
-        "\23\3\2\2\2\25\26\3\2\2\2\26\30\3\2\2\2\27\n\3\2\2\2\27\16\3\2\2\2\30"+
-        "\3\3\2\2\2\31\32\7\5\2\2\32\33\7\6\2\2\33\37\7\3\2\2\34\35\7\5\2\2\35"+
-        "\37\7\3\2\2\36\31\3\2\2\2\36\34\3\2\2\2\37\5\3\2\2\2 !\7\6\2\2!\7\3\2"+
-        "\2\2\b\n\16\23\25\27\36";
-    public static final ATN _ATN =
-        ATNSimulator.deserialize(_serializedATN.toCharArray());
-    static {
-        _decisionToDFA = new DFA[_ATN.getNumberOfDecisions()];
-        for (int i = 0; i < _ATN.getNumberOfDecisions(); i++) {
-            _decisionToDFA[i] = new DFA(_ATN.getDecisionState(i), i);
-        }
-    }
+	public static class ParsePropertyContext extends ParserRuleContext {
+		public PropertyContext property() {
+			return getRuleContext(PropertyContext.class,0);
+		}
+		public TerminalNode EOF() { return getToken(PropertyPathParser.EOF, 0); }
+		public ParsePropertyContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_parseProperty; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).enterParseProperty(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).exitParseProperty(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitParseProperty(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final ParsePropertyContext parseProperty() throws RecognitionException {
+		ParsePropertyContext _localctx = new ParsePropertyContext(_ctx, getState());
+		enterRule(_localctx, 2, RULE_parseProperty);
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(30); 
+			property();
+			setState(31); 
+			match(EOF);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class PropertyContext extends ParserRuleContext {
+		public TerminalNode Identifier() { return getToken(PropertyPathParser.Identifier, 0); }
+		public PropertyContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_property; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).enterProperty(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).exitProperty(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitProperty(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final PropertyContext property() throws RecognitionException {
+		PropertyContext _localctx = new PropertyContext(_ctx, getState());
+		enterRule(_localctx, 4, RULE_property);
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(33); 
+			match(Identifier);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class IndexedContext extends ParserRuleContext {
+		public IndexContext index() {
+			return getRuleContext(IndexContext.class,0);
+		}
+		public KeyContext key() {
+			return getRuleContext(KeyContext.class,0);
+		}
+		public AnyIndexContext anyIndex() {
+			return getRuleContext(AnyIndexContext.class,0);
+		}
+		public AnyKeyContext anyKey() {
+			return getRuleContext(AnyKeyContext.class,0);
+		}
+		public IndexedContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_indexed; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).enterIndexed(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).exitIndexed(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitIndexed(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final IndexedContext indexed() throws RecognitionException {
+		IndexedContext _localctx = new IndexedContext(_ctx, getState());
+		enterRule(_localctx, 6, RULE_indexed);
+		try {
+			setState(44);
+			switch (_input.LA(1)) {
+			case T__1:
+				enterOuterAlt(_localctx, 1);
+				{
+				setState(35); 
+				match(T__1);
+				setState(38);
+				switch (_input.LA(1)) {
+				case Integer:
+					{
+					setState(36); 
+					index();
+					}
+					break;
+				case Key:
+					{
+					setState(37); 
+					key();
+					}
+					break;
+				default:
+					throw new NoViableAltException(this);
+				}
+				setState(40); 
+				match(T__2);
+				}
+				break;
+			case T__3:
+				enterOuterAlt(_localctx, 2);
+				{
+				setState(42); 
+				anyIndex();
+				}
+				break;
+			case T__4:
+				enterOuterAlt(_localctx, 3);
+				{
+				setState(43); 
+				anyKey();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class IndexContext extends ParserRuleContext {
+		public TerminalNode Integer() { return getToken(PropertyPathParser.Integer, 0); }
+		public IndexContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_index; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).enterIndex(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).exitIndex(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitIndex(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final IndexContext index() throws RecognitionException {
+		IndexContext _localctx = new IndexContext(_ctx, getState());
+		enterRule(_localctx, 8, RULE_index);
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(46); 
+			match(Integer);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class KeyContext extends ParserRuleContext {
+		public TerminalNode Key() { return getToken(PropertyPathParser.Key, 0); }
+		public KeyContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_key; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).enterKey(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).exitKey(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitKey(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final KeyContext key() throws RecognitionException {
+		KeyContext _localctx = new KeyContext(_ctx, getState());
+		enterRule(_localctx, 10, RULE_key);
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(48); 
+			match(Key);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class AnyIndexContext extends ParserRuleContext {
+		public AnyIndexContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_anyIndex; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).enterAnyIndex(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).exitAnyIndex(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitAnyIndex(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final AnyIndexContext anyIndex() throws RecognitionException {
+		AnyIndexContext _localctx = new AnyIndexContext(_ctx, getState());
+		enterRule(_localctx, 12, RULE_anyIndex);
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(50); 
+			match(T__3);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class AnyKeyContext extends ParserRuleContext {
+		public AnyKeyContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_anyKey; }
+		@Override
+		public void enterRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).enterAnyKey(this);
+		}
+		@Override
+		public void exitRule(ParseTreeListener listener) {
+			if ( listener instanceof PropertyPathListener ) ((PropertyPathListener)listener).exitAnyKey(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropertyPathVisitor ) return ((PropertyPathVisitor<? extends T>)visitor).visitAnyKey(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final AnyKeyContext anyKey() throws RecognitionException {
+		AnyKeyContext _localctx = new AnyKeyContext(_ctx, getState());
+		enterRule(_localctx, 14, RULE_anyKey);
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(52); 
+			match(T__4);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static final String _serializedATN =
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\n9\4\2\t\2\4\3\t"+
+		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\3\2\3\2\5\2\25\n\2"+
+		"\3\2\3\2\3\2\7\2\32\n\2\f\2\16\2\35\13\2\3\2\3\2\3\3\3\3\3\3\3\4\3\4\3"+
+		"\5\3\5\3\5\5\5)\n\5\3\5\3\5\3\5\3\5\5\5/\n\5\3\6\3\6\3\7\3\7\3\b\3\b\3"+
+		"\t\3\t\3\t\2\2\n\2\4\6\b\n\f\16\20\2\2\66\2\24\3\2\2\2\4 \3\2\2\2\6#\3"+
+		"\2\2\2\b.\3\2\2\2\n\60\3\2\2\2\f\62\3\2\2\2\16\64\3\2\2\2\20\66\3\2\2"+
+		"\2\22\25\5\6\4\2\23\25\5\b\5\2\24\22\3\2\2\2\24\23\3\2\2\2\25\33\3\2\2"+
+		"\2\26\27\7\3\2\2\27\32\5\6\4\2\30\32\5\b\5\2\31\26\3\2\2\2\31\30\3\2\2"+
+		"\2\32\35\3\2\2\2\33\31\3\2\2\2\33\34\3\2\2\2\34\36\3\2\2\2\35\33\3\2\2"+
+		"\2\36\37\7\2\2\3\37\3\3\2\2\2 !\5\6\4\2!\"\7\2\2\3\"\5\3\2\2\2#$\7\b\2"+
+		"\2$\7\3\2\2\2%(\7\4\2\2&)\5\n\6\2\')\5\f\7\2(&\3\2\2\2(\'\3\2\2\2)*\3"+
+		"\2\2\2*+\7\5\2\2+/\3\2\2\2,/\5\16\b\2-/\5\20\t\2.%\3\2\2\2.,\3\2\2\2."+
+		"-\3\2\2\2/\t\3\2\2\2\60\61\7\t\2\2\61\13\3\2\2\2\62\63\7\n\2\2\63\r\3"+
+		"\2\2\2\64\65\7\6\2\2\65\17\3\2\2\2\66\67\7\7\2\2\67\21\3\2\2\2\7\24\31"+
+		"\33(.";
+	public static final ATN _ATN =
+		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
+	static {
+		_decisionToDFA = new DFA[_ATN.getNumberOfDecisions()];
+		for (int i = 0; i < _ATN.getNumberOfDecisions(); i++) {
+			_decisionToDFA[i] = new DFA(_ATN.getDecisionState(i), i);
+		}
+	}
 }

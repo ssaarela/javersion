@@ -34,7 +34,7 @@ public class ListTypeMapping implements TypeMapping {
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor listType, DescribeContext context) {
         TypeDescriptor elementType = listType.resolveGenericParameter(List.class, 0);
-        context.describeComponent(path.index(""), listType, elementType);
+        context.describeComponent(path.anyIndex(), listType, elementType);
         return new ListType();
     }
 

@@ -15,17 +15,111 @@
  */
 grammar PropertyPath;
 
-root 
-    : (property | index)?
-    | (property | index) ( '.' property | index )+;
+parsePath
+	: (property | indexed) ('.' property | indexed)* EOF
+	;
 
-index 
-    : '[' NAME ']'
-    | '[' ']' // empty index
-    ;
+parseProperty
+	: property EOF
+	;
 
-property : NAME;
+property
+	: Identifier
+	;
 
-NAME : (ESC | ~[\.\[\]])+;
+indexed
+	: '[' (index | key) ']'
+	| anyIndex
+	| anyKey
+	;
 
-fragment ESC :   '\\' [\.\[\]\\] ;
+index
+	: Integer
+	;
+
+key
+	: Key
+	;
+
+anyIndex
+	: '[]'
+	;
+
+anyKey
+	: '{}'
+	;
+
+
+Identifier
+	: JavaIdentifierStart JavaIdentifierPart*
+	;
+
+fragment JavaIdentifierStart
+	: [a-zA-Z$_]
+	| ~[\u0000-\u00A1\uD800-\uDBFF] {Character.isJavaIdentifierStart(_input.LA(-1))}?
+	| [\uD800-\uDBFF] [\uDC00-\uDFFF] {Character.isJavaIdentifierStart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
+	;
+
+fragment JavaIdentifierPart
+	: [a-zA-Z0-9$_]
+	| ~[a-zA-Z0-9$_\uD800-\uDBFF] {Character.isJavaIdentifierPart(_input.LA(-1))}?
+	| [\uD800-\uDBFF] [\uDC00-\uDFFF] {Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
+	;
+
+
+Integer
+	: '0'
+	| NonZeroDigit Digit*
+	;
+
+fragment Digit
+	: '0'
+	| NonZeroDigit
+	;
+
+fragment NonZeroDigit
+	: [1-9]
+	;
+
+
+Key
+	: '"' StringCharacters? '"'
+	;
+
+fragment StringCharacters
+	: StringCharacter+
+	;
+
+fragment StringCharacter
+	: ~["\\]
+	| EscapeSequence
+	;
+
+
+fragment EscapeSequence
+	: '\\' [btnfr"'\\]
+	| OctalEscape
+	| UnicodeEscape
+	;
+
+fragment OctalEscape
+	: '\\' OctalDigit
+	| '\\' OctalDigit OctalDigit
+	| '\\' ZeroToThree OctalDigit OctalDigit
+	;
+
+fragment UnicodeEscape
+	: '\\' 'u' HexDigit HexDigit HexDigit HexDigit
+	;
+
+fragment ZeroToThree
+	: [0-3]
+	;
+
+fragment HexDigit
+	: [0-9a-fA-F]
+	;
+
+fragment OctalDigit
+	: [0-7]
+	;

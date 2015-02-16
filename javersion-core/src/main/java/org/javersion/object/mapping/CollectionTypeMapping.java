@@ -34,7 +34,7 @@ public class CollectionTypeMapping implements TypeMapping {
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor collectionType, DescribeContext context) {
         TypeDescriptor elementType = collectionType.resolveGenericParameter(Collection.class, 0);
-        context.describeComponent(path.index(""), collectionType, elementType);
+        context.describeComponent(path.anyIndex(), collectionType, elementType);
         return new CollectionType();
     }
 

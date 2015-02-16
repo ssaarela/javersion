@@ -164,9 +164,9 @@ public class JsonSerializer {
                     String property = reader.nextName();
                     PropertyPath propertyPath;
                     if (indexed) {
-                        propertyPath = path.index(property);
+                        propertyPath = path.key(property);
                     } else {
-                        propertyPath = path.property(property);
+                        propertyPath = path.propertyOrKey(property);
                     }
 
                     if (property.startsWith(META_PREFIX)) {

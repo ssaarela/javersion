@@ -35,7 +35,7 @@ public class SetTypeMapping implements TypeMapping {
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor setType, DescribeContext context) {
         TypeDescriptor elementType = setType.resolveGenericParameter(Set.class, 0);
-        ValueType valueType = context.describeComponent(path.index(""), setType, elementType);
+        ValueType valueType = context.describeComponent(path.anyKey(), setType, elementType);
         return new SetType((IdentifiableType) valueType);
     }
 
