@@ -1,10 +1,7 @@
 package org.javersion.object;
 
-import static org.javersion.core.Diff.diff;
-
 import java.util.Map;
 
-import org.javersion.core.Merge;
 import org.javersion.path.PropertyPath;
 
 public class ManagedObjectVersionBuilder<M> extends ObjectVersionBuilder<M> {

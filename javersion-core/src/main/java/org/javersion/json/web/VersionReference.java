@@ -17,11 +17,7 @@ package org.javersion.json.web;
 
 import static org.javersion.object.Persistent.GENERIC_TYPE;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.javersion.core.Revision;
 import org.javersion.core.VersionProperty;
@@ -33,13 +29,13 @@ import com.google.common.collect.Multimap;
 @Versionable(alias = GENERIC_TYPE)
 public class VersionReference {
     public String _id;
-    public Set<Revision> _revs = new HashSet<>();
-    public Map<PropertyPath, Collection<VersionProperty<Object>>> _conflicts = new HashMap<>();
+    public List<Revision> _revs;
+    public Map<PropertyPath, Collection<VersionProperty<Object>>> _conflicts;
     public VersionReference() {}
 
     public VersionReference(String _id, Set<Revision> _revs, Multimap<PropertyPath, VersionProperty<Object>> conflicts) {
         this._id = _id;
-        this._revs = _revs;
+        this._revs = _revs.isEmpty() ? null : new ArrayList<>(_revs);
         this._conflicts = conflicts.isEmpty() ? null : conflicts.asMap();
     }
 }

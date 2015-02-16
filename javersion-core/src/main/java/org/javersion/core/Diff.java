@@ -23,12 +23,26 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.javersion.path.PropertyPath;
-
 public class Diff {
 
-    public static <K, V> Map<K, V> diff(Merge<K, V, ?> from, Map<K, V> to) {
-        Map<K, V> diff = diff(from.getProperties(), to);
+    public static <K, V> Map<K, V> mergeDiff(Merge<K, V, ?> from, Map<K, V> to) {
+        return diff(from, to, false);
+    }
+
+    public static <K, V> Map<K, V> mergeDiff(Map<K, V> from, Map<K, V> to) {
+        return diff(from, to, false);
+    }
+
+    public static <K, V> Map<K, V> strictDiff(Merge<K, V, ?> from, Map<K, V> to) {
+        return diff(from, to, true);
+    }
+
+    public static <K, V> Map<K, V> strictDiff(Map<K, V> from, Map<K, V> to) {
+        return diff(from, to, true);
+    }
+
+    private static <K, V> Map<K, V> diff(Merge<K, V, ?> from, Map<K, V> to, boolean strict) {
+        Map<K, V> diff = diff(from.getProperties(), to, strict);
         from.conflicts.keySet().stream().forEach(k -> {
             if (!diff.containsKey(k) && to.containsKey(k)) {
                 diff.put(k, to.get(k));
@@ -37,47 +51,51 @@ public class Diff {
         return diff;
     }
 
-    public static <K, V> Map<K, V> diff(Map<K, V> from, Map<K, V> to) {
+    private static <K, V> Map<K, V> diff(Map<K, V> from, Map<K, V> to, boolean strict) {
         notNull(from, "from");
         notNull(to, "to");
 
         if (from.size() < to.size()) {
-            return diffBySmallerFrom(from, to);
+            return diffBySmallerFrom(from, to, strict);
         } else {
-            return diffBySmallerTo(from, to);
+            return diffBySmallerTo(from, to, strict);
         }
     }
 
-    private static <K, V> Map<K, V> diffBySmallerFrom(Map<K, V> from, Map<K, V> to) {
+    private static <K, V> Map<K, V> diffBySmallerFrom(Map<K, V> from, Map<K, V> to, boolean strict) {
         Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
-        Map<K, V> fromClone = new HashMap<>(from);
+        Map<K, V> fromClone = strict ? new HashMap<>(from) : from;
         for (Entry<K, V> entry : to.entrySet()) {
             K key = entry.getKey();
             V newValue = entry.getValue();
-            V oldValue = fromClone.remove(key);
+            V oldValue = strict ? fromClone.remove(key) : fromClone.get(key);
             if (!equal(newValue, oldValue)) {
                 diff.put(key, newValue);
             }
         }
-        for (K key : fromClone.keySet()) {
-            diff.put(key, null);
+        if (strict) {
+            for (K key : fromClone.keySet()) {
+                diff.put(key, null);
+            }
         }
         return diff;
     }
 
-    private static <K, V> Map<K, V> diffBySmallerTo(Map<K, V> from, Map<K, V> to) {
+    private static <K, V> Map<K, V> diffBySmallerTo(Map<K, V> from, Map<K, V> to, boolean strict) {
         Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
-        Map<K, V> toClone = new HashMap<>(to);
+        Map<K, V> toClone = strict ? new HashMap<>(to) : to;
         for (Entry<K, V> entry : from.entrySet()) {
             K key = entry.getKey();
             V oldValue = entry.getValue();
-            V newValue = toClone.remove(key);
-            if (!equal(oldValue, newValue)) {
+            V newValue = strict ? toClone.remove(key) : toClone.get(key);
+            if (!equal(oldValue, newValue) && strict || to.containsKey(key)) {
                 diff.put(key, newValue);
             }
         }
-        for (Entry<K, V> entry : toClone.entrySet()) {
-            diff.put(entry.getKey(), entry.getValue());
+        if (strict) {
+            for (Entry<K, V> entry : toClone.entrySet()) {
+                diff.put(entry.getKey(), entry.getValue());
+            }
         }
         return diff;
     }

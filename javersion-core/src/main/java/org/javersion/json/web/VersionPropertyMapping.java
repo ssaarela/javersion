@@ -24,18 +24,6 @@ public class VersionPropertyMapping implements TypeMapping {
         public Object instantiate(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
             Revision revision = (Revision) context.getObject(propertyTree.get("revision"));
             Object value = context.getProperty(propertyTree.get("value"));
-            Persistent.Type type = Persistent.Type.valueOf((String) context.getProperty(propertyTree.get("type")));
-
-            if (type == OBJECT) {
-                if (value != null) {
-                    value = Persistent.object(value.toString());
-                } else {
-                    value = Persistent.object();
-                }
-            } else if (type == Persistent.Type.ARRAY) {
-                value = Persistent.array();
-            }
-
             return new VersionProperty<>(revision, value);
         }
 
@@ -47,17 +35,7 @@ public class VersionPropertyMapping implements TypeMapping {
             VersionProperty<?> versionProperty = (VersionProperty) object;
             context.put(path, Persistent.object());
             context.put(path.property("revision"), versionProperty.revision.toString());
-
-            Persistent.Type type = Persistent.Type.of(versionProperty.value);
-            if (type == OBJECT) {
-                Persistent.Object obj = (Persistent.Object) versionProperty.value;
-                if (!obj.isGeneric()) {
-                    context.put(path.property("value"), obj.type);
-                }
-            } else if (type != ARRAY) {
-                context.put(path.property("value"), versionProperty.value);
-            }
-            context.put(path.property("type"), type.toString());
+            context.put(path.property("value"), versionProperty.value);
         }
 
         @Override

@@ -1,9 +1,8 @@
 package org.javersion.object;
 
-import static org.javersion.core.Diff.diff;
-
 import java.util.Map;
 
+import org.javersion.core.Diff;
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
@@ -24,7 +23,6 @@ public class ObjectVersionBuilder<M> extends Version.Builder<PropertyPath, Objec
     }
 
     public void changeset(Map<PropertyPath, Object> newProperties, VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ?> versionGraph) {
-        Merge<PropertyPath, Object, M> merge = versionGraph.mergeRevisions(parentRevisions);
-        changeset(diff(merge, newProperties));
+        changeset(versionGraph.mergeRevisions(parentRevisions).diff(newProperties));
     }
 }
