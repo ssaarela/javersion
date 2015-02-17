@@ -67,11 +67,7 @@ public abstract class Merge<K, V, M> {
     protected abstract void setMergeHeads(Set<Revision> heads);
 
     public Map<K, V> diff(Map<K, V> newProperties) {
-        if (mergedRevisions.size() > 1) {
-            return Diff.mergeDiff(this, newProperties);
-        } else {
-            return Diff.strictDiff(this, newProperties);
-        }
+        return Diff.diff(this, newProperties);
     }
 
     public Map<K, V> getProperties() {
