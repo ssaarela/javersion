@@ -144,7 +144,7 @@ public class JsonStoreController {
         VersionReference ref = metaSerializer.fromPropertyMap(paths.meta);
         ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
         ObjectVersionBuilder<Void> versionBuilder = new ObjectVersionBuilder<>();
-        if (ref != null) {
+        if (ref != null && ref._revs != null) {
             versionBuilder.parents(ref._revs);
         } else if (!versionGraph.isEmpty()) {
             versionBuilder.parents(getParentsForUnreferencedUpdate(versionGraph, branch));
