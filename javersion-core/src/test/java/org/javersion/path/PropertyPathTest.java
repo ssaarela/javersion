@@ -25,6 +25,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.HashSet;
 import java.util.List;
 
+import org.javersion.path.PropertyPath.Key;
+import org.javersion.path.PropertyPath.Property;
 import org.javersion.path.PropertyPath.SubPath;
 import org.junit.Assert;
 import org.junit.Test;
@@ -191,6 +193,15 @@ public class PropertyPathTest {
 
         any = ROOT.anyKey();
         assertThat(any.toSchemaPath()).isSameAs(any);
+    }
+
+    @Test
+    public void property_equals_key() {
+        Property property = ROOT.property("property");
+        Key key = ROOT.key("property");
+        assertThat(property).isEqualTo(key);
+        assertThat(key).isEqualTo(property);
+        assertThat(property.hashCode()).isEqualTo(key.hashCode());
     }
 
     public void Full_Path() {

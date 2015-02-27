@@ -492,7 +492,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         public final boolean equals(Object obj) {
             if (obj == this) {
                 return true;
-            } else if (obj.getClass().equals(this.getClass())) {
+            } else if (obj instanceof SubPath) {
                 SubPath other = (SubPath) obj;
                 return this.nodeId.equals(other.nodeId) && parent.equals(other.parent);
             } else {
