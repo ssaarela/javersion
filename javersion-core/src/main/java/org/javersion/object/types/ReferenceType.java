@@ -18,6 +18,7 @@ package org.javersion.object.types;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
@@ -35,15 +36,14 @@ public final class ReferenceType implements ValueType, IdentifiableType {
 
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
-        String id = identifiableType.toString(object);
-        context.put(path, id);
-        context.serialize(targetRoot.key(id), object);
+        NodeId id = identifiableType.toNodeId(object);
+        context.put(path, id.getKeyOrIndex());
+        context.serialize(targetRoot.keyOrIndex(id), object);
     }
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        String id = (String) value;
-        return context.prepareObject(targetRoot.key(id));
+        return context.prepareObject(targetRoot.keyOrIndex(value));
     }
 
     @Override
@@ -55,8 +55,8 @@ public final class ReferenceType implements ValueType, IdentifiableType {
     }
 
     @Override
-    public String toString(Object object) {
-        return identifiableType.toString(object);
+    public NodeId toNodeId(Object object) {
+        return identifiableType.toNodeId(object);
     }
 
 }

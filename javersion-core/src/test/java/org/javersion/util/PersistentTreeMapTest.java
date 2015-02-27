@@ -16,13 +16,7 @@
 package org.javersion.util;
 
 import static com.google.common.collect.Iterables.transform;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.emptyIterable;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
@@ -59,7 +53,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
         }
         assertThat(count, equalTo(1234));
     }
-    
+
     @Test
     public void Iterate_Ascending() {
         PersistentTreeMap<Integer, Integer> pmap = emptyMap();
@@ -68,7 +62,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
         }
         assertThat(keys(pmap), contains(1,2,3,4,5,6,7,8,9));
     }
-    
+
     @Test
     public void Iterate_Descending() {
         PersistentTreeMap<Integer, Integer> pmap = emptyMap();
@@ -83,7 +77,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
             }
         }), contains(1,2,3,4,5,6,7,8,9));
     }
-    
+
     @Test
     public void Iterate_Ascending_Range() {
         PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
@@ -104,7 +98,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
         }
         return map;
     }
-    
+
     @Test
     public void Iterate_Descending_Range() {
         PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
@@ -112,37 +106,37 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
         assertThat(keys(map.range(3, true, 9, true, false)), contains(9, 7, 5, 3));
         assertThat(keys(map.range(3, false, 9, false, false)), contains(7, 5));
     }
-    
+
     @Test
     public void Iterate_Ascending_Tail_Map() {
         PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
         assertThat(keys(map.range(7, true, null, false, true)), contains(7, 9));
     }
-    
+
     @Test
     public void Iterate_Descending_Tail_Map() {
         PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
         assertThat(keys(map.range(7, true, null, false, false)), contains(9, 7));
     }
-    
+
     @Test
     public void Iterate_Ascending_Head_Map() {
         PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
         assertThat(keys(map.range(null, true, 5, true, true)), contains(1, 3, 5));
         assertThat(keys(map.range(null, true, 5, false, true)), contains(1, 3));
     }
-    
+
     @Test
     public void Iterate_Descending_Head_Map() {
         PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
         assertThat(keys(map.range(null, true, 5, true, false)), contains(5, 3, 1));
         assertThat(keys(map.range(null, true, 5, false, false)), contains(3, 1));
     }
-    
+
     private static Iterable<Integer> keys(Iterable<Map.Entry<Integer, Integer>> entries) {
         return transform(entries, MapUtils.<Integer>mapKeyFunction());
     }
-    
+
     @Test
     public void CLR_P269() {
         // Example tree
@@ -170,7 +164,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
                 15
                 );
     }
-    
+
     @Test
     public void Find_Min_Max() {
         List<Integer> ints = ascending(37);
@@ -181,7 +175,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
         assertThat(pmap.max(), equalTo(ints.get(36)));
         assertThat(pmap.min(), equalTo(ints.get(0)));
     }
-    
+
     @Test
     public void Find_Min_Max_From_Empty() {
         PersistentTreeMap<Integer, Integer> pmap = emptyMap();
@@ -190,14 +184,14 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
     }
 
     private static Integer blacksOnPath = null;
-    
+
     static synchronized void assertNodeProperties(Node<Integer, Integer> node) {
         blacksOnPath = null;
         if (node != null) {
             assertNodeProperties(node, 0);
         }
     }
-    
+
     private static void assertNodeProperties(Node<Integer, Integer> node, int blacks) {
         assertThat(node.color, not(nullValue()));
         if (node.color == Color.RED) {

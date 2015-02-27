@@ -16,10 +16,8 @@
 package org.javersion.util;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 

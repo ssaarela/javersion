@@ -15,8 +15,6 @@
  */
 package org.javersion.object.mapping;
 
-import static java.util.Arrays.asList;
-
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.Versionable;
@@ -24,7 +22,6 @@ import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableBiMap;
 
 public class VersionableTypeMapping implements TypeMapping {

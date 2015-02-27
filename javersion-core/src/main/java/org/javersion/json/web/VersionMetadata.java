@@ -17,7 +17,11 @@ package org.javersion.json.web;
 
 import static org.javersion.object.Persistent.GENERIC_TYPE;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.javersion.core.Revision;
 import org.javersion.core.VersionProperty;

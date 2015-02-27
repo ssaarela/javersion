@@ -15,8 +15,6 @@
  */
 package org.javersion.util;
 
-import static java.util.Spliterators.emptySpliterator;
-
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Spliterator;

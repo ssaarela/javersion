@@ -6,6 +6,7 @@ import org.javersion.object.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.PropertyTree;
 
@@ -16,6 +17,8 @@ public class MapType implements ValueType {
     public static final Persistent.Object CONSTANT = Persistent.object();
 
     public static final String KEY = "$KEY";
+
+    public static final NodeId KEY_ID = NodeId.valueOf(KEY);
 
     private final IdentifiableType keyType;
 
@@ -32,7 +35,7 @@ public class MapType implements ValueType {
     private void prepareKeys(PropertyTree propertyTree, ReadContext context) {
         for (PropertyTree entryPath : propertyTree.getChildren()) {
             if (!isScalar()) {
-                context.prepareObject(entryPath.get(KEY));
+                context.prepareObject(entryPath.get(KEY_ID));
             }
         }
     }
@@ -48,9 +51,9 @@ public class MapType implements ValueType {
         for (PropertyTree entryPath : propertyTree.getChildren()) {
             Object key;
             if (isScalar()) {
-                key = ((ScalarType) keyType).fromString(entryPath.path.getName());
+                key = ((ScalarType) keyType).fromNodeId(entryPath.path.getNodeId());
             } else {
-                key = context.getObject(entryPath.get(KEY));
+                key = context.getObject(entryPath.get(KEY_ID));
             }
             Object value = context.getObject(entryPath);
             map.put(key, value);
@@ -64,7 +67,8 @@ public class MapType implements ValueType {
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             Object key = entry.getKey();
             Object value = entry.getValue();
-            SubPath entryPath = path.key(keyType.toString(key));
+            NodeId nodeId = keyType.toNodeId(key);
+            SubPath entryPath = path.keyOrIndex(nodeId);
             if (!isScalar()) {
                 context.serialize(entryPath.property(KEY), key);
             }

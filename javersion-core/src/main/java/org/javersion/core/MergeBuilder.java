@@ -21,13 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.javersion.util.Check;
-import org.javersion.util.Merger;
-import org.javersion.util.MergerAdapter;
-import org.javersion.util.MutableHashMap;
-import org.javersion.util.MutableHashSet;
-import org.javersion.util.PersistentHashMap;
-import org.javersion.util.PersistentHashSet;
+import org.javersion.util.*;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;

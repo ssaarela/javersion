@@ -3,6 +3,7 @@ package org.javersion.object.types;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 
 public class StringValueType extends AbstractScalarType {
@@ -22,8 +23,12 @@ public class StringValueType extends AbstractScalarType {
     }
 
     @Override
-    public Object fromString(String str) {
-        return str;
+    public Object fromNodeId(NodeId nodeId) {
+        return nodeId.getKey();
     }
 
+    @Override
+    public NodeId toNodeId(Object object) {
+        return NodeId.valueOf((String) object);
+    }
 }

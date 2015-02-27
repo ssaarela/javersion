@@ -3,10 +3,9 @@ package org.javersion.object.types;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 
 public class DateTimeType extends AbstractScalarType {
 
@@ -21,13 +20,13 @@ public class DateTimeType extends AbstractScalarType {
     }
 
     @Override
-    public String toString(Object object) {
-        return Long.toString(((DateTime) object).getMillis());
+    public NodeId toNodeId(Object object) {
+        return NodeId.valueOf(((DateTime) object).getMillis());
     }
 
     @Override
-    public Object fromString(String str) {
-        return new DateTime(Long.valueOf(str));
+    public Object fromNodeId(NodeId nodeId) {
+        return new DateTime(nodeId.getIndex());
     }
 
 }

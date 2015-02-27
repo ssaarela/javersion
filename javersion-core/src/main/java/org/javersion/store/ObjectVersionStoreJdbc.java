@@ -38,7 +38,6 @@ import com.mysema.query.group.Group;
 import com.mysema.query.group.GroupBy;
 import com.mysema.query.sql.Configuration;
 import com.mysema.query.sql.SQLExpressions;
-import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.sql.SQLTemplates;
 import com.mysema.query.sql.dml.SQLInsertClause;

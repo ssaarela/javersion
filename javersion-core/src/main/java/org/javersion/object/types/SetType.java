@@ -21,6 +21,7 @@ import org.javersion.object.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
@@ -63,8 +64,8 @@ public class SetType implements ValueType {
         context.put(path, CONSTANT);
 
         for (Object element : set) {
-            String key = identifiableType.toString(element);
-            context.serialize(path.key(key), element);
+            NodeId key = identifiableType.toNodeId(element);
+            context.serialize(path.keyOrIndex(key), element);
         }
     }
 

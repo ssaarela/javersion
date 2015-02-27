@@ -6,7 +6,10 @@ import static java.lang.String.format;
 import static java.lang.System.nanoTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.javersion.util.BinaryEncoder.*;
+import static org.javersion.util.BinaryEncoder.BASE32;
+import static org.javersion.util.BinaryEncoder.BASE64;
+import static org.javersion.util.BinaryEncoder.Builder;
+import static org.javersion.util.BinaryEncoder.NUMBER_BASE64_URL;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;

@@ -1,13 +1,10 @@
 package org.javersion.core;
 
-import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.core.Revision.MAX_VALUE;
 import static org.javersion.core.Revision.MIN_VALUE;
 
-import java.util.Arrays;
-
-import com.eaio.uuid.UUID;
+import org.junit.Test;
 
 public class RevisionTest {
 

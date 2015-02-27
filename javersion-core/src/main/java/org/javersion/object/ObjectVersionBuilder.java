@@ -2,8 +2,6 @@ package org.javersion.object;
 
 import java.util.Map;
 
-import org.javersion.core.Diff;
-import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;

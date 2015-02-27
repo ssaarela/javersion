@@ -20,7 +20,6 @@ import java.util.Set;
 import org.javersion.object.DescribeContext;
 import org.javersion.object.Id;
 import org.javersion.object.LocalTypeDescriptor;
-import org.javersion.object.Versionable;
 import org.javersion.object.types.IdentifiableObjectType;
 import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.ObjectType;
@@ -29,12 +28,10 @@ import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
-import org.javersion.util.Check;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 public class ObjectTypeMapping<O> implements TypeMapping {

@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+import org.javersion.path.PropertyPath.NodeId;
+
 import com.google.common.collect.Maps;
 
 public class PropertyTree {
@@ -33,10 +35,10 @@ public class PropertyTree {
         Map<PropertyPath, PropertyTree> nodes = Maps.newHashMapWithExpectedSize(paths.size());
         for (PropertyPath path : paths) {
             PropertyTree parentTree = getOrCreate(PropertyPath.ROOT, nodes);
-            for (PropertyPath subpath : path) {
-                PropertyTree childTree = getOrCreate(subpath, nodes);
+            for (PropertyPath subPath : path) {
+                PropertyTree childTree = getOrCreate(subPath, nodes);
                 if (parentTree != null) {
-                    parentTree.children.put(subpath.getName(), childTree);
+                    parentTree.children.put(subPath.getNodeId(), childTree);
                 }
                 parentTree = childTree;
             }
@@ -55,25 +57,25 @@ public class PropertyTree {
 
     public final PropertyPath path;
 
-    private Map<String, PropertyTree> children = Maps.newLinkedHashMap();
+    private Map<NodeId, PropertyTree> children = Maps.newLinkedHashMap();
 
     private PropertyTree(PropertyPath path) {
         this.path = path;
     }
 
-    public String getName() {
-        return path.getName();
+    public NodeId getNodeId() {
+        return path.getNodeId();
     }
 
     public Collection<PropertyTree> getChildren() {
         return unmodifiableCollection(children.values());
     }
 
-    public Map<String, PropertyTree> getChildrenMap() {
+    public Map<NodeId, PropertyTree> getChildrenMap() {
         return unmodifiableMap(children);
     }
 
-    public PropertyTree get(String childNode) {
+    public PropertyTree get(NodeId childNode) {
         return children.get(childNode);
     }
 
@@ -85,7 +87,7 @@ public class PropertyTree {
         PropertyTree match = this;
         for (PropertyPath node : path) {
             if (match == null) continue;
-            else match = match.get(node.getName());
+            else match = match.get(node.getNodeId());
         }
         return match;
     }

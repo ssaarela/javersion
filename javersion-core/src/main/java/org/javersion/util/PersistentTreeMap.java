@@ -21,8 +21,6 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Spliterator;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> implements PersistentSortedMap<K, V> {
 

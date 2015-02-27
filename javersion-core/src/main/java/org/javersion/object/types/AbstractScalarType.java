@@ -13,9 +13,4 @@ public abstract class AbstractScalarType implements ScalarType, IdentifiableType
         return false;
     }
 
-    @Override
-    public String toString(Object object) {
-        return object.toString();
-    }
-
 }

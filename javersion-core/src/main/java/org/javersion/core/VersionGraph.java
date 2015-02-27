@@ -16,7 +16,6 @@
 package org.javersion.core;
 
 import static com.google.common.collect.Iterables.getFirst;
-import static com.google.common.collect.Iterables.isEmpty;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
@@ -25,19 +24,13 @@ import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
 import static org.javersion.util.MapUtils.mapValueFunction;
 
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.javersion.util.MapUtils;
 import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 public abstract class VersionGraph<K, V, M,
@@ -58,7 +51,7 @@ public abstract class VersionGraph<K, V, M,
     }
 
     protected VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes) {
-        this(versionNodes, versionNodes.getLastEntry().getValue());
+        this(versionNodes, versionNodes.isEmpty() ? null : versionNodes.getLastEntry().getValue());
     }
 
     protected VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes, VersionNode<K, V, M> at) {

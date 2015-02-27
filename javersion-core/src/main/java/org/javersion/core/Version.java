@@ -15,7 +15,6 @@
  */
 package org.javersion.core;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Maps.newLinkedHashMap;
@@ -28,7 +27,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.google.common.base.Function;
-import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 

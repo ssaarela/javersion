@@ -3,18 +3,19 @@ package org.javersion.object.types;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 
 public class PropertyPathType extends AbstractScalarType {
 
     @Override
-    public Object fromString(String str) throws Exception {
-        return PropertyPath.parse(str);
+    public Object fromNodeId(NodeId nodeId) throws Exception {
+        return PropertyPath.parse(nodeId.getKey());
     }
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        return fromString((String) value);
+        return PropertyPath.parse((String) value);
     }
 
     @Override
@@ -22,4 +23,8 @@ public class PropertyPathType extends AbstractScalarType {
         context.put(path, object.toString());
     }
 
+    @Override
+    public NodeId toNodeId(Object object) {
+        return NodeId.valueOf(object.toString());
+    }
 }

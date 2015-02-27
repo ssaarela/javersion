@@ -1,13 +1,12 @@
 package org.javersion.object.types;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 
 public class SimpleValueType extends AbstractScalarType {
@@ -33,10 +32,12 @@ public class SimpleValueType extends AbstractScalarType {
     }
 
     @Override
-    public Object fromString(String str) throws IllegalAccessException, InvocationTargetException, InstantiationException {
-        if (isNullOrEmpty(str)) {
-            return null;
-        }
-        return constructor.newInstance(str);
+    public Object fromNodeId(NodeId nodeId) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        return constructor.newInstance(nodeId.getKey());
+    }
+
+    @Override
+    public NodeId toNodeId(Object object) {
+        return NodeId.valueOf(object.toString());
     }
 }

@@ -25,18 +25,192 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.parser.PropertyPathBaseVisitor;
 import org.javersion.path.parser.PropertyPathLexer;
 import org.javersion.path.parser.PropertyPathParser;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 public abstract class PropertyPath implements Iterable<SubPath> {
 
-    private static class SilentParseException extends RuntimeException {
+    public static abstract class NodeId {
+
+        private static final IndexId[] INDEXES;
+
+        static {
+            INDEXES = new IndexId[32];
+            for (int i=0; i < INDEXES.length; i++) {
+                INDEXES[i] = new IndexId(i);
+            }
+        }
+
+        public static IndexId valueOf(long index) {
+            Preconditions.checkArgument(index >= 0, "index should be >= 0");
+            if (index < INDEXES.length) {
+                return INDEXES[(int) index];
+            }
+            return new IndexId(index);
+        }
+
+        public static KeyId valueOf(String key) {
+            return new KeyId(key);
+        }
+
+        public static NodeId valueOf(Object object) {
+            if (object instanceof Number) {
+                return valueOf(((Number) object).longValue());
+            } else if (object instanceof String) {
+                return valueOf((String) object);
+            } else {
+                throw new IllegalArgumentException("Unsupported NodeId type: " + object);
+            }
+        }
+
+        private NodeId() {}
+
+        public boolean isIndex() {
+            return false;
+        }
+
+        public boolean isKey() {
+            return false;
+        }
+
+        public long getIndex() {
+            throw new UnsupportedOperationException();
+        }
+
+        public String getKey() {
+            throw new UnsupportedOperationException();
+        }
+
+        public Object getKeyOrIndex() {
+            if (isIndex()) {
+                return getIndex();
+            } else {
+                return getKey();
+            }
+        }
+    }
+
+    public static final class IndexId extends NodeId {
+
+        public final long index;
+
+        private IndexId(long index) {
+            Preconditions.checkArgument(index >= 0, "index should be >= 0");
+            this.index = index;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof IndexId) {
+                return ((IndexId) obj).index == this.index;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public boolean isIndex() {
+            return true;
+        }
+
+        @Override
+        public long getIndex() {
+            return index;
+        }
+
+        @Override
+        public int hashCode() {
+            return Long.hashCode(index);
+        }
+
+        @Override
+        public String toString() {
+            return Long.toString(index);
+        }
+
+    }
+
+    public static final class KeyId extends NodeId {
+
+        public final String key;
+
+        private KeyId(String key) {
+            Preconditions.checkNotNull(key);
+            this.key = key;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof KeyId) {
+                return ((KeyId) obj).key.equals(this.key);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public boolean isKey() {
+            return true;
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+
+        @Override
+        public int hashCode() {
+            return key.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return key;
+        }
+
+    }
+
+    private static final class SpecialNodeId extends NodeId {
+
+        private final String str;
+
+        private SpecialNodeId(String str) {
+            this.str = str;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj instanceof SpecialNodeId) {
+                return ((SpecialNodeId) obj).str.equals(this.str);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public int hashCode() {
+            return str.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return str;
+        }
+    }
+
+    private static final class SilentParseException extends RuntimeException {
         public SilentParseException() {
             super(null, null, false, false);
         }
@@ -131,7 +305,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         });
     }
 
-    public final Index index(int index) {
+    public final Index index(long index) {
         checkArgument(index >= 0, "index should be >= 0");
         return new Index(this, index);
     }
@@ -139,6 +313,21 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     public final Key key(String index) {
         checkNotNull(index);
         return new Key(this, index);
+    }
+
+    public final SubPath keyOrIndex(Object object) {
+        return keyOrIndex(NodeId.valueOf(object));
+    }
+
+    public final SubPath keyOrIndex(NodeId nodeId) {
+        Preconditions.checkNotNull(nodeId);
+        if (nodeId.isKey()) {
+            return new Key(this, (KeyId) nodeId);
+        } else if (nodeId.isIndex()) {
+            return new Index(this, (IndexId) nodeId);
+        } else {
+            throw new IllegalArgumentException("Expected KeyId or IndexId, got " + nodeId.getClass());
+        }
     }
 
     public final AnyIndex anyIndex() {
@@ -209,7 +398,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public abstract int hashCode();
 
-    public abstract String getName();
+    public abstract NodeId getNodeId();
 
 
     abstract List<SubPath> getFullPath();
@@ -221,9 +410,11 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public static final class Root extends PropertyPath {
 
+        public static final NodeId ID = new SpecialNodeId(EMPTY_STRING);
+
         private static final Root ROOT = new Root();
 
-        private static final List<SubPath> FULL_PATH = ImmutableList.<SubPath>of();
+        private static final List<SubPath> FULL_PATH = ImmutableList.of();
 
         private Root() {}
 
@@ -251,8 +442,8 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
         @Override
-        public String getName() {
-            return EMPTY_STRING;
+        public NodeId getNodeId() {
+            return ID;
         }
 
         @Override
@@ -264,10 +455,13 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public static abstract class SubPath extends PropertyPath {
 
+        public final NodeId nodeId;
+
         public final PropertyPath parent;
 
-        private SubPath(PropertyPath parent) {
+        private SubPath(PropertyPath parent, NodeId nodeId) {
             this.parent = checkNotNull(parent, "parent");
+            this.nodeId = checkNotNull(nodeId, "nodeId");
         }
 
         List<SubPath> getFullPath() {
@@ -278,173 +472,109 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             return pathBuilder.build();
         }
 
+        @Override
+        public final boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj.getClass().equals(this.getClass())) {
+                SubPath other = (SubPath) obj;
+                return this.nodeId.equals(other.nodeId) && parent.equals(other.parent);
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public final int hashCode() {
+            return 31 * parent.hashCode() + nodeId.hashCode();
+        }
+
+        @Override
+        public final NodeId getNodeId() {
+            return nodeId;
+        }
+
+        public final String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(parent.toString());
+            appendNode(sb);
+            return sb.toString();
+        }
+
+        protected abstract void appendNode(StringBuilder sb);
     }
 
     public static final class Property extends SubPath {
 
-        public final String name;
-
         private Property(PropertyPath parent, String name) {
-            super(parent);
-            this.name = name;
+            super(parent, new KeyId(name));
         }
 
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            } else if (obj instanceof Property) {
-                Property other = (Property) obj;
-                return this.name.equals(other.name) && parent.equals(other.parent);
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * parent.hashCode() + name.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            if (!parent.isRoot()) {
-                sb.append(parent.toString());
-                sb.append('.');
-            }
-            return sb.append(name).toString();
-        }
-
-        @Override
-        public String getName() {
-            return name;
+        private Property(PropertyPath parent, NodeId nodeId) {
+            super(parent, nodeId);
         }
 
         @Override
         Property toSchemaPath(PropertyPath newParent) {
-            return parent.equals(newParent) ? this : new Property(newParent, name);
+            return parent.equals(newParent) ? this : new Property(newParent, nodeId);
         }
 
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            if (!parent.isRoot()) {
+                sb.append('.');
+            }
+            sb.append(nodeId);
+        }
     }
 
     public static final class AnyIndex extends SubPath {
 
-        public static final String ID = "[]";
+        public static final NodeId ID = new SpecialNodeId("[]");
 
         private AnyIndex(PropertyPath parent) {
-            super(parent);
-        }
-
-        @Override
-        public String toString() {
-            return new StringBuilder().append(parent.toString()).append(ID).toString();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            } else if (obj instanceof AnyIndex) {
-                AnyIndex other = (AnyIndex) obj;
-                return parent.equals(other.parent);
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * parent.hashCode() + -1;
-        }
-
-        @Override
-        public String getName() {
-            return ID;
+            super(parent, ID);
         }
 
         @Override
         PropertyPath toSchemaPath(PropertyPath newParent) {
             return parent.equals(newParent) ? this : new AnyKey(newParent);
         }
+
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append(ID);
+        }
     }
 
     public static final class AnyKey extends SubPath {
 
-        public static final String ID = "{}";
+        public static final NodeId ID = new SpecialNodeId("{}");
 
         private AnyKey(PropertyPath parent) {
-            super(parent);
-        }
-
-        @Override
-        public String toString() {
-            return new StringBuilder().append(parent.toString()).append(ID).toString();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            } else if (obj instanceof AnyKey) {
-                AnyKey other = (AnyKey) obj;
-                return parent.equals(other.parent);
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * parent.hashCode() + -2;
-        }
-
-        @Override
-        public String getName() {
-            return ID;
+            super(parent, ID);
         }
 
         @Override
         AnyKey toSchemaPath(PropertyPath newParent) {
             return parent.equals(newParent) ? this : new AnyKey(newParent);
         }
+
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append(ID);
+        }
+
     }
 
     public static final class Index extends SubPath {
 
-        public final int index;
-
-        private Index(PropertyPath parent, int index) {
-            super(parent);
-            checkArgument(index >= 0, "index should be >= 0");
-            this.index = index;
+        private Index(PropertyPath parent, long index) {
+            super(parent, new IndexId(index));
         }
 
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            } else if (obj instanceof Index) {
-                Index other = (Index) obj;
-                return this.index == other.index && parent.equals(other.parent);
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * parent.hashCode() + index;
-        }
-
-        @Override
-        public String toString() {
-            return new StringBuilder().append(parent.toString()).append('[').append(index).append(']').toString();
-        }
-
-        @Override
-        public String getName() {
-            return Integer.toString(index);
+        private Index(PropertyPath parent, IndexId id) {
+            super(parent, id);
         }
 
         @Override
@@ -452,48 +582,33 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             return new AnyIndex(newParent);
         }
 
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append('[').append(nodeId.getIndex()).append(']');
+        }
+
     }
 
     public static final class Key extends SubPath {
 
-        public final String key;
-
         private Key(PropertyPath parent, String key) {
-            super(parent);
-            this.key = key;
+            super(parent, new KeyId(key));
         }
 
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            } else if (obj instanceof Key) {
-                Key other = (Key) obj;
-                return this.key.equals(other.key) && parent.equals(other.parent);
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * parent.hashCode() + key.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return new StringBuilder().append(parent.toString()).append("[\"").append(escapeEcmaScript(key)).append("\"]").toString();
-        }
-
-        @Override
-        public String getName() {
-            return key;
+        private Key(PropertyPath parent, KeyId id) {
+            super(parent, id);
         }
 
         @Override
         SubPath toSchemaPath(PropertyPath newParent) {
             return new AnyKey(newParent);
         }
+
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append("[\"").append(escapeEcmaScript(nodeId.getKey())).append("\"]").toString();
+        }
+
     }
 
     private static PropertyPathParser newParser(String input, boolean silent) {

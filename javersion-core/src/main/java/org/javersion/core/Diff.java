@@ -19,7 +19,6 @@ import static com.google.common.base.Objects.equal;
 import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
 import static org.javersion.util.Check.notNull;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;

@@ -61,7 +61,9 @@ public class ReferenceTypeMapping implements TypeMapping {
     }
 
     public static ValueType describeReference(PropertyPath path, TypeDescriptor type, String alias, DescribeContext context) {
-        IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath(alias).anyKey(), type);
-        return new ReferenceType(identifiableType, targetPath(alias));
+        SubPath targetPath = targetPath(alias);
+        context.describeAsync(targetPath.anyIndex(), type);
+        IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath.anyKey(), type);
+        return new ReferenceType(identifiableType, targetPath);
     }
 }

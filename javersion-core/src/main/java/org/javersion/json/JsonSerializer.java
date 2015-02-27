@@ -15,8 +15,6 @@
  */
 package org.javersion.json;
 
-import static com.google.common.collect.Maps.newLinkedHashMap;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -28,6 +26,8 @@ import org.javersion.object.Persistent;
 import org.javersion.object.Schema;
 import org.javersion.object.SchemaRoot;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.AnyKey;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 
 import com.google.gson.stream.JsonReader;
@@ -135,8 +135,16 @@ public class JsonSerializer {
                 break;
             case ARRAY:
                 writer.beginArray();
-                for (PropertyTree child : tree.getChildren()) {
-                    toJson(child, map, writer);
+                Map<NodeId, PropertyTree> childrenMap = tree.getChildrenMap();
+                int nonNullElements = 0;
+                for (int i=0; nonNullElements < childrenMap.size(); i++) {
+                    PropertyTree child = childrenMap.get(NodeId.valueOf(i));
+                    if (child != null) {
+                        nonNullElements++;
+                        toJson(child, map, writer);
+                    } else {
+                        writer.nullValue();
+                    }
                 }
                 writer.endArray();
                 break;
@@ -147,8 +155,11 @@ public class JsonSerializer {
                     writer.name(TYPE_FIELD).value(typeAlias);
                 }
                 for (PropertyTree child : tree.getChildren()) {
-                    writer.name(child.getName());
-                    toJson(child, map, writer);
+                    NodeId nodeId = child.getNodeId();
+                    if (nodeId.isKey()) {
+                        writer.name(nodeId.getKey());
+                        toJson(child, map, writer);
+                    }
                 }
                 writer.endObject();
                 break;
@@ -207,7 +218,7 @@ public class JsonSerializer {
     private boolean isIndexed(PropertyPath path) {
         if (schemaRoot != null) {
             Schema schema = this.schemaRoot.find(path);
-            return schema != null && schema.hasChild(PropertyPath.AnyKey.ID);
+            return schema != null && schema.hasChild(AnyKey.ID);
         }
         return false;
     }

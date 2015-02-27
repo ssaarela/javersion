@@ -33,18 +33,10 @@ import org.javersion.core.BranchAndRevision;
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionType;
-import org.javersion.properties.PropertiesVersionGraph;
-import org.javersion.properties.PropertiesVersion;
 import org.junit.Test;
 
 import com.google.common.base.Function;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.*;
 
 public class PropertiesVersionGraphTest {
 

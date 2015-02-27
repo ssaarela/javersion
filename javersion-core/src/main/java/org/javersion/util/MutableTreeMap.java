@@ -16,7 +16,6 @@
 package org.javersion.util;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import org.javersion.util.AbstractTreeMap.Node;
 

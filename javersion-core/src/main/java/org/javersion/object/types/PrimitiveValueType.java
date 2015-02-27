@@ -1,17 +1,10 @@
 package org.javersion.object.types;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static java.lang.Boolean.FALSE;
-import static java.lang.Boolean.TRUE;
-import static java.lang.Double.doubleToRawLongBits;
-import static java.lang.Float.floatToRawIntBits;
-
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
-
-import com.google.common.base.Strings;
 
 public abstract class PrimitiveValueType extends AbstractScalarType {
 
@@ -30,11 +23,13 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromString(String str) {
-            if (isNullOrEmpty(str)) {
-                return null;
-            }
-            return Long.valueOf(str);
+        public Object fromNodeId(NodeId nodeId) {
+            return nodeId.getIndex();
+        }
+
+        @Override
+        public NodeId toNodeId(Object object) {
+            return NodeId.valueOf((Long) object);
         }
     };
 
@@ -51,13 +46,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromString(String str) {
-            if (isNullOrEmpty(str)) {
-                return null;
-            }
-            return Integer.valueOf(str);
+        public Object fromNodeId(NodeId nodeId) {
+            return (int) nodeId.getIndex();
         }
 
+        @Override
+        public NodeId toNodeId(Object object) {
+            return NodeId.valueOf((Integer) object);
+        }
     };
 
     public static final PrimitiveValueType SHORT = new PrimitiveValueType() {
@@ -73,13 +69,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromString(String str) {
-            if (isNullOrEmpty(str)) {
-                return null;
-            }
-            return Short.valueOf(str);
+        public Object fromNodeId(NodeId nodeId) {
+            return (short) nodeId.getIndex();
         }
 
+        @Override
+        public NodeId toNodeId(Object object) {
+            return NodeId.valueOf((Short) object);
+        }
     };
 
     public static final PrimitiveValueType BYTE = new PrimitiveValueType() {
@@ -95,20 +92,21 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromString(String str) {
-            if (isNullOrEmpty(str)) {
-                return null;
-            }
-            return Byte.valueOf(str);
+        public Object fromNodeId(NodeId nodeId) {
+            return (byte) nodeId.getIndex();
         }
 
+        @Override
+        public NodeId toNodeId(Object object) {
+            return NodeId.valueOf((Byte) object);
+        }
     };
 
     public static final PrimitiveValueType BOOLEAN = new PrimitiveValueType() {
 
         @Override
         public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-            return (Boolean) value;
+            return value;
         }
 
         @Override
@@ -117,13 +115,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromString(String str) {
-            if (isNullOrEmpty(str)) {
-                return null;
-            }
-            return Boolean.valueOf(str);
+        public Object fromNodeId(NodeId nodeId) {
+            return nodeId.getIndex() != 0;
         }
 
+        @Override
+        public NodeId toNodeId(Object object) {
+            return (Boolean) object ? NodeId.valueOf(1) : NodeId.valueOf(0);
+        }
     };
 
     public static final PrimitiveValueType DOUBLE = new PrimitiveValueType() {
@@ -139,13 +138,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromString(String str) {
-            if (isNullOrEmpty(str)) {
-                return null;
-            }
-            return Double.valueOf(str);
+        public Object fromNodeId(NodeId nodeId) {
+            return Double.valueOf(nodeId.getKey());
         }
 
+        @Override
+        public NodeId toNodeId(Object object) {
+            return NodeId.valueOf(object.toString());
+        }
     };
 
     public static final PrimitiveValueType FLOAT = new PrimitiveValueType() {
@@ -161,13 +161,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromString(String str) {
-            if (isNullOrEmpty(str)) {
-                return null;
-            }
-            return Float.valueOf(str);
+        public Object fromNodeId(NodeId nodeId) {
+            return Float.valueOf(nodeId.getKey());
         }
 
+        @Override
+        public NodeId toNodeId(Object object) {
+            return NodeId.valueOf(object.toString());
+        }
     };
 
     public static final PrimitiveValueType CHAR = new PrimitiveValueType() {
@@ -183,13 +184,14 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromString(String str) {
-            if (isNullOrEmpty(str)) {
-                return null;
-            }
-            return Character.valueOf(str.charAt(0));
+        public Object fromNodeId(NodeId nodeId) {
+            return Character.valueOf(nodeId.getKey().charAt(0));
         }
 
+        @Override
+        public NodeId toNodeId(Object object) {
+            return NodeId.valueOf(object.toString());
+        }
     };
 
 }

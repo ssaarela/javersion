@@ -17,9 +17,6 @@ package org.javersion.util;
 
 import static com.google.common.collect.Iterables.transform;
 import static org.javersion.util.AbstractRedBlackTree.Color.RED;
-import static org.javersion.util.MapUtils.mapEntryFunction;
-import static org.javersion.util.MapUtils.mapKeyFunction;
-import static org.javersion.util.MapUtils.mapValueFunction;
 
 import java.util.Comparator;
 import java.util.Iterator;
@@ -28,7 +25,6 @@ import java.util.Map.Entry;
 
 import org.javersion.util.AbstractTreeMap.Node;
 
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;

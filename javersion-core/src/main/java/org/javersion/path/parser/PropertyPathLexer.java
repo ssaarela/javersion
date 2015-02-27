@@ -1,13 +1,13 @@
 // Generated from /Users/samppa/Personal/javersion/javersion-core/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
 package org.javersion.path.parser;
-import org.antlr.v4.runtime.Lexer;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenStream;
+
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.atn.*;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNDeserializer;
+import org.antlr.v4.runtime.atn.LexerATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.misc.*;
+import org.antlr.v4.runtime.misc.NotNull;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class PropertyPathLexer extends Lexer {
@@ -23,9 +23,9 @@ public class PropertyPathLexer extends Lexer {
 	};
 
 	public static final String[] ruleNames = {
-		"T__0", "T__1", "T__2", "T__3", "T__4", "Identifier", "JavaIdentifierStart", 
-		"JavaIdentifierPart", "Integer", "Digit", "NonZeroDigit", "Key", "StringCharacters", 
-		"StringCharacter", "EscapeSequence", "OctalEscape", "UnicodeEscape", "ZeroToThree", 
+		"T__0", "T__1", "T__2", "T__3", "T__4", "Identifier", "JavaIdentifierStart",
+		"JavaIdentifierPart", "Integer", "Digit", "NonZeroDigit", "Key", "StringCharacters",
+		"StringCharacter", "EscapeSequence", "OctalEscape", "UnicodeEscape", "ZeroToThree",
 		"HexDigit", "OctalDigit"
 	};
 
@@ -92,27 +92,27 @@ public class PropertyPathLexer extends Lexer {
 	@Override
 	public boolean sempred(RuleContext _localctx, int ruleIndex, int predIndex) {
 		switch (ruleIndex) {
-		case 6: 
+		case 6:
 			return JavaIdentifierStart_sempred((RuleContext)_localctx, predIndex);
-		case 7: 
+		case 7:
 			return JavaIdentifierPart_sempred((RuleContext)_localctx, predIndex);
 		}
 		return true;
 	}
 	private boolean JavaIdentifierStart_sempred(RuleContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 0: 
+		case 0:
 			return Character.isJavaIdentifierStart(_input.LA(-1));
-		case 1: 
+		case 1:
 			return Character.isJavaIdentifierStart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)));
 		}
 		return true;
 	}
 	private boolean JavaIdentifierPart_sempred(RuleContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 2: 
+		case 2:
 			return Character.isJavaIdentifierPart(_input.LA(-1));
-		case 3: 
+		case 3:
 			return Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)));
 		}
 		return true;

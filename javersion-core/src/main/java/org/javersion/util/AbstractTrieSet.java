@@ -20,9 +20,6 @@ import static com.google.common.collect.Iterators.transform;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Objects;
-import java.util.Spliterator;
-import java.util.stream.Collectors;
 
 import org.javersion.util.AbstractTrieSet.EntryNode;
 

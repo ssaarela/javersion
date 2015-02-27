@@ -1,8 +1,5 @@
 package org.javersion.json.web;
 
-import static org.javersion.object.Persistent.Type.ARRAY;
-import static org.javersion.object.Persistent.Type.OBJECT;
-
 import org.javersion.core.Revision;
 import org.javersion.core.VersionProperty;
 import org.javersion.object.DescribeContext;
@@ -13,6 +10,7 @@ import org.javersion.object.WriteContext;
 import org.javersion.object.mapping.TypeMapping;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.reflect.TypeDescriptor;
 
@@ -20,10 +18,16 @@ public class VersionPropertyMapping implements TypeMapping {
 
     private static class VersionPropertyValueType implements ValueType {
 
+        private static final String REVISION = "revision";
+        private static final NodeId REVISION_ID = NodeId.valueOf(REVISION);
+
+        private static final String VALUE = "value";
+        private static final NodeId VALUE_ID = NodeId.valueOf(VALUE);
+
         @Override
         public Object instantiate(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
-            Revision revision = (Revision) context.getObject(propertyTree.get("revision"));
-            Object value = context.getProperty(propertyTree.get("value"));
+            Revision revision = (Revision) context.getObject(propertyTree.get(REVISION_ID));
+            Object value = context.getProperty(propertyTree.get(VALUE_ID));
             return new VersionProperty<>(revision, value);
         }
 
@@ -34,8 +38,8 @@ public class VersionPropertyMapping implements TypeMapping {
         public void serialize(PropertyPath path, Object object, WriteContext context) {
             VersionProperty<?> versionProperty = (VersionProperty) object;
             context.put(path, Persistent.object());
-            context.put(path.property("revision"), versionProperty.revision.toString());
-            context.put(path.property("value"), versionProperty.value);
+            context.put(path.property(REVISION), versionProperty.revision.toString());
+            context.put(path.property(VALUE), versionProperty.value);
         }
 
         @Override

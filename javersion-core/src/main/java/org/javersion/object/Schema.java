@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
@@ -26,11 +27,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 public class Schema implements ValueType {
-    
+
     private ValueType valueType;
-    
-    private Map<String, Schema> children = Maps.newHashMap();
-    
+
+    private Map<NodeId, Schema> children = Maps.newHashMap();
+
 
     Schema() {
         this.valueType = null;
@@ -38,33 +39,33 @@ public class Schema implements ValueType {
     Schema(ValueType valueType) {
         this.valueType = Check.notNull(valueType, "valueType");
     }
-    
+
     public ValueType getValueType() {
         return valueType;
     }
 
-    public Schema getChild(String name) {
-        return children.get(name);
+    public Schema getChild(NodeId nodeId) {
+        return children.get(nodeId);
     }
-    
+
     public boolean hasChildren() {
         return !children.isEmpty();
     }
-    
-    Schema addChild(String name, Schema child) {
-        children.put(name, child);
+
+    Schema addChild(NodeId nodeId, Schema child) {
+        children.put(nodeId, child);
         return child;
     }
-    
+
     void setValueType(ValueType valueType) {
         Check.that(this.valueType == null, "valueType has been set already");
         this.valueType = Check.notNull(valueType, "valueType");
     }
-    
+
     void lock() {
         children = ImmutableMap.copyOf(children);
     }
-    
+
     boolean isLocked() {
         return children instanceof ImmutableMap;
     }
@@ -72,11 +73,11 @@ public class Schema implements ValueType {
     public boolean isReference() {
         return valueType.isReference();
     }
-    
-    public boolean hasChild(String name) {
-        return children.containsKey(name);
+
+    public boolean hasChild(NodeId nodeId) {
+        return children.containsKey(nodeId);
     }
-    
+
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         return valueType.instantiate(propertyTree, value, context);

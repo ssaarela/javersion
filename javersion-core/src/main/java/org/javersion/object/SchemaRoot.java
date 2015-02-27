@@ -34,7 +34,7 @@ public class SchemaRoot extends Schema  {
         Check.notNull(path, "path");
         Schema currentMapping = this;
         for (PropertyPath currentPath : path.toSchemaPath().asList()) {
-            currentMapping = currentMapping.getChild(currentPath.getName());
+            currentMapping = currentMapping.getChild(currentPath.getNodeId());
             if (currentMapping == null) {
                 return null;
             }

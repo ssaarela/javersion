@@ -1,10 +1,11 @@
 package org.javersion.core;
 
-import java.util.Map;
-
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.javersion.core.Diff.diff;
-import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.assertThat;
+
+import java.util.Map;
 
 import org.junit.Test;
 

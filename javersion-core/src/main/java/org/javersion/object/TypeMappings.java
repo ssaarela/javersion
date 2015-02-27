@@ -15,24 +15,24 @@
  */
 package org.javersion.object;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.javersion.object.mapping.PrimitiveTypeMapping.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import org.javersion.core.Revision;
-import org.javersion.core.VersionProperty;
 import org.javersion.object.mapping.*;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
 import org.javersion.util.Check;
 
-import com.google.common.collect.*;
-import static org.javersion.object.mapping.PrimitiveTypeMapping.*;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 public class TypeMappings {
 

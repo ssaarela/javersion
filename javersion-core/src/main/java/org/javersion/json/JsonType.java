@@ -15,14 +15,10 @@
  */
 package org.javersion.json;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 import java.math.BigDecimal;
 import java.util.Map;
 
 import org.javersion.object.Persistent;
-import org.javersion.object.types.ListType;
-import org.javersion.object.types.MapType;
 
 import com.google.common.collect.ImmutableMap;
 

@@ -3,6 +3,7 @@ package org.javersion.json;
 import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.equalTo;
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.path.PropertyPath.parse;
 import static org.junit.Assert.assertThat;
 
 import java.io.Serializable;
@@ -15,7 +16,6 @@ import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -37,6 +37,12 @@ public class JsonSerializerTest {
         Map<PropertyPath, Object> map = serializer.parse(toJson(map("_type", "MyType"))).properties;
         assertThat(map, equalTo(ImmutableMap.of(ROOT, Persistent.object("MyType"))));
         assertThat(serializer.serialize(map), equalTo("{\"_type\":\"MyType\"}"));
+    }
+
+    @Test
+    public void sparse_list() {
+        Map<PropertyPath, Object> map = ImmutableMap.of(parse(""), Persistent.array(), parse("[1]"), 1l, parse("[3]"), 3l);
+        assertThat(serializer.serialize(map), equalTo("[null,1,null,3]"));
     }
 
     @Test
@@ -79,12 +85,6 @@ public class JsonSerializerTest {
 
     private String toJson(Object src) {
         return gson.toJson(src);
-    }
-
-    private static Map<PropertyPath, String> map(PropertyPath k1, String v1) {
-        Map<PropertyPath, String> map = Maps.newHashMap();
-        map.put(k1, v1);
-        return map;
     }
 
     private static Map<String, Object> map(Object... keysAndValues) {

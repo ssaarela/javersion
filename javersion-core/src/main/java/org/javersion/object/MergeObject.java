@@ -1,7 +1,5 @@
 package org.javersion.object;
 
-import java.util.Set;
-
 import org.javersion.core.Merge;
 import org.javersion.path.PropertyPath;
 

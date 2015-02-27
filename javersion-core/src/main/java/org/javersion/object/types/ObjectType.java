@@ -21,6 +21,7 @@ import org.javersion.object.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
@@ -73,9 +74,9 @@ public class ObjectType<O> implements ValueType {
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
         TypeDescriptor typeDescriptor = getAlias(object.getClass());
         for (PropertyTree child : propertyTree.getChildren()) {
-            String fieldName = child.getName();
-            if (typeDescriptor.hasField(fieldName)) {
-                FieldDescriptor fieldDescriptor = typeDescriptor.getField(fieldName);
+            NodeId nodeId = child.getNodeId();
+            if (nodeId.isKey() && typeDescriptor.hasField(nodeId.getKey())) {
+                FieldDescriptor fieldDescriptor = typeDescriptor.getField(nodeId.getKey());
                 Object value = context.getObject(child);
                 fieldDescriptor.set(object, value);
             }

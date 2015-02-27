@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.object.TestUtil.properties;
 import static org.javersion.object.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
 import static org.junit.Assert.assertThat;
 
 import java.util.Map;
@@ -16,7 +17,7 @@ import org.junit.Test;
 
 public class ReferencesTest {
 
-    public static final Object NODE_ALIAS = Persistent.object("ReferencesTest$Node");
+    public static final Object NODE_ALIAS = Persistent.object(getTypeDescriptor(Node.class).getSimpleName());
 
     public static class Node {
 
@@ -66,17 +67,17 @@ public class ReferencesTest {
         Map<PropertyPath, Object> properties = nodeSerializer.toPropertyMap(root);
 
         Map<PropertyPath, Object> expectedProperties = properties(
-                ROOT, "1",
+                ROOT, 1l,
 
-                property("$REF.nodes[\"1\"]"), NODE_ALIAS,
-                property("$REF.nodes[\"1\"].id"), 1l,
-                property("$REF.nodes[\"1\"].left"), "2",
-                property("$REF.nodes[\"1\"].right"), "1",
+                property("$REF.nodes[1]"), NODE_ALIAS,
+                property("$REF.nodes[1].id"), 1l,
+                property("$REF.nodes[1].left"), 2l,
+                property("$REF.nodes[1].right"), 1l,
 
-                property("$REF.nodes[\"2\"]"), NODE_ALIAS,
-                property("$REF.nodes[\"2\"].id"), 2l,
-                property("$REF.nodes[\"2\"].left"), "1",
-                property("$REF.nodes[\"2\"].right"), "2"
+                property("$REF.nodes[2]"), NODE_ALIAS,
+                property("$REF.nodes[2].id"), 2l,
+                property("$REF.nodes[2].left"), 1l,
+                property("$REF.nodes[2].right"), 2l
         );
 
         assertThat(properties.entrySet(), everyItem(isIn(expectedProperties.entrySet())));

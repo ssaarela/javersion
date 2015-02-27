@@ -2,12 +2,10 @@ package org.javersion.object;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import java.util.Set;
 
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * Object (type alias)

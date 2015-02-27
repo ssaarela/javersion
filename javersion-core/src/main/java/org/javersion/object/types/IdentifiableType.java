@@ -16,8 +16,10 @@
 package org.javersion.object.types;
 
 
+import org.javersion.path.PropertyPath.NodeId;
+
 public interface IdentifiableType extends ValueType {
 
-    public String toString(Object object);
+    public NodeId toNodeId(Object object);
 
 }
