@@ -20,8 +20,8 @@ public final class Persistent {
 
     public static enum Type {
         NULL(Void.class),
-        OBJECT(),
-        ARRAY(),
+        OBJECT(Object.class),
+        ARRAY(Array.class),
         STRING(String.class),
         BOOLEAN(Boolean.class),
         LONG(Long.class),
@@ -35,9 +35,7 @@ public final class Persistent {
         static {
             ImmutableMap.Builder<Class<?>, Type> builder = ImmutableMap.builder();
             for (Type type : Type.values()) {
-                if (type.clazz != null) {
-                    builder.put(type.clazz, type);
-                }
+                builder.put(type.clazz, type);
             }
             TYPES_BY_CLASS = builder.build();
         }
@@ -47,9 +45,6 @@ public final class Persistent {
             return TYPES_BY_CLASS.get(clazz);
         }
 
-        Type() {
-            this.clazz = null;
-        }
         Type(Class<?> clazz) {
             this.clazz = clazz;
         }

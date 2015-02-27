@@ -184,6 +184,7 @@ public class JsonStoreController {
             branches.addAll(merge);
         }
         if (branches.isEmpty()) {
+            // Specific version requested
             return getResponse(objectId, versionGraph.getVersionNode(revision), create);
         } else {
             // If revision is given, merge branches of that time
