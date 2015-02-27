@@ -16,6 +16,7 @@
 package org.javersion.object;
 
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.util.Check;
 
 public class SchemaRoot extends Schema  {
@@ -33,8 +34,10 @@ public class SchemaRoot extends Schema  {
     public Schema find(PropertyPath path) {
         Check.notNull(path, "path");
         Schema currentMapping = this;
-        for (PropertyPath currentPath : path.toSchemaPath().asList()) {
-            currentMapping = currentMapping.getChild(currentPath.getNodeId());
+        for (PropertyPath currentPath : path.asList()) {
+            NodeId nodeId = currentPath.getNodeId();
+            Schema childMapping = currentMapping.getChild(nodeId);
+            currentMapping = childMapping != null ? childMapping : currentMapping.getChild(nodeId.fallbackId());
             if (currentMapping == null) {
                 return null;
             }

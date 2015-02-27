@@ -94,6 +94,9 @@ public abstract class PropertyPath implements Iterable<SubPath> {
                 return getKey();
             }
         }
+
+        public abstract NodeId fallbackId();
+
     }
 
     public static final class IndexId extends NodeId {
@@ -136,6 +139,10 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             return Long.toString(index);
         }
 
+        @Override
+        public NodeId fallbackId() {
+            return AnyIndex.ID;
+        }
     }
 
     public static final class KeyId extends NodeId {
@@ -178,6 +185,10 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             return key;
         }
 
+        @Override
+        public NodeId fallbackId() {
+            return AnyKey.ID;
+        }
     }
 
     private static final class SpecialNodeId extends NodeId {
@@ -207,6 +218,11 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         @Override
         public String toString() {
             return str;
+        }
+
+        @Override
+        public NodeId fallbackId() {
+            return this;
         }
     }
 
