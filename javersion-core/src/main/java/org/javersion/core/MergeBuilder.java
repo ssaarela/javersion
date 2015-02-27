@@ -107,7 +107,7 @@ public class MergeBuilder<K, V, M> {
         return this;
     }
 
-    public final MergeBuilder<K, V, M> merge(final Merge<K, V, M> node) {
+    private final MergeBuilder<K, V, M> merge(final Merge<K, V, M> node) {
         Check.notNull(node, "node");
         ensureNotLocked();
 
@@ -141,13 +141,13 @@ public class MergeBuilder<K, V, M> {
                 // Conflicting value?
                 else if (!equal(oldValue.value, newValue.value)) {
                     K key = newEntry.getKey();
-                    boolean retainNewer = replaceWith(oldValue, newValue);
-                    if (retainNewer) {
+                    boolean resolveToNewer = replaceWith(oldValue, newValue);
+                    if (resolveToNewer) {
                         conflicts.put(key, oldValue);
                     } else {
                         conflicts.put(key, newValue);
                     }
-                    return retainNewer;
+                    return resolveToNewer;
                 }
                 // Newer value
                 else {

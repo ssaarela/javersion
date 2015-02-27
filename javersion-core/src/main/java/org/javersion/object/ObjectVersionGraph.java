@@ -15,11 +15,14 @@
  */
 package org.javersion.object;
 
+import org.javersion.core.Revision;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionGraphBuilder;
 import org.javersion.core.Version;
+import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 import org.javersion.object.ObjectVersionGraph.Builder;
+import org.javersion.util.PersistentSortedMap;
 
 public final class ObjectVersionGraph<M> extends VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
 
@@ -49,9 +52,18 @@ public final class ObjectVersionGraph<M> extends VersionGraph<PropertyPath, Obje
         super(builder);
     }
 
+    private ObjectVersionGraph(PersistentSortedMap<Revision, VersionNode<PropertyPath, Object, M>> versionNodes, VersionNode<PropertyPath, Object, M> at) {
+        super(versionNodes, at);
+    }
+
     @Override
     protected Builder<M> newBuilder() {
         return new Builder<M>(this);
+    }
+
+    @Override
+    protected ObjectVersionGraph<M> at(PersistentSortedMap<Revision, VersionNode<PropertyPath, Object, M>> versionNodes, VersionNode<PropertyPath, Object, M> at) {
+        return new ObjectVersionGraph<>(versionNodes, at);
     }
 
     public static class Builder<M> extends VersionGraphBuilder<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {

@@ -27,13 +27,14 @@ import org.javersion.path.PropertyPath;
 import com.google.common.collect.Multimap;
 
 @Versionable(alias = GENERIC_TYPE)
-public class VersionReference {
+public class VersionMetadata {
     public String _id;
     public List<Revision> _revs;
     public Map<PropertyPath, Collection<VersionProperty<Object>>> _conflicts;
-    public VersionReference() {}
 
-    public VersionReference(String _id, Set<Revision> _revs, Multimap<PropertyPath, VersionProperty<Object>> conflicts) {
+    public VersionMetadata() {}
+
+    public VersionMetadata(String _id, Set<Revision> _revs, Multimap<PropertyPath, VersionProperty<Object>> conflicts) {
         this._id = _id;
         this._revs = _revs.isEmpty() ? null : new ArrayList<>(_revs);
         this._conflicts = conflicts.isEmpty() ? null : conflicts.asMap();

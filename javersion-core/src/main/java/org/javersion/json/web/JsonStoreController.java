@@ -73,7 +73,7 @@ public class JsonStoreController {
             .withMapping(new VersionPropertyMapping())
             .build();
 
-    private final ObjectSerializer<VersionReference> metaSerializer = new ObjectSerializer<>(VersionReference.class, typeMappings);
+    private final ObjectSerializer<VersionMetadata> metaSerializer = new ObjectSerializer<>(VersionMetadata.class, typeMappings);
 
     private final JsonSerializer jsonSerializer = new JsonSerializer(new JsonSerializer.Config(false, false, ""), metaSerializer.schemaRoot);
 
@@ -141,7 +141,7 @@ public class JsonStoreController {
                                              String branch,
                                              boolean create) {
         JsonSerializer.JsonPaths paths = jsonSerializer.parse(json);
-        VersionReference ref = metaSerializer.fromPropertyMap(paths.meta);
+        VersionMetadata ref = metaSerializer.fromPropertyMap(paths.meta);
         ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
         ObjectVersionBuilder<Void> versionBuilder = new ObjectVersionBuilder<>();
         if (ref != null && ref._revs != null) {
@@ -172,21 +172,28 @@ public class JsonStoreController {
                                                String branchOrRevision,
                                                Set<String> merge,
                                                boolean create) {
+        Revision revision = null;
+        Set<String> branches = new LinkedHashSet<>();
         if (versionGraph.getBranches().contains(branchOrRevision)) {
-            Set<String> branches = new LinkedHashSet<>();
             branches.add(branchOrRevision);
-            if (merge != null) {
-                branches.addAll(merge);
-            }
-            return getResponse(objectId, versionGraph.mergeBranches(branches), create);
         } else {
-            return getResponse(objectId, versionGraph.mergeRevisions(new Revision(branchOrRevision)), create);
+            revision = new Revision(branchOrRevision);
+            versionGraph = versionGraph.at(revision);
+        }
+        if (merge != null) {
+            branches.addAll(merge);
+        }
+        if (branches.isEmpty()) {
+            return getResponse(objectId, versionGraph.getVersionNode(revision), create);
+        } else {
+            // If revision is given, merge branches of that time
+            return getResponse(objectId, versionGraph.mergeBranches(branches), create);
         }
     }
 
     private ResponseEntity<String> getResponse(String objectId, Merge<PropertyPath, Object, Void> merge, boolean create) {
         Map<PropertyPath, Object> properties = new HashMap<>(merge.getProperties());
-        VersionReference ref = new VersionReference(objectId, merge.getMergeHeads(), merge.conflicts);
+        VersionMetadata ref = new VersionMetadata(objectId, merge.getMergeHeads(), merge.conflicts);
         properties.putAll(metaSerializer.toPropertyMap(ref));
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json;charset=UTF-8");

@@ -47,8 +47,10 @@ public abstract class VersionGraph<K, V, M,
 
     public final PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes;
 
+    private final VersionNode<K, V, M> at;
+
     public VersionGraph() {
-        this(PersistentTreeMap.<Revision, VersionNode<K, V, M>> empty());
+        this(PersistentTreeMap.<Revision, VersionNode<K, V, M>> empty(), null);
     }
 
     protected VersionGraph(VersionGraphBuilder<K, V, M, This, B> builder) {
@@ -56,7 +58,12 @@ public abstract class VersionGraph<K, V, M,
     }
 
     protected VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes) {
+        this(versionNodes, versionNodes.getLastEntry().getValue());
+    }
+
+    protected VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes, VersionNode<K, V, M> at) {
         this.versionNodes = versionNodes;
+        this.at = at;
     }
 
     public final This commit(Version<K, V, M> version) {
@@ -76,11 +83,11 @@ public abstract class VersionGraph<K, V, M,
     protected abstract B newBuilder();
 
     @Override
-    public VersionNode<K, V, M> apply(Revision input) {
+    public final VersionNode<K, V, M> apply(Revision input) {
         return input != null ? getVersionNode(input) : null;
     }
 
-    public VersionNode<K, V, M> getVersionNode(Revision revision) {
+    public final VersionNode<K, V, M> getVersionNode(Revision revision) {
         VersionNode<K, V, M> node = versionNodes.get(revision);
         if (node == null) {
             throw new VersionNotFoundException(revision);
@@ -108,37 +115,47 @@ public abstract class VersionGraph<K, V, M,
         return new VersionMerge<K, V, M>(transform(revisions, this));
     }
 
-    public Iterable<VersionNode<K, V, M>> getHeads(String branch) {
+    public final Iterable<VersionNode<K, V, M>> getHeads(String branch) {
         return transform(getHeads().range(min(branch), max(branch)), mapValueFunction());
     }
 
-    public VersionNode<K, V, M> getHead(String branch) {
+    public final VersionNode<K, V, M> getHead(String branch) {
         return getFirst(transform(getHeads().range(min(branch), max(branch), false), mapValueFunction()), null);
     }
 
-    public PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> getHeads() {
+    public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> getHeads() {
         if (versionNodes.isEmpty()) {
             return PersistentTreeMap.empty();
         }
-        return getTip().heads;
+        return at.heads;
     }
 
-    public boolean isEmpty() {
+    public final This at(Revision revision) {
+        return at(versionNodes, getVersionNode(revision));
+    }
+
+    public final This atTip() {
+        return at(versionNodes, getTip());
+    }
+
+    protected abstract This at(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes, VersionNode<K, V, M> at);
+
+    public final boolean isEmpty() {
         return versionNodes.isEmpty();
     }
 
-    public VersionNode<K, V, M> getTip() {
+    public final VersionNode<K, V, M> getTip() {
         if (isEmpty()) {
             return null;
         }
         return versionNodes.getLastEntry().getValue();
     }
 
-    public Set<String> getBranches() {
+    public final Set<String> getBranches() {
         return getHeads().keyStream().map(k -> k.branch).collect(toSet());
     }
 
-    public List<Version<K, V, M>> getVersions() {
+    public final List<Version<K, V, M>> getVersions() {
         return versionNodes.valueStream().map(n -> n.version).collect(toList());
     }
 }
