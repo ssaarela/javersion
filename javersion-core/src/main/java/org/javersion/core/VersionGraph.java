@@ -117,10 +117,7 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> getHeads() {
-        if (versionNodes.isEmpty()) {
-            return PersistentTreeMap.empty();
-        }
-        return at.heads;
+        return at != null ? at.heads : PersistentTreeMap.empty();
     }
 
     public final This at(Revision revision) {

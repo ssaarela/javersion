@@ -66,7 +66,7 @@ public final class Persistent {
     }
 
     public static final class Array {
-        private Array(){}
+        private Array() {}
         @Override
         public boolean equals(java.lang.Object obj) {
             return (obj == this || obj instanceof Array);

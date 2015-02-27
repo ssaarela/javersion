@@ -168,11 +168,11 @@ public class JsonSerializer {
         switch (reader.peek()) {
             case BEGIN_OBJECT:
                 reader.beginObject();
-                boolean indexed = isIndexed(path);
+                boolean map = isMap(path);
                 while (reader.hasNext()) {
                     String property = reader.nextName();
                     PropertyPath propertyPath;
-                    if (indexed) {
+                    if (map) {
                         propertyPath = path.key(property);
                     } else {
                         propertyPath = path.propertyOrKey(property);
@@ -213,7 +213,7 @@ public class JsonSerializer {
         }
     }
 
-    private boolean isIndexed(PropertyPath path) {
+    private boolean isMap(PropertyPath path) {
         if (schemaRoot != null) {
             Schema schema = this.schemaRoot.find(path);
             return schema != null && schema.hasChild(AnyKey.ID);
