@@ -9,6 +9,8 @@ import static org.junit.Assert.assertThat;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.javersion.object.ReferencesTest.Node;
 import org.javersion.path.PropertyPath;
@@ -25,6 +27,7 @@ public class SetTest {
 
     public static class NodeExt extends Node {
         Set<NodeExt> nodes = Sets.newLinkedHashSet();
+        SortedSet<String> sorted = new TreeSet<>();
     }
 
     public static TypeMappings typeMappings = TypeMappings.builder()
@@ -57,6 +60,11 @@ public class SetTest {
         Iterator<Node> iter = nodeSet.nodes.iterator();
         node1 = iter.next();
         node2 = iter.next();
+        if (node1.id != 123) {
+            Node tmp = node2;
+            node2 = node1;
+            node1 = tmp;
+        }
         assertThat(node1.id, equalTo(123));
         assertThat(node2.id, equalTo(456));
         assertThat(node1.left, sameInstance(node1));
@@ -70,12 +78,20 @@ public class SetTest {
         NodeExt nodeExt = new NodeExt();
         nodeExt.id = 789;
         nodeExt.nodes.add(nodeExt);
+        nodeExt.sorted.add("omega");
+        nodeExt.sorted.add("alpha");
+        nodeExt.sorted.add("beta");
 
         Map<PropertyPath, Object> map = nodeExtSerializer.toPropertyMap(nodeExt);
 
         nodeExt = nodeExtSerializer.fromPropertyMap(map);
         assertThat(nodeExt.id, equalTo(789));
         assertThat(nodeExt.nodes, equalTo(singleton(nodeExt)));
+
+        Iterator<String> iter = nodeExt.sorted.iterator();
+        assertThat(iter.next(), equalTo("alpha"));
+        assertThat(iter.next(), equalTo("beta"));
+        assertThat(iter.next(), equalTo("omega"));
     }
 
 }

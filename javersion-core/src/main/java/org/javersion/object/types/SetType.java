@@ -15,6 +15,8 @@
  */
 package org.javersion.object.types;
 
+import static com.google.common.collect.Sets.newHashSetWithExpectedSize;
+
 import java.util.Set;
 
 import org.javersion.object.Persistent;
@@ -40,7 +42,11 @@ public class SetType implements ValueType {
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
         prepareElements(propertyTree, context);
-        return Sets.newLinkedHashSetWithExpectedSize(propertyTree.getChildren().size());
+        return newSet(propertyTree.getChildren().size());
+    }
+
+    protected Set<Object> newSet(int size) {
+        return newHashSetWithExpectedSize(size);
     }
 
     private void prepareElements(PropertyTree propertyTree, ReadContext context) {

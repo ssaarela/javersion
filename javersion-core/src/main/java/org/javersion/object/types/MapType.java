@@ -1,5 +1,7 @@
 package org.javersion.object.types;
 
+import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
+
 import java.util.Map;
 
 import org.javersion.object.Persistent;
@@ -27,9 +29,13 @@ public class MapType implements ValueType {
     }
 
     @Override
-    public Object instantiate(PropertyTree propertyTree, Object mapSize, ReadContext context) throws Exception {
+    public Object instantiate(PropertyTree propertyTree, Object constant, ReadContext context) throws Exception {
         prepareKeys(propertyTree, context);
-        return Maps.newHashMapWithExpectedSize(propertyTree.getChildren().size());
+        return newMap(propertyTree.getChildren().size());
+    }
+
+    protected Map<Object, Object> newMap(int size) {
+        return newHashMapWithExpectedSize(size);
     }
 
     private void prepareKeys(PropertyTree propertyTree, ReadContext context) {

@@ -1,9 +1,11 @@
 package org.javersion.object;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
 import java.util.Map;
+import java.util.NavigableMap;
 
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -39,7 +41,7 @@ public class MapTest {
 
     @Versionable
     public static class Mab {
-        public Map<String, Integer> primitives = Maps.newLinkedHashMap();
+        public NavigableMap<String, Integer> primitives = Maps.newTreeMap();
         public Map<KeyValue, KeyValue> objects = Maps.newLinkedHashMap();
     }
 
@@ -59,6 +61,7 @@ public class MapTest {
         Map<PropertyPath, Object> properties = serializer.toPropertyMap(map);
 
         map = serializer.fromPropertyMap(properties);
+        assertThat(map.primitives, instanceOf(NavigableMap.class));
         assertThat(map.primitives, equalTo(map("123", 456, "null", null)));
         assertThat(map.objects, equalTo(map(kv, kv, new KeyValue(789), new KeyValue(234), new KeyValue(890), null)));
     }

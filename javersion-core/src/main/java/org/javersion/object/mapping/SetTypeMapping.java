@@ -16,10 +16,12 @@
 package org.javersion.object.mapping;
 
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.IdentifiableType;
+import org.javersion.object.types.NavigableSetType;
 import org.javersion.object.types.SetType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -27,17 +29,32 @@ import org.javersion.reflect.TypeDescriptor;
 
 public class SetTypeMapping implements TypeMapping {
 
+    private final Class<? extends Set> lowerBound;
+
+    public SetTypeMapping() {
+        this(Set.class);
+    }
+
+    public SetTypeMapping(Class<? extends Set> lowerBound) {
+        this.lowerBound = lowerBound;
+    }
+
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.equalTo(Set.class);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor descriptor) {
+        return descriptor.typeDescriptor.isSubTypeOf(Set.class) && descriptor.typeDescriptor.isSuperTypeOf(lowerBound);
     }
 
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor setType, DescribeContext context) {
         TypeDescriptor elementType = setType.resolveGenericParameter(Set.class, 0);
-        ValueType valueType = context.describeComponent(path.anyKey(), setType, elementType);
+        IdentifiableType valueType = (IdentifiableType) context.describeComponent(path.anyKey(), setType, elementType);
         context.describeComponent(path.anyIndex(), setType, elementType);
-        return new SetType((IdentifiableType) valueType);
+
+        return newSetType(valueType);
+    }
+
+    protected ValueType newSetType(IdentifiableType valueType) {
+        return new SetType(valueType);
     }
 
 }

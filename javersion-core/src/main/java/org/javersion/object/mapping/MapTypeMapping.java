@@ -28,9 +28,19 @@ import org.javersion.reflect.TypeDescriptor;
 
 public class MapTypeMapping implements TypeMapping {
 
+    private final Class<? extends Map> lowerBound;
+
+    public MapTypeMapping() {
+        this(Map.class);
+    }
+
+    public MapTypeMapping(Class<? extends Map> lowerBound) {
+        this.lowerBound = lowerBound;
+    }
+
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.getRawType().equals(Map.class);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor descriptor) {
+        return descriptor.typeDescriptor.isSubTypeOf(Map.class) && descriptor.typeDescriptor.isSuperTypeOf(lowerBound);
     }
 
     @Override
@@ -41,7 +51,11 @@ public class MapTypeMapping implements TypeMapping {
         // Numeric keys
         describe(path.anyIndex(), mapType, keyType, valueType, context);
         // String keys
-        return new MapType(describe(path.anyKey(), mapType, keyType, valueType, context));
+        return newMapType(describe(path.anyKey(), mapType, keyType, valueType, context));
+    }
+
+    protected ValueType newMapType(IdentifiableType keyType) {
+        return new MapType(keyType);
     }
 
     private IdentifiableType describe(SubPath valuePath, TypeDescriptor mapType, TypeDescriptor keyType, TypeDescriptor valueType, DescribeContext context) {
