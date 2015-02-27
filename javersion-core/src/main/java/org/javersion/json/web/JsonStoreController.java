@@ -16,6 +16,7 @@
 package org.javersion.json.web;
 
 import static org.javersion.core.Version.DEFAULT_BRANCH;
+import static org.javersion.path.PropertyPath.ROOT;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
@@ -33,11 +34,7 @@ import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.json.JsonSerializer;
-import org.javersion.object.ObjectSerializer;
-import org.javersion.object.ObjectVersion;
-import org.javersion.object.ObjectVersionBuilder;
-import org.javersion.object.ObjectVersionGraph;
-import org.javersion.object.TypeMappings;
+import org.javersion.object.*;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.ObjectVersionStoreJdbc;
 import org.springframework.http.HttpHeaders;
@@ -141,6 +138,9 @@ public class JsonStoreController {
                                              String branch,
                                              boolean create) {
         JsonSerializer.JsonPaths paths = jsonSerializer.parse(json);
+        if (!(paths.properties.get(ROOT) instanceof Persistent.Object)) {
+            throw new IllegalArgumentException("Expected root object to be an Object, got " + paths.properties.get(ROOT));
+        }
         VersionMetadata ref = metaSerializer.fromPropertyMap(paths.meta);
         ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
         ObjectVersionBuilder<Void> versionBuilder = new ObjectVersionBuilder<>();

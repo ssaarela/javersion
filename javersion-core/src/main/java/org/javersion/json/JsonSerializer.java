@@ -156,10 +156,8 @@ public class JsonSerializer {
                 }
                 for (PropertyTree child : tree.getChildren()) {
                     NodeId nodeId = child.getNodeId();
-                    if (nodeId.isKey()) {
-                        writer.name(nodeId.getKey());
-                        toJson(child, map, writer);
-                    }
+                    writer.name(nodeId.toString());
+                    toJson(child, map, writer);
                 }
                 writer.endObject();
                 break;
