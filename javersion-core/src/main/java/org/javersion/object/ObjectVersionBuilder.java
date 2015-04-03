@@ -1,11 +1,15 @@
 package org.javersion.object;
 
+import static com.google.common.collect.Maps.filterValues;
+
 import java.util.Map;
 
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.path.PropertyPath;
+
+import com.google.common.collect.Maps;
 
 public class ObjectVersionBuilder<M> extends Version.Builder<PropertyPath, Object, M, ObjectVersionBuilder<M>> {
 
@@ -21,6 +25,12 @@ public class ObjectVersionBuilder<M> extends Version.Builder<PropertyPath, Objec
     }
 
     public void changeset(Map<PropertyPath, Object> newProperties, VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ?> versionGraph) {
-        changeset(versionGraph.mergeRevisions(parentRevisions).diff(newProperties));
+        if (parentRevisions != null) {
+            changeset(versionGraph.mergeRevisions(parentRevisions).diff(newProperties));
+        } else if (newProperties != null) {
+            changeset(filterValues(newProperties, v -> v != null));
+        } else {
+            changeset(null);
+        }
     }
 }

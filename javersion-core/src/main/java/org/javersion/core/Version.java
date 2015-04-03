@@ -19,9 +19,13 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static com.google.common.collect.Maps.transformValues;
+import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
+import static org.javersion.core.VersionType.NORMAL;
 import static org.javersion.util.Check.notNull;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -31,6 +35,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 public class Version<K, V, M> {
+
+    private static final Set<Revision> EMPTY_PARENTS = ImmutableSet.of();
 
     public static final String DEFAULT_BRANCH = "default";
 
@@ -56,11 +62,11 @@ public class Version<K, V, M> {
     public final M meta;
 
     protected Version(Builder<K, V, M, ?> builder) {
-        this.revision = builder.revision;
-        this.branch = builder.branch;
-        this.type = builder.type;
-        this.parentRevisions = copyOf(builder.parentRevisions);
-        this.changeset = unmodifiableMap(newLinkedHashMap(builder.changeset));
+        this.revision = builder.revision != null ? builder.revision : new Revision();
+        this.branch = builder.branch != null ? builder.branch : DEFAULT_BRANCH;
+        this.type = builder.type != null ? builder.type : NORMAL;
+        this.parentRevisions = builder.parentRevisions != null ? copyOf(builder.parentRevisions) : EMPTY_PARENTS;
+        this.changeset = builder.changeset != null ? unmodifiableMap(newLinkedHashMap(builder.changeset)) : ImmutableMap.of();
         this.meta = builder.meta;
     }
 
@@ -70,10 +76,10 @@ public class Version<K, V, M> {
 
     public int hashCode() {
         int hashCode = revision.hashCode();
-        hashCode = 31*hashCode + (branch==null ? 0 : branch.hashCode());
-        hashCode = 31*hashCode + (parentRevisions==null ? 0 : parentRevisions.hashCode());
-        hashCode = 31*hashCode + (changeset==null ? 0 : changeset.hashCode());
-        hashCode = 31*hashCode + (type==null ? 0 : type.hashCode());
+        hashCode = 31*hashCode + branch.hashCode();
+        hashCode = 31*hashCode + parentRevisions.hashCode();
+        hashCode = 31*hashCode + changeset.hashCode();
+        hashCode = 31*hashCode + type.hashCode();
         hashCode = 31*hashCode + (meta==null ? 0 : meta.hashCode());
         return hashCode;
     }
@@ -83,11 +89,11 @@ public class Version<K, V, M> {
             return true;
         } else if (obj instanceof Version) {
             Version<?, ?, ?> other = (Version<?, ?, ?>) obj;
-            return Objects.equals(this.revision, other.revision)
-                    && Objects.equals(this.branch, other.branch)
-                    && Objects.equals(this.parentRevisions, other.parentRevisions)
-                    && Objects.equals(this.changeset, other.changeset)
-                    && Objects.equals(this.type, other.type)
+            return this.revision.equals(other.revision)
+                    && this.branch.equals(other.branch)
+                    && this.parentRevisions.equals(other.parentRevisions)
+                    && this.changeset.equals(other.changeset)
+                    && this.type.equals(other.type)
                     && Objects.equals(this.meta, other.meta);
         } else {
             return false;
@@ -107,22 +113,19 @@ public class Version<K, V, M> {
 
     public static class Builder<K, V, M, This extends Builder<K, V, M, This>> {
 
-        private static final Set<Revision> EMPTY_PARENTS = ImmutableSet.of();
-
         protected Revision revision;
 
-        protected VersionType type = VersionType.NORMAL;
+        protected VersionType type;
 
-        protected String branch = DEFAULT_BRANCH;
+        protected String branch;
 
-        protected Set<Revision> parentRevisions = EMPTY_PARENTS;
+        protected Iterable<Revision> parentRevisions;
 
-        protected Map<K, V> changeset = ImmutableMap.of();
+        protected Map<K, V> changeset;
 
         protected M meta;
 
         public Builder() {
-            this(new Revision());
         }
 
         public Builder(Revision revision) {
@@ -130,30 +133,27 @@ public class Version<K, V, M> {
         }
 
         public This type(VersionType versionType) {
-            this.type = notNull(versionType, "type");
+            this.type = versionType;
             return self();
         }
 
         public This branch(String branch) {
-            this.branch = notNull(branch, "branch");
+            this.branch = branch;
             return self();
         }
 
         public This parents(Revision... parentRevisions) {
-            return parents(copyOf(parentRevisions));
+            this.parentRevisions = (parentRevisions != null ? asList(parentRevisions) : null);
+            return self();
         }
 
         public This parents(Iterable<Revision> parentRevisions) {
-            return parents(copyOf(parentRevisions));
-        }
-
-        public This parents(Set<Revision> parentRevisions) {
-            this.parentRevisions = (parentRevisions != null ? parentRevisions : EMPTY_PARENTS);
+            this.parentRevisions = parentRevisions;
             return self();
         }
 
         public This changeset(Map<K, V> changeset) {
-            this.changeset = (changeset != null ? changeset : ImmutableMap.of());
+            this.changeset = changeset;
             return self();
         }
 

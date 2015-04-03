@@ -26,7 +26,11 @@ public class Check {
     private static final String NOT_NULL_OR_EMPTY_FMT = "%s shoud not be null or empty. Got %s";
 
     public static <T> T notNull(T reference, String fieldName) {
-        return notNull$(reference, "%s should not be null", fieldName);
+        if (reference == null) {
+            // Avoid creating new Object[] (varargs) for normal flow
+            throw new NullPointerException(String.format("%s should not be null", fieldName));
+        }
+        return reference;
     }
 
     public static <T> T notNull$(T reference, String messageFormat, Object... args) {
