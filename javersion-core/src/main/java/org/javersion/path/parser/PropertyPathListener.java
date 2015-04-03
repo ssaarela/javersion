@@ -39,15 +39,15 @@ public interface PropertyPathListener extends ParseTreeListener {
 	 */
 	void exitProperty(@NotNull PropertyPathParser.PropertyContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link PropertyPathParser#indexed}.
+	 * Enter a parse tree produced by {@link PropertyPathParser#indexedOrAny}.
 	 * @param ctx the parse tree
 	 */
-	void enterIndexed(@NotNull PropertyPathParser.IndexedContext ctx);
+	void enterIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link PropertyPathParser#indexed}.
+	 * Exit a parse tree produced by {@link PropertyPathParser#indexedOrAny}.
 	 * @param ctx the parse tree
 	 */
-	void exitIndexed(@NotNull PropertyPathParser.IndexedContext ctx);
+	void exitIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#index}.
 	 * @param ctx the parse tree
@@ -88,4 +88,14 @@ public interface PropertyPathListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitAnyKey(@NotNull PropertyPathParser.AnyKeyContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link PropertyPathParser#any}.
+	 * @param ctx the parse tree
+	 */
+	void enterAny(@NotNull PropertyPathParser.AnyContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link PropertyPathParser#any}.
+	 * @param ctx the parse tree
+	 */
+	void exitAny(@NotNull PropertyPathParser.AnyContext ctx);
 }

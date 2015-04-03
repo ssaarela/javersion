@@ -53,9 +53,4 @@ public class CollectionType implements ValueType {
         }
     }
 
-    @Override
-    public boolean isReference() {
-        return false;
-    }
-
 }

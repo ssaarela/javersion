@@ -1,15 +1,15 @@
 package org.javersion.object.mapping;
 
-import java.util.NavigableSet;
+import java.util.SortedSet;
 
 import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.SortedSetType;
 import org.javersion.object.types.ValueType;
 
-public class NavigableSetMapping extends SetTypeMapping {
+public class SortedSetMapping extends SetTypeMapping {
 
-    public NavigableSetMapping() {
-        super(NavigableSet.class);
+    public SortedSetMapping() {
+        super(SortedSet.class);
     }
 
     @Override

@@ -37,8 +37,12 @@ public class SchemaRoot extends Schema  {
         for (PropertyPath currentPath : path.asList()) {
             NodeId nodeId = currentPath.getNodeId();
             Schema childMapping = currentMapping.getChild(nodeId);
-            currentMapping = childMapping != null ? childMapping : currentMapping.getChild(nodeId.fallbackId());
-            if (currentMapping == null) {
+            while (childMapping == null && (nodeId = nodeId.fallbackId()) != null) {
+                childMapping = currentMapping.getChild(nodeId);
+            }
+            if (childMapping != null) {
+                currentMapping = childMapping;
+            } else {
                 return null;
             }
         }

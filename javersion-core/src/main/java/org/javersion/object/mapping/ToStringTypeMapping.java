@@ -15,38 +15,17 @@
  */
 package org.javersion.object.mapping;
 
-import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
-import org.javersion.object.types.SimpleValueType;
+import org.javersion.object.types.ToStringValueType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
-public class SimpleTypeMapping implements TypeMapping {
+public class ToStringTypeMapping extends SimpleValueMapping {
 
-    public final Class<?> type;
-
-    public final ValueType valueType;
-
-    public SimpleTypeMapping(Class<?> type) {
-        this.type = Check.notNull(type, "type");
-        this.valueType = new SimpleValueType(type);
-    }
-
-    @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
-        return typeDescriptor.getRawType().equals(type);
-    }
-
-    @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return valueType;
-    }
-
-    public ValueType getValueType() {
-        return valueType;
+    public ToStringTypeMapping(Class<?> type) {
+        super(type, new ToStringValueType(type));
     }
 
 }

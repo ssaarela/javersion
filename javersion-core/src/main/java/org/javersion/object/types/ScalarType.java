@@ -4,6 +4,6 @@ import org.javersion.path.PropertyPath.NodeId;
 
 public interface ScalarType extends IdentifiableType {
 
-    public Object fromNodeId(NodeId nodeId) throws Exception;
+    Object fromNodeId(NodeId nodeId);
 
 }

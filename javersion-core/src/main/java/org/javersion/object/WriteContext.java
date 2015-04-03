@@ -39,7 +39,7 @@ public class WriteContext {
 
     private final Map<PropertyPath, Object> properties = Maps.newLinkedHashMap();
 
-    protected WriteContext(SchemaRoot schemaRoot, Object root) {
+    public WriteContext(SchemaRoot schemaRoot, Object root) {
         this.root = root;
         this.schemaRoot = schemaRoot;
     }

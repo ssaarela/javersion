@@ -53,13 +53,13 @@ public class PropertyPathBaseListener implements PropertyPathListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterIndexed(@NotNull PropertyPathParser.IndexedContext ctx) { }
+	@Override public void enterIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitIndexed(@NotNull PropertyPathParser.IndexedContext ctx) { }
+	@Override public void exitIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -108,6 +108,18 @@ public class PropertyPathBaseListener implements PropertyPathListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitAnyKey(@NotNull PropertyPathParser.AnyKeyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterAny(@NotNull PropertyPathParser.AnyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAny(@NotNull PropertyPathParser.AnyContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

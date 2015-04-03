@@ -25,45 +25,41 @@ import org.javersion.util.Check;
 import com.google.common.base.Objects;
 
 public final class LocalTypeDescriptor {
-    
-    @Nullable 
+
+    @Nullable
     private final ElementDescriptor<?, ?, ?> parent;
-    
+
     public final TypeDescriptor typeDescriptor;
 
     public LocalTypeDescriptor(TypeDescriptor typeDescriptor) {
-        this(null, typeDescriptor, true);
+        this(null, typeDescriptor);
     }
-    
+
     public LocalTypeDescriptor(FieldDescriptor fieldDescriptor) {
-        this(fieldDescriptor, fieldDescriptor.getType(), true);
+        this(fieldDescriptor, fieldDescriptor.getType());
     }
 
-    public LocalTypeDescriptor(TypeDescriptor parentType, TypeDescriptor typeDescriptor) {
-        this(parentType, typeDescriptor, true);
-    }
-
-    private LocalTypeDescriptor(ElementDescriptor<?, ?, ?> parent, TypeDescriptor typeDescriptor, boolean x) {
+    public LocalTypeDescriptor(ElementDescriptor<?, ?, ?> parent, TypeDescriptor typeDescriptor) {
         this.parent = parent;
         this.typeDescriptor = Check.notNull(typeDescriptor, "typeDescriptor");
     }
-    
+
     public int hashCode() {
         return 31*typeDescriptor.hashCode() + (parent != null ? parent.hashCode() : 0);
     }
-    
+
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         } else if (obj instanceof LocalTypeDescriptor) {
-            LocalTypeDescriptor key = (LocalTypeDescriptor) obj; 
+            LocalTypeDescriptor key = (LocalTypeDescriptor) obj;
             return this.typeDescriptor.equals(key.typeDescriptor)
                     && Objects.equal(this.parent, key.parent);
         } else {
             return false;
         }
     }
-    
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
         if (parent != null) {

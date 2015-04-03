@@ -16,7 +16,7 @@
 grammar PropertyPath;
 
 parsePath
-	: (property | indexed) ('.' property | indexed)* EOF
+	: (property | indexedOrAny) ('.' property | indexedOrAny)* EOF
 	;
 
 parseProperty
@@ -27,10 +27,11 @@ property
 	: Identifier
 	;
 
-indexed
+indexedOrAny
 	: '[' (index | key) ']'
 	| anyIndex
 	| anyKey
+	| any
 	;
 
 index
@@ -47,6 +48,10 @@ anyIndex
 
 anyKey
 	: '{}'
+	;
+
+any
+	: '*'
 	;
 
 

@@ -38,8 +38,8 @@ public class TypeMappings {
 
     public static TypeMapping STRING = new StringTypeMapping();
 
-    public static TypeMapping BIG_INTEGER = new SimpleTypeMapping(BigInteger.class);
-    public static TypeMapping BIG_DECIMAL = new SimpleTypeMapping(BigDecimal.class);
+    public static TypeMapping BIG_INTEGER = new ToStringTypeMapping(BigInteger.class);
+    public static TypeMapping BIG_DECIMAL = new ToStringTypeMapping(BigDecimal.class);
 
     public static TypeMapping ENUM = new EnumTypeMapping();
 
@@ -58,12 +58,14 @@ public class TypeMappings {
                     new VersionableReferenceTypeMapping(),
                     new VersionableTypeMapping(),
                     new ListTypeMapping(),
-                    new SetTypeMapping(),
                     new NavigableSetMapping(),
-                    new MapTypeMapping(),
+                    new SortedSetMapping(),
+                    new SetTypeMapping(),
                     new NavigableMapMapping(),
+                    new SortedMapMapping(),
+                    new MapTypeMapping(),
                     new CollectionTypeMapping(),
-                    new SimpleTypeMapping(Revision.class),
+                    new ToStringTypeMapping(Revision.class),
                     new PropertyPathTypeMapping(),
                     DATE_TIME,
                     ENUM,
@@ -85,7 +87,8 @@ public class TypeMappings {
     private final List<TypeMapping> types;
 
     public TypeMappings(Iterable<TypeMapping> types) {
-        this.types = ImmutableList.copyOf(types);
+        ImmutableList.Builder<TypeMapping> builder = ImmutableList.builder();
+        this.types = builder.addAll(types).build();
     }
 
     public TypeMapping getTypeMapping(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
@@ -127,7 +130,6 @@ public class TypeMappings {
         public TypeMappings build() {
             return new TypeMappings(Iterables.concat(mappings, defaultMappings));
         }
-
 
         public final class HierarchyBuilder<R> {
 

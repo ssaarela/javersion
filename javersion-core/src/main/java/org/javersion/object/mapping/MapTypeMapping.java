@@ -23,24 +23,23 @@ import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.MapType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.TypeDescriptor;
 
 public class MapTypeMapping implements TypeMapping {
 
-    private final Class<? extends Map> lowerBound;
+    private final Class<? extends Map> mapType;
 
     public MapTypeMapping() {
         this(Map.class);
     }
 
-    public MapTypeMapping(Class<? extends Map> lowerBound) {
-        this.lowerBound = lowerBound;
+    public MapTypeMapping(Class<? extends Map> mapType) {
+        this.mapType = mapType;
     }
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor descriptor) {
-        return descriptor.typeDescriptor.isSubTypeOf(Map.class) && descriptor.typeDescriptor.isSuperTypeOf(lowerBound);
+        return descriptor.typeDescriptor.getRawType().equals(mapType);
     }
 
     @Override
@@ -48,22 +47,13 @@ public class MapTypeMapping implements TypeMapping {
         TypeDescriptor keyType = mapType.resolveGenericParameter(Map.class, 0);
         TypeDescriptor valueType = mapType.resolveGenericParameter(Map.class, 1);
 
-        // Numeric keys
-        describe(path.anyIndex(), mapType, keyType, valueType, context);
-        // String keys
-        return newMapType(describe(path.anyKey(), mapType, keyType, valueType, context));
+        context.describeComponent(path.any(), mapType, valueType);
+
+        return newMapType((IdentifiableType) context.describeComponent(path.any().property(MapType.KEY), mapType, keyType));
     }
 
     protected ValueType newMapType(IdentifiableType keyType) {
         return new MapType(keyType);
     }
 
-    private IdentifiableType describe(SubPath valuePath, TypeDescriptor mapType, TypeDescriptor keyType, TypeDescriptor valueType, DescribeContext context) {
-        IdentifiableType identifiableKeyType = (IdentifiableType)
-                context.describeComponent(valuePath.property(MapType.KEY), mapType, keyType);
-
-        context.describeComponent(valuePath, mapType, valueType);
-
-        return identifiableKeyType;
-    }
 }

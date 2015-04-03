@@ -39,8 +39,8 @@ public class MapType implements ValueType {
     }
 
     private void prepareKeys(PropertyTree propertyTree, ReadContext context) {
-        for (PropertyTree entryPath : propertyTree.getChildren()) {
-            if (!isScalar()) {
+        if (!isScalar()) {
+            for (PropertyTree entryPath : propertyTree.getChildren()) {
                 context.prepareObject(entryPath.get(KEY_ID));
             }
         }
@@ -80,11 +80,6 @@ public class MapType implements ValueType {
             }
             context.serialize(entryPath, value);
         }
-    }
-
-    @Override
-    public boolean isReference() {
-        return false;
     }
 
 }

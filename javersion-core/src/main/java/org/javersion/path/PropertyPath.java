@@ -191,7 +191,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
     }
 
-    private static final class SpecialNodeId extends NodeId {
+    private static class SpecialNodeId extends NodeId {
 
         private final String str;
 
@@ -222,9 +222,17 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public NodeId fallbackId() {
-            return this;
+            return ANY_NODE;
         }
     }
+
+    private static NodeId ANY_NODE = new SpecialNodeId("*") {
+        @Override
+        public NodeId fallbackId() {
+            return null;
+        }
+    };
+
 
     private static final class SilentParseException extends RuntimeException {
         public SilentParseException() {
@@ -296,6 +304,11 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             }
 
             @Override
+            public PropertyPath visitAny(PropertyPathParser.AnyContext ctx) {
+                return parent = new Any(parent);
+            }
+
+            @Override
             protected PropertyPath defaultResult() {
                 return parent;
             }
@@ -338,12 +351,16 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     public final SubPath keyOrIndex(NodeId nodeId) {
         Preconditions.checkNotNull(nodeId);
         if (nodeId.isKey()) {
-            return new Key(this, (KeyId) nodeId);
+            return new Key(this, nodeId);
         } else if (nodeId.isIndex()) {
-            return new Index(this, (IndexId) nodeId);
+            return new Index(this, nodeId);
         } else {
             throw new IllegalArgumentException("Expected KeyId or IndexId, got " + nodeId.getClass());
         }
+    }
+
+    public final Any any() {
+        return new Any(this);
     }
 
     public final AnyIndex anyIndex() {
@@ -375,6 +392,14 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
     }
 
+    public final PropertyPath path(PropertyPath path) {
+        PropertyPath result = this;
+        for (SubPath subPath : path) {
+            result = subPath.withParent(result);
+        }
+        return result;
+    }
+
     public Iterator<SubPath> iterator() {
         return asList().iterator();
     }
@@ -402,7 +427,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public PropertyPath toSchemaPath() {
         PropertyPath schemaPath = ROOT;
-        for (PropertyPath path : this) {
+        for (SubPath path : this) {
             schemaPath = path.toSchemaPath(schemaPath);
         }
         return schemaPath;
@@ -419,10 +444,10 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     abstract List<SubPath> getFullPath();
 
-    abstract PropertyPath toSchemaPath(PropertyPath newParent);
+    abstract PropertyPath withParent(PropertyPath newParent);
 
 
-    private volatile List<SubPath> fullPath;
+    private volatile transient List<SubPath> fullPath;
 
     public static final class Root extends PropertyPath {
 
@@ -463,10 +488,9 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
         @Override
-        Root toSchemaPath(PropertyPath newParent) {
-            return ROOT;
+        PropertyPath withParent(PropertyPath newParent) {
+            return newParent;
         }
-
     }
 
     public static abstract class SubPath extends PropertyPath {
@@ -517,6 +541,10 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             return sb.toString();
         }
 
+        PropertyPath toSchemaPath(PropertyPath newParent) {
+            return withParent(newParent);
+        }
+
         protected abstract void appendNode(StringBuilder sb);
     }
 
@@ -532,7 +560,12 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         Property toSchemaPath(PropertyPath newParent) {
-            return parent.equals(newParent) ? this : new Property(newParent, nodeId);
+            return withParent(newParent);
+        }
+
+        @Override
+        Property withParent(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new Property(newParent, nodeId);
         }
 
         @Override
@@ -541,6 +574,25 @@ public abstract class PropertyPath implements Iterable<SubPath> {
                 sb.append('.');
             }
             sb.append(nodeId);
+        }
+    }
+
+    public static final class Any extends SubPath {
+
+        public static final NodeId ID = ANY_NODE;
+
+        private Any(PropertyPath parent) {
+            super(parent, ID);
+        }
+
+        @Override
+        Any withParent(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new Any(newParent);
+        }
+
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append(ID);
         }
     }
 
@@ -553,8 +605,8 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
         @Override
-        PropertyPath toSchemaPath(PropertyPath newParent) {
-            return parent.equals(newParent) ? this : new AnyKey(newParent);
+        AnyIndex withParent(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new AnyIndex(newParent);
         }
 
         @Override
@@ -572,8 +624,8 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
 
         @Override
-        AnyKey toSchemaPath(PropertyPath newParent) {
-            return parent.equals(newParent) ? this : new AnyKey(newParent);
+        AnyKey withParent(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new AnyKey(newParent);
         }
 
         @Override
@@ -589,13 +641,18 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             super(parent, new IndexId(index));
         }
 
-        private Index(PropertyPath parent, IndexId id) {
+        private Index(PropertyPath parent, NodeId id) {
             super(parent, id);
         }
 
         @Override
-        SubPath toSchemaPath(PropertyPath newParent) {
+        AnyIndex toSchemaPath(PropertyPath newParent) {
             return new AnyIndex(newParent);
+        }
+
+        @Override
+        Index withParent(PropertyPath newParent) {
+            return new Index(newParent, nodeId);
         }
 
         @Override
@@ -611,13 +668,18 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             super(parent, new KeyId(key));
         }
 
-        private Key(PropertyPath parent, KeyId id) {
+        private Key(PropertyPath parent, NodeId id) {
             super(parent, id);
         }
 
         @Override
-        SubPath toSchemaPath(PropertyPath newParent) {
+        AnyKey toSchemaPath(PropertyPath newParent) {
             return new AnyKey(newParent);
+        }
+
+        @Override
+        SubPath withParent(PropertyPath newParent) {
+            return new Key(newParent, nodeId);
         }
 
         @Override

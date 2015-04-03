@@ -196,6 +196,17 @@ public class PropertyPathTest {
     }
 
     @Test
+    public void asterisk() {
+        assertThat(parse("map*.key")).isEqualTo(ROOT.property("map").any().property("key"));
+    }
+
+    @Test
+    public void path() {
+        PropertyPath path = parents_0.path(parents_1_name);
+        assertThat(path.toString()).isEqualTo("parents[0].parents[1].name");
+    }
+
+    @Test
     public void property_equals_key() {
         Property property = ROOT.property("property");
         Key key = ROOT.key("property");

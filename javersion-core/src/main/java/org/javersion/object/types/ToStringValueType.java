@@ -9,11 +9,11 @@ import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 
-public class SimpleValueType extends AbstractScalarType {
+public class ToStringValueType extends AbstractScalarType {
 
     private final Constructor<?> constructor;
 
-    public SimpleValueType(Class<?> type) {
+    public ToStringValueType(Class<?> type) {
         try {
             constructor = type.getConstructor(String.class);
         } catch (NoSuchMethodException e) {
@@ -32,8 +32,12 @@ public class SimpleValueType extends AbstractScalarType {
     }
 
     @Override
-    public Object fromNodeId(NodeId nodeId) throws IllegalAccessException, InvocationTargetException, InstantiationException {
-        return constructor.newInstance(nodeId.getKey());
+    public Object fromNodeId(NodeId nodeId) {
+        try {
+            return constructor.newInstance(nodeId.getKey());
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

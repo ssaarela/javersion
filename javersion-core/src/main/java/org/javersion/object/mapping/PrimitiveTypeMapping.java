@@ -15,12 +15,10 @@
  */
 package org.javersion.object.mapping;
 
-import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.PrimitiveValueType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
-import org.javersion.reflect.TypeDescriptor;
 
 public abstract class PrimitiveTypeMapping implements TypeMapping {
 
@@ -41,56 +39,56 @@ public abstract class PrimitiveTypeMapping implements TypeMapping {
 
     public static final PrimitiveTypeMapping LONG = new PrimitiveTypeMapping(Long.class, long.class) {
         @Override
-        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        public ValueType getValueType() {
             return PrimitiveValueType.LONG;
         }
     };
 
     public static final PrimitiveTypeMapping INT = new PrimitiveTypeMapping(Integer.class, int.class) {
         @Override
-        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        public ValueType getValueType() {
             return PrimitiveValueType.INT;
         }
     };
 
     public static final PrimitiveTypeMapping SHORT = new PrimitiveTypeMapping(Short.class, short.class) {
         @Override
-        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        public ValueType getValueType() {
             return PrimitiveValueType.SHORT;
         }
     };
 
     public static final PrimitiveTypeMapping BYTE = new PrimitiveTypeMapping(Byte.class, byte.class) {
         @Override
-        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        public ValueType getValueType() {
             return PrimitiveValueType.BYTE;
         }
     };
 
     public static final PrimitiveTypeMapping BOOLEAN = new PrimitiveTypeMapping(Boolean.class, boolean.class) {
         @Override
-        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        public ValueType getValueType() {
             return PrimitiveValueType.BOOLEAN;
         }
     };
 
     public static final PrimitiveTypeMapping DOUBLE = new PrimitiveTypeMapping(Double.class, double.class) {
         @Override
-        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        public ValueType getValueType() {
             return PrimitiveValueType.DOUBLE;
         }
     };
 
     public static final PrimitiveTypeMapping FLOAT = new PrimitiveTypeMapping(Float.class, float.class) {
         @Override
-        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        public ValueType getValueType() {
             return PrimitiveValueType.FLOAT;
         }
     };
 
     public static final PrimitiveTypeMapping CHAR = new PrimitiveTypeMapping(Character.class, char.class) {
         @Override
-        public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        public ValueType getValueType() {
             return PrimitiveValueType.CHAR;
         }
     };

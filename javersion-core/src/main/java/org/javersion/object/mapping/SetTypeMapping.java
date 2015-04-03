@@ -16,12 +16,10 @@
 package org.javersion.object.mapping;
 
 import java.util.Set;
-import java.util.SortedSet;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.IdentifiableType;
-import org.javersion.object.types.NavigableSetType;
 import org.javersion.object.types.SetType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -29,19 +27,19 @@ import org.javersion.reflect.TypeDescriptor;
 
 public class SetTypeMapping implements TypeMapping {
 
-    private final Class<? extends Set> lowerBound;
+    private final Class<? extends Set> setType;
 
     public SetTypeMapping() {
         this(Set.class);
     }
 
-    public SetTypeMapping(Class<? extends Set> lowerBound) {
-        this.lowerBound = lowerBound;
+    public SetTypeMapping(Class<? extends Set> setType) {
+        this.setType = setType;
     }
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor descriptor) {
-        return descriptor.typeDescriptor.isSubTypeOf(Set.class) && descriptor.typeDescriptor.isSuperTypeOf(lowerBound);
+        return descriptor.typeDescriptor.getRawType().equals(setType);
     }
 
     @Override

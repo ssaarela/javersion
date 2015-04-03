@@ -22,13 +22,15 @@ import org.javersion.path.PropertyTree;
 
 
 public interface ValueType {
-    
+
     Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception;
-    
+
     void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception;
-    
+
     void serialize(PropertyPath path, Object object, WriteContext context);
 
-    boolean isReference();
-   
+    default boolean isReference() {
+        return false;
+    }
+
 }

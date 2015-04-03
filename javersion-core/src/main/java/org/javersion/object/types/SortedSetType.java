@@ -3,9 +3,9 @@ package org.javersion.object.types;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class NavigableSetType extends SetType {
+public class SortedSetType extends SetType {
 
-    public NavigableSetType(IdentifiableType identifiableType) {
+    public SortedSetType(IdentifiableType identifiableType) {
         super(identifiableType);
     }
 

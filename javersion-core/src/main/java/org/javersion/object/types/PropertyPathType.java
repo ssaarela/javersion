@@ -9,7 +9,7 @@ import org.javersion.path.PropertyTree;
 public class PropertyPathType extends AbstractScalarType {
 
     @Override
-    public Object fromNodeId(NodeId nodeId) throws Exception {
+    public Object fromNodeId(NodeId nodeId) {
         return PropertyPath.parse(nodeId.getKey());
     }
 

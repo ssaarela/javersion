@@ -27,8 +27,6 @@ import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
-import com.google.common.collect.Sets;
-
 public class SetType implements ValueType {
 
     private final static Persistent.Object CONSTANT = Persistent.object();
@@ -73,11 +71,6 @@ public class SetType implements ValueType {
             NodeId key = identifiableType.toNodeId(element);
             context.serialize(path.keyOrIndex(key), element);
         }
-    }
-
-    @Override
-    public boolean isReference() {
-        return false;
     }
 
 }

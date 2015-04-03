@@ -28,9 +28,4 @@ public class EnumValueType implements ValueType {
         context.put(path, ((Enum) object).name());
     }
 
-    @Override
-    public boolean isReference() {
-        return false;
-    }
-
 }

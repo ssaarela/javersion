@@ -24,7 +24,13 @@ import org.javersion.reflect.TypeDescriptor;
 public interface TypeMapping {
 
     boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor);
-    
-    ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context);
-    
+
+    default ValueType getValueType() {
+        throw new UnsupportedOperationException();
+    }
+
+    default ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return getValueType();
+    }
+
 }

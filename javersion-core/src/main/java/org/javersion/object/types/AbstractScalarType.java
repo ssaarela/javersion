@@ -8,9 +8,4 @@ public abstract class AbstractScalarType implements ScalarType, IdentifiableType
     @Override
     public final void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {}
 
-    @Override
-    public final boolean isReference() {
-        return false;
-    }
-
 }

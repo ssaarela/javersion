@@ -18,7 +18,6 @@ package org.javersion.json.web;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.springframework.http.HttpStatus.CREATED;
-import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -26,14 +25,17 @@ import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.inject.Inject;
 
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
-import org.javersion.core.VersionType;
 import org.javersion.json.JsonSerializer;
 import org.javersion.object.*;
 import org.javersion.path.PropertyPath;

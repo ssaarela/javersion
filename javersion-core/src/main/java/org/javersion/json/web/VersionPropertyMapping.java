@@ -42,11 +42,6 @@ public class VersionPropertyMapping implements TypeMapping {
             context.put(path.property(VALUE), versionProperty.value);
         }
 
-        @Override
-        public boolean isReference() {
-            return false;
-        }
-
     }
 
     @Override

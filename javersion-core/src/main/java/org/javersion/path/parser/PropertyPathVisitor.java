@@ -30,11 +30,11 @@ public interface PropertyPathVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitProperty(@NotNull PropertyPathParser.PropertyContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PropertyPathParser#indexed}.
+	 * Visit a parse tree produced by {@link PropertyPathParser#indexedOrAny}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIndexed(@NotNull PropertyPathParser.IndexedContext ctx);
+	T visitIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PropertyPathParser#index}.
 	 * @param ctx the parse tree
@@ -59,4 +59,10 @@ public interface PropertyPathVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitAnyKey(@NotNull PropertyPathParser.AnyKeyContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PropertyPathParser#any}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAny(@NotNull PropertyPathParser.AnyContext ctx);
 }

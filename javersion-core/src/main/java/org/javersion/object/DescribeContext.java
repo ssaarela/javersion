@@ -22,6 +22,7 @@ import java.util.Deque;
 import java.util.Map;
 
 import org.javersion.object.mapping.TypeMapping;
+import org.javersion.object.types.ScalarType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.NodeId;
@@ -140,6 +141,11 @@ public class DescribeContext {
     private synchronized ValueType createValueType(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         TypeMapping typeMapping = typeMappings.getTypeMapping(path, localTypeDescriptor);
         return typeMapping.describe(path, localTypeDescriptor.typeDescriptor, this);
+    }
+
+    public ValueType getValueType(TypeDescriptor type) {
+        TypeMapping typeMapping = typeMappings.getTypeMapping(null, new LocalTypeDescriptor(type));
+        return typeMapping.getValueType();
     }
 
     private void lockMappings() {

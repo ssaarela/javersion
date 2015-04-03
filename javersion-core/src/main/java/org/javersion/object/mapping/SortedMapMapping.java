@@ -1,15 +1,16 @@
 package org.javersion.object.mapping;
 
-import java.util.NavigableMap;
+import java.util.SortedMap;
 
 import org.javersion.object.types.IdentifiableType;
+import org.javersion.object.types.ScalarType;
 import org.javersion.object.types.SortedMapType;
 import org.javersion.object.types.ValueType;
 
-public class NavigableMapMapping extends MapTypeMapping {
+public class SortedMapMapping extends MapTypeMapping {
 
-    public NavigableMapMapping() {
-        super(NavigableMap.class);
+    public SortedMapMapping() {
+        super(SortedMap.class);
     }
 
     @Override

@@ -99,11 +99,6 @@ public class ObjectType<O> implements ValueType {
         }
     }
 
-    @Override
-    public boolean isReference() {
-        return false;
-    }
-
     public String toString() {
         return "ObjectType of " + typesByAlias.values();
     }

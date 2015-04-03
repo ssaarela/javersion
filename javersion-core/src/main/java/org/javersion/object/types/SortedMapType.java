@@ -3,9 +3,9 @@ package org.javersion.object.types;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class NavigableMapType extends MapType {
+public class SortedMapType extends MapType {
 
-    public NavigableMapType(IdentifiableType keyType) {
+    public SortedMapType(IdentifiableType keyType) {
         super(keyType);
     }
 
