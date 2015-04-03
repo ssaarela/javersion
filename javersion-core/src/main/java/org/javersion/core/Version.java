@@ -108,6 +108,7 @@ public class Version<K, V, M> {
                 .add("parentRevisions", parentRevisions)
                 .add("type", type)
                 .add("changeset", changeset)
+                .add("meta", meta)
                 .toString();
     }
 
@@ -168,9 +169,6 @@ public class Version<K, V, M> {
         }
 
         public Version<K, V, M> build() {
-            if (revision == null) {
-                revision = new Revision();
-            }
             return new Version<>(this);
         }
 

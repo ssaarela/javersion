@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.properties;
+package org.javersion.core;
 
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Iterables.filter;
@@ -29,16 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.javersion.core.BranchAndRevision;
-import org.javersion.core.Merge;
-import org.javersion.core.Revision;
-import org.javersion.core.VersionType;
 import org.junit.Test;
 
 import com.google.common.base.Function;
 import com.google.common.collect.*;
 
-public class PropertiesVersionGraphTest {
+public class SimpleVersionGraphTest {
 
     private static final Set<Revision> EMPTY_REVISIONS = setOf();
 
@@ -275,7 +271,7 @@ public class PropertiesVersionGraphTest {
 
     @Test
     public void Sequential_Updates() {
-        PropertiesVersionGraph versionGraph = PropertiesVersionGraph.init();
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init();
         Revision revision = null;
         for (VersionExpectation expectation : EXPECTATIONS) {
             if (expectation.version != null) {
@@ -303,19 +299,19 @@ public class PropertiesVersionGraphTest {
             if (lastExpectation.getRevision() != null) {
                 revision = lastExpectation.getRevision();
             }
-            PropertiesVersionGraph versionGraph = PropertiesVersionGraph.init(getVersions(expectations));
+            SimpleVersionGraph versionGraph = SimpleVersionGraph.init(getVersions(expectations));
             VersionExpectation expectation = expectations.get(expectations.size() - 1);
             assertGraphExpectations(versionGraph, revision, expectation);
             assertMergeExpectations(versionGraph, revision, expectation);
         }
     }
 
-    private Iterable<PropertiesVersion> getVersions(
+    private Iterable<SimpleVersion> getVersions(
             List<VersionExpectation> expectations) {
         return filter(transform(expectations, getVersion), notNull());
     }
 
-    private void assertGraphExpectations(PropertiesVersionGraph versionGraph, Revision revision, VersionExpectation expectation) {
+    private void assertGraphExpectations(SimpleVersionGraph versionGraph, Revision revision, VersionExpectation expectation) {
         if (expectation.expectedHeads != null) {
             Set<Revision> heads = new HashSet<>();
             for (BranchAndRevision leaf : versionGraph.getHeads().keys()) {
@@ -327,9 +323,9 @@ public class PropertiesVersionGraphTest {
         }
     }
 
-    private void assertMergeExpectations(PropertiesVersionGraph versionGraph, Revision revision, VersionExpectation expectation) {
+    private void assertMergeExpectations(SimpleVersionGraph versionGraph, Revision revision, VersionExpectation expectation) {
         try {
-            Merge<String, String, Void> merge;
+            Merge<String, String, String> merge;
             if (expectation.mergeBranches != null) {
                 merge = versionGraph.mergeBranches(expectation.mergeBranches);
             } else {
@@ -355,16 +351,16 @@ public class PropertiesVersionGraphTest {
         return assertLabel + " of " + revision + (expectation.title != null ? ": " + expectation.title : "");
     }
 
-    public static Function<VersionExpectation, PropertiesVersion> getVersion = new Function<VersionExpectation, PropertiesVersion>() {
+    public static Function<VersionExpectation, SimpleVersion> getVersion = new Function<VersionExpectation, SimpleVersion>() {
         @Override
-        public PropertiesVersion apply(VersionExpectation input) {
+        public SimpleVersion apply(VersionExpectation input) {
             return input.version;
         }
     };
 
     public static class VersionExpectation {
         public final String title;
-        public final PropertiesVersion version;
+        public final SimpleVersion version;
         public Set<Revision> mergeRevisions = ImmutableSet.of();
         public Iterable<String> mergeBranches;
         public Map<String, String> expectedProperties;
@@ -374,10 +370,10 @@ public class PropertiesVersionGraphTest {
         public VersionExpectation(String title) {
             this(null, title);
         }
-        public VersionExpectation(PropertiesVersion version) {
+        public VersionExpectation(SimpleVersion version) {
             this(version, null);
         }
-        public VersionExpectation(PropertiesVersion version, String title) {
+        public VersionExpectation(SimpleVersion version, String title) {
             this.version = version;
             this.title = title;
             if (version != null) {
@@ -415,11 +411,11 @@ public class PropertiesVersionGraphTest {
         }
     }
 
-    public static PropertiesVersion.Builder version(Revision rev) {
-        return new PropertiesVersion.Builder(rev);
+    public static SimpleVersion.Builder version(Revision rev) {
+        return new SimpleVersion.Builder(rev);
     }
 
-    public static VersionExpectation when(PropertiesVersion.Builder builder) {
+    public static VersionExpectation when(SimpleVersion.Builder builder) {
         return new VersionExpectation(builder.build());
     }
     public static VersionExpectation then(String title) {
