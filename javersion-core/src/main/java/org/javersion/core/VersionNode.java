@@ -18,6 +18,7 @@ package org.javersion.core;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.util.Check;
 import org.javersion.util.MutableSortedMap;
 import org.javersion.util.PersistentSortedMap;
 
@@ -32,7 +33,7 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
     public VersionNode(Version<K, V, M> version, Iterable<VersionNode<K, V, M>> parents, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads) {
         super(new MergeBuilder<K, V, M>(toMergeNodes(parents)).overwrite(version));
 
-        this.version = version;
+        this.version = Check.notNull(version, "version");
 
         MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads = heads.toMutableMap();
         for (VersionNode<K, V, M> parent : parents) {

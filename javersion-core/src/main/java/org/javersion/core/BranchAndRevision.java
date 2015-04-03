@@ -33,17 +33,20 @@ public class BranchAndRevision implements Comparable<BranchAndRevision>{
     public final Revision revision;
 
     public BranchAndRevision(VersionNode<?, ?, ?> versionNode) {
-        this(versionNode.getBranch(), versionNode.getRevision());
+        Check.notNull(versionNode, "versionNode");
+        this.branch = versionNode.getBranch();
+        this.revision = versionNode.getRevision();
     }
 
-    private BranchAndRevision(String branch, Revision revision) {
+    public BranchAndRevision(String branch, Revision revision) {
         this.branch = Check.notNullOrEmpty(branch, "branch");
-        this.revision = revision;
+        this.revision = Check.notNull(revision, "revision");
     }
 
     @Override
     public int hashCode() {
-        return revision.hashCode();
+        int hashCode = revision.hashCode();
+        return 31*hashCode + branch.hashCode();
     }
 
     @Override

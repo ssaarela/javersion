@@ -17,6 +17,7 @@ package org.javersion.util;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.String.format;
 
 import java.util.Collection;
 import java.util.Map;
@@ -28,13 +29,16 @@ public class Check {
     public static <T> T notNull(T reference, String fieldName) {
         if (reference == null) {
             // Avoid creating new Object[] (varargs) for normal flow
-            throw new NullPointerException(String.format("%s should not be null", fieldName));
+            throw new IllegalArgumentException(format("%s should not be null", fieldName));
         }
         return reference;
     }
 
     public static <T> T notNull$(T reference, String messageFormat, Object... args) {
-        return checkNotNull(reference, messageFormat, args);
+        if (reference == null) {
+            throw new IllegalArgumentException(format(messageFormat, args));
+        }
+        return reference;
     }
 
     public static void that(boolean expression, String messageFormat, Object... args) {
@@ -70,7 +74,7 @@ public class Check {
 
     public static String notNullOrEmpty(String reference, String fieldName) {
         if (reference == null || reference.length() == 0) {
-            throw new IllegalArgumentException(String.format(NOT_NULL_OR_EMPTY_FMT, fieldName, reference));
+            throw new IllegalArgumentException(format(NOT_NULL_OR_EMPTY_FMT, fieldName, reference));
         }
         return reference;
     }
