@@ -4,14 +4,13 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.javersion.core.SimpleVersion.Builder;
-import org.javersion.object.Persistent;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.javersion.core.VersionType.ROOT;
+import static org.javersion.core.VersionType.RESET;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -48,7 +47,7 @@ public class VersionIdentityTest {
                         builder.changeset(ImmutableMap.of()).build(), true },
 
                 { "different type", builder.build(),
-                        builder.type(ROOT).build(), false },
+                        builder.type(RESET).build(), false },
 
                 { "different branch", builder.build(),
                         builder.branch("branch").build(), false },

@@ -17,6 +17,5 @@ package org.javersion.core;
 
 public enum VersionType {
     NORMAL,
-    ROOT,
-    REWRITE
+    RESET
 }

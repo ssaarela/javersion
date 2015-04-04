@@ -157,11 +157,6 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         return Iterables.transform(this, MapUtils.<V>mapValueFunction());
     }
 
-    public String toString() {
-        Node<K, V> root = root();
-        return root == null ? "NIL" : root.toString();
-    }
-
     static class Node<K, V> extends AbstractRedBlackTree.Node<K, Node<K,V>> implements Map.Entry<K, V>{
         V value;
 
@@ -216,10 +211,8 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
             }
         }
 
-        @Override
-        protected StringBuilder label(StringBuilder sb) {
-            sb.append(color).append('(').append(key).append(':').append(value).append(')');
-            return sb;
+        public String toString() {
+            return getKey() + ": " + getValue();
         }
     }
 

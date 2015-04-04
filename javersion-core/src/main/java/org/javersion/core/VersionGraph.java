@@ -47,16 +47,12 @@ public abstract class VersionGraph<K, V, M,
     }
 
     protected VersionGraph(VersionGraphBuilder<K, V, M, This, B> builder) {
-        this(builder.versionNodes.toPersistentMap());
+        this(builder.versionNodes.toPersistentMap(), builder.at);
     }
 
-    protected VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes) {
-        this(versionNodes, versionNodes.isEmpty() ? null : versionNodes.getLastEntry().getValue());
-    }
-
-    protected VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes, VersionNode<K, V, M> at) {
+    private VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes, VersionNode<K, V, M> at) {
         this.versionNodes = versionNodes;
-        this.at = at;
+        this.at = (at != null || versionNodes.isEmpty() ? at : versionNodes.getLastEntry().getValue());
     }
 
     public final This commit(Version<K, V, M> version) {
@@ -65,7 +61,7 @@ public abstract class VersionGraph<K, V, M,
         return builder.build();
     }
 
-    public final This commit(Iterable<Version<K, V, M>> versions) {
+    public final This commit(Iterable<? extends Version<K, V, M>> versions) {
         B builder = newBuilder();
         for (Version<K, V, M> version : versions) {
             builder.add(version);
@@ -121,14 +117,12 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public final This at(Revision revision) {
-        return at(versionNodes, getVersionNode(revision));
+        return newBuilder().at(getVersionNode(revision)).build();
     }
 
     public final This atTip() {
-        return at(versionNodes, getTip());
+        return newBuilder().at(getTip()).build();
     }
-
-    protected abstract This at(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes, VersionNode<K, V, M> at);
 
     public final boolean isEmpty() {
         return versionNodes.isEmpty();

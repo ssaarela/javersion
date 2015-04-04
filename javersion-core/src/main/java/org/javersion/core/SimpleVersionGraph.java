@@ -15,8 +15,6 @@
  */
 package org.javersion.core;
 
-import org.javersion.util.PersistentSortedMap;
-
 public final class SimpleVersionGraph extends VersionGraph<String, String, String, SimpleVersionGraph, SimpleVersionGraph.Builder> {
 
     public static SimpleVersionGraph init() {
@@ -45,18 +43,9 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Strin
         super(builder);
     }
 
-    private SimpleVersionGraph(PersistentSortedMap<Revision, VersionNode<String, String, String>> versionNodes, VersionNode<String, String, String> at) {
-        super(versionNodes, at);
-    }
-
     @Override
     protected Builder newBuilder() {
         return new Builder(this);
-    }
-
-    @Override
-    protected SimpleVersionGraph at(PersistentSortedMap<Revision, VersionNode<String, String, String>> versionNodes, VersionNode<String, String, String> at) {
-        return new SimpleVersionGraph(versionNodes, at);
     }
 
     static class Builder extends VersionGraphBuilder<String, String, String, SimpleVersionGraph, Builder> {

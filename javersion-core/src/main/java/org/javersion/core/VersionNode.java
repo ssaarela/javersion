@@ -15,7 +15,6 @@
  */
 package org.javersion.core;
 
-import java.util.Map;
 import java.util.Set;
 
 import org.javersion.util.Check;
@@ -30,17 +29,11 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
     public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;
 
-    public VersionNode(Version<K, V, M> version, Iterable<VersionNode<K, V, M>> parents, PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads) {
-        super(new MergeBuilder<K, V, M>(toMergeNodes(parents)).overwrite(version));
-
+    public VersionNode(Version<K, V, M> version,
+                       MergeBuilder<K, V, M> mergeBuilder,
+                       MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads) {
+        super(mergeBuilder);
         this.version = Check.notNull(version, "version");
-
-        MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads = heads.toMutableMap();
-        for (VersionNode<K, V, M> parent : parents) {
-            if (parent.version.branch.equals(version.branch)) {
-                mutableHeads.remove(new BranchAndRevision(parent));
-            }
-        }
         mutableHeads.put(new BranchAndRevision(this), this);
         this.heads = mutableHeads.toPersistentMap();
     }
@@ -53,28 +46,9 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
         return version.branch;
     }
 
-    public Map<K, VersionProperty<V>> getVersionProperties() {
-        return version.getVersionProperties();
-    }
-
     @Override
     public Set<Revision> getMergeHeads() {
         return ImmutableSet.of(version.revision);
-    }
-
-    @Override
-    public int hashCode() {
-        return version.revision.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj == this;
-    }
-
-    @Override
-    public String toString() {
-        return version.toString();
     }
 
     @Override

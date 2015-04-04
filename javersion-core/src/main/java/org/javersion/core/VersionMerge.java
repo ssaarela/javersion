@@ -22,7 +22,7 @@ public class VersionMerge<K, V, M> extends Merge<K, V, M> {
     private Set<Revision> heads;
 
     public VersionMerge(Iterable<VersionNode<K, V, M>> nodes) {
-        super(new MergeBuilder<K, V, M>(toMergeNodes(nodes)));
+        super(new MergeBuilder<K, V, M>(nodes));
     }
 
     @Override

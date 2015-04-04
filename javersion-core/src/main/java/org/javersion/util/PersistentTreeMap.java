@@ -20,7 +20,9 @@ import static java.util.Spliterators.emptySpliterator;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Spliterator;
+import java.util.stream.Collectors;
 
 public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> implements PersistentSortedMap<K, V> {
 
@@ -118,10 +120,6 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
         return new PersistentTreeMap<K, V>(comparator, newRoot, newSize);
     }
 
-    public String toString() {
-        return root == null ? "NIL" : root.toString();
-    }
-
     @Override
     public Entry<K, V> getFirstEntry() {
         return findMin(root);
@@ -154,6 +152,10 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
         } else {
             return emptySpliterator();
         }
+    }
+
+    public String toString() {
+        return stream().map(Objects::toString).collect(Collectors.joining(", ", "{", "}"));
     }
 
 }

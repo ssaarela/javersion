@@ -36,9 +36,5 @@ public class SimpleVersion extends Version<String, String, String> {
             return new SimpleVersion(this);
         }
 
-        public String toString() {
-            return meta;
-        }
-
     }
 }

@@ -21,17 +21,15 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertThat;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.Test;
 
 import com.google.common.base.Function;
+import com.google.common.base.VerifyException;
 import com.google.common.collect.*;
 
 public class SimpleVersionGraphTest {
@@ -46,7 +44,7 @@ public class SimpleVersionGraphTest {
 
     static {
         for (int i=0; i < REV.length; i++) {
-            REV[i] = new Revision();
+            REV[i] = new Revision(0, i);
         }
     }
     /**
@@ -68,205 +66,226 @@ public class SimpleVersionGraphTest {
      * 7    // still unresolved status!
      * |
      * 8    status="Married" // resolve status
-     * :
-     * 9    type: ROOT, status: "New beginning"
+     * |
+     * 9    type: RESET, status: "New beginning"
+     * |
+     * |  10  status: Starts with conflict
      * </pre>
      */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
             when(version(REV[1])
-                .changeset(mapOf(
-                        "firstName", "John",
-                        "lastName", "Doe")))
-                .expectProperties(mapOf(
-                        "firstName", "John",
-                        "lastName", "Doe")),
+                    .changeset(mapOf(
+                            "firstName", "John",
+                            "lastName", "Doe")))
+                    .expectProperties(mapOf(
+                            "firstName", "John",
+                            "lastName", "Doe")),
 
             then("Empty merge")
-                .expectAllHeads(setOf(REV[1]))
-                .mergeRevisions(EMPTY_REVISIONS)
-                .expectProperties(EMPTY_PROPERTIES),
-
+                    .expectAllHeads(setOf(REV[1]))
+                    .mergeRevisions(EMPTY_REVISIONS)
+                    .expectProperties(EMPTY_PROPERTIES),
 
             when(version(REV[2])
-                .parents(setOf(REV[1]))
-                .changeset(mapOf(
-                        "status", "Single")))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Doe", // 1
-                        "status", "Single")), // 2
-
+                    .parents(setOf(REV[1]))
+                    .changeset(mapOf(
+                            "status", "Single")))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Doe", // 1
+                            "status", "Single")), // 2
 
             when(version(REV[3])
-                .branch(ALT_BRANCH)
-                .parents(setOf(REV[1]))
-                .changeset(mapOf(
-                        "mood", "Lonely")))
-                .expectAllHeads(setOf(REV[2], REV[3]))
-                .mergeRevisions(setOf(REV[3], REV[2]))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Doe", // 1
-                        "status", "Single", // 2
-                        "mood", "Lonely")), // 3
-
+                    .branch(ALT_BRANCH)
+                    .parents(setOf(REV[1]))
+                    .changeset(mapOf(
+                            "mood", "Lonely")))
+                    .expectAllHeads(setOf(REV[2], REV[3]))
+                    .mergeRevisions(setOf(REV[3], REV[2]))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Doe", // 1
+                            "status", "Single", // 2
+                            "mood", "Lonely")), // 3
 
             when(version(REV[4])
-                .branch(ALT_BRANCH)
-                .parents(setOf(REV[3]))
-                .changeset(mapOf(
-                        "lastName", "Foe",
-                        "status", "Just married",
-                        "mood", "Ecstatic",
-                        "married", "2013-10-12")))
-                .expectAllHeads(setOf(REV[2], REV[4]))
-                .mergeRevisions(setOf(REV[4]))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Foe", // 4
-                        "status", "Just married", // 4
-                        "mood", "Ecstatic", // 4
-                        "married", "2013-10-12")), // 4
+                    .branch(ALT_BRANCH)
+                    .parents(setOf(REV[3]))
+                    .changeset(mapOf(
+                            "lastName", "Foe",
+                            "status", "Just married",
+                            "mood", "Ecstatic",
+                            "married", "2013-10-12")))
+                    .expectAllHeads(setOf(REV[2], REV[4]))
+                    .mergeRevisions(setOf(REV[4]))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Foe", // 4
+                            "status", "Just married", // 4
+                            "mood", "Ecstatic", // 4
+                            "married", "2013-10-12")), // 4
 
             then("Merge with ancestor")
-                .mergeRevisions(setOf(REV[3], REV[4]))
-                .expectMergeHeads(setOf(REV[4]))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Foe", // 4
-                        "status", "Just married", // 4
-                        "mood", "Ecstatic", // 4
-                        "married", "2013-10-12")), // 4
+                    .mergeRevisions(setOf(REV[3], REV[4]))
+                    .expectMergeHeads(setOf(REV[4]))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Foe", // 4
+                            "status", "Just married", // 4
+                            "mood", "Ecstatic", // 4
+                            "married", "2013-10-12")), // 4
 
             then("Merge with concurrent older version")
-                .mergeRevisions(setOf(REV[2], REV[4]))
-                .expectMergeHeads(setOf(REV[2], REV[4]))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Foe", // 4
-                        "status", "Just married", // 4
-                        "mood", "Ecstatic", // 4
-                        "married", "2013-10-12")) // 4
-                .expectConflicts(multimapOf(
-                        "status", "Single" // 2
-                        )),
+                    .mergeRevisions(setOf(REV[2], REV[4]))
+                    .expectMergeHeads(setOf(REV[2], REV[4]))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Foe", // 4
+                            "status", "Just married", // 4
+                            "mood", "Ecstatic", // 4
+                            "married", "2013-10-12")) // 4
+                    .expectConflicts(multimapOf(
+                            "status", "Single" // 2
+                    )),
 
             then("Merge with concurrent older version, ignore order")
-                .mergeRevisions(setOf(REV[4], REV[2]))
-                .expectMergeHeads(setOf(REV[2], REV[4]))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Foe", // 4
-                        "status", "Just married", // 4
-                        "mood", "Ecstatic", // 4
-                        "married", "2013-10-12")) // 4
-                .expectConflicts(multimapOf(
-                        "status", "Single" // 2
-                        )),
-
+                    .mergeRevisions(setOf(REV[4], REV[2]))
+                    .expectMergeHeads(setOf(REV[2], REV[4]))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Foe", // 4
+                            "status", "Just married", // 4
+                            "mood", "Ecstatic", // 4
+                            "married", "2013-10-12")) // 4
+                    .expectConflicts(multimapOf(
+                            "status", "Single" // 2
+                    )),
 
             when(version(REV[5])
-                .parents(setOf(REV[2]))
-                .changeset(mapOf(
-                        "mood", "Ecstatic")))
-                .expectAllHeads(setOf(REV[5], REV[4]))
-                .mergeRevisions(setOf(REV[4], REV[5]))
-                .expectProperties(mapOf(
-                        "firstName", "John",
-                        "lastName", "Foe",
-                        "status", "Just married", // 4
-                        "mood", "Ecstatic", // 4 and 5 - not conflicting!
-                        "married", "2013-10-12")) // 4
-                .expectConflicts(multimapOf(
-                        "status", "Single" // 2
-                        )),
+                    .parents(setOf(REV[2]))
+                    .changeset(mapOf(
+                            "mood", "Ecstatic")))
+                    .expectAllHeads(setOf(REV[5], REV[4]))
+                    .mergeRevisions(setOf(REV[4], REV[5]))
+                    .expectProperties(mapOf(
+                            "firstName", "John",
+                            "lastName", "Foe",
+                            "status", "Just married", // 4
+                            "mood", "Ecstatic", // 4 and 5 - not conflicting!
+                            "married", "2013-10-12")) // 4
+                    .expectConflicts(multimapOf(
+                            "status", "Single" // 2
+                    )),
 
             then("Merge default branch")
-                .mergeBranches(setOf(DEFAULT_BRANCH))
-                .expectMergeHeads(setOf(REV[5]))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Doe", // 1
-                        "status", "Single", // 2
-                        "mood", "Ecstatic")), // 5
+                    .mergeBranches(setOf(DEFAULT_BRANCH))
+                    .expectMergeHeads(setOf(REV[5]))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Doe", // 1
+                            "status", "Single", // 2
+                            "mood", "Ecstatic")), // 5
 
             then("Merge alt-branch")
-                .mergeBranches(setOf(ALT_BRANCH))
-                .expectMergeHeads(setOf(REV[4]))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Foe", // 4
-                        "status", "Just married", // 4
-                        "mood", "Ecstatic", // 4
-                        "married", "2013-10-12")), // 4
-
+                    .mergeBranches(setOf(ALT_BRANCH))
+                    .expectMergeHeads(setOf(REV[4]))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Foe", // 4
+                            "status", "Just married", // 4
+                            "mood", "Ecstatic", // 5
+                            "married", "2013-10-12")), // 4
 
             when(version(REV[6])
-                .parents(setOf(REV[5], REV[4]))
-                .changeset(mapOf(
-                        "mood", null,
-                        "married", null)))
-                .expectAllHeads(setOf(REV[6], REV[4]))
-                .expectProperties(mapOf(
-                        "firstName", "John",
-                        "lastName", "Foe",
-                        "status", "Just married")) // 4
-                .expectConflicts(multimapOf(
-                        "status", "Single" // 2 - unresolved conflict
-                        )),
-
+                    .parents(setOf(REV[5], REV[4]))
+                    .changeset(mapOf(
+                            "mood", null,
+                            "married", null)))
+                    .expectAllHeads(setOf(REV[6], REV[4]))
+                    .expectProperties(mapOf(
+                            "firstName", "John",
+                            "lastName", "Foe",
+                            "status", "Just married")) // 4
+                    .expectConflicts(multimapOf(
+                            "status", "Single" // 2 - unresolved conflict
+                    )),
 
             then("Merge alt-branch - should not have changed")
-                .mergeBranches(setOf(ALT_BRANCH))
-                .expectMergeHeads(setOf(REV[4]))
-                .expectProperties(mapOf(
-                        "firstName", "John", // 1
-                        "lastName", "Foe", // 4
-                        "status", "Just married", // 4
-                        "mood", "Ecstatic", // 4
-                        "married", "2013-10-12")), // 4
+                    .mergeBranches(setOf(ALT_BRANCH))
+                    .expectMergeHeads(setOf(REV[4]))
+                    .expectProperties(mapOf(
+                            "firstName", "John", // 1
+                            "lastName", "Foe", // 4
+                            "status", "Just married", // 4
+                            "mood", "Ecstatic", // 4
+                            "married", "2013-10-12")), // 4
 
             then("Merge alt-branch and default")
-                .mergeBranches(setOf(ALT_BRANCH, DEFAULT_BRANCH))
-                .expectMergeHeads(setOf(REV[6]))
-                .expectProperties(mapOf(
-                        "firstName", "John",
-                        "lastName", "Foe",
-                        "status", "Just married")) // 4
-                .expectConflicts(multimapOf(
-                        "status", "Single" // 2 - unresolved conflict
-                        )),
-
+                    .mergeBranches(setOf(ALT_BRANCH, DEFAULT_BRANCH))
+                    .expectMergeHeads(setOf(REV[6]))
+                    .expectProperties(mapOf(
+                            "firstName", "John",
+                            "lastName", "Foe",
+                            "status", "Just married")) // 4
+                    .expectConflicts(multimapOf(
+                            "status", "Single" // 2 - unresolved conflict
+                    )),
 
             when(version(REV[7])
-                .parents(setOf(REV[6])))
-                .expectProperties(mapOf(
-                        "firstName", "John",
-                        "lastName", "Foe",
-                        "status", "Just married"))
-                .expectConflicts(multimapOf(
-                        "status", "Single" // 2 - still unresolved conflict
-                        )),
-
+                    .parents(setOf(REV[6])))
+                    .expectProperties(mapOf(
+                            "firstName", "John",
+                            "lastName", "Foe",
+                            "status", "Just married"))
+                    .expectConflicts(multimapOf(
+                            "status", "Single" // 2 - still unresolved conflict
+                    )),
 
             when(version(REV[8])
-                .parents(setOf(REV[7]))
-                .changeset(mapOf(
-                        "status", "Married"
-                        )))
-                .expectProperties(mapOf(
-                        "firstName", "John",
-                        "lastName", "Foe",
-                        "status", "Married")),
-
+                    .parents(setOf(REV[7]))
+                    .changeset(mapOf(
+                            "status", "Married"
+                    )))
+                    .expectProperties(mapOf(
+                            "firstName", "John",
+                            "lastName", "Foe",
+                            "status", "Married")),
 
             when(version(REV[9])
-                .changeset(mapOf(
-                        "status", "New beginning"))
-                .type(VersionType.ROOT))
-                .expectProperties(mapOf(
-                        "status", "New beginning")) // 4 and 5 - not conflicting!
-            );
+                    .parents(setOf(REV[8]))
+                    .changeset(mapOf(
+                            "status", "New beginning"))
+                    .type(VersionType.RESET))
+                    .expectAllHeads(setOf(REV[9]))
+                    .expectMergeHeads(setOf(REV[9]))
+                    .expectProperties(mapOf(
+                            "status", "New beginning")),
+
+            when(version(REV[10])
+                    .branch(ALT_BRANCH)
+                    .changeset(mapOf("status", "Starts with conflict")))
+                    .mergeBranches(setOf(DEFAULT_BRANCH, ALT_BRANCH))
+                    .expectAllHeads(setOf(REV[9], REV[10]))
+                    .expectMergeHeads(setOf(REV[9], REV[10]))
+                    .expectProperties(mapOf(
+                            "status", "New beginning"
+                    ))
+                    .expectConflicts(multimapOf(
+                            "status", "Starts with conflict"
+                    )),
+
+            when(version(REV[11])
+                    .parents(setOf(REV[10]))
+                    .changeset(mapOf(
+                            "purpose", "Reset alt-branch"))
+                    .type(VersionType.RESET))
+                    .mergeBranches(setOf(DEFAULT_BRANCH))
+                    .expectAllHeads(setOf(REV[9], REV[11]))
+                    .expectMergeHeads(setOf(REV[9], REV[11]))
+                    .expectProperties(mapOf(
+                            "status", "New beginning",
+                            "purpose", "Reset alt-branch"))
+    );
 
 
     @Test
@@ -292,15 +311,60 @@ public class SimpleVersionGraphTest {
     }
 
     @Test
-    public void Bulk_Load() {
+    public void Bulk_Init() {
         Revision revision = null;
         for (List<VersionExpectation> expectations : getBulkExpectations()) {
-            VersionExpectation lastExpectation = expectations.get(expectations.size() - 1);
-            if (lastExpectation.getRevision() != null) {
-                revision = lastExpectation.getRevision();
+            VersionExpectation expectation = expectations.get(expectations.size() - 1);
+            if (expectation.getRevision() != null) {
+                revision = expectation.getRevision();
             }
             SimpleVersionGraph versionGraph = SimpleVersionGraph.init(getVersions(expectations));
-            VersionExpectation expectation = expectations.get(expectations.size() - 1);
+            assertGraphExpectations(versionGraph, revision, expectation);
+            assertMergeExpectations(versionGraph, revision, expectation);
+        }
+    }
+
+    @Test
+    public void Visit_Older_Versions() {
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(getVersions(EXPECTATIONS));
+        runExpectations(versionGraph, EXPECTATIONS);
+    }
+
+    @Test
+    public void Bulk_Commit() {
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(EXPECTATIONS.get(0).version);
+        versionGraph = versionGraph.commit(getVersions(EXPECTATIONS.subList(1, EXPECTATIONS.size())));
+        runExpectations(versionGraph, EXPECTATIONS);
+    }
+
+    @Test
+    public void Tip_of_an_Empty_Graph() {
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init();
+        assertNull(versionGraph.getTip());
+        assertTrue(versionGraph.getVersions().isEmpty());
+    }
+
+    @Test(expected = VersionNotFoundException.class)
+    public void Version_Not_Found() {
+        SimpleVersionGraph.init().getVersionNode(new Revision());
+    }
+
+    private int findIndex(List<VersionExpectation> expectations, int versionNumber) {
+        for (int i=0; i < expectations.size(); i++) {
+            Revision revision = expectations.get(i).getRevision();
+            if (revision != null && revision.equals(REV[versionNumber])) {
+                return i;
+            }
+        }
+        throw new VersionNotFoundException(REV[versionNumber]);
+    }
+
+    private void runExpectations(SimpleVersionGraph versionGraph, List<VersionExpectation> expectations) {
+        for (VersionExpectation expectation : expectations) {
+            Revision revision = expectation.getRevision();
+            if (revision != null) {
+                versionGraph = versionGraph.at(revision);
+            }
             assertGraphExpectations(versionGraph, revision, expectation);
             assertMergeExpectations(versionGraph, revision, expectation);
         }

@@ -15,7 +15,12 @@
  */
 package org.javersion.core;
 
-import static com.google.common.collect.Iterables.transform;
+import static org.javersion.core.VersionType.RESET;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.javersion.util.Check;
 import org.javersion.util.MutableSortedMap;
@@ -24,6 +29,7 @@ import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 
 public abstract class VersionGraphBuilder<K, V, M,
                                G extends VersionGraph<K, V, M, G, B>,
@@ -33,16 +39,14 @@ public abstract class VersionGraphBuilder<K, V, M,
 
     MutableSortedMap<Revision, VersionNode<K, V, M>> versionNodes;
 
-    private Function<Revision, VersionNode<K, V, M>> revisionToVersionNode = new Function<Revision, VersionNode<K, V, M>>() {
-        @Override
-        public VersionNode<K, V, M> apply(Revision input) {
-            return getVersionNode(Check.notNull(input, "input"));
-        }
-    };
+    VersionNode<K, V, M> at;
+
+    private Function<Revision, VersionNode<K, V, M>> revisionToVersionNode = input -> getVersionNode(Check.notNull(input, "input"));
 
 
     protected VersionGraphBuilder() {
-        reset();
+        this.versionNodes = new MutableTreeMap<>();
+        this.heads = PersistentTreeMap.empty();
     }
 
     protected VersionGraphBuilder(G parentGraph) {
@@ -50,24 +54,53 @@ public abstract class VersionGraphBuilder<K, V, M,
         this.heads = parentGraph.getHeads();
     }
 
-    private void reset() {
-        this.versionNodes = new MutableTreeMap<>();
-        this.heads = PersistentTreeMap.empty();
+    public final B at(VersionNode<K, V, M> at) {
+        this.at = at;
+        return (B) this;
     }
 
     public final void add(Version<K, V, M> version) {
         Check.notNull(version, "version");
-        if (version.type == VersionType.ROOT) {
-            reset();
+        MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads = heads.toMutableMap();
+        MergeBuilder<K, V, M> mergeBuilder = new MergeBuilder<K, V, M>();
+
+        if (version.type == RESET) {
+            resetVersion(version, mutableHeads);
+        } else {
+            normalVersion(version, mutableHeads, mergeBuilder);
         }
-        Iterable<VersionNode<K, V, M>> parents = revisionsToNodes(version.parentRevisions);
-        VersionNode<K, V, M> versionNode = new VersionNode<K, V, M>(version, parents, heads);
+        mergeBuilder.overwrite(version);
+        VersionNode<K, V, M> versionNode = new VersionNode<>(version, mergeBuilder, mutableHeads);
         heads = versionNode.heads;
         versionNodes.put(version.revision, versionNode);
     }
 
-    Iterable<VersionNode<K, V, M>> revisionsToNodes(Iterable<Revision> revisions) {
-        return transform(revisions, revisionToVersionNode);
+    private void normalVersion(Version<K, V, M> version, MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads, MergeBuilder<K, V, M> mergeBuilder) {
+        Iterable<VersionNode<K, V, M>> parents = toVersionNodes(version.parentRevisions);
+        mergeBuilder.mergeAll(parents);
+        for (VersionNode<K, V, M> parent : parents) {
+            if (parent.version.branch.equals(version.branch)) {
+                mutableHeads.remove(new BranchAndRevision(parent));
+            }
+        }
+    }
+
+    private void resetVersion(Version<K, V, M> version, MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads) {
+        if (!mutableHeads.isEmpty()) {
+            Iterable<VersionNode<K, V, M>> parents = toVersionNodes(version.parentRevisions);
+            for (BranchAndRevision branchAndRevision : new ArrayList<>(mutableHeads.keySet())) {
+                for (VersionNode<K, V, M> parent : parents) {
+                    if (parent.mergedRevisions.contains(branchAndRevision.revision)) {
+                        mutableHeads.remove(branchAndRevision);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private List<VersionNode<K, V, M>> toVersionNodes(Set<Revision> revisions) {
+        return revisions.stream().map(this::getVersionNode).collect(Collectors.toList());
     }
 
     private VersionNode<K, V, M> getVersionNode(Revision revision) {

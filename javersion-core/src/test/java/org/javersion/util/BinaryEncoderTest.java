@@ -15,6 +15,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Base64;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class BinaryEncoderTest {
@@ -164,6 +165,7 @@ public class BinaryEncoderTest {
     }
 
     @Test
+    @Ignore
     public void performance() {
         // NOTE: It seems that the order in which these tests are run affects more than actual optimizations... GC?
 

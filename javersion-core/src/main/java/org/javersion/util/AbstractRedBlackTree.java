@@ -293,42 +293,6 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             }
         }
 
-        public String toString() {
-            return toString(new StringBuilder(), 0).toString();
-        }
-
-        protected StringBuilder toString(StringBuilder sb, int level) {
-            label(sb);
-
-            indent(sb, level+1).append("left:");
-            if (left != null) {
-                left.toString(sb, level+1);
-            } else {
-                sb.append("NIL");
-            }
-
-            indent(sb, level+1).append("right:");
-            if (right != null) {
-                right.toString(sb, level+1);
-            } else {
-                sb.append("NIL");
-            }
-            return sb;
-        }
-
-        protected StringBuilder label(StringBuilder sb) {
-            sb.append(color).append('(').append(key).append(')');
-            return sb;
-        }
-
-        private StringBuilder indent(StringBuilder sb, int level) {
-            sb.append('\n');
-            for (int i=0; i < level; i++) {
-                sb.append("   ");
-            }
-            return sb;
-        }
-
         abstract This cloneWith(UpdateContext<? super This> currentContext);
 
         abstract This replaceWith(UpdateContext<? super This> currentContext, This node);

@@ -52,18 +52,9 @@ public final class ObjectVersionGraph<M> extends VersionGraph<PropertyPath, Obje
         super(builder);
     }
 
-    private ObjectVersionGraph(PersistentSortedMap<Revision, VersionNode<PropertyPath, Object, M>> versionNodes, VersionNode<PropertyPath, Object, M> at) {
-        super(versionNodes, at);
-    }
-
     @Override
     protected Builder<M> newBuilder() {
         return new Builder<M>(this);
-    }
-
-    @Override
-    protected ObjectVersionGraph<M> at(PersistentSortedMap<Revision, VersionNode<PropertyPath, Object, M>> versionNodes, VersionNode<PropertyPath, Object, M> at) {
-        return new ObjectVersionGraph<>(versionNodes, at);
     }
 
     public static class Builder<M> extends VersionGraphBuilder<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
