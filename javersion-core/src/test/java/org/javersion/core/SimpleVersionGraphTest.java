@@ -49,27 +49,33 @@ public class SimpleVersionGraphTest {
     }
     /**
      * <pre>
-     * default
-     *    alt-branch
-     * 1    firstName: "John", lastName: "Doe"
-     * | \
-     * 2  |  status: "Single"
-     * |  |
-     * |  3  mood: "Lonely"
-     * |  |
-     * |  4  lastName: "Foe", status: "Just married", mood: "Ecstatic", married: "2013-10-12"
-     * |  |
-     * 5 /   mood: "Ecstatic"
-     * |/
-     * 6    mood: null, married: null // unresolved status!
-     * |
-     * 7    // still unresolved status!
-     * |
-     * 8    status="Married" // resolve status
-     * |
-     * 9    type: RESET, status: "New beginning"
-     * |
-     * |  10  status: Starts with conflict
+     *     default
+     *        alt-branch
+     *     1    firstName: "John", lastName: "Doe"
+     *     | \
+     *     2  |  status: "Single"
+     *     |  |
+     *     |  3  mood: "Lonely"
+     *     |  |
+     *     |  4  lastName: "Foe", status: "Just married", mood: "Ecstatic", married: "2013-10-12"
+     *     |  |
+     *     5 /   mood: "Ecstatic"
+     *   / |/
+     *  |  6    mood: null, married: null // unresolved status!
+     *  |  |
+     *  |  7    // still unresolved status!
+     *  |  |
+     *  |  8    status="Married" // resolve status
+     *  |  |
+     *  |  9    type: RESET, status: "New beginning"
+     *  |  |
+     *  |  |  10  status: Starts with conflict
+     *  |  |  |
+     *  |  |  11  purpose: "Reset alt-branch"
+     *  |  | /
+     *   \ 12   Full reset
+     *    \|
+     *     13  status: "Revert to #5", firstName: "John", lastName: "Doe", mood: "Ecstatic"
      * </pre>
      */
     public static List<VersionExpectation> EXPECTATIONS = Arrays.asList(
@@ -284,7 +290,26 @@ public class SimpleVersionGraphTest {
                     .expectMergeHeads(setOf(REV[9], REV[11]))
                     .expectProperties(mapOf(
                             "status", "New beginning",
-                            "purpose", "Reset alt-branch"))
+                            "purpose", "Reset alt-branch")),
+
+            when(version(REV[12]) // Full reset
+                    .parents(setOf(REV[11], REV[9]))
+                    .type(VersionType.RESET))
+                    .expectAllHeads(setOf(REV[12]))
+                    .expectProperties(mapOf()),
+
+            when(version(REV[13])
+                    .parents(setOf(REV[12], REV[5]))
+                    .changeset(mapOf(
+                            "status", "Revert to #5")))
+                    .mergeBranches(setOf(DEFAULT_BRANCH))
+                    .expectAllHeads(setOf(REV[13]))
+                    .expectMergeHeads(setOf(REV[13]))
+                    .expectProperties(mapOf(
+                            "status", "Revert to #5",
+                            "firstName", "John",
+                            "lastName", "Doe",
+                            "mood", "Ecstatic"))
     );
 
 
