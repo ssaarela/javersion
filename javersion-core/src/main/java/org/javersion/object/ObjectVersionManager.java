@@ -43,6 +43,7 @@ public class ObjectVersionManager<O, M> {
 
     public ObjectVersionBuilder<M> versionBuilder(O object) {
         ObjectVersionBuilder<M> builder = new ManagedObjectVersionBuilder<M>(this, serializer.toPropertyMap(object));
+        // TODO: Set Revision for known node
         builder.parents(heads);
         return builder;
     }

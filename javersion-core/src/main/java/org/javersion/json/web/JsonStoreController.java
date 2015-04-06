@@ -131,7 +131,7 @@ public class JsonStoreController {
 
     @RequestMapping(value = "/objects/{objectId}/versions", method = GET)
     public List<Version<PropertyPath, Object, Void>> getVersions(@PathVariable("objectId") String objectId) {
-        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
+        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId);
         if (versionGraph.isEmpty()) {
             throw new NotFoundException();
         }
@@ -143,7 +143,7 @@ public class JsonStoreController {
                                             Revision revision,
                                             Set<String> mergeBranches,
                                             boolean create) {
-        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
+        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId);
         if (versionGraph.isEmpty()) {
             throw new NotFoundException();
         }
@@ -159,7 +159,7 @@ public class JsonStoreController {
             throw new IllegalArgumentException("Expected root object to be an Object, got " + paths.properties.get(ROOT));
         }
         VersionMetadata ref = metaSerializer.fromPropertyMap(paths.meta);
-        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId, null);
+        ObjectVersionGraph<Void> versionGraph = objectVersionStore.load(objectId);
         ObjectVersionBuilder<Void> versionBuilder = new ObjectVersionBuilder<>();
         if (ref != null && ref._revs != null) {
             versionBuilder.parents(ref._revs);

@@ -22,6 +22,4 @@ public interface VersionStore<I,
 
     G load(I id);
 
-    G load(I id, @Nullable Revision revision);
-
 }

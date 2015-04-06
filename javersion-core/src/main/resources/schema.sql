@@ -8,41 +8,40 @@ insert into version_type values ('REWRITE');
 
 create table version (
   doc_id varchar(255) not null,
-  revision_seq bigint not null,
-  revision_node bigint not null,
+  revision varchar(32) not null,
   ordinal bigint not null,
   tx varchar(32),
 
   branch varchar(128) not null,
   type varchar(8) not null,
 
-  primary key (revision_seq, revision_node),
+  primary key (revision),
 
   constraint version_type_fk foreign key (type) references version_type (name)
 );
 
 create sequence version_ordinal_seq start with 1 increment by 1 no cycle;
+create index version_tx_idx on version (tx);
+create index version_ordinal_idx on version (ordinal);
+
 
 create table version_parent (
-  child_revision_seq bigint not null,
-  child_revision_node bigint not null,
-  parent_revision_seq bigint not null,
-  parent_revision_node bigint not null,
+  child_revision varchar(32) not null,
+  parent_revision varchar(32) not null,
 
-  primary key (child_revision_seq, child_revision_node, parent_revision_seq, parent_revision_node),
+  primary key (child_revision, parent_revision),
 
   constraint version_parent_child_revision_fk
-    foreign key (child_revision_seq, child_revision_node)
-    references version (revision_seq, revision_node),
+    foreign key (child_revision)
+    references version (revision),
 
   constraint version_parent_parent_revision_fk
-    foreign key (parent_revision_seq, parent_revision_node)
-    references version (revision_seq, revision_node)
+    foreign key (parent_revision)
+    references version (revision)
 );
 
 create table version_property (
-  revision_seq bigint not null,
-  revision_node bigint not null,
+  revision varchar(32) not null,
 
   path varchar(512) not null,
   -- n=null, O=object, A=array, s=string,
@@ -51,10 +50,10 @@ create table version_property (
   str varchar(1024),
   nbr bigint,
 
-  primary key (revision_seq, revision_node, path),
+  primary key (revision, path),
 
   constraint version_property_revision_fk
-    foreign key (revision_seq, revision_node) references version (revision_seq, revision_node)
+    foreign key (revision) references version (revision)
 );
 
 create table repository (

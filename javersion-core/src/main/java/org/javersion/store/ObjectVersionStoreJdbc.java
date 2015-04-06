@@ -10,12 +10,10 @@ import static org.javersion.store.ObjectVersionStoreJdbc.ConfigProp.ORDINAL;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
 import org.javersion.core.Revision;
@@ -44,8 +42,8 @@ import com.mysema.query.sql.dml.SQLInsertClause;
 import com.mysema.query.sql.types.EnumByNameType;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.MappingProjection;
-import com.mysema.query.types.Path;
 import com.mysema.query.types.QTuple;
+import com.mysema.query.types.path.StringPath;
 import com.mysema.query.types.query.NumberSubQuery;
 
 public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
@@ -66,24 +64,21 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
     private static final class RevisionMapping extends MappingProjection<Revision> {
 
-        private final Path<Long> revisionSeq;
-        private final Path<Long> revisionNode;
+        private final StringPath revisionPath;
 
-        public RevisionMapping(Path<Long> revisionSeq, Path<Long> revisionNode) {
-            super(Revision.class, revisionSeq, revisionNode);
-            this.revisionSeq = revisionSeq;
-            this.revisionNode = revisionNode;
+        public RevisionMapping(StringPath revisionPath) {
+            super(Revision.class, revisionPath);
+            this.revisionPath = revisionPath;
         }
 
         @Override
         protected Revision map(Tuple row) {
-            Long seq = row.get(revisionSeq);
-            Long node = row.get(revisionNode);
-            return seq != null && node != null ? new Revision(node, seq) : null;
+            String rev = row.get(revisionPath);
+            return rev != null ? new Revision(rev) : null;
         }
 
         public <T extends StoreClause<T>> T populate(Revision revision, T store) {
-            return store.set(revisionSeq, revision.timeSeq).set(revisionNode, revision.node);
+            return store.set(revisionPath, revision.toString());
         }
     }
 
@@ -97,13 +92,13 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
     private static final QRepository qRepository = QRepository.repository;
 
-    private static final RevisionMapping versionRevision = new RevisionMapping(qVersion.revisionSeq, qVersion.revisionNode);
+    private static final RevisionMapping versionRevision = new RevisionMapping(qVersion.revision);
 
-    private static final RevisionMapping versionChild = new RevisionMapping(qParent.childRevisionSeq, qParent.childRevisionNode);
+    private static final RevisionMapping versionChild = new RevisionMapping(qParent.childRevision);
 
-    private static final RevisionMapping versionParent = new RevisionMapping(qParent.parentRevisionSeq, qParent.parentRevisionNode);
+    private static final RevisionMapping versionParent = new RevisionMapping(qParent.parentRevision);
 
-    private static final RevisionMapping propertyRevision = new RevisionMapping(qProperty.revisionSeq, qProperty.revisionNode);
+    private static final RevisionMapping propertyRevision = new RevisionMapping(qProperty.revision);
 
     private final SQLQueryFactory queryFactory;
 
@@ -218,20 +213,15 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         try (Connection connection = txBegin()) {
             long repositoryOrdinal = getLastOrdinalForUpdate();
 
-            List<String> txs = new ArrayList<>();
             for (Map.Entry<String, Long> entry : findUncommittedTransactions().entrySet()) {
                 String tx = entry.getKey();
                 long versionOrdinal = entry.getValue();
                 if (versionOrdinal <= repositoryOrdinal) {
-                    shiftOrdinals(tx, repositoryOrdinal - versionOrdinal + 1);
+                    shiftOrdinalsAndClearTx(tx, repositoryOrdinal - versionOrdinal + 1);
+                } else {
+                    clearTx(tx);
                 }
-                txs.add(tx);
             }
-            queryFactory
-                    .update(qVersion)
-                    .setNull(qVersion.tx)
-                    .where(qVersion.tx.in(txs))
-                    .execute();
 
             queryFactory
                     .update(qRepository)
@@ -244,10 +234,19 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         }
     }
 
-    private void shiftOrdinals(String tx, long shift) {
+    private void clearTx(String tx) {
+        queryFactory
+                .update(qVersion)
+                .setNull(qVersion.tx)
+                .where(qVersion.tx.eq(tx))
+                .execute();
+    }
+
+    private void shiftOrdinalsAndClearTx(String tx, long shift) {
         queryFactory
                 .update(qVersion)
                 .set(qVersion.ordinal, qVersion.ordinal.add(shift))
+                .setNull(qVersion.tx)
                 .where(qVersion.tx.eq(tx))
                 .execute();
     }
@@ -336,18 +335,13 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
     }
 
     @Override
-    public ObjectVersionGraph<M> load(String id) {
-        return load(id, null);
-    }
-
-    @Override
-    public ObjectVersionGraph<M> load(String docId, @Nullable Revision revision) {
+    public ObjectVersionGraph<M> load(String docId) {
         try (Connection connection = txBegin()) {
             Map<Revision, Group> versionsAndParents = queryFactory
                     .from(qVersion)
                     .leftJoin(qVersion._versionParentChildRevisionFk, qParent)
                     .where(qVersion.docId.eq(docId), qVersion.tx.isNull())
-                    .orderBy(qVersion.ordinal.asc(), qVersion.revisionSeq.asc())
+                    .orderBy(qVersion.ordinal.asc(), qVersion.revision.asc())
                     .transform(groupBy(versionRevision).as(versionRevision, qVersion.branch, qVersion.type, GroupBy.set(versionParent)));
 
             Map<Revision, List<Tuple>> properties = queryFactory

@@ -8,8 +8,6 @@ import com.mysema.query.types.PathMetadata;
 import javax.annotation.Generated;
 import com.mysema.query.types.Path;
 
-import java.util.*;
-
 import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
 
@@ -33,17 +31,15 @@ public class QVersionProperty extends RelationalPathSpatial<QVersionProperty> {
 
     public final StringPath path = createString("path");
 
-    public final NumberPath<Long> revisionNode = createNumber("revisionNode", Long.class);
-
-    public final NumberPath<Long> revisionSeq = createNumber("revisionSeq", Long.class);
+    public final StringPath revision = createString("revision");
 
     public final StringPath str = createString("str");
 
     public final StringPath type = createString("type");
 
-    public final com.mysema.query.sql.PrimaryKey<QVersionProperty> constraint38 = createPrimaryKey(path, revisionNode, revisionSeq);
+    public final com.mysema.query.sql.PrimaryKey<QVersionProperty> constraint38 = createPrimaryKey(path, revision);
 
-    public final com.mysema.query.sql.ForeignKey<QVersion> versionPropertyRevisionFk = createForeignKey(Arrays.asList(revisionSeq, revisionNode), Arrays.asList("REVISION_SEQ", "REVISION_NODE"));
+    public final com.mysema.query.sql.ForeignKey<QVersion> versionPropertyRevisionFk = createForeignKey(revision, "REVISION");
 
     public QVersionProperty(String variable) {
         super(QVersionProperty.class, forVariable(variable), "PUBLIC", "VERSION_PROPERTY");
@@ -66,12 +62,11 @@ public class QVersionProperty extends RelationalPathSpatial<QVersionProperty> {
     }
 
     public void addMetadata() {
-        addMetadata(nbr, ColumnMetadata.named("NBR").withIndex(6).ofType(Types.BIGINT).withSize(19));
-        addMetadata(path, ColumnMetadata.named("PATH").withIndex(3).ofType(Types.VARCHAR).withSize(512).notNull());
-        addMetadata(revisionNode, ColumnMetadata.named("REVISION_NODE").withIndex(2).ofType(Types.BIGINT).withSize(19).notNull());
-        addMetadata(revisionSeq, ColumnMetadata.named("REVISION_SEQ").withIndex(1).ofType(Types.BIGINT).withSize(19).notNull());
-        addMetadata(str, ColumnMetadata.named("STR").withIndex(5).ofType(Types.VARCHAR).withSize(1024));
-        addMetadata(type, ColumnMetadata.named("TYPE").withIndex(4).ofType(Types.CHAR).withSize(1));
+        addMetadata(nbr, ColumnMetadata.named("NBR").withIndex(5).ofType(Types.BIGINT).withSize(19));
+        addMetadata(path, ColumnMetadata.named("PATH").withIndex(2).ofType(Types.VARCHAR).withSize(512).notNull());
+        addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(str, ColumnMetadata.named("STR").withIndex(4).ofType(Types.VARCHAR).withSize(1024));
+        addMetadata(type, ColumnMetadata.named("TYPE").withIndex(3).ofType(Types.CHAR).withSize(1));
     }
 
 }

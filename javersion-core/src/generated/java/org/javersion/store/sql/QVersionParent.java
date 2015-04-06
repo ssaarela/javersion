@@ -8,8 +8,6 @@ import com.mysema.query.types.PathMetadata;
 import javax.annotation.Generated;
 import com.mysema.query.types.Path;
 
-import java.util.*;
-
 import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
 
@@ -29,19 +27,15 @@ public class QVersionParent extends RelationalPathSpatial<QVersionParent> {
 
     public static final QVersionParent versionParent = new QVersionParent("VERSION_PARENT");
 
-    public final NumberPath<Long> childRevisionNode = createNumber("childRevisionNode", Long.class);
+    public final StringPath childRevision = createString("childRevision");
 
-    public final NumberPath<Long> childRevisionSeq = createNumber("childRevisionSeq", Long.class);
+    public final StringPath parentRevision = createString("parentRevision");
 
-    public final NumberPath<Long> parentRevisionNode = createNumber("parentRevisionNode", Long.class);
+    public final com.mysema.query.sql.PrimaryKey<QVersionParent> constraint2 = createPrimaryKey(childRevision, parentRevision);
 
-    public final NumberPath<Long> parentRevisionSeq = createNumber("parentRevisionSeq", Long.class);
+    public final com.mysema.query.sql.ForeignKey<QVersion> versionParentChildRevisionFk = createForeignKey(childRevision, "REVISION");
 
-    public final com.mysema.query.sql.PrimaryKey<QVersionParent> constraint2 = createPrimaryKey(childRevisionNode, childRevisionSeq, parentRevisionNode, parentRevisionSeq);
-
-    public final com.mysema.query.sql.ForeignKey<QVersion> versionParentChildRevisionFk = createForeignKey(Arrays.asList(childRevisionSeq, childRevisionNode), Arrays.asList("REVISION_SEQ", "REVISION_NODE"));
-
-    public final com.mysema.query.sql.ForeignKey<QVersion> versionParentParentRevisionFk = createForeignKey(Arrays.asList(parentRevisionSeq, parentRevisionNode), Arrays.asList("REVISION_SEQ", "REVISION_NODE"));
+    public final com.mysema.query.sql.ForeignKey<QVersion> versionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
 
     public QVersionParent(String variable) {
         super(QVersionParent.class, forVariable(variable), "PUBLIC", "VERSION_PARENT");
@@ -64,10 +58,8 @@ public class QVersionParent extends RelationalPathSpatial<QVersionParent> {
     }
 
     public void addMetadata() {
-        addMetadata(childRevisionNode, ColumnMetadata.named("CHILD_REVISION_NODE").withIndex(2).ofType(Types.BIGINT).withSize(19).notNull());
-        addMetadata(childRevisionSeq, ColumnMetadata.named("CHILD_REVISION_SEQ").withIndex(1).ofType(Types.BIGINT).withSize(19).notNull());
-        addMetadata(parentRevisionNode, ColumnMetadata.named("PARENT_REVISION_NODE").withIndex(4).ofType(Types.BIGINT).withSize(19).notNull());
-        addMetadata(parentRevisionSeq, ColumnMetadata.named("PARENT_REVISION_SEQ").withIndex(3).ofType(Types.BIGINT).withSize(19).notNull());
+        addMetadata(childRevision, ColumnMetadata.named("CHILD_REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(parentRevision, ColumnMetadata.named("PARENT_REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
     }
 
 }
