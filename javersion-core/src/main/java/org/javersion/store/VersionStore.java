@@ -1,8 +1,5 @@
 package org.javersion.store;
 
-import javax.annotation.Nullable;
-
-import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionGraphBuilder;

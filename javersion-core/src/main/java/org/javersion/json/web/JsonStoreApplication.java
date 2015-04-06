@@ -22,8 +22,10 @@ import org.javersion.store.ObjectVersionStoreJdbc;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.datasource.DataSourceUtils;
 
 import com.mysema.query.sql.H2Templates;
+import com.mysema.query.sql.SQLQueryFactory;
 
 @SpringBootApplication
 public class JsonStoreApplication {
@@ -33,12 +35,21 @@ public class JsonStoreApplication {
         app.run(args);
     }
 
-    @Inject
-    DataSource dataSource;
+    @Bean
+    public SQLQueryFactory queryFactory(final DataSource dataSource) {
+        com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new H2Templates());
+        ObjectVersionStoreJdbc.registerTypes(configuration);
+        return new SQLQueryFactory(configuration, () -> DataSourceUtils.getConnection(dataSource));
+    }
 
     @Bean
-    public ObjectVersionStoreJdbc<Void> versionStore() {
-        return new ObjectVersionStoreJdbc<>(dataSource, new H2Templates());
+    public ObjectVersionStoreJdbc.Initializer storeInitializer(SQLQueryFactory queryFactory) {
+        return new ObjectVersionStoreJdbc.Initializer(queryFactory);
+    }
+
+    @Bean
+    public ObjectVersionStoreJdbc<Void> versionStore(ObjectVersionStoreJdbc.Initializer storeInitializer) {
+        return new ObjectVersionStoreJdbc<>(storeInitializer);
     }
 
 }
