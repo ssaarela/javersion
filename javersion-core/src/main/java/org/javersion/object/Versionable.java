@@ -26,6 +26,13 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Documented
 public @interface Versionable {
+
+    String REFERENCES = "$REF";
+
     String alias() default "";
+
+    String targetPath() default REFERENCES;
+
     boolean reference() default false;
+
 }

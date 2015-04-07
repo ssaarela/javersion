@@ -15,7 +15,9 @@
  */
 package org.javersion.object;
 
+import static org.javersion.object.Versionable.REFERENCES;
 import static org.javersion.object.mapping.PrimitiveTypeMapping.*;
+import static org.javersion.path.PropertyPath.ROOT;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -133,7 +135,7 @@ public class TypeMappings {
 
         public final class HierarchyBuilder<R> {
 
-            protected String rootAlias;
+            protected PropertyPath targetPath;
 
             protected boolean reference;
 
@@ -145,7 +147,7 @@ public class TypeMappings {
 
             public HierarchyBuilder(Class<R> root, String alias) {
                 Check.notNull(root, "root");
-                rootAlias = register(root, alias);
+                targetPath = getTargetPath(register(root, alias));
             }
 
             private TypeDescriptor getTypeDescriptor(Class<?> clazz) {
@@ -188,9 +190,21 @@ public class TypeMappings {
 
             public HierarchyBuilder<R> asReferenceWithAlias(String alias) {
                 Check.notNullOrEmpty(alias, "alias");
-                this.rootAlias = alias;
+                return asReferenceOnPath(getTargetPath(alias));
+            }
+
+            public HierarchyBuilder<R> asReferenceForPath(String targetPath) {
+                return asReferenceOnPath(PropertyPath.parse(targetPath));
+            }
+
+            public HierarchyBuilder<R> asReferenceOnPath(PropertyPath targetPath) {
+                this.targetPath = Check.notNull(targetPath, "targetPath");
                 this.reference = true;
                 return this;
+            }
+
+            private PropertyPath getTargetPath(String alias) {
+                return ROOT.property(REFERENCES).property(alias);
             }
 
             private String register(Class<?> clazz, String alias) {
@@ -208,7 +222,7 @@ public class TypeMappings {
                 ObjectTypeMapping<R> objectTypeMapping = new ObjectTypeMapping<>(typesByAlias);
                 if (reference) {
                     // NOTE: ReferenceTypeMapping has higher priority and thus must be registered before ObjectTypeMapping
-                    builder = builder.withMapping(new ReferenceTypeMapping(rootAlias, objectTypeMapping));
+                    builder = builder.withMapping(new ReferenceTypeMapping(targetPath, objectTypeMapping));
                 }
                 return builder.withMapping(objectTypeMapping);
             }

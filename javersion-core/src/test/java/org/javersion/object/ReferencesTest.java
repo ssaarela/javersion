@@ -8,7 +8,7 @@ import static org.javersion.object.TestUtil.properties;
 import static org.javersion.object.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Map;
 
@@ -80,13 +80,34 @@ public class ReferencesTest {
                 property("$REF.nodes[2].right"), 2l
         );
 
-        assertThat(properties.entrySet(), everyItem(isIn(expectedProperties.entrySet())));
+        assertThat(properties).isEqualTo(expectedProperties);
 
         root = nodeSerializer.fromPropertyMap(properties);
-        assertThat(root.id, equalTo(1));
-        assertThat(root.left.id, equalTo(2));
-        assertThat(root.right, sameInstance(root));
-        assertThat(root.left.left, sameInstance(root));
-        assertThat(root.left.right, sameInstance(root.left));
+        assertThat(root.id).isEqualTo(1);
+        assertThat(root.left.id).isEqualTo(2);
+        assertThat(root.right).isSameAs(root);
+        assertThat(root.left.left).isSameAs(root);
+        assertThat(root.left.right).isSameAs(root.left);
+    }
+
+    @Test
+    public void Custom_Target_Path() {
+        TypeMappings typeMappings = TypeMappings.builder()
+                .withClass(Node.class)
+                .asReferenceForPath("nodes")
+                .build();
+        ObjectSerializer<Node> nodeSerializer = new ObjectSerializer<>(Node.class, typeMappings);
+        Node node = new Node(1);
+
+        Map<PropertyPath, Object> properties = nodeSerializer.toPropertyMap(node);
+        Map<PropertyPath, Object> expectedProperties = properties(
+                ROOT, 1l,
+                property("nodes[1]"), NODE_ALIAS,
+                property("nodes[1].id"), 1l,
+                property("nodes[1].left"), null,
+                property("nodes[1].right"), null
+        );
+
+        assertThat(properties).isEqualTo(expectedProperties);
     }
 }

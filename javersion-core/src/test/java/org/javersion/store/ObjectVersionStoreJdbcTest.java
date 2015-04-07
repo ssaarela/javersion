@@ -7,8 +7,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
-import javax.sql.DataSource;
 
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
@@ -19,48 +17,14 @@ import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import com.google.common.collect.ImmutableList;
-import com.mysema.query.sql.H2Templates;
-import com.mysema.query.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringApplicationConfiguration(classes = ObjectVersionStoreJdbcTest.Conf.class)
+@SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
 public class ObjectVersionStoreJdbcTest {
-
-    @Configuration
-    @EnableAutoConfiguration
-    @EnableTransactionManagement
-    public static class Conf {
-
-        @Bean
-        public SQLQueryFactory queryFactory(final DataSource dataSource) {
-            com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new H2Templates());
-            ObjectVersionStoreJdbc.registerTypes(configuration);
-            return new SQLQueryFactory(configuration, () -> DataSourceUtils.getConnection(dataSource));
-        }
-
-        @Bean
-        public ObjectVersionStoreJdbc.Initializer storeInitializer(SQLQueryFactory queryFactory) {
-            return new ObjectVersionStoreJdbc.Initializer(queryFactory);
-        }
-
-        @Bean
-        public VersionStore<String,
-                PropertyPath, Object, Void,
-                ObjectVersionGraph<Void>,
-                ObjectVersionGraph.Builder<Void>> versionStore(ObjectVersionStoreJdbc.Initializer initializer) {
-            return new ObjectVersionStoreJdbc<>(initializer);
-        }
-
-    }
 
     @Versionable
     public static class Price {

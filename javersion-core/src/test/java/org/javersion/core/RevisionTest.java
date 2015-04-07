@@ -44,7 +44,6 @@ public class RevisionTest {
     public void to_string() {
         Revision revision = new Revision();
         String rev = revision.toString();
-        System.out.println(rev);
         assertThat(new Revision(rev)).isEqualTo(revision);
     }
 }

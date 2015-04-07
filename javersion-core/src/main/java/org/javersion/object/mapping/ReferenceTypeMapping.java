@@ -28,41 +28,33 @@ import org.javersion.util.Check;
 
 public class ReferenceTypeMapping implements TypeMapping {
 
-    private static final String REFERENCES = "$REF";
-
-    private final String alias;
+    private final PropertyPath targetPath;
 
     private final ObjectTypeMapping<?> objectTypeMapping;
 
-    public ReferenceTypeMapping(String alias, ObjectTypeMapping<?> objectTypeMapping) {
-        // FIXME: Customizable targetPath
-        this.alias = Check.notNullOrEmpty(alias, "alias");
+    public ReferenceTypeMapping(PropertyPath targetPath, ObjectTypeMapping<?> objectTypeMapping) {
+        this.targetPath = Check.notNullOrEmpty(targetPath, "targetPath");
         this.objectTypeMapping = Check.notNull(objectTypeMapping, "objectTypeMapping");
     }
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         return objectTypeMapping.applies(path, localTypeDescriptor)
-                && isReferencePath(alias, path);
+                && isReferencePath(targetPath, path);
     }
 
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return describeReference(path, type, alias, context);
+        return describeReference(path, type, targetPath, context);
     }
 
-    public static boolean isReferencePath(String alias, PropertyPath path) {
+    public static boolean isReferencePath(PropertyPath targetPath, PropertyPath path) {
         return path instanceof Root
                 || path instanceof SubPath
-                && !targetPath(alias).equals(((SubPath) path).parent);
+                && !targetPath.equals(((SubPath) path).parent);
     }
 
-    private static SubPath targetPath(String alias) {
-        return PropertyPath.ROOT.property(REFERENCES).property(alias);
-    }
-
-    public static ValueType describeReference(PropertyPath path, TypeDescriptor type, String alias, DescribeContext context) {
-        SubPath targetPath = targetPath(alias);
+    public static ValueType describeReference(PropertyPath path, TypeDescriptor type, PropertyPath targetPath, DescribeContext context) {
         context.describeAsync(targetPath.anyIndex(), type);
         IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath.anyKey(), type);
         return new ReferenceType(identifiableType, targetPath);
