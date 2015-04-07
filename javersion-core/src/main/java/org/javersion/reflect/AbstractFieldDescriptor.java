@@ -16,15 +16,16 @@
 package org.javersion.reflect;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 import org.javersion.util.Check;
 
 public abstract class AbstractFieldDescriptor<
-            F extends AbstractFieldDescriptor<F, T, Ts>, 
+            F extends AbstractFieldDescriptor<F, T, Ts>,
             T extends AbstractTypeDescriptor<F, T, Ts>,
-            Ts extends AbstractTypeDescriptors<F, T, Ts>> 
+            Ts extends AbstractTypeDescriptors<F, T, Ts>>
         extends ElementDescriptor<F, T, Ts> {
-    
+
     protected final Field field;
 
     public AbstractFieldDescriptor(Ts typeDescriptors, Field field) {
@@ -32,11 +33,11 @@ public abstract class AbstractFieldDescriptor<
         this.field = Check.notNull(field, "field");
         field.setAccessible(true);
     }
-    
+
     public Object getStatic() {
         return get(null);
     }
-    
+
     public Object get(Object obj) {
         try {
             return field.get(obj);
@@ -44,11 +45,11 @@ public abstract class AbstractFieldDescriptor<
             throw new ReflectionException(e);
         }
     }
-    
+
     public void setStatic(Object value) {
         set(null, value);
     }
-    
+
     public void set(Object obj, Object value) {
         try {
             field.set(obj, value);
@@ -57,19 +58,23 @@ public abstract class AbstractFieldDescriptor<
         }
     }
 
+    public boolean isTransient() {
+        return Modifier.isTransient(field.getModifiers());
+    }
+
     public T getType() {
         return typeDescriptors.get(field.getGenericType());
     }
-    
+
     @Override
     public Field getElement() {
         return field;
     }
-    
+
     public final int hashCode() {
         return 31 * typeDescriptors.hashCode() + field.hashCode();
     }
-    
+
     public final boolean equals(Object obj) {
         if (obj == this) {
             return true;
@@ -82,17 +87,17 @@ public abstract class AbstractFieldDescriptor<
             return false;
         }
     }
-    
+
     public Field getField() {
         return field;
     }
-    
+
     public String getName() {
         return field.getName();
     }
-    
+
     public String toString() {
         return field.toGenericString();
     }
-    
+
 }

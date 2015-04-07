@@ -35,6 +35,7 @@ public class ReferenceTypeMapping implements TypeMapping {
     private final ObjectTypeMapping<?> objectTypeMapping;
 
     public ReferenceTypeMapping(String alias, ObjectTypeMapping<?> objectTypeMapping) {
+        // FIXME: Customizable targetPath
         this.alias = Check.notNullOrEmpty(alias, "alias");
         this.objectTypeMapping = Check.notNull(objectTypeMapping, "objectTypeMapping");
     }

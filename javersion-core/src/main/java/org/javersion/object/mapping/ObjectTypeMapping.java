@@ -71,7 +71,8 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         IdentifiableType idType = null;
         for (TypeDescriptor type : typesByAlias.values()) {
             for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
-                if (uniqueFields.add(fieldDescriptor)) {
+                // TODO: @VersionIgnore / transient?
+                if (!fieldDescriptor.isTransient() && uniqueFields.add(fieldDescriptor)) {
                     SubPath subPath = path.property(fieldDescriptor.getName());
                     if (fieldDescriptor.hasAnnotation(Id.class)) {
                         idField = fieldDescriptor;

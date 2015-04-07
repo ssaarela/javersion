@@ -93,9 +93,11 @@ public class ObjectType<O> implements ValueType {
         context.put(path, Persistent.object(alias));
         TypeDescriptor typeDescriptor = typesByAlias.get(alias);
         for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {
-            Object value = fieldDescriptor.get(object);
-            PropertyPath subPath = path.property(fieldDescriptor.getName());
-            context.serialize(subPath, value);
+            if (!fieldDescriptor.isTransient()) {
+                Object value = fieldDescriptor.get(object);
+                PropertyPath subPath = path.property(fieldDescriptor.getName());
+                context.serialize(subPath, value);
+            }
         }
     }
 
