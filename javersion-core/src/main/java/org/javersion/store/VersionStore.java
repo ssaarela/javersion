@@ -4,6 +4,8 @@ import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionGraphBuilder;
 
+import com.google.common.collect.ImmutableSet;
+
 public interface VersionStore<I,
         K, V, M,
         G extends VersionGraph<K, V, M, G, B>,
@@ -11,12 +13,18 @@ public interface VersionStore<I,
 
     long getNode();
 
-    void append(I id, Version<K, V, M> version);
+    default void append(I id, Version<K, V, M> version) {
+        append(id, ImmutableSet.of(version));
+    }
 
     void append(I id, Iterable<Version<K, V, M>> versions);
 
     void commit();
 
-    G load(I id);
+    default G load(I... docId) {
+        return load(ImmutableSet.copyOf(docId));
+    }
+
+    G load(Iterable<I> docIds);
 
 }

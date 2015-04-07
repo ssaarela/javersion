@@ -230,11 +230,11 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
     @Override
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public ObjectVersionGraph<M> load(String docId) {
-        return ObjectVersionGraph.init(load(ImmutableSet.of(docId)));
+    public ObjectVersionGraph<M> load(Iterable<String> docIds) {
+        return ObjectVersionGraph.init(loadVersions(ImmutableSet.copyOf(docIds)));
     }
 
-    private Iterable<ObjectVersion<M>> load(Set<String> docIds) {
+    private Iterable<ObjectVersion<M>> loadVersions(Set<String> docIds) {
         SortedMap<OrdinalAndRevision, ObjectVersion<M>> versions = new TreeMap<>();
         Set<String> retrievedDocIds = new HashSet<>();
         Set<String> nextBatch = docIds;
