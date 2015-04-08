@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.javersion.object.Persistent;
 import org.javersion.object.ReadContext;
+import org.javersion.object.VersionIgnore;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.NodeId;
@@ -93,12 +94,16 @@ public class ObjectType<O> implements ValueType {
         context.put(path, Persistent.object(alias));
         TypeDescriptor typeDescriptor = typesByAlias.get(alias);
         for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {
-            if (!fieldDescriptor.isTransient()) {
+            if (!ignore(fieldDescriptor)) {
                 Object value = fieldDescriptor.get(object);
                 PropertyPath subPath = path.property(fieldDescriptor.getName());
                 context.serialize(subPath, value);
             }
         }
+    }
+
+    public static boolean ignore(FieldDescriptor field) {
+        return field.isTransient() || field.hasAnnotation(VersionIgnore.class);
     }
 
     public String toString() {

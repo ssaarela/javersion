@@ -15,6 +15,8 @@
  */
 package org.javersion.object.mapping;
 
+import static org.javersion.object.types.ObjectType.ignore;
+
 import java.util.Set;
 
 import org.javersion.object.DescribeContext;
@@ -72,7 +74,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         for (TypeDescriptor type : typesByAlias.values()) {
             for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
                 // TODO: @VersionIgnore / transient?
-                if (!fieldDescriptor.isTransient() && uniqueFields.add(fieldDescriptor)) {
+                if (!ignore(fieldDescriptor) && uniqueFields.add(fieldDescriptor)) {
                     SubPath subPath = path.property(fieldDescriptor.getName());
                     if (fieldDescriptor.hasAnnotation(Id.class)) {
                         idField = fieldDescriptor;
