@@ -9,7 +9,7 @@ import org.javersion.path.PropertyTree;
 public class PropertyPathType extends AbstractScalarType {
 
     @Override
-    public Object fromNodeId(NodeId nodeId) {
+    public Object fromNodeId(NodeId nodeId, ReadContext context) {
         return PropertyPath.parse(nodeId.getKey());
     }
 
@@ -24,7 +24,7 @@ public class PropertyPathType extends AbstractScalarType {
     }
 
     @Override
-    public NodeId toNodeId(Object object) {
+    public NodeId toNodeId(Object object, WriteContext writeContext) {
         return NodeId.valueOf(object.toString());
     }
 }

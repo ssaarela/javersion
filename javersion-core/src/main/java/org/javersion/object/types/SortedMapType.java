@@ -5,7 +5,7 @@ import java.util.TreeMap;
 
 public class SortedMapType extends MapType {
 
-    public SortedMapType(IdentifiableType keyType) {
+    public SortedMapType(ScalarType keyType) {
         super(keyType);
     }
 

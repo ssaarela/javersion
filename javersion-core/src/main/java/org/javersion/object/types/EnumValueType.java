@@ -6,7 +6,7 @@ import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public class EnumValueType implements ValueType {
+public class EnumValueType implements ValueType { // TODO: implements ScalarType!
 
     private final Class<Enum> enumType;
 

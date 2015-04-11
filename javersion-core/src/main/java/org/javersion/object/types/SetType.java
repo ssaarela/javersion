@@ -68,7 +68,7 @@ public class SetType implements ValueType {
         context.put(path, CONSTANT);
 
         for (Object element : set) {
-            NodeId key = identifiableType.toNodeId(element);
+            NodeId key = identifiableType.toNodeId(element, context);
             context.serialize(path.keyOrIndex(key), element);
         }
     }

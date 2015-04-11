@@ -16,10 +16,11 @@
 package org.javersion.object.types;
 
 
+import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath.NodeId;
 
 public interface IdentifiableType extends ValueType {
 
-    public NodeId toNodeId(Object object);
+    NodeId toNodeId(Object object, WriteContext writeContext);
 
 }

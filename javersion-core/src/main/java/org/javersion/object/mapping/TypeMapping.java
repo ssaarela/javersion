@@ -15,6 +15,8 @@
  */
 package org.javersion.object.mapping;
 
+import java.util.Optional;
+
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.ValueType;
@@ -23,13 +25,13 @@ import org.javersion.reflect.TypeDescriptor;
 
 public interface TypeMapping {
 
-    boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor);
+    boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor);
 
     default ValueType getValueType() {
         throw new UnsupportedOperationException();
     }
 
-    default ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+    default ValueType describe(Optional<PropertyPath> path, TypeDescriptor type, DescribeContext context) {
         return getValueType();
     }
 

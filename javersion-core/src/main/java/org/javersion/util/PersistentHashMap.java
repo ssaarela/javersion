@@ -16,7 +16,9 @@
 package org.javersion.util;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Spliterator;
+import java.util.stream.Collectors;
 
 
 public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHashMap<K, V>> implements PersistentMap<K, V> {
@@ -114,6 +116,10 @@ public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHas
         } else {
             return create(newRoot, newSize);
         }
+    }
+
+    public String toString() {
+        return stream().map(Objects::toString).collect(Collectors.joining(", ", "{", "}"));
     }
 
 }

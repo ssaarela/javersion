@@ -17,6 +17,7 @@ package org.javersion.object.mapping;
 
 import static org.javersion.object.types.ObjectType.ignore;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.javersion.object.DescribeContext;
@@ -53,7 +54,10 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
+        if (!path.isPresent()) {
+            return false;
+        }
         for (TypeDescriptor typeDescriptor : typesByAlias.values()) {
             if (typeDescriptor.getRawType().equals(localTypeDescriptor.typeDescriptor.getRawType())) {
                 return true;
@@ -63,8 +67,8 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
 
     @Override
-    public  synchronized ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return describe(path, typesByAlias, context);
+    public  synchronized ValueType describe(Optional<PropertyPath> path, TypeDescriptor type, DescribeContext context) {
+        return describe(path.get(), typesByAlias, context);
     }
 
     public static ValueType describe(PropertyPath path, BiMap<String, TypeDescriptor> typesByAlias, DescribeContext context) {

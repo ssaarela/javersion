@@ -32,7 +32,7 @@ public class ToStringValueType extends AbstractScalarType {
     }
 
     @Override
-    public Object fromNodeId(NodeId nodeId) {
+    public Object fromNodeId(NodeId nodeId, ReadContext context) {
         try {
             return constructor.newInstance(nodeId.getKey());
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -41,7 +41,7 @@ public class ToStringValueType extends AbstractScalarType {
     }
 
     @Override
-    public NodeId toNodeId(Object object) {
+    public NodeId toNodeId(Object object, WriteContext writeContext) {
         return NodeId.valueOf(object.toString());
     }
 }

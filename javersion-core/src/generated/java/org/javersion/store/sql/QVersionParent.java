@@ -29,6 +29,8 @@ public class QVersionParent extends RelationalPathSpatial<QVersionParent> {
 
     public final StringPath childRevision = createString("childRevision");
 
+    public final StringPath parentDocId = createString("parentDocId");
+
     public final StringPath parentRevision = createString("parentRevision");
 
     public final com.mysema.query.sql.PrimaryKey<QVersionParent> constraint2 = createPrimaryKey(childRevision, parentRevision);
@@ -59,6 +61,7 @@ public class QVersionParent extends RelationalPathSpatial<QVersionParent> {
 
     public void addMetadata() {
         addMetadata(childRevision, ColumnMetadata.named("CHILD_REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(parentDocId, ColumnMetadata.named("PARENT_DOC_ID").withIndex(3).ofType(Types.VARCHAR).withSize(255).notNull());
         addMetadata(parentRevision, ColumnMetadata.named("PARENT_REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
     }
 

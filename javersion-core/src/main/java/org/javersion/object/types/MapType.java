@@ -12,19 +12,13 @@ import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.PropertyTree;
 
-import com.google.common.collect.Maps;
-
 public class MapType implements ValueType {
 
     public static final Persistent.Object CONSTANT = Persistent.object();
 
-    public static final String KEY = "$KEY";
+    private final ScalarType keyType;
 
-    public static final NodeId KEY_ID = NodeId.valueOf(KEY);
-
-    private final IdentifiableType keyType;
-
-    public MapType(IdentifiableType keyType) {
+    public MapType(ScalarType keyType) {
         this.keyType = keyType;
     }
 
@@ -38,16 +32,10 @@ public class MapType implements ValueType {
         return newHashMapWithExpectedSize(size);
     }
 
-    private void prepareKeys(PropertyTree propertyTree, ReadContext context) {
-        if (!isScalar()) {
-            for (PropertyTree entryPath : propertyTree.getChildren()) {
-                context.prepareObject(entryPath.get(KEY_ID));
-            }
+    private void prepareKeys(PropertyTree propertyTree, ReadContext context) throws Exception {
+        for (PropertyTree entryPath : propertyTree.getChildren()) {
+            keyType.fromNodeId(entryPath.path.getNodeId(), context);
         }
-    }
-
-    private boolean isScalar() {
-        return keyType instanceof ScalarType;
     }
 
     @Override
@@ -55,12 +43,7 @@ public class MapType implements ValueType {
         @SuppressWarnings("unchecked")
         Map<Object, Object> map = (Map<Object, Object>) object;
         for (PropertyTree entryPath : propertyTree.getChildren()) {
-            Object key;
-            if (isScalar()) {
-                key = ((ScalarType) keyType).fromNodeId(entryPath.path.getNodeId());
-            } else {
-                key = context.getObject(entryPath.get(KEY_ID));
-            }
+            Object key = keyType.fromNodeId(entryPath.path.getNodeId(), context);
             Object value = context.getObject(entryPath);
             map.put(key, value);
         }
@@ -73,11 +56,8 @@ public class MapType implements ValueType {
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             Object key = entry.getKey();
             Object value = entry.getValue();
-            NodeId nodeId = keyType.toNodeId(key);
+            NodeId nodeId = keyType.toNodeId(key, context);
             SubPath entryPath = path.keyOrIndex(nodeId);
-            if (!isScalar()) {
-                context.serialize(entryPath.property(KEY), key);
-            }
             context.serialize(entryPath, value);
         }
     }

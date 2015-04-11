@@ -23,12 +23,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromNodeId(NodeId nodeId) {
+        public Object fromNodeId(NodeId nodeId, ReadContext context) {
             return nodeId.getIndex();
         }
 
         @Override
-        public NodeId toNodeId(Object object) {
+        public NodeId toNodeId(Object object, WriteContext context) {
             return NodeId.valueOf((Long) object);
         }
     };
@@ -46,12 +46,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromNodeId(NodeId nodeId) {
+        public Object fromNodeId(NodeId nodeId, ReadContext context) {
             return (int) nodeId.getIndex();
         }
 
         @Override
-        public NodeId toNodeId(Object object) {
+        public NodeId toNodeId(Object object, WriteContext context) {
             return NodeId.valueOf((Integer) object);
         }
     };
@@ -69,12 +69,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromNodeId(NodeId nodeId) {
+        public Object fromNodeId(NodeId nodeId, ReadContext context) {
             return (short) nodeId.getIndex();
         }
 
         @Override
-        public NodeId toNodeId(Object object) {
+        public NodeId toNodeId(Object object, WriteContext context) {
             return NodeId.valueOf((Short) object);
         }
     };
@@ -92,12 +92,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromNodeId(NodeId nodeId) {
+        public Object fromNodeId(NodeId nodeId, ReadContext context) {
             return (byte) nodeId.getIndex();
         }
 
         @Override
-        public NodeId toNodeId(Object object) {
+        public NodeId toNodeId(Object object, WriteContext context) {
             return NodeId.valueOf((Byte) object);
         }
     };
@@ -115,12 +115,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromNodeId(NodeId nodeId) {
+        public Object fromNodeId(NodeId nodeId, ReadContext context) {
             return nodeId.getIndex() != 0;
         }
 
         @Override
-        public NodeId toNodeId(Object object) {
+        public NodeId toNodeId(Object object, WriteContext context) {
             return (Boolean) object ? NodeId.valueOf(1) : NodeId.valueOf(0);
         }
     };
@@ -138,12 +138,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromNodeId(NodeId nodeId) {
+        public Object fromNodeId(NodeId nodeId, ReadContext context) {
             return Double.valueOf(nodeId.getKey());
         }
 
         @Override
-        public NodeId toNodeId(Object object) {
+        public NodeId toNodeId(Object object, WriteContext context) {
             return NodeId.valueOf(object.toString());
         }
     };
@@ -161,12 +161,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromNodeId(NodeId nodeId) {
+        public Object fromNodeId(NodeId nodeId, ReadContext context) {
             return Float.valueOf(nodeId.getKey());
         }
 
         @Override
-        public NodeId toNodeId(Object object) {
+        public NodeId toNodeId(Object object, WriteContext context) {
             return NodeId.valueOf(object.toString());
         }
     };
@@ -184,12 +184,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         }
 
         @Override
-        public Object fromNodeId(NodeId nodeId) {
+        public Object fromNodeId(NodeId nodeId, ReadContext context) {
             return Character.valueOf(nodeId.getKey().charAt(0));
         }
 
         @Override
-        public NodeId toNodeId(Object object) {
+        public NodeId toNodeId(Object object, WriteContext context) {
             return NodeId.valueOf(object.toString());
         }
     };

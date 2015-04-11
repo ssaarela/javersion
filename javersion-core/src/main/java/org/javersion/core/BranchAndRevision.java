@@ -70,4 +70,8 @@ public class BranchAndRevision implements Comparable<BranchAndRevision>{
         return cmpr;
     }
 
+    @Override
+    public String toString() {
+        return branch + "@" + revision;
+    }
 }

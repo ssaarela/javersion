@@ -21,13 +21,14 @@ create table version (
 );
 
 create sequence version_ordinal_seq start with 1 increment by 1 no cycle;
-create index version_tx_idx on version (tx);
 create index version_ordinal_idx on version (ordinal);
-
+create index version_tx_ordinal_idx on version (tx, ordinal);
+create index version_doc_id_idx on version (doc_id);
 
 create table version_parent (
   child_revision varchar(32) not null,
   parent_revision varchar(32) not null,
+  parent_doc_id varchar(255) not null,
 
   primary key (child_revision, parent_revision),
 
@@ -41,6 +42,7 @@ create table version_parent (
 );
 
 create table version_property (
+  doc_id varchar(255) not null,
   revision varchar(32) not null,
 
   path varchar(512) not null,
@@ -55,6 +57,8 @@ create table version_property (
   constraint version_property_revision_fk
     foreign key (revision) references version (revision)
 );
+
+create index version_property_doc_id_idx on version_property (doc_id);
 
 create table repository (
   -- NODE, ORDINAL

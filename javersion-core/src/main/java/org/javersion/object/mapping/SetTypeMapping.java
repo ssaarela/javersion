@@ -15,6 +15,7 @@
  */
 package org.javersion.object.mapping;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.javersion.object.DescribeContext;
@@ -38,12 +39,13 @@ public class SetTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor descriptor) {
-        return descriptor.typeDescriptor.getRawType().equals(setType);
+    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor descriptor) {
+        return path.isPresent() && descriptor.typeDescriptor.getRawType().equals(setType);
     }
 
     @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor setType, DescribeContext context) {
+    public ValueType describe(Optional<PropertyPath> optionalPath, TypeDescriptor setType, DescribeContext context) {
+        PropertyPath path = optionalPath.get();
         TypeDescriptor elementType = setType.resolveGenericParameter(Set.class, 0);
         IdentifiableType valueType = (IdentifiableType) context.describeComponent(path.anyKey(), setType, elementType);
         context.describeComponent(path.anyIndex(), setType, elementType);

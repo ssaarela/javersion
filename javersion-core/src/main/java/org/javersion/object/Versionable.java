@@ -31,7 +31,7 @@ public @interface Versionable {
 
     String alias() default "";
 
-    String targetPath() default REFERENCES;
+    String targetPath() default "";
 
     boolean reference() default false;
 

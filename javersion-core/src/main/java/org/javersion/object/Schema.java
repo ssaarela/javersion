@@ -17,6 +17,7 @@ package org.javersion.object;
 
 import java.util.Map;
 
+import org.javersion.object.types.MapType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.NodeId;
@@ -31,7 +32,6 @@ public class Schema implements ValueType {
     private ValueType valueType;
 
     private Map<NodeId, Schema> children = Maps.newHashMap();
-
 
     Schema() {
         this.valueType = null;

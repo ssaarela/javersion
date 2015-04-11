@@ -15,6 +15,8 @@
  */
 package org.javersion.object.mapping;
 
+import java.util.Optional;
+
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.Versionable;
@@ -27,15 +29,15 @@ import com.google.common.collect.ImmutableBiMap;
 public class VersionableTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
+    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
+        return path.isPresent() && localTypeDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
     }
 
 
     @Override
-    public  ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+    public  ValueType describe(Optional<PropertyPath> path, TypeDescriptor type, DescribeContext context) {
         String alias = getAlias(type.getAnnotation(Versionable.class), type);
-        return ObjectTypeMapping.describe(path, ImmutableBiMap.of(alias, type), context);
+        return ObjectTypeMapping.describe(path.get(), ImmutableBiMap.of(alias, type), context);
     }
 
     static String getAlias(Versionable versionable, TypeDescriptor type) {

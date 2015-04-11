@@ -1,5 +1,7 @@
 package org.javersion.json.web;
 
+import java.util.Optional;
+
 import org.javersion.core.Revision;
 import org.javersion.core.VersionProperty;
 import org.javersion.object.DescribeContext;
@@ -45,13 +47,13 @@ public class VersionPropertyMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.getRawType().equals(VersionProperty.class);
+    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
+        return path.isPresent() && localTypeDescriptor.typeDescriptor.getRawType().equals(VersionProperty.class);
     }
 
     @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        context.describeAsync(path.property("revision"), type.getField("revision"));
+    public ValueType describe(Optional<PropertyPath> path, TypeDescriptor type, DescribeContext context) {
+        context.describeAsync(path.get().property("revision"), type.getField("revision"));
         return new VersionPropertyValueType();
     }
 }

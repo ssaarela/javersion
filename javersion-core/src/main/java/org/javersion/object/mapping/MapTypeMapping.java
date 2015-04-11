@@ -16,11 +16,13 @@
 package org.javersion.object.mapping;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.MapType;
+import org.javersion.object.types.ScalarType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
@@ -38,21 +40,22 @@ public class MapTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor descriptor) {
-        return descriptor.typeDescriptor.getRawType().equals(mapType);
+    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor descriptor) {
+        return path.isPresent() && descriptor.typeDescriptor.getRawType().equals(mapType);
     }
 
     @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor mapType, DescribeContext context) {
+    public ValueType describe(Optional<PropertyPath> path, TypeDescriptor mapType, DescribeContext context) {
         TypeDescriptor keyType = mapType.resolveGenericParameter(Map.class, 0);
         TypeDescriptor valueType = mapType.resolveGenericParameter(Map.class, 1);
 
-        context.describeComponent(path.any(), mapType, valueType);
+        context.describeComponent(path.get().any(), mapType, valueType);
 
-        return newMapType((IdentifiableType) context.describeComponent(path.any().property(MapType.KEY), mapType, keyType));
+        ValueType keyValueType = context.describeComponent(null, mapType, keyType);
+        return newMapType((ScalarType) keyValueType);
     }
 
-    protected ValueType newMapType(IdentifiableType keyType) {
+    protected ValueType newMapType(ScalarType keyType) {
         return new MapType(keyType);
     }
 

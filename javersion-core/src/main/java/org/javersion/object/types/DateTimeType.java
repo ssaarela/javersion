@@ -20,12 +20,12 @@ public class DateTimeType extends AbstractScalarType {
     }
 
     @Override
-    public NodeId toNodeId(Object object) {
+    public NodeId toNodeId(Object object, WriteContext writeContext) {
         return NodeId.valueOf(((DateTime) object).getMillis());
     }
 
     @Override
-    public Object fromNodeId(NodeId nodeId) {
+    public Object fromNodeId(NodeId nodeId, ReadContext context) {
         return new DateTime(nodeId.getIndex());
     }
 

@@ -14,7 +14,7 @@ public class SortedMapMapping extends MapTypeMapping {
     }
 
     @Override
-    protected ValueType newMapType(IdentifiableType keyType) {
+    protected ValueType newMapType(ScalarType keyType) {
         return new SortedMapType(keyType);
     }
 

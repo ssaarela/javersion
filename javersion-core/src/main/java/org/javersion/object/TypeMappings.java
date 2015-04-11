@@ -22,6 +22,7 @@ import static org.javersion.path.PropertyPath.ROOT;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import org.javersion.core.Revision;
 import org.javersion.object.mapping.*;
@@ -93,7 +94,7 @@ public class TypeMappings {
         this.types = builder.addAll(types).build();
     }
 
-    public TypeMapping getTypeMapping(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+    public TypeMapping getTypeMapping(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
         for (TypeMapping valueType : types) {
             if (valueType.applies(path, localTypeDescriptor)) {
                 return valueType;

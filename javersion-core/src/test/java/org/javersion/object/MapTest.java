@@ -49,21 +49,37 @@ public class MapTest {
 
     @Test
     public void Write_Read_Map() {
-        Mab map = new Mab();
-        map.primitives.put("123", 456);
-        map.primitives.put("null", null);
+        Mab mab = new Mab();
+        mab.primitives.put("123", 456);
+        mab.primitives.put("null", null);
 
         KeyValue kv = new KeyValue(567);
-        map.objects.put(kv, kv);
-        map.objects.put(new KeyValue(789), new KeyValue(234));
-        map.objects.put(new KeyValue(890), null);
+        mab.objects.put(kv, kv);
+        mab.objects.put(new KeyValue(789), new KeyValue(234));
+        mab.objects.put(new KeyValue(890), null);
 
-        Map<PropertyPath, Object> properties = serializer.toPropertyMap(map);
+        Map<PropertyPath, Object> properties = serializer.toPropertyMap(mab);
 
-        map = serializer.fromPropertyMap(properties);
-        assertThat(map.primitives, instanceOf(NavigableMap.class));
-        assertThat(map.primitives, equalTo(map("123", 456, "null", null)));
-        assertThat(map.objects, equalTo(map(kv, kv, new KeyValue(789), new KeyValue(234), new KeyValue(890), null)));
+        mab = serializer.fromPropertyMap(properties);
+        assertThat(mab.primitives, instanceOf(NavigableMap.class));
+        assertThat(mab.primitives, equalTo(map("123", 456, "null", null)));
+        assertThat(mab.objects, equalTo(
+                map(kv, kv,
+                    new KeyValue(789), new KeyValue(234),
+                    new KeyValue(890), null)));
+    }
+
+    @Test
+    public void Duplicate_Scalar_Values_Allowed() {
+        Mab mab = new Mab();
+        Integer integer = 123;
+        mab.primitives.put("eka", integer);
+        mab.primitives.put("toka", integer);
+
+        Map<PropertyPath, Object> properties = serializer.toPropertyMap(mab);
+
+        mab = serializer.fromPropertyMap(properties);
+        assertThat(mab.primitives, equalTo(map("eka", integer, "toka", integer)));
     }
 
     @SuppressWarnings("unused")

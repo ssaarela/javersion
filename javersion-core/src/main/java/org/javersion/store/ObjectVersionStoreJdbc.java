@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.eaio.uuid.UUIDGen;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.mysema.query.Tuple;
 import com.mysema.query.dml.StoreClause;
 import com.mysema.query.group.Group;
@@ -192,7 +193,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
             }
             addVersion(docId, version, tx, versionBatch);
             addParents(version, parentBatch);
-            addProperties(version, propertyBatch);
+            addProperties(docId, version, propertyBatch);
         }
 
         if (!versionBatch.isEmpty()) {
@@ -241,7 +242,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
         while (!nextBatch.isEmpty()) {
             Map<Revision, Group> versionsAndParents = getVersionsAndParents(nextBatch);
-            Map<Revision, List<Tuple>> properties = getPropertiesByVersion(nextBatch);
+            Map<Revision, List<Tuple>> properties = getPropertiesByDocId(nextBatch);
 
             retrievedDocIds.addAll(nextBatch);
             nextBatch = new HashSet<>();
@@ -255,7 +256,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
                 versions.put(new OrdinalAndRevision(ordinal, rev), version);
 
-                for (String parentDocId : versionAndParents.getSet(qParentVersion.docId)) {
+                for (String parentDocId : versionAndParents.getSet(qParent.parentDocId)) {
                     if (!retrievedDocIds.contains(parentDocId)) {
                         nextBatch.add(parentDocId);
                     }
@@ -299,10 +300,11 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
                 .map(qVersion.tx, qVersion.ordinal.min());
     }
 
-    private void addProperties(Version<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {
+    private void addProperties(String docId, Version<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {
         for (Entry<PropertyPath, Object> entry : version.changeset.entrySet()) {
             propertyRevision
                     .populate(version.revision, propertyBatch)
+                    .set(qProperty.docId, docId)
                     .set(qProperty.path, entry.getKey().toString());
             setValue(entry.getValue(), propertyBatch);
         }
@@ -358,6 +360,10 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
     private void addParents(Version<PropertyPath, Object, M> version, SQLInsertClause parentBatch) {
         for (Revision parentRevision : version.parentRevisions) {
+            parentBatch.set(qParent.parentDocId, queryFactory.subQuery()
+                    .from(qParentVersion)
+                    .where(qParentVersion.revision.eq(parentRevision.toString()))
+                    .distinct().unique(qParentVersion.docId));
             versionChild.populate(version.revision, parentBatch);
             versionParent.populate(parentRevision, parentBatch).addBatch();
         }
@@ -383,29 +389,27 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
                 .build();
     }
 
-    private Map<Revision, List<Tuple>> getPropertiesByVersion(Set<String> nextBatch) {
+    private Map<Revision, List<Tuple>> getPropertiesByDocId(Set<String> nextBatch) {
         return queryFactory
                 .from(qProperty)
-                .innerJoin(qProperty.versionPropertyRevisionFk, qVersion)
-                .where(qVersion.docId.in(nextBatch), qVersion.tx.isNull())
-                .transform(groupBy(versionRevision).as(GroupBy.list(new QTuple(qProperty.all()))));
+                .where(qProperty.docId.in(nextBatch))
+                .transform(groupBy(propertyRevision).as(GroupBy.list(new QTuple(qProperty.all()))));
     }
 
     private Map<Revision, Group> getVersionsAndParents(Set<String> nextBatch) {
         return queryFactory
                 .from(qVersion)
                 .leftJoin(qVersion._versionParentChildRevisionFk, qParent)
-                .leftJoin(qParent.versionParentParentRevisionFk, qParentVersion)
                 .where(qVersion.docId.in(nextBatch), qVersion.tx.isNull())
-                .orderBy(qVersion.ordinal.asc(), qVersion.revision.asc())
+//                .orderBy(qVersion.ordinal.asc(), qVersion.revision.asc())
                 .transform(groupBy(versionRevision)
                         .as(versionRevision, qVersion.branch, qVersion.type, qVersion.ordinal,
-                                GroupBy.set(qParentVersion.docId),
+                                GroupBy.set(qParent.parentDocId),
                                 GroupBy.set(versionParent)));
     }
 
     private Map<PropertyPath, Object> toChangeSet(List<Tuple> properties) {
-        Map<PropertyPath, Object> changeset = new HashMap<>();
+        Map<PropertyPath, Object> changeset = Maps.newHashMapWithExpectedSize(properties.size());
         if (properties != null) {
             for (Tuple tuple : properties) {
                 PropertyPath path = PropertyPath.parse(tuple.get(qProperty.path));

@@ -20,6 +20,7 @@ import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
+import java.util.Optional;
 
 import org.javersion.object.mapping.TypeMapping;
 import org.javersion.object.types.ScalarType;
@@ -102,6 +103,9 @@ public class DescribeContext {
     }
 
     private ValueType registerMapping(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        if (path == null) {
+            return createValueType(path, localTypeDescriptor);
+        }
         Schema schema = schemaMappings.get(localTypeDescriptor);
         if (schema == null) {
             schema = addSchema(path);
@@ -139,13 +143,9 @@ public class DescribeContext {
     }
 
     private synchronized ValueType createValueType(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeMapping typeMapping = typeMappings.getTypeMapping(path, localTypeDescriptor);
-        return typeMapping.describe(path, localTypeDescriptor.typeDescriptor, this);
-    }
-
-    public ValueType getValueType(TypeDescriptor type) {
-        TypeMapping typeMapping = typeMappings.getTypeMapping(null, new LocalTypeDescriptor(type));
-        return typeMapping.getValueType();
+        Optional<PropertyPath> optionalPath = Optional.ofNullable(path);
+        TypeMapping typeMapping = typeMappings.getTypeMapping(optionalPath, localTypeDescriptor);
+        return typeMapping.describe(optionalPath, localTypeDescriptor.typeDescriptor, this);
     }
 
     private void lockMappings() {

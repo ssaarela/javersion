@@ -60,9 +60,8 @@ public class WriteContext {
                 } else {
                     Schema schema = getSchema(path);
                     if (schema.hasChildren()  // Composite (not scalar)?
-                            && !schema.isReference() // Not a reference - multiple references to same object are allowed
-                            && objects.put(value, path) != null) { // First time for this object?
-                        illegalReferenceException(path, value);
+                        && !schema.isReference()) { // Not a reference - multiple references to same object are allowed
+                        checkIllegalReference(path, value);
                     }
                     schema.serialize(path, currentItem.value, this);
                 }
@@ -75,11 +74,13 @@ public class WriteContext {
         return schemaRoot.get(path);
     }
 
-    private void illegalReferenceException(PropertyPath path, Object value) {
-        throw new IllegalArgumentException(format(
-                "Multiple references to the same object: \"%s\"@\"%s\"",
-                value,
-                path));
+    private void checkIllegalReference(PropertyPath path, Object value) {
+        Object oldPath = objects.put(value, path);
+
+        if (oldPath != null) {
+            throw new IllegalArgumentException(
+                    format("Multiple references to the same object: %s = %s = %s", oldPath, path, value));
+        }
     }
 
     public void put(PropertyPath path, Object value) {

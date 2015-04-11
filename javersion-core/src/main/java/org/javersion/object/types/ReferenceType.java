@@ -22,8 +22,10 @@ import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
+import com.mysema.query.types.Expression;
 
-public final class ReferenceType implements ValueType, IdentifiableType {
+
+public final class ReferenceType implements ScalarType {
 
     private final IdentifiableType identifiableType;
 
@@ -36,7 +38,7 @@ public final class ReferenceType implements ValueType, IdentifiableType {
 
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
-        NodeId id = identifiableType.toNodeId(object);
+        NodeId id = identifiableType.toNodeId(object, context);
         context.put(path, id.getKeyOrIndex());
         context.serialize(targetRoot.keyOrIndex(id), object);
     }
@@ -55,8 +57,14 @@ public final class ReferenceType implements ValueType, IdentifiableType {
     }
 
     @Override
-    public NodeId toNodeId(Object object) {
-        return identifiableType.toNodeId(object);
+    public NodeId toNodeId(Object object, WriteContext writeContext) {
+        NodeId nodeId = identifiableType.toNodeId(object, writeContext);
+        writeContext.serialize(targetRoot.keyOrIndex(nodeId), object);
+        return nodeId;
     }
 
+    @Override
+    public Object fromNodeId(NodeId nodeId, ReadContext context) throws Exception {
+        return instantiate(null, nodeId.getKeyOrIndex(), context);
+    }
 }

@@ -15,6 +15,8 @@
  */
 package org.javersion.object.mapping;
 
+import java.util.Optional;
+
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.IdentifiableType;
@@ -38,14 +40,14 @@ public class ReferenceTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return objectTypeMapping.applies(path, localTypeDescriptor)
-                && isReferencePath(targetPath, path);
+    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
+        return objectTypeMapping.applies(Optional.of(targetPath), localTypeDescriptor) &&
+                (!path.isPresent() || isReferencePath(targetPath, path.get()));
     }
 
     @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return describeReference(path, type, targetPath, context);
+    public ValueType describe(Optional<PropertyPath> path, TypeDescriptor type, DescribeContext context) {
+        return describeReference(type, targetPath, context);
     }
 
     public static boolean isReferencePath(PropertyPath targetPath, PropertyPath path) {
@@ -54,7 +56,7 @@ public class ReferenceTypeMapping implements TypeMapping {
                 && !targetPath.equals(((SubPath) path).parent);
     }
 
-    public static ValueType describeReference(PropertyPath path, TypeDescriptor type, PropertyPath targetPath, DescribeContext context) {
+    public static ValueType describeReference(TypeDescriptor type, PropertyPath targetPath, DescribeContext context) {
         context.describeAsync(targetPath.anyIndex(), type);
         IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath.anyKey(), type);
         return new ReferenceType(identifiableType, targetPath);
