@@ -23,7 +23,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class Diff {
+public final class Diff {
+
+    private Diff() {}
 
     public static <K, V> Map<K, V> diff(Map<K, V> from, Map<K, V> to) {
         notNull(from, "from");
