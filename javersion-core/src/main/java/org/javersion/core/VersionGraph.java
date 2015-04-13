@@ -140,6 +140,6 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public final List<Version<K, V, M>> getVersions() {
-        return versionNodes.valueStream().map(n -> n.version).collect(toList());
+        return versionNodes.valueStream().map(node -> node.getVersion()).collect(toList());
     }
 }

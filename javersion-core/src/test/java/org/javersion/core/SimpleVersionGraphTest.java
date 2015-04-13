@@ -21,8 +21,10 @@ import static com.google.common.collect.Iterables.transform;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -427,6 +429,15 @@ public class SimpleVersionGraphTest {
 
         VersionNode versionNode = versionGraph.getVersionNode(v2.revision);
         assertThat(versionNode.getChangeset(), equalTo(ImmutableMap.of("id", "id2")));
+        Version<String, String, String> version = versionNode.getVersion();
+        assertNotSame(version, v2);
+        assertThat(version.revision, equalTo(v2.revision));
+        assertThat(version.type, equalTo(v2.type));
+        assertThat(version.branch, equalTo(v2.branch));
+        assertThat(version.parentRevisions, equalTo(v2.parentRevisions));
+        assertThat(version.meta, equalTo(v2.meta));
+        // VersionNode.getVersion() reflects actual changes
+        assertThat(version.changeset, equalTo(ImmutableMap.of("id", "id2")));
 
         versionNode = versionGraph.getVersionNode(v3.revision);
         assertThat(versionNode.getChangeset(), equalTo(ImmutableMap.of("name", "name2")));

@@ -73,7 +73,7 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.commit();
         VersionGraph versionGraph = versionStore.load(docId);
         assertThat(versionGraph.isEmpty()).isFalse();
-        assertThat(versionGraph.getTip().version).isEqualTo(versionOne);
+        assertThat(versionGraph.getTip().getVersion()).isEqualTo(versionOne);
 
         product.price = new Price(new BigDecimal(10));
         product.tags = ImmutableList.of("tag", "and", "another");
@@ -85,11 +85,11 @@ public class ObjectVersionStoreJdbcTest {
 
         ObjectVersion<Void> lastVersion = versionManager.versionBuilder(product).build();
         versionStore.append(docId, lastVersion);
-        assertThat(versionStore.load(docId).getTip().version).isEqualTo(versionOne);
+        assertThat(versionStore.load(docId).getTip().getVersion()).isEqualTo(versionOne);
 
         versionStore.commit();
         versionGraph = versionStore.load(docId);
-        assertThat(versionGraph.getTip().version).isEqualTo(lastVersion);
+        assertThat(versionGraph.getTip().getVersion()).isEqualTo(lastVersion);
 
         versionManager.init(versionGraph);
         Product persisted = versionManager.mergeObject(Version.DEFAULT_BRANCH).object;

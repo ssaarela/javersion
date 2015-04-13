@@ -21,7 +21,7 @@ public class SimpleVersion extends Version<String, String, String> {
         super(builder);
     }
 
-    public static class Builder extends Version.Builder<String, String, String, Builder> {
+    public static class Builder extends BuilderBase<String, String, String, Builder> {
 
         public Builder() {
             super();

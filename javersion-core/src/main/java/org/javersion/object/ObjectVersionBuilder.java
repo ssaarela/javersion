@@ -9,9 +9,7 @@ import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.path.PropertyPath;
 
-import com.google.common.collect.Maps;
-
-public class ObjectVersionBuilder<M> extends Version.Builder<PropertyPath, Object, M, ObjectVersionBuilder<M>> {
+public class ObjectVersionBuilder<M> extends Version.BuilderBase<PropertyPath, Object, M, ObjectVersionBuilder<M>> {
 
     public ObjectVersionBuilder() {}
 

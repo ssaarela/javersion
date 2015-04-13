@@ -22,10 +22,7 @@ import static com.google.common.collect.Maps.transformValues;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
 import static org.javersion.core.VersionType.NORMAL;
-import static org.javersion.util.Check.notNull;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -61,7 +58,7 @@ public class Version<K, V, M> {
 
     public final M meta;
 
-    protected Version(Builder<K, V, M, ?> builder) {
+    protected Version(BuilderBase<K, V, M, ?> builder) {
         this.revision = builder.revision != null ? builder.revision : new Revision();
         this.branch = builder.branch != null ? builder.branch : DEFAULT_BRANCH;
         this.type = builder.type != null ? builder.type : NORMAL;
@@ -112,7 +109,15 @@ public class Version<K, V, M> {
                 .toString();
     }
 
-    public static class Builder<K, V, M, This extends Builder<K, V, M, This>> {
+    public static class Builder<K, V, M> extends BuilderBase<K, V, M, Builder<K, V, M>> {
+        public Builder() {
+        }
+        public Builder(Revision revision) {
+            super(revision);
+        }
+    }
+
+    public abstract static class BuilderBase<K, V, M, This extends BuilderBase<K, V, M, This>> {
 
         protected Revision revision;
 
@@ -126,10 +131,10 @@ public class Version<K, V, M> {
 
         protected M meta;
 
-        public Builder() {
+        public BuilderBase() {
         }
 
-        public Builder(Revision revision) {
+        public BuilderBase(Revision revision) {
             this.revision = revision;
         }
 

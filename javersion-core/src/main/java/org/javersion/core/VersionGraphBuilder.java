@@ -79,7 +79,7 @@ public abstract class VersionGraphBuilder<K, V, M,
         Iterable<VersionNode<K, V, M>> parents = toVersionNodes(version.parentRevisions);
         mergeBuilder.mergeAll(parents);
         for (VersionNode<K, V, M> parent : parents) {
-            if (parent.version.branch.equals(version.branch)) {
+            if (parent.branch.equals(version.branch)) {
                 mutableHeads.remove(new BranchAndRevision(parent));
             }
         }

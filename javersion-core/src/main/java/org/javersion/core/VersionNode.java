@@ -17,6 +17,7 @@ package org.javersion.core;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.javersion.util.Check;
 import org.javersion.util.MutableSortedMap;
@@ -27,7 +28,15 @@ import com.google.common.collect.Maps;
 
 public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
-    public final Version<K, V, M> version;
+    public final Revision revision;
+
+    public final String branch;
+
+    public final Set<Revision> parentRevisions;
+
+    public final VersionType type;
+
+    public final M meta;
 
     public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;
 
@@ -35,29 +44,47 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
                        MergeBuilder<K, V, M> mergeBuilder,
                        MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads) {
         super(mergeBuilder);
-        this.version = Check.notNull(version, "version");
+        Check.notNull(version, "version");
+        this.revision = version.revision;
+        this.branch = version.branch;
+        this.parentRevisions = version.parentRevisions;
+        this.type = version.type;
+        this.meta = version.meta;
         mutableHeads.put(new BranchAndRevision(this), this);
         this.heads = mutableHeads.toPersistentMap();
     }
 
     public Revision getRevision() {
-        return version.revision;
+        return revision;
     }
 
     public String getBranch() {
-        return version.branch;
+        return branch;
     }
 
     @Override
     public Set<Revision> getMergeHeads() {
-        return ImmutableSet.of(version.revision);
+        return ImmutableSet.of(revision);
     }
 
     @Override
     protected void setMergeHeads(Set<Revision> heads) {}
 
     public Map<K, V> getChangeset() {
-        return Maps.filterKeys(version.changeset, k -> mergedProperties.get(k).revision.equals(version.revision));
+        return mergedProperties.stream()
+                .filter(entry -> entry.getValue().revision.equals(revision))
+                .collect(Collectors.toMap(
+                        entry -> entry.getKey(),
+                        entry -> entry.getValue().value));
     }
 
+    public Version<K, V, M> getVersion() {
+        return new Version.Builder<K, V, M>(revision)
+                .type(type)
+                .branch(branch)
+                .meta(meta)
+                .parents(parentRevisions)
+                .changeset(getChangeset())
+                .build();
+    }
 }
