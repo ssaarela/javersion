@@ -409,6 +409,9 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
     }
 
     private Map<PropertyPath, Object> toChangeSet(List<Tuple> properties) {
+        if (properties == null) {
+            return null;
+        }
         Map<PropertyPath, Object> changeset = Maps.newHashMapWithExpectedSize(properties.size());
         if (properties != null) {
             for (Tuple tuple : properties) {

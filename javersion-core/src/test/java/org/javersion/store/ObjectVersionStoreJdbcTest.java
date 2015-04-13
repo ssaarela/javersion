@@ -11,6 +11,7 @@ import javax.annotation.Resource;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.object.ObjectVersion;
+import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.object.ObjectVersionManager;
 import org.javersion.object.Versionable;
@@ -98,6 +99,18 @@ public class ObjectVersionStoreJdbcTest {
         assertThat(persisted.price.amount).isEqualTo(product.price.amount);
         assertThat(persisted.tags).isEqualTo(product.tags);
         assertThat(persisted.vat).isEqualTo(product.vat);
+    }
+
+    @Test
+    public void load_version_with_empty_changeset() {
+        String docId = randomUUID().toString();
+        ObjectVersion<Void> emptyVersion = new ObjectVersionBuilder<Void>().build();
+        versionStore.append(docId, emptyVersion);
+        versionStore.commit();
+        ObjectVersionGraph<Void> versionGraph = versionStore.load(docId);
+        List<Version<PropertyPath, Object, Void>> versions = versionGraph.getVersions();
+        assertThat(versions).hasSize(1);
+        assertThat(versions.get(0)).isEqualTo(emptyVersion);
     }
 
 }
