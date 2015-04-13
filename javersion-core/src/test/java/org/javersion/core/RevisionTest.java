@@ -21,6 +21,24 @@ public class RevisionTest {
         assertThat(revision.toString().compareTo(MIN_VALUE.toString())).isGreaterThan(0);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void bad_revision_format() {
+        new Revision("foo-bar");
+    }
+
+    @Test
+    public void same_given_node() {
+        Revision r1 = new Revision(123l);
+        Revision r2 = new Revision(123l);
+        assertThat(r1.node).isEqualTo(r2.node);
+        assertThat(r1.timeSeq).isLessThan(r2.timeSeq);
+    }
+
+    @Test
+    public void not_equal_to_other_types() {
+        assertThat(new Revision()).isNotEqualTo(new Object());
+    }
+
     @Test
     public void new_revision_should_be_less_than_max() {
         Revision revision = new Revision();
