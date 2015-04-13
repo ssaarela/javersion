@@ -25,7 +25,7 @@ public class BranchMerge<K, V, M> extends Merge<K, V, M> {
             super(nodes);
         }
 
-        protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
+        protected boolean shouldResolveToNext(VersionProperty<V> prevValue, VersionProperty<V> nextValue) {
             return false;
         }
 

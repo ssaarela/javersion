@@ -79,8 +79,17 @@ public class MergeBuilder<K, V, M> {
         ensureNotLocked();
         ensureInitialized();
 
+        final Merger<Entry<K, VersionProperty<V>>> overwriteMerger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
+            @Override
+            public boolean merge(Entry<K, VersionProperty<V>> prevEntry, Entry<K, VersionProperty<V>> nextEntry) {
+                // Keep prevValue if there's no change
+                return !equal(prevEntry.getValue().value, nextEntry.getValue().value);
+            }
+        };
+
         for (Map.Entry<K, V> entry : version.changeset.entrySet()) {
-            mergedProperties.put(entry.getKey(), new VersionProperty<V>(version.revision, entry.getValue()));
+            VersionProperty<V> versionProperty = new VersionProperty<V>(version.revision, entry.getValue());
+            mergedProperties.merge(entry.getKey(), versionProperty, overwriteMerger);
             conflicts.removeAll(entry.getKey());
         }
         heads.removeAll(version.parentRevisions);
@@ -116,36 +125,27 @@ public class MergeBuilder<K, V, M> {
     }
 
     private void nextVersion(final Merge<K, V, M> node) {
-        Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
+        final Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
             @Override
-            public boolean merge(
-                    Entry<K, VersionProperty<V>> oldEntry,
-                    Entry<K, VersionProperty<V>> newEntry) {
-                VersionProperty<V> oldValue = oldEntry.getValue();
-                VersionProperty<V> newValue = newEntry.getValue();
+            public boolean merge(Entry<K, VersionProperty<V>> oldEntry, Entry<K, VersionProperty<V>> newEntry) {
+                VersionProperty<V> prevValue = oldEntry.getValue();
+                VersionProperty<V> nextValue = newEntry.getValue();
 
-                // newValue from common ancestor?
-                if (mergedRevisions.contains(newValue.revision)) {
+                // Keep older value if there's no change
+                if (equal(prevValue.value, nextValue.value)) {
+                    return nextValue.isBefore(prevValue);
+                }
+                // Keep prevValue if nextValue is from common ancestor
+                else if (mergedRevisions.contains(nextValue.revision)) {
                     return false;
                 }
-                // oldValue from common ancestor?
-                else if (node.mergedRevisions.contains(oldValue.revision)) {
+                // Keep nextValue if prevValue is from common ancestor
+                else if (node.mergedRevisions.contains(prevValue.revision)) {
                     return true;
                 }
-                // Conflicting value?
-                else if (!equal(oldValue.value, newValue.value)) {
-                    K key = newEntry.getKey();
-                    boolean resolveToNewer = replaceWith(oldValue, newValue);
-                    if (resolveToNewer) {
-                        conflicts.put(key, oldValue);
-                    } else {
-                        conflicts.put(key, newValue);
-                    }
-                    return resolveToNewer;
-                }
-                // Newer value
+                // For conflicting value, keep newer and report the other as a conflict
                 else {
-                    return true;
+                    return handleMergeConflict(newEntry.getKey(), prevValue, nextValue);
                 }
 
             }
@@ -156,14 +156,24 @@ public class MergeBuilder<K, V, M> {
         heads.removeAll(node.mergedRevisions.asSet());
     }
 
+    private boolean handleMergeConflict(K key, VersionProperty<V> prevValue, VersionProperty<V> nextValue) {
+        boolean resolveToNext = shouldResolveToNext(prevValue, nextValue);
+        if (resolveToNext) {
+            conflicts.put(key, prevValue);
+        } else {
+            conflicts.put(key, nextValue);
+        }
+        return resolveToNext;
+    }
+
     private void firstVersion(final Merge<K, V, M> node) {
         first = false;
         mergedProperties = node.mergedProperties.toMutableMap();
         mergedRevisions = node.mergedRevisions.toMutableSet();
     }
 
-    protected boolean replaceWith(VersionProperty<V> oldValue, VersionProperty<V> newValue) {
-        return oldValue.revision.compareTo(newValue.revision) < 0;
+    protected boolean shouldResolveToNext(VersionProperty<V> prevValue, VersionProperty<V> nextValue) {
+        return nextValue.isAfter(prevValue);
     }
 
     private void ensureInitialized() {

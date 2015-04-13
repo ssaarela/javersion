@@ -22,6 +22,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -402,6 +403,37 @@ public class SimpleVersionGraphTest {
     @Test(expected = VersionNotFoundException.class)
     public void Version_Not_Found() {
         SimpleVersionGraph.init().getVersionNode(new Revision());
+    }
+
+    @Test
+    public void VersionNode_Should_Analyze_Actual_Changeset() {
+        SimpleVersion v1 = new SimpleVersion.Builder()
+                .changeset(ImmutableMap.of("id", "id1", "name", "name1"))
+                .build();
+
+        // v2.parents == v3.parents, non-conflicting changes from not-a-diff-based versions
+
+        SimpleVersion v2 = new SimpleVersion.Builder()
+                .changeset(ImmutableMap.of("id", "id2", "name", "name1"))
+                .parents(v1.revision)
+                .build();
+
+        SimpleVersion v3 = new SimpleVersion.Builder()
+                .changeset(ImmutableMap.of("id", "id1", "name", "name2"))
+                .parents(v1.revision)
+                .build();
+
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v1, v2, v3));
+
+        VersionNode versionNode = versionGraph.getVersionNode(v2.revision);
+        assertThat(versionNode.getChangeset(), equalTo(ImmutableMap.of("id", "id2")));
+
+        versionNode = versionGraph.getVersionNode(v3.revision);
+        assertThat(versionNode.getChangeset(), equalTo(ImmutableMap.of("name", "name2")));
+
+        Merge<String, String, String> merge = versionGraph.mergeBranches(DEFAULT_BRANCH);
+        assertTrue(merge.getConflicts().isEmpty());
+        assertThat(merge.getProperties(), equalTo(ImmutableMap.of("id", "id2", "name", "name2")));
     }
 
     private int findIndex(List<VersionExpectation> expectations, int versionNumber) {

@@ -15,6 +15,7 @@
  */
 package org.javersion.core;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.javersion.util.Check;
@@ -22,6 +23,7 @@ import org.javersion.util.MutableSortedMap;
 import org.javersion.util.PersistentSortedMap;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
@@ -53,5 +55,9 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
     @Override
     protected void setMergeHeads(Set<Revision> heads) {}
+
+    public Map<K, V> getChangeset() {
+        return Maps.filterKeys(version.changeset, k -> mergedProperties.get(k).revision.equals(version.revision));
+    }
 
 }

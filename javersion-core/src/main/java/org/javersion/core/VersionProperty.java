@@ -26,6 +26,14 @@ public final class VersionProperty<V> {
         this.value = value;
     }
 
+    public boolean isBefore(VersionProperty<V> other) {
+        return revision.compareTo(other.revision) < 0;
+    }
+
+    public boolean isAfter(VersionProperty<V> other) {
+        return revision.compareTo(other.revision) > 0;
+    }
+
     public String toString() {
         return String.valueOf(value) + "@" + revision;
     }
