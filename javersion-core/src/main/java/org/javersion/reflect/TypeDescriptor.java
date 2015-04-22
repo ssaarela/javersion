@@ -15,9 +15,6 @@
  */
 package org.javersion.reflect;
 
-import org.javersion.util.Check;
-
-import com.google.common.base.Function;
 import com.google.common.reflect.TypeToken;
 
 public class TypeDescriptor extends AbstractTypeDescriptor<

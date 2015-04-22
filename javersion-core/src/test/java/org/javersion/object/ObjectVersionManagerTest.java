@@ -8,7 +8,7 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
 import static org.javersion.object.ObjectVersionManagerTest.ProductStatus.IN_STOCK;
 import static org.javersion.object.ObjectVersionManagerTest.ProductStatus.PRE_ORDER;
-import static org.javersion.util.ReflectionEquals.reflectionEquals;
+import static org.javersion.object.ReflectionEquals.reflectionEquals;
 import static org.junit.Assert.assertThat;
 
 import java.math.BigDecimal;

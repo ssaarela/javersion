@@ -27,6 +27,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.mutable.MutableLong;
+import org.assertj.core.api.Assertions;
 import org.javersion.util.PersistentHashMapTest.HashKey;
 import org.junit.Test;
 
@@ -130,7 +131,7 @@ public class PersistentHashSetTest {
             for (int j=0; j < i; j++) {
                 spliterator.tryAdvance(k -> partialSum.add(k.hash));
             }
-            assertThat(sumOf(StreamSupport.stream(spliterator, true)) + partialSum.intValue()).isEqualTo(sum);
+            Assertions.assertThat(sumOf(StreamSupport.stream(spliterator, true)) + partialSum.intValue()).isEqualTo(sum);
         }
     }
 
@@ -154,7 +155,7 @@ public class PersistentHashSetTest {
         for (Spliterator<Integer> spliterator : spliterators) {
             while (spliterator.tryAdvance(i -> sum.add(i)));
         }
-        assertThat(sum.longValue()).isEqualTo(
+        Assertions.assertThat(sum.longValue()).isEqualTo(
                 ints.stream().map(Long::new).reduce(Long::sum).get());
     }
 
