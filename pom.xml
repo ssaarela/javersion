@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.javersion</groupId>
   <version>0.1-SNAPSHOT</version>
-  <artifactId>root</artifactId>
+  <artifactId>javersion-root</artifactId>
   <packaging>pom</packaging>
 
   <modules>
