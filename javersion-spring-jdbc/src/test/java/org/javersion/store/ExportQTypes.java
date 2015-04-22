@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
+import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -53,7 +54,7 @@ public class ExportQTypes {
                 MetaDataExporter exporter = new MetaDataExporter();
                 exporter.setPackageName(PACKAGE_NAME);
                 exporter.setInnerClassesForKeys(false);
-                exporter.setSpatial(true);
+                exporter.setSpatial(false);
                 exporter.setNamePrefix(NAME_PREFIX);
                 exporter.setNamingStrategy(new DefaultNamingStrategy());
                 exporter.setTargetFolder(new File(TARGET_FOLDER));

@@ -22,8 +22,6 @@ import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.util.Check;
 
-import com.mysema.query.types.Expression;
-
 
 public final class ReferenceType implements ScalarType {
 

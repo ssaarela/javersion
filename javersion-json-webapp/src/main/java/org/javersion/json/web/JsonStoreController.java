@@ -39,7 +39,7 @@ import org.javersion.core.Version;
 import org.javersion.json.JsonSerializer;
 import org.javersion.object.*;
 import org.javersion.path.PropertyPath;
-import org.javersion.store.ObjectVersionStoreJdbc;
+import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

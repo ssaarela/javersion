@@ -1,19 +1,16 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.*;
+import static com.mysema.query.types.PathMetadataFactory.forVariable;
 
-import com.mysema.query.types.path.*;
-
-import com.mysema.query.types.PathMetadata;
-import javax.annotation.Generated;
-import com.mysema.query.types.Path;
-
-import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
 
-import com.mysema.query.sql.spatial.RelationalPathSpatial;
+import javax.annotation.Generated;
 
-import com.mysema.query.spatial.path.*;
+import com.mysema.query.sql.ColumnMetadata;
+import com.mysema.query.sql.RelationalPathBase;
+import com.mysema.query.types.Path;
+import com.mysema.query.types.PathMetadata;
+import com.mysema.query.types.path.StringPath;
 
 
 
@@ -21,7 +18,7 @@ import com.mysema.query.spatial.path.*;
  * QVersionType is a Querydsl query type for QVersionType
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QVersionType extends RelationalPathSpatial<QVersionType> {
+public class QVersionType extends RelationalPathBase<QVersionType> {
 
     private static final long serialVersionUID = 1436464965;
 

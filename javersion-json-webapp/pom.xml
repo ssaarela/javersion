@@ -23,7 +23,7 @@
   <dependencies>
     <dependency>
       <groupId>org.javersion</groupId>
-      <artifactId>javersion-core</artifactId>
+      <artifactId>javersion-spring-jdbc</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -64,16 +64,6 @@
       <version>8.0.14</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot</artifactId>
-      <version>${spring.boot.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter</artifactId>
-      <version>${spring.boot.version}</version>
-    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-autoconfigure</artifactId>

@@ -1,10 +1,10 @@
-package org.javersion.store;
+package org.javersion.store.jdbc;
 
 import static com.mysema.query.group.GroupBy.groupBy;
 import static java.util.Collections.singleton;
 import static java.util.Map.Entry;
-import static org.javersion.store.ObjectVersionStoreJdbc.ConfigProp.NODE;
-import static org.javersion.store.ObjectVersionStoreJdbc.ConfigProp.ORDINAL;
+import static org.javersion.store.jdbc.ObjectVersionStoreJdbc.ConfigProp.NODE;
+import static org.javersion.store.jdbc.ObjectVersionStoreJdbc.ConfigProp.ORDINAL;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
@@ -20,6 +20,7 @@ import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.object.Persistent;
 import org.javersion.path.PropertyPath;
+import org.javersion.store.VersionStore;
 import org.javersion.store.sql.QRepository;
 import org.javersion.store.sql.QVersion;
 import org.javersion.store.sql.QVersionParent;

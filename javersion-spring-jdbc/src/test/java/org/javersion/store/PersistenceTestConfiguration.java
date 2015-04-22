@@ -4,6 +4,7 @@ import javax.sql.DataSource;
 
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
+import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
