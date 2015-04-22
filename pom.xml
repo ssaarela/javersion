@@ -9,11 +9,17 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>javersion-core</module>
     <module>javersion-util</module>
     <module>javersion-path</module>
     <module>javersion-reflect</module>
+    <module>javersion-core</module>
+    <module>javersion-json-webapp</module>
   </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
 
   <dependencies>
     <dependency>
