@@ -11,6 +11,7 @@
   <modules>
     <module>javersion-core</module>
     <module>javersion-util</module>
+    <module>javersion-path</module>
   </modules>
 
   <dependencies>

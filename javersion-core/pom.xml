@@ -37,6 +37,11 @@
       <artifactId>javersion-util</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.javersion</groupId>
+      <artifactId>javersion-path</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>com.google.guava</groupId>
