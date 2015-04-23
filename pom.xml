@@ -16,6 +16,7 @@
     <module>javersion-spring-jdbc</module>
     <module>javersion-object</module>
     <module>javersion-json-webapp</module>
+    <module>javersion-json</module>
   </modules>
 
   <properties>
