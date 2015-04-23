@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.javersion.object.Persistent;
+import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;

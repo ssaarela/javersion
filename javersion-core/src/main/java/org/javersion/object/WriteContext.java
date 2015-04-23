@@ -23,7 +23,9 @@ import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.Schema;
 
 import com.google.common.collect.Maps;
 
@@ -31,7 +33,7 @@ public class WriteContext {
 
     private final Object root;
 
-    private final SchemaRoot schemaRoot;
+    private final Schema<ValueType> schemaRoot;
 
     private final Deque<QueueItem<PropertyPath, Object>> queue = new ArrayDeque<>();
 
@@ -39,13 +41,13 @@ public class WriteContext {
 
     private final Map<PropertyPath, Object> properties = Maps.newLinkedHashMap();
 
-    public WriteContext(SchemaRoot schemaRoot, Object root) {
+    public WriteContext(Schema<ValueType> schemaRoot, Object root) {
         this.root = root;
         this.schemaRoot = schemaRoot;
     }
 
     public void serialize(PropertyPath path, Object object) {
-        queue.add(new QueueItem<PropertyPath, Object>(path, object));
+        queue.add(new QueueItem<>(path, object));
     }
 
     public Map<PropertyPath, Object> getMap() {
@@ -58,19 +60,20 @@ public class WriteContext {
                 if (value == null) {
                     put(path, null);
                 } else {
-                    Schema schema = getSchema(path);
+                    Schema<ValueType> schema = getSchema(path);
+                    ValueType valueType = schema.getValue();
                     if (schema.hasChildren()  // Composite (not scalar)?
-                        && !schema.isReference()) { // Not a reference - multiple references to same object are allowed
+                        && !valueType.isReference()) { // Not a reference - multiple references to same object are allowed
                         checkIllegalReference(path, value);
                     }
-                    schema.serialize(path, currentItem.value, this);
+                    valueType.serialize(path, currentItem.value, this);
                 }
             }
         }
         return unmodifiableMap(properties);
     }
 
-    private Schema getSchema(PropertyPath path) {
+    private Schema<ValueType> getSchema(PropertyPath path) {
         return schemaRoot.get(path);
     }
 
@@ -90,7 +93,7 @@ public class WriteContext {
         properties.put(path, value);
     }
 
-    public SchemaRoot getRootMapping() {
+    public Schema<ValueType> getRootMapping() {
         return schemaRoot;
     }
 

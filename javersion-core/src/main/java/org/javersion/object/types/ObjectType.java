@@ -17,7 +17,7 @@ package org.javersion.object.types;
 
 import java.util.Map;
 
-import org.javersion.object.Persistent;
+import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.VersionIgnore;
 import org.javersion.object.WriteContext;

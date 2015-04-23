@@ -19,8 +19,10 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 
+import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
+import org.javersion.path.Schema;
 
 import com.google.common.collect.Maps;
 
@@ -28,7 +30,7 @@ public class ReadContext {
 
     private final Map<PropertyPath, Object> properties;
 
-    private final SchemaRoot schemaRoot;
+    private final Schema<ValueType> schemaRoot;
 
     private final PropertyTree rootNode;
 
@@ -38,7 +40,7 @@ public class ReadContext {
 
     private final Map<PropertyPath, Object> objects = Maps.newHashMap();
 
-    protected ReadContext(SchemaRoot schemaRoot, Map<PropertyPath, Object> properties) {
+    protected ReadContext(Schema<ValueType> schemaRoot, Map<PropertyPath, Object> properties) {
         this.properties = properties;
         this.schemaRoot = schemaRoot;
         this.rootNode = PropertyTree.build(properties.keySet());
@@ -50,20 +52,26 @@ public class ReadContext {
         }
         try {
             Object value = properties.get(rootNode.path);
-            Object result = schemaRoot.instantiate(rootNode, value, this);
+            ValueType valueType = schemaRoot.getValue();
+            Object result = valueType.instantiate(rootNode, value, this);
             objects.put(rootNode.path, result);
-            if (result != null && rootNode.hasChildren()) {
-                schemaRoot.bind(rootNode, result, this);
-                while (queueIsNotEmpty()) {
-                    PropertyTree propertyTree = nextQueueItem();
-                    Schema schema = schemaRoot.get(propertyTree.path);
-                    Object object = objects.get(propertyTree.path);
-                    schema.bind(propertyTree, object, this);
-                }
-            }
+            valueType.bind(rootNode, result, this);
+            bindAll();
             return result;
+        } catch (RuntimeException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void bindAll() throws Exception {
+        while (queueIsNotEmpty()) {
+            PropertyTree propertyTree = nextQueueItem();
+            Schema<ValueType> schema = schemaRoot.get(propertyTree.path);
+            ValueType valueType = schema.getValue();
+            Object object = objects.get(propertyTree.path);
+            valueType.bind(propertyTree, object, this);
         }
     }
 
@@ -97,14 +105,15 @@ public class ReadContext {
         if (objects.containsKey(propertyTree.path)) {
             return objects.get(propertyTree.path);
         } else {
-            Schema schema = schemaRoot.get(propertyTree.path);
+            Schema<ValueType> schema = schemaRoot.get(propertyTree.path);
             Object value = properties.get(propertyTree.path);
             if (value == null) {
                 objects.put(propertyTree.path, null);
                 return null;
             } else {
                 try {
-                    Object result = schema.instantiate(propertyTree, value, this);
+                    ValueType valueType = schema.getValue();
+                    Object result = valueType.instantiate(propertyTree, value, this);
                     objects.put(propertyTree.path, result);
                     if (result != null && schema.hasChildren()) {
                         if (highPriority) {

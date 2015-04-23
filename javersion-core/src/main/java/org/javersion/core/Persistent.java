@@ -1,4 +1,4 @@
-package org.javersion.object;
+package org.javersion.core;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -18,7 +18,7 @@ import com.google.common.collect.ImmutableMap;
  */
 public final class Persistent {
 
-    public static enum Type {
+    public enum Type {
         NULL(Void.class),
         OBJECT(Object.class),
         ARRAY(Array.class),

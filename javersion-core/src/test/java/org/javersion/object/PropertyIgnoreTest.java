@@ -2,6 +2,7 @@ package org.javersion.object;
 
 import java.util.Map;
 
+import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 import static org.assertj.core.api.Assertions.*;

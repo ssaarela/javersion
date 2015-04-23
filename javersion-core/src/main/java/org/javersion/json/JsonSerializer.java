@@ -22,9 +22,8 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.javersion.object.Persistent;
-import org.javersion.object.Schema;
-import org.javersion.object.SchemaRoot;
+import org.javersion.core.Persistent;
+import org.javersion.path.Schema;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.AnyKey;
 import org.javersion.path.PropertyPath.NodeId;
@@ -66,7 +65,7 @@ public class JsonSerializer {
 
     public static final String META_PREFIX = "_";
 
-    private final SchemaRoot schemaRoot;
+    private final Schema<Persistent.Type> schemaRoot;
 
     private final Config config;
 
@@ -74,11 +73,11 @@ public class JsonSerializer {
         this(null);
     }
 
-    public JsonSerializer(SchemaRoot schemaRoot) {
+    public JsonSerializer(Schema<Persistent.Type> schemaRoot) {
         this(new Config(), schemaRoot);
     }
 
-    public JsonSerializer(Config config, SchemaRoot schemaRoot) {
+    public JsonSerializer(Config config, Schema<Persistent.Type> schemaRoot) {
         this.config = config;
         this.schemaRoot = schemaRoot;
     }
@@ -213,6 +212,7 @@ public class JsonSerializer {
         }
     }
 
+    // TODO: Use Schema for real!
     private boolean isMap(PropertyPath path) {
         if (schemaRoot != null) {
             Schema schema = this.schemaRoot.find(path);

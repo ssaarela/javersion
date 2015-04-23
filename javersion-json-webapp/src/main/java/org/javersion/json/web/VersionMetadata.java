@@ -15,7 +15,7 @@
  */
 package org.javersion.json.web;
 
-import static org.javersion.object.Persistent.GENERIC_TYPE;
+import static org.javersion.core.Persistent.GENERIC_TYPE;
 
 import java.util.ArrayList;
 import java.util.Collection;

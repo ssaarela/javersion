@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
+import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 

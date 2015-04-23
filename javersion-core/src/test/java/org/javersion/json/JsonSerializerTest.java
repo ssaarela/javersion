@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.javersion.object.Persistent;
+import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 

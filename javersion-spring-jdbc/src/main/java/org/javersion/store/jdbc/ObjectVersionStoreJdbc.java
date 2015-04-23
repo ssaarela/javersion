@@ -18,7 +18,7 @@ import org.javersion.core.VersionType;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
-import org.javersion.object.Persistent;
+import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.VersionStore;
 import org.javersion.store.sql.QRepository;

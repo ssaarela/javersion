@@ -17,11 +17,13 @@ package org.javersion.object;
 
 import java.util.Map;
 
+import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.Schema;
 
 public class ObjectSerializer<O> {
 
-    public final SchemaRoot schemaRoot;
+    public final Schema<ValueType> schemaRoot;
 
     public ObjectSerializer(Class<O> clazz) {
         this.schemaRoot = DescribeContext.DEFAULT.describeSchema(clazz);

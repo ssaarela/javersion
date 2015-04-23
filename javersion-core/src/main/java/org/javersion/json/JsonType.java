@@ -18,7 +18,7 @@ package org.javersion.json;
 import java.math.BigDecimal;
 import java.util.Map;
 
-import org.javersion.object.Persistent;
+import org.javersion.core.Persistent;
 
 import com.google.common.collect.ImmutableMap;
 

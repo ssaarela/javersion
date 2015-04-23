@@ -1,9 +1,6 @@
 package org.javersion.object;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.isIn;
-import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.object.TestUtil.properties;
 import static org.javersion.object.TestUtil.property;
 import static org.javersion.path.PropertyPath.ROOT;
@@ -12,6 +9,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.Map;
 
+import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
