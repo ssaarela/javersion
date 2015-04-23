@@ -9,6 +9,7 @@ import java.util.Set;
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionGraph;
+import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 
 public class ObjectVersionManager<O, M> {
@@ -41,8 +42,8 @@ public class ObjectVersionManager<O, M> {
         return this;
     }
 
-    public ObjectVersionBuilder<M> versionBuilder(O object) {
-        ObjectVersionBuilder<M> builder = new ManagedObjectVersionBuilder<M>(this, serializer.toPropertyMap(object));
+    public ManagedObjectVersionBuilder<M> versionBuilder(O object) {
+        ManagedObjectVersionBuilder<M> builder = new ManagedObjectVersionBuilder<M>(this, serializer.toPropertyMap(object));
         // TODO: Set Revision for known node
         builder.parents(heads);
         return builder;
@@ -78,5 +79,9 @@ public class ObjectVersionManager<O, M> {
 
     public Set<Revision> getHeads() {
         return heads;
+    }
+
+    public VersionNode<PropertyPath, Object, M> getVersionNode(Revision revision) {
+        return versionGraph.getVersionNode(revision);
     }
 }

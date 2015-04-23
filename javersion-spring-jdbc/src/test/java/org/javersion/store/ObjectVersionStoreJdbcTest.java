@@ -67,7 +67,7 @@ public class ObjectVersionStoreJdbcTest {
         product.name = "product";
 
         ObjectVersion<Void> versionOne = versionManager.versionBuilder(product).build();
-        versionStore.append(docId, versionOne);
+        versionStore.append(docId, versionManager.getVersionNode(versionOne.revision));
         assertThat(versionStore.load(docId).isEmpty()).isTrue();
 
         versionStore.commit();
@@ -79,12 +79,12 @@ public class ObjectVersionStoreJdbcTest {
         product.tags = ImmutableList.of("tag", "and", "another");
         product.vat = 22.5;
 
-        versionStore.append(docId, versionManager.versionBuilder(product).build());
+        versionStore.append(docId, versionManager.versionBuilder(product).buildVersionNode());
 
         product.outOfStock = true;
 
         ObjectVersion<Void> lastVersion = versionManager.versionBuilder(product).build();
-        versionStore.append(docId, lastVersion);
+        versionStore.append(docId, versionManager.getVersionNode(lastVersion.revision));
         assertThat(versionStore.load(docId).getTip().getVersion()).isEqualTo(versionOne);
 
         versionStore.commit();
@@ -105,9 +105,10 @@ public class ObjectVersionStoreJdbcTest {
     public void load_version_with_empty_changeset() {
         String docId = randomUUID().toString();
         ObjectVersion<Void> emptyVersion = new ObjectVersionBuilder<Void>().build();
-        versionStore.append(docId, emptyVersion);
+        ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(emptyVersion);
+        versionStore.append(docId, versionGraph.getTip());
         versionStore.commit();
-        ObjectVersionGraph<Void> versionGraph = versionStore.load(docId);
+        versionGraph = versionStore.load(docId);
         List<Version<PropertyPath, Object, Void>> versions = versionGraph.getVersions();
         assertThat(versions).hasSize(1);
         assertThat(versions.get(0)).isEqualTo(emptyVersion);

@@ -1,8 +1,8 @@
 package org.javersion.store;
 
-import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionGraphBuilder;
+import org.javersion.core.VersionNode;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -13,11 +13,11 @@ public interface VersionStore<I,
 
     long getNode();
 
-    default void append(I id, Version<K, V, M> version) {
+    default void append(I id, VersionNode<K, V, M> version) {
         append(id, ImmutableSet.of(version));
     }
 
-    void append(I id, Iterable<Version<K, V, M>> versions);
+    void append(I id, Iterable<VersionNode<K, V, M>> versions);
 
     void commit();
 

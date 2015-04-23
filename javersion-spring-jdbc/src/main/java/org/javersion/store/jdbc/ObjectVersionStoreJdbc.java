@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import org.javersion.core.Revision;
-import org.javersion.core.Version;
+import org.javersion.core.VersionNode;
 import org.javersion.core.VersionType;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionBuilder;
@@ -54,7 +54,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
     public static class Initializer {
         private final SQLQueryFactory queryFactory;
 
-        protected Initializer() {
+        public Initializer() {
             this.queryFactory = null;
         }
 
@@ -85,7 +85,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
     }
 
-    public static enum ConfigProp {
+    public enum ConfigProp {
         NODE, ORDINAL
     }
 
@@ -175,20 +175,20 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
 
     @Override
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void append(String id, Version<PropertyPath, Object, M> version) {
+    public void append(String id, VersionNode<PropertyPath, Object, M> version) {
         append(id, singleton(version));
     }
 
     @Override
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void append(String docId, Iterable<Version<PropertyPath, Object, M>> versions) {
+    public void append(String docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
         String tx = null;
 
         SQLInsertClause versionBatch = queryFactory.insert(qVersion);
         SQLInsertClause parentBatch = queryFactory.insert(qParent);
         SQLInsertClause propertyBatch = queryFactory.insert(qProperty);
 
-        for (Version<PropertyPath, Object, M> version : versions) {
+        for (VersionNode<PropertyPath, Object, M> version : versions) {
             if (tx == null) {
                 tx = version.revision.toString();
             }
@@ -301,8 +301,8 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
                 .map(qVersion.tx, qVersion.ordinal.min());
     }
 
-    private void addProperties(String docId, Version<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {
-        for (Entry<PropertyPath, Object> entry : version.changeset.entrySet()) {
+    private void addProperties(String docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {
+        for (Entry<PropertyPath, Object> entry : version.getChangeset().entrySet()) {
             propertyRevision
                     .populate(version.revision, propertyBatch)
                     .set(qProperty.docId, docId)
@@ -335,7 +335,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
                 break;
             case BOOLEAN:
                 type = 'b';
-                nbr = ((Boolean) value).booleanValue() ? 1l : 0l;
+                nbr = ((Boolean) value) ? 1l : 0l;
                 break;
             case LONG:
                 type = 'l';
@@ -359,7 +359,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
                 .addBatch();
     }
 
-    private void addParents(Version<PropertyPath, Object, M> version, SQLInsertClause parentBatch) {
+    private void addParents(VersionNode<PropertyPath, Object, M> version, SQLInsertClause parentBatch) {
         for (Revision parentRevision : version.parentRevisions) {
             parentBatch.set(qParent.parentDocId, queryFactory.subQuery()
                     .from(qParentVersion)
@@ -370,7 +370,7 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         }
     }
 
-    private void addVersion(String docId, Version<PropertyPath, Object, M> version, String tx, SQLInsertClause versionBatch) {
+    private void addVersion(String docId, VersionNode<PropertyPath, Object, M> version, String tx, SQLInsertClause versionBatch) {
         versionRevision
                 .populate(version.revision, versionBatch)
                 .set(qVersion.docId, docId)
@@ -414,12 +414,10 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
             return null;
         }
         Map<PropertyPath, Object> changeset = Maps.newHashMapWithExpectedSize(properties.size());
-        if (properties != null) {
-            for (Tuple tuple : properties) {
-                PropertyPath path = PropertyPath.parse(tuple.get(qProperty.path));
-                Object value = getPropertyValue(tuple);
-                changeset.put(path, value);
-            }
+        for (Tuple tuple : properties) {
+            PropertyPath path = PropertyPath.parse(tuple.get(qProperty.path));
+            Object value = getPropertyValue(tuple);
+            changeset.put(path, value);
         }
         return changeset;
     }

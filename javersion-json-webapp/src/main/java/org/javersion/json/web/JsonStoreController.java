@@ -169,7 +169,7 @@ public class JsonStoreController {
         versionBuilder.branch(branch);
         versionBuilder.changeset(paths.properties, versionGraph);
         ObjectVersion<Void> version = versionBuilder.build();
-        objectVersionStore.append(objectId, version);
+        objectVersionStore.append(objectId, versionGraph.getVersionNode(version.revision));
         objectVersionStore.commit();
         return getObject(objectId, null, ImmutableSet.of(branch), create);
     }

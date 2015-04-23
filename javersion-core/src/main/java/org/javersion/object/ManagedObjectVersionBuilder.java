@@ -2,6 +2,7 @@ package org.javersion.object;
 
 import java.util.Map;
 
+import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 
 public class ManagedObjectVersionBuilder<M> extends ObjectVersionBuilder<M> {
@@ -22,4 +23,10 @@ public class ManagedObjectVersionBuilder<M> extends ObjectVersionBuilder<M> {
         manager.commit(version);
         return version;
     }
+
+    public VersionNode<PropertyPath, Object, M> buildVersionNode() {
+        ObjectVersion<M> version = build();
+        return manager.getVersionNode(version.revision);
+    }
+
 }
