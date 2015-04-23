@@ -30,7 +30,7 @@
     <dependency>
       <groupId>org.javersion</groupId>
       <artifactId>javersion-object</artifactId>
-      <version>0.1-SNAPSHOT</version>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
