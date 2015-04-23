@@ -55,7 +55,7 @@ public class Schema<T> extends SchemaBase<Schema<T>> {
         return value;
     }
 
-    public Schema getChild(NodeId nodeId) {
+    public Schema<T> getChild(NodeId nodeId) {
         return children.get(nodeId);
     }
 
@@ -63,7 +63,7 @@ public class Schema<T> extends SchemaBase<Schema<T>> {
         return !children.isEmpty();
     }
 
-    public Schema addChild(NodeId nodeId, Schema child) {
+    public Schema<T> addChild(NodeId nodeId, Schema<T> child) {
         children.put(nodeId, child);
         return child;
     }

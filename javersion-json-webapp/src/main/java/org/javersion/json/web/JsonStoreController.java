@@ -76,7 +76,7 @@ public class JsonStoreController {
 
     private final ObjectSerializer<VersionMetadata> metaSerializer = new ObjectSerializer<>(VersionMetadata.class, metaTypeMappings);
 
-    private final JsonSerializer jsonSerializer = new JsonSerializer(new JsonSerializer.Config(false, false, ""), metaSerializer.schemaRoot);
+    private final JsonSerializer jsonSerializer = new JsonSerializer(new JsonSerializer.Config(false, false, ""), null); // FIXME: schema!
 
     public JsonStoreController() {
         this(new JsonStoreConfig());

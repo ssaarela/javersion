@@ -14,6 +14,8 @@
     <module>javersion-reflect</module>
     <module>javersion-core</module>
     <module>javersion-spring-jdbc</module>
+    <module>javersion-object</module>
+    <module>javersion-json-webapp</module>
   </modules>
 
   <properties>
