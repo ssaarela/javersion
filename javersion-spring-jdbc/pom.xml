@@ -27,6 +27,11 @@
       <artifactId>javersion-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.javersion</groupId>
+      <artifactId>javersion-object</artifactId>
+      <version>${project.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>com.mysema.querydsl</groupId>

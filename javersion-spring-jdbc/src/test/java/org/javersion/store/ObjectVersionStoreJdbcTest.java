@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.javersion.core.VersionStore;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.object.ObjectVersion;
@@ -52,9 +53,9 @@ public class ObjectVersionStoreJdbcTest {
 
     @Resource
     private VersionStore<String,
-            PropertyPath, Object, Void,
-            ObjectVersionGraph<Void>,
-            ObjectVersionGraph.Builder<Void>> versionStore;
+                PropertyPath, Object, Void,
+                ObjectVersionGraph<Void>,
+                ObjectVersionGraph.Builder<Void>> versionStore;
 
     @Test
     public void insert_and_load() {

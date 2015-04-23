@@ -38,6 +38,7 @@ import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.json.JsonSerializer;
 import org.javersion.object.*;
+import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.http.HttpHeaders;
@@ -75,7 +76,7 @@ public class JsonStoreController {
 
     private final ObjectSerializer<VersionMetadata> metaSerializer = new ObjectSerializer<>(VersionMetadata.class, metaTypeMappings);
 
-    private final JsonSerializer jsonSerializer = new JsonSerializer(new JsonSerializer.Config(false, false, ""), metaSerializer.schemaRoot);
+    private final JsonSerializer jsonSerializer = new JsonSerializer(new JsonSerializer.Config(false, false, ""), null); // FIXME: schema!
 
     public JsonStoreController() {
         this(new JsonStoreConfig());

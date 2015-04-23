@@ -8,12 +8,48 @@
   <artifactId>javersion-root</artifactId>
   <packaging>pom</packaging>
 
+  <url>http://javersion.org</url>
+
+  <developers>
+    <developer>
+      <name>Samppa Saarela</name>
+      <organization>Nitor Creations Ltd</organization>
+      <organizationUrl>http://nitorcreations.com/</organizationUrl>
+      <email>samppa.saarela@iki.fi</email>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://raw.githubusercontent.com/ssaarela/javersion/master/LICENSE</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <developerConnection>scm:git@github.com:ssaarela/javersion.git</developerConnection>
+    <connection>scm:git@github.com:ssaarela/javersion.git</connection>
+    <url>https://github.com/ssaarela/javersion</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <modules>
     <module>javersion-util</module>
     <module>javersion-path</module>
     <module>javersion-reflect</module>
     <module>javersion-core</module>
     <module>javersion-spring-jdbc</module>
+    <module>javersion-object</module>
+    <!--<module>javersion-json-webapp</module>-->
+    <module>javersion-json</module>
   </modules>
 
   <properties>
@@ -73,6 +109,7 @@
           <target>1.8</target>
         </configuration>
       </plugin>
+
       <plugin>
         <!-- Usage: mvn compile org.pitest:pitest-maven:mutationCoverage -->
         <groupId>org.pitest</groupId>
@@ -90,6 +127,66 @@
           </targetTests>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.5</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

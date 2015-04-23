@@ -10,26 +10,13 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>javersion-path</artifactId>
+  <artifactId>javersion-object</artifactId>
 
   <dependencies>
     <dependency>
       <groupId>org.javersion</groupId>
-      <artifactId>javersion-util</artifactId>
+      <artifactId>javersion-core</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr4-runtime</artifactId>
-      <version>4.5</version>
     </dependency>
   </dependencies>
 
