@@ -8,6 +8,8 @@
   <artifactId>javersion-root</artifactId>
   <packaging>pom</packaging>
 
+  <name>Javersion</name>
+  <description>Data versioning library for Java</description>
   <url>http://javersion.org</url>
 
   <developers>
