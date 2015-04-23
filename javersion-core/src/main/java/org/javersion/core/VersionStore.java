@@ -1,8 +1,4 @@
-package org.javersion.store;
-
-import org.javersion.core.VersionGraph;
-import org.javersion.core.VersionGraphBuilder;
-import org.javersion.core.VersionNode;
+package org.javersion.core;
 
 import com.google.common.collect.ImmutableSet;
 
