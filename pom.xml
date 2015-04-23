@@ -110,12 +110,12 @@
         <plugin>
           <groupId>org.eluder.coveralls</groupId>
           <artifactId>coveralls-maven-plugin</artifactId>
-          <version>${maven-plugin.coveralls.version}</version>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>${maven-plugin.jacoco.version}</version>
+          <version>0.7.4.201502262128</version>
           <executions>
             <execution>
               <id>prepare-agent</id>
