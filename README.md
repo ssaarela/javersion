@@ -1,4 +1,4 @@
-Javersion [![Build Status](https://travis-ci.org/ssaarela/javersion.svg?branch=master)](https://travis-ci.org/ssaarela/javersion)
+Javersion [![Build Status](https://travis-ci.org/ssaarela/javersion.svg?branch=master)](https://travis-ci.org/ssaarela/javersion) [![Coverage Status](https://coveralls.io/repos/ssaarela/javersion/badge.svg?branch=master)](https://coveralls.io/r/ssaarela/javersion?branch=master)
 ======
 
 Javersion is a Work In Progress for Data Versioning Library for Java.
