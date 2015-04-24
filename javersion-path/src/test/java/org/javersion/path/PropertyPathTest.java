@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.javersion.path.PropertyPath.Key;
+import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyPath.Property;
 import org.javersion.path.PropertyPath.SubPath;
 import org.junit.Assert;
@@ -215,11 +216,83 @@ public class PropertyPathTest {
         assertThat(property.hashCode()).isEqualTo(key.hashCode());
     }
 
+    @Test
+    public void key_or_index() {
+        assertThat(ROOT.keyOrIndex("key").getNodeId().isKey()).isTrue();
+        assertThat(ROOT.keyOrIndex(123).getNodeId().isIndex()).isTrue();
+    }
+
+    @Test
+    public void any_toString() {
+        assertThat(ROOT.any().toString()).isEqualTo("*");
+    }
+
+    @Test
+    public void any_key_toString() {
+        assertThat(ROOT.anyKey().toString()).isEqualTo("{}");
+    }
+
+    @Test
+    public void index_id_toString() {
+        assertThat(NodeId.valueOf(567).toString()).isEqualTo("567");
+    }
+
+    @Test
+    public void root_with_parent() {
+        Property path = ROOT.property("property");
+        assertThat(ROOT.withParent(path)).isEqualTo(path);
+    }
+
+    @Test
+    public void key_with_parent() {
+        PropertyPath key = ROOT.key("key");
+        assertThat(ROOT.path(key)).isEqualTo(key);
+    }
+
+    @Test
+    public void schema_path_of_key() {
+        assertThat(ROOT.key("key").toSchemaPath()).isEqualTo(ROOT.anyKey());
+    }
+
+    @Test
+    public void any_with_parent() {
+        PropertyPath any = ROOT.any();
+        Property path = ROOT.property("property");
+        assertThat(path.path(any)).isEqualTo(path.any());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void key_or_index_of_unsupported_type() {
+        ROOT.keyOrIndex(new Object());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void key_or_index_of_special_node() {
+        ROOT.keyOrIndex(NodeId.ANY);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void get_index_of_any_index() {
+        NodeId.INDEX.getIndex();
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void get_key_of_any_key() {
+        NodeId.KEY.getKey();
+    }
+
+    @Test
+    public void key_or_index_of_NodeId() {
+        assertThat(NodeId.valueOf(123).getKeyOrIndex()).isEqualTo(123l);
+        assertThat(NodeId.valueOf("key").getKeyOrIndex()).isEqualTo("key");
+    }
+
+    @Test
     public void Full_Path() {
         List<SubPath> fullPath = children_0_name().getFullPath();
         assertThat(fullPath).hasSize(3);
         assertThat(fullPath.get(0)).isEqualTo(children);
-        assertThat(fullPath.get(0)).isEqualTo((PropertyPath) children_0());
+        assertThat(fullPath.get(1)).isEqualTo((PropertyPath) children_0());
     }
 
     public static PropertyPath _0 = ROOT.index(0);
