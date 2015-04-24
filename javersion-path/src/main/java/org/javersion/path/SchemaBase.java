@@ -1,11 +1,7 @@
 package org.javersion.path;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.util.Check;
-
-import com.google.common.base.Preconditions;
 
 public abstract class SchemaBase<This extends SchemaBase<This>> {
 

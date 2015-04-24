@@ -38,6 +38,18 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public static abstract class NodeId {
 
+        public static final NodeId ANY = new SpecialNodeId("*") {
+            @Override
+            public NodeId fallbackId() {
+                return null;
+            }
+        };
+
+        public static final NodeId INDEX = new SpecialNodeId("[]");
+
+        public static final NodeId KEY = new SpecialNodeId("{}");
+
+
         private static final IndexId[] INDEXES;
 
         static {
@@ -141,7 +153,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public NodeId fallbackId() {
-            return AnyIndex.ID;
+            return INDEX;
         }
     }
 
@@ -187,7 +199,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public NodeId fallbackId() {
-            return AnyKey.ID;
+            return KEY;
         }
     }
 
@@ -222,16 +234,9 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public NodeId fallbackId() {
-            return ANY_NODE;
+            return ANY;
         }
     }
-
-    private static NodeId ANY_NODE = new SpecialNodeId("*") {
-        @Override
-        public NodeId fallbackId() {
-            return null;
-        }
-    };
 
 
     private static final class SilentParseException extends RuntimeException {
@@ -579,10 +584,8 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public static final class Any extends SubPath {
 
-        public static final NodeId ID = ANY_NODE;
-
         private Any(PropertyPath parent) {
-            super(parent, ID);
+            super(parent, NodeId.ANY);
         }
 
         @Override
@@ -592,16 +595,14 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         protected void appendNode(StringBuilder sb) {
-            sb.append(ID);
+            sb.append(NodeId.ANY);
         }
     }
 
     public static final class AnyIndex extends SubPath {
 
-        public static final NodeId ID = new SpecialNodeId("[]");
-
         private AnyIndex(PropertyPath parent) {
-            super(parent, ID);
+            super(parent, NodeId.INDEX);
         }
 
         @Override
@@ -611,16 +612,14 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         protected void appendNode(StringBuilder sb) {
-            sb.append(ID);
+            sb.append(NodeId.INDEX);
         }
     }
 
     public static final class AnyKey extends SubPath {
 
-        public static final NodeId ID = new SpecialNodeId("{}");
-
         private AnyKey(PropertyPath parent) {
-            super(parent, ID);
+            super(parent, NodeId.KEY);
         }
 
         @Override
@@ -630,7 +629,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         protected void appendNode(StringBuilder sb) {
-            sb.append(ID);
+            sb.append(NodeId.KEY);
         }
 
     }

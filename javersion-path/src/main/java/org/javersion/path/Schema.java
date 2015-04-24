@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyPath.SubPath;
+import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -56,16 +57,12 @@ public class Schema<T> extends SchemaBase<Schema<T>> {
     }
 
     public Schema<T> getChild(NodeId nodeId) {
+        Check.notNull(nodeId, "nodeId");
         return children.get(nodeId);
     }
 
     public boolean hasChildren() {
         return !children.isEmpty();
-    }
-
-    public Schema<T> addChild(NodeId nodeId, Schema<T> child) {
-        children.put(nodeId, child);
-        return child;
     }
 
     public boolean hasChild(NodeId nodeId) {
@@ -86,6 +83,7 @@ public class Schema<T> extends SchemaBase<Schema<T>> {
 
         @Override
         public Builder<T> getChild(NodeId nodeId) {
+            Check.notNull(nodeId, "nodeId");
             return children.get(nodeId);
         }
 
@@ -98,17 +96,19 @@ public class Schema<T> extends SchemaBase<Schema<T>> {
             return value;
         }
 
-        public void setValue(T value) {
+        public Builder<T> setValue(T value) {
             this.value = value;
+            return this;
         }
 
         public Schema<T> build() {
             return new Schema<>(this);
         }
 
-        public void connect(SubPath subPath, Builder<T> schema) {
+        public Builder<T> connect(SubPath subPath, Builder<T> schema) {
             Builder<T> parent = getOrCreate(subPath.parent);
             parent.addChild(subPath.getNodeId(), schema);
+            return this;
         }
 
         public Builder<T> getOrCreate(PropertyPath path) {
@@ -121,10 +121,13 @@ public class Schema<T> extends SchemaBase<Schema<T>> {
                 NodeId nodeId = pathElement.getNodeId();
                 Schema.Builder<T> child = schema.getChild(nodeId);
                 if (child == null) {
-                    child = new Schema.Builder<>(value);
+                    child = new Schema.Builder<>();
                     schema.addChild(nodeId, child);
                 }
                 schema = child;
+            }
+            if (value != null) {
+                return schema.setValue(value);
             }
             return schema;
         }

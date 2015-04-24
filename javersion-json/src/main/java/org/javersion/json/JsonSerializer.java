@@ -25,7 +25,6 @@ import java.util.Map;
 import org.javersion.core.Persistent;
 import org.javersion.path.Schema;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.AnyKey;
 import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 
@@ -216,7 +215,7 @@ public class JsonSerializer {
     private boolean isMap(PropertyPath path) {
         if (schemaRoot != null) {
             Schema schema = this.schemaRoot.find(path);
-            return schema != null && schema.hasChild(AnyKey.ID);
+            return schema != null && schema.hasChild(NodeId.KEY);
         }
         return false;
     }
