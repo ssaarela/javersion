@@ -92,11 +92,6 @@ public class ReadContext {
         return getObject(propertyTree, true);
     }
 
-    public Object getObject(PropertyPath path) {
-        PropertyTree propertyTree = rootNode.get(path);
-        return propertyTree != null ? getObject(propertyTree) : null;
-    }
-
     public Object getObject(PropertyTree propertyTree) {
         return getObject(propertyTree, false);
     }

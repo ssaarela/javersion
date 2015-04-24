@@ -31,6 +31,7 @@ public class PropertyTree {
     public static PropertyTree build(PropertyPath...paths) {
         return build(Arrays.asList(paths));
     }
+
     public static PropertyTree build(Collection<PropertyPath> paths) {
         Map<PropertyPath, PropertyTree> nodes = Maps.newHashMapWithExpectedSize(paths.size());
         for (PropertyPath path : paths) {
@@ -45,6 +46,7 @@ public class PropertyTree {
         }
         return nodes.get(PropertyPath.ROOT);
     }
+
     private static PropertyTree getOrCreate(PropertyPath path,
             Map<PropertyPath, PropertyTree> nodes) {
         PropertyTree childTree = nodes.get(path);
@@ -86,9 +88,10 @@ public class PropertyTree {
     public PropertyTree get(PropertyPath path) {
         PropertyTree match = this;
         for (PropertyPath node : path) {
-            if (match == null) continue;
+            if (match == null) break;
             else match = match.get(node.getNodeId());
         }
+        if (match == null) throw new IllegalArgumentException("path not found: " + path);
         return match;
     }
 

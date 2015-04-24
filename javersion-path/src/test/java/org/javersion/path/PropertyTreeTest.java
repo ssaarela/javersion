@@ -16,9 +16,11 @@
 package org.javersion.path;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.path.PropertyPath.parse;
 import static org.javersion.path.PropertyPathTest.children;
 import static org.javersion.path.PropertyPathTest.children_0;
 import static org.javersion.path.PropertyPathTest.children_0_name;
@@ -77,4 +79,32 @@ public class PropertyTreeTest {
         assertPropertyTree(children, 123, 0);
     }
 
+    @Test
+    public void get_node() {
+        NodeId list = NodeId.valueOf("list");
+
+        PropertyPath path = parse("list[0][\"key\"]");
+        PropertyTree tree = PropertyTree.build(path);
+        assertThat(tree.getNodeId(), equalTo(ROOT.getNodeId()));
+
+        assertThat(tree.get(list).hasChildren(), equalTo(true));
+        assertThat(tree.getChildren(), hasSize(1));
+
+        tree = tree.get(path);
+        assertThat(tree.hasChildren(), equalTo(false));
+    }
+
+    @Test
+    public void to_string() {
+        PropertyPath path = children_0_name();
+        PropertyTree tree = PropertyTree.build(path);
+        assertThat(tree.toString(), equalTo(ROOT.toString()));
+        assertThat(tree.get(path).toString(), equalTo(path.toString()));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void not_found() {
+        PropertyPath path = children_0_name();
+        PropertyTree.build(path).get(children.index(123));
+    }
 }
