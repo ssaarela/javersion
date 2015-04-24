@@ -15,6 +15,7 @@
  */
 package org.javersion.core;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -71,11 +72,14 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
     protected void setMergeHeads(Set<Revision> heads) {}
 
     public Map<K, V> getChangeset() {
-        return mergedProperties.stream()
-                .filter(entry -> entry.getValue().revision.equals(revision))
-                .collect(Collectors.toMap(
-                        entry -> entry.getKey(),
-                        entry -> entry.getValue().value));
+        // TODO: cache result
+        final Map<K, V> changeset = new HashMap<>();
+        mergedProperties.stream().forEach(entry -> {
+            if (entry.getValue().revision.equals(revision)) {
+                changeset.put(entry.getKey(), entry.getValue().value);
+            }
+        });
+        return changeset;
     }
 
     public Version<K, V, M> getVersion() {

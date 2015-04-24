@@ -83,6 +83,8 @@ public class SimpleVersionGraphTest {
      *   \ 12   Full reset
      *    \|
      *     13  status: "Revert to #5", firstName: "John", lastName: "Doe", mood: "Ecstatic"
+     *     |
+     *     14  mood: null
      * </pre>
      */
     public static List<VersionExpectation> EXPECTATIONS;
@@ -342,6 +344,19 @@ public class SimpleVersionGraphTest {
                                 "lastName", "Doe",
                                 "mood", "Ecstatic"))
         );
+        b.add(
+                when(version(REV[14])
+                        .parents(setOf(REV[13]))
+                        .changeset(mapOf(
+                                "mood", null)))
+                        .mergeBranches(setOf(DEFAULT_BRANCH))
+                        .expectAllHeads(setOf(REV[14]))
+                        .expectMergeHeads(setOf(REV[14]))
+                        .expectProperties(mapOf(
+                                "status", "Revert to #5",
+                                "firstName", "John",
+                                "lastName", "Doe"))
+        );
 
         EXPECTATIONS = b.build();
     }
@@ -406,6 +421,19 @@ public class SimpleVersionGraphTest {
     public void Version_Not_Found() {
         SimpleVersionGraph.init().getVersionNode(new Revision());
     }
+
+    @Test
+    public void VersionNode_getChangeset_should_not_throw_NPE() {
+        SimpleVersion v1 = new SimpleVersion.Builder()
+                .changeset(mapOf("value", null))
+                .build();
+
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v1));
+        VersionNode versionNode = versionGraph.getVersionNode(v1.revision);
+        assertThat(versionNode.getChangeset(), equalTo(mapOf("value", null)));
+    }
+
+
 
     @Test
     public void VersionNode_Should_Analyze_Actual_Changeset() {
