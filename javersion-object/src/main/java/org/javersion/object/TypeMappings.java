@@ -180,7 +180,7 @@ public class TypeMappings {
             }
 
             public HierarchyBuilder<R> havingSubClass(Class<? extends R> clazz, String alias) {
-                register(clazz, null);
+                register(clazz, alias);
                 return this;
             }
 
