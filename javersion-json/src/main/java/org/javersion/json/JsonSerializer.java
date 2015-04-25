@@ -215,7 +215,7 @@ public class JsonSerializer {
     private boolean isMap(PropertyPath path) {
         if (schemaRoot != null) {
             Schema schema = this.schemaRoot.find(path);
-            return schema != null && schema.hasChild(NodeId.KEY);
+            return schema != null && schema.hasChild(NodeId.ANY_KEY);
         }
         return false;
     }

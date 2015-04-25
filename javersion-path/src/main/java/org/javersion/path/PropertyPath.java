@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.parser.PropertyPathBaseVisitor;
@@ -45,9 +46,11 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             }
         };
 
-        public static final NodeId INDEX = new SpecialNodeId("[]");
+        public static final NodeId ANY_PROPERTY = new SpecialNodeId(".*");
 
-        public static final NodeId KEY = new SpecialNodeId("{}");
+        public static final NodeId ANY_INDEX = new SpecialNodeId("[]");
+
+        public static final NodeId ANY_KEY = new SpecialNodeId("{}");
 
 
         private static final IndexId[] INDEXES;
@@ -153,7 +156,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public NodeId fallbackId() {
-            return INDEX;
+            return ANY_INDEX;
         }
     }
 
@@ -199,7 +202,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public NodeId fallbackId() {
-            return KEY;
+            return ANY_KEY;
         }
     }
 
@@ -299,6 +302,11 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             }
 
             @Override
+            public PropertyPath visitAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx) {
+                return parent = new AnyProperty(parent);
+            }
+
+            @Override
             public PropertyPath visitAnyIndex(PropertyPathParser.AnyIndexContext ctx) {
                 return parent = new AnyIndex(parent);
             }
@@ -364,8 +372,8 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
     }
 
-    public final Any any() {
-        return new Any(this);
+    public final AnyProperty anyProperty() {
+        return new AnyProperty(this);
     }
 
     public final AnyIndex anyIndex() {
@@ -374,6 +382,10 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public final AnyKey anyKey() {
         return new AnyKey(this);
+    }
+
+    public final Any any() {
+        return new Any(this);
     }
 
     public final SubPath propertyOrKey(String string) {
@@ -565,6 +577,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         Property toSchemaPath(PropertyPath newParent) {
+            // NOTE: SchemaPath of a Property is itself - there's no changing index/key
             return withParent(newParent);
         }
 
@@ -580,58 +593,6 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             }
             sb.append(nodeId);
         }
-    }
-
-    public static final class Any extends SubPath {
-
-        private Any(PropertyPath parent) {
-            super(parent, NodeId.ANY);
-        }
-
-        @Override
-        Any withParent(PropertyPath newParent) {
-            return newParent.equals(parent) ? this : new Any(newParent);
-        }
-
-        @Override
-        protected void appendNode(StringBuilder sb) {
-            sb.append(NodeId.ANY);
-        }
-    }
-
-    public static final class AnyIndex extends SubPath {
-
-        private AnyIndex(PropertyPath parent) {
-            super(parent, NodeId.INDEX);
-        }
-
-        @Override
-        AnyIndex withParent(PropertyPath newParent) {
-            return newParent.equals(parent) ? this : new AnyIndex(newParent);
-        }
-
-        @Override
-        protected void appendNode(StringBuilder sb) {
-            sb.append(NodeId.INDEX);
-        }
-    }
-
-    public static final class AnyKey extends SubPath {
-
-        private AnyKey(PropertyPath parent) {
-            super(parent, NodeId.KEY);
-        }
-
-        @Override
-        AnyKey withParent(PropertyPath newParent) {
-            return newParent.equals(parent) ? this : new AnyKey(newParent);
-        }
-
-        @Override
-        protected void appendNode(StringBuilder sb) {
-            sb.append(NodeId.KEY);
-        }
-
     }
 
     public static final class Index extends SubPath {
@@ -686,6 +647,75 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             sb.append("[\"").append(escapeEcmaScript(nodeId.getKey())).append("\"]").toString();
         }
 
+    }
+
+    public static final class AnyProperty extends SubPath {
+
+        private AnyProperty(PropertyPath parent) {
+            super(parent, NodeId.ANY_PROPERTY);
+        }
+
+        @Override
+        AnyProperty withParent(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new AnyProperty(newParent);
+        }
+
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append(NodeId.ANY_PROPERTY);
+        }
+    }
+
+    public static final class AnyIndex extends SubPath {
+
+        private AnyIndex(PropertyPath parent) {
+            super(parent, NodeId.ANY_INDEX);
+        }
+
+        @Override
+        AnyIndex withParent(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new AnyIndex(newParent);
+        }
+
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append(NodeId.ANY_INDEX);
+        }
+    }
+
+    public static final class AnyKey extends SubPath {
+
+        private AnyKey(PropertyPath parent) {
+            super(parent, NodeId.ANY_KEY);
+        }
+
+        @Override
+        AnyKey withParent(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new AnyKey(newParent);
+        }
+
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append(NodeId.ANY_KEY);
+        }
+
+    }
+
+    public static final class Any extends SubPath {
+
+        private Any(PropertyPath parent) {
+            super(parent, NodeId.ANY);
+        }
+
+        @Override
+        Any withParent(PropertyPath newParent) {
+            return newParent.equals(parent) ? this : new Any(newParent);
+        }
+
+        @Override
+        protected void appendNode(StringBuilder sb) {
+            sb.append(NodeId.ANY);
+        }
     }
 
     private static PropertyPathParser newParser(String input, boolean silent) {

@@ -132,6 +132,11 @@ public class PropertyPathTest {
         assertThat(parse("list[]")).isEqualTo(ROOT.property("list").anyIndex());
     }
 
+    @Test
+    public void any_property() {
+        assertThat(parse("object.*")).isEqualTo(ROOT.property("object").anyProperty());
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void property_should_not_start_with_digit() {
         parse("123åäö");
@@ -233,6 +238,11 @@ public class PropertyPathTest {
     }
 
     @Test
+    public void any_property_toString() {
+        assertThat(ROOT.anyProperty().toString()).isEqualTo(".*");
+    }
+
+    @Test
     public void index_id_toString() {
         assertThat(NodeId.valueOf(567).toString()).isEqualTo("567");
     }
@@ -250,8 +260,32 @@ public class PropertyPathTest {
     }
 
     @Test
+    public void name_of_any_property() {
+        PropertyPath key = ROOT.anyProperty().property("name");
+        assertThat(ROOT.path(key)).isEqualTo(key);
+    }
+
+    @Test
+    public void any_property_with_parent() {
+        PropertyPath key = ROOT.anyProperty();
+        assertThat(ROOT.path(key)).isEqualTo(key);
+    }
+
+    @Test
     public void schema_path_of_key() {
         assertThat(ROOT.key("key").toSchemaPath()).isEqualTo(ROOT.anyKey());
+    }
+
+    @Test
+    public void schema_path_of_property() {
+        assertThat(ROOT.property("property").toSchemaPath()).isEqualTo(ROOT.property("property"));
+    }
+
+    @Test
+    public void schema_path_of_a_schema_path_is_the_same_path() {
+        PropertyPath path = ROOT.property("list").index(123).key("key").property("property").toSchemaPath();
+        assertThat(path.toString()).isEqualTo("list[]{}.property");
+        assertThat(path.toSchemaPath()).isEqualTo(path);
     }
 
     @Test
@@ -273,12 +307,12 @@ public class PropertyPathTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void get_index_of_any_index() {
-        NodeId.INDEX.getIndex();
+        NodeId.ANY_INDEX.getIndex();
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void get_key_of_any_key() {
-        NodeId.KEY.getKey();
+        NodeId.ANY_KEY.getKey();
     }
 
     @Test

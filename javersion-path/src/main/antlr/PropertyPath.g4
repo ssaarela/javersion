@@ -23,15 +23,16 @@ parseProperty
 	: property EOF
 	;
 
-property
-	: Identifier
-	;
-
 indexedOrAny
 	: '[' (index | key) ']'
+	| anyProperty
 	| anyIndex
 	| anyKey
 	| any
+	;
+
+property
+	: Identifier
 	;
 
 index
@@ -40,6 +41,10 @@ index
 
 key
 	: Key
+	;
+
+anyProperty
+	: '.*'
 	;
 
 anyIndex

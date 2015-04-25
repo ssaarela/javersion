@@ -5,7 +5,6 @@ import static org.javersion.path.PropertyPath.ROOT;
 import static org.assertj.core.api.Assertions.*;
 import static org.javersion.path.PropertyPath.parse;
 
-import org.javersion.path.PropertyPath.Any;
 import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.Schema.Builder;
 import org.junit.Test;
@@ -36,7 +35,7 @@ public class SchemaTest {
         assertThat(schema.getValue()).isEqualTo("root");
         Schema<String> child = schema.get(parse("list"));
         assertThat(child.getValue()).isNull();
-        child = child.getChild(NodeId.INDEX);
+        child = child.getChild(NodeId.ANY_INDEX);
         assertThat(child.getValue()).isEqualTo("element");
         assertThat(child.get(parse("name")).getValue()).isEqualTo("name");
     }
@@ -49,7 +48,7 @@ public class SchemaTest {
 
         assertThat(schema.hasChildren()).isTrue();
         assertThat(schema.hasChild(valueOf("property"))).isTrue();
-        assertThat(schema.hasChild(NodeId.KEY)).isFalse();
+        assertThat(schema.hasChild(NodeId.ANY_KEY)).isFalse();
 
         schema = schema.getChild(valueOf("property"));
         assertThat(schema.hasChildren()).isFalse();

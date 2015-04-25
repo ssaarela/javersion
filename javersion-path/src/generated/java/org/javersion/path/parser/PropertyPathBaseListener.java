@@ -1,4 +1,4 @@
-// Generated from /Users/samppa/Personal/javersion/javersion-core/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
+// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
 package org.javersion.path.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -41,18 +41,6 @@ public class PropertyPathBaseListener implements PropertyPathListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterProperty(@NotNull PropertyPathParser.PropertyContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitProperty(@NotNull PropertyPathParser.PropertyContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -60,6 +48,18 @@ public class PropertyPathBaseListener implements PropertyPathListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterProperty(@NotNull PropertyPathParser.PropertyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitProperty(@NotNull PropertyPathParser.PropertyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -84,6 +84,18 @@ public class PropertyPathBaseListener implements PropertyPathListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitKey(@NotNull PropertyPathParser.KeyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -1,4 +1,4 @@
-// Generated from /Users/samppa/Personal/javersion/javersion-core/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
+// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
 package org.javersion.path.parser;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
@@ -24,17 +24,17 @@ public interface PropertyPathVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitParseProperty(@NotNull PropertyPathParser.ParsePropertyContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link PropertyPathParser#property}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitProperty(@NotNull PropertyPathParser.PropertyContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link PropertyPathParser#indexedOrAny}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PropertyPathParser#property}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitProperty(@NotNull PropertyPathParser.PropertyContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PropertyPathParser#index}.
 	 * @param ctx the parse tree
@@ -47,6 +47,12 @@ public interface PropertyPathVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitKey(@NotNull PropertyPathParser.KeyContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link PropertyPathParser#anyProperty}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link PropertyPathParser#anyIndex}.
 	 * @param ctx the parse tree
