@@ -145,7 +145,8 @@
         <version>0.7.4.201502262128</version>
         <configuration>
           <excludes>
-            <exclude>**/src/generated/java/**</exclude>
+            <exclude>**/javersion/store/sql/**</exclude>
+            <exclude>**/javersion/path/parser/**</exclude>
           </excludes>
         </configuration>
         <executions>
