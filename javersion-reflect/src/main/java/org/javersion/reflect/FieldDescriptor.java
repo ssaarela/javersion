@@ -18,15 +18,12 @@ package org.javersion.reflect;
 import java.lang.reflect.Field;
 
 public class FieldDescriptor extends AbstractFieldDescriptor<
-            FieldDescriptor, 
-            TypeDescriptor, 
+            FieldDescriptor,
+            TypeDescriptor,
             TypeDescriptors> {
 
     public FieldDescriptor(TypeDescriptors typeDescriptors, Field field) {
         super(typeDescriptors, field);
     }
 
-    public String toString() {
-        return field.getDeclaringClass().getCanonicalName() + "." + getName();
-    }
 }

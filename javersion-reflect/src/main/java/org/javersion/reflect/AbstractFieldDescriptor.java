@@ -41,7 +41,9 @@ public abstract class AbstractFieldDescriptor<
     public Object get(Object obj) {
         try {
             return field.get(obj);
-        } catch (IllegalArgumentException | IllegalAccessException e) {
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (IllegalAccessException e) {
             throw new ReflectionException(e);
         }
     }
@@ -82,14 +84,10 @@ public abstract class AbstractFieldDescriptor<
             @SuppressWarnings("unchecked")
             F other = (F) obj;
             return this.typeDescriptors.equals(other.typeDescriptors)
-                    && getField().equals(other.getField());
+                    && field.equals(other.field);
         } else {
             return false;
         }
-    }
-
-    public Field getField() {
-        return field;
     }
 
     public String getName() {
@@ -97,7 +95,10 @@ public abstract class AbstractFieldDescriptor<
     }
 
     public String toString() {
-        return field.toGenericString();
+        return field.getDeclaringClass().getCanonicalName() + "." + getName();
     }
 
+    public boolean isStatic() {
+        return Modifier.isStatic(field.getModifiers());
+    }
 }

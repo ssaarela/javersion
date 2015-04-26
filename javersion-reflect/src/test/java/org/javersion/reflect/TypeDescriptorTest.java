@@ -34,12 +34,8 @@ public class TypeDescriptorTest {
 
     static final TypeDescriptors TYPES = new TypeDescriptors();
 
-    static final TypeDescriptors STATIC_FIELDS = new TypeDescriptors(new Predicate<Field>() {
-        @Override
-        public boolean apply(Field input) {
-            return Modifier.isStatic(input.getModifiers());
-        }
-    });
+    static final TypeDescriptors STATIC_FIELDS =
+            new TypeDescriptors(input -> Modifier.isStatic(input.getModifiers()));
 
     public static class Cycle {
         Cycle cycle;

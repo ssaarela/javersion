@@ -15,39 +15,111 @@
  */
 package org.javersion.reflect;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.sameInstance;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.reflect.TypeDescriptorTest.STATIC_FIELDS;
 import static org.javersion.reflect.TypeDescriptorTest.TYPES;
-import static org.junit.Assert.assertThat;
+
+import java.lang.reflect.Field;
 
 import org.junit.Test;
 
 public class FieldDescriptorTest {
-    
-    private String thisIs;
+
+    private static String staticField;
+
+    private String privateField;
+
+    private transient String transientField;
+
+    private static TypeDescriptor type = TYPES.get(FieldDescriptorTest.class);
 
     @Test
     public void Get_Success() {
         FieldDescriptor fieldDescriptor = getTYPESDescriptor();
-        assertThat((TypeDescriptors) fieldDescriptor.getStatic(), sameInstance(TYPES));
+        assertThat((TypeDescriptors) fieldDescriptor.getStatic()).isSameAs(TYPES);
     }
 
     @Test(expected=ReflectionException.class)
     public void Set_Final_Value() {
         getTYPESDescriptor().setStatic(null);
     }
-    
+
     private FieldDescriptor getTYPESDescriptor() {
         FieldDescriptor fieldDescriptor = STATIC_FIELDS.get(TypeDescriptorTest.class).getField("TYPES");
         return fieldDescriptor;
     }
 
     @Test
-    public void Set() {
-        FieldDescriptor fieldDescriptor = TYPES.get(FieldDescriptorTest.class).getField("thisIs");
+    public void set_value() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
         fieldDescriptor.set(this, "Magic!");
-        assertThat(thisIs, equalTo("Magic!"));
+        assertThat(privateField).isEqualTo("Magic!");
     }
-    
+
+    @Test(expected = IllegalArgumentException.class)
+    public void get_value_from_wrong_type() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        fieldDescriptor.get(new Object());
+    }
+
+    @Test
+    public void basic_private_field() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        assertThat(fieldDescriptor.getName()).isEqualTo("privateField");
+        assertThat(fieldDescriptor.getType().getRawType()).isEqualTo(String.class);
+        assertThat(fieldDescriptor.getAnnotations()).isEmpty();
+        assertThat(fieldDescriptor.isTransient()).isFalse();
+        assertThat(fieldDescriptor.isStatic()).isFalse();
+    }
+
+    @Test
+    public void element_is_field() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        assertThat(fieldDescriptor.getElement()).isSameAs(fieldDescriptor.field);
+    }
+
+    @Test
+    public void wraps_java_reflect_Field() throws NoSuchFieldException {
+        Field field = FieldDescriptorTest.class.getDeclaredField("privateField");
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        assertThat(fieldDescriptor.field).isEqualTo(field);
+        assertThat(fieldDescriptor.toString())
+                .isEqualTo("org.javersion.reflect.FieldDescriptorTest.privateField");
+    }
+
+    @Test(expected = ReflectionException.class)
+    public void illegal_access() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        try {
+            fieldDescriptor.field.setAccessible(false);
+            fieldDescriptor.get(this);
+        } finally {
+            fieldDescriptor.field.setAccessible(true);
+        }
+    }
+
+    @Test
+    public void field_descriptor_from_another_TypeDescriptors_is_not_equal() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        FieldDescriptor other = new TypeDescriptors().get(FieldDescriptorTest.class).getField("privateField");
+        assertThat(fieldDescriptor.equals(other)).isFalse();
+    }
+
+    @Test
+    public void equals() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        assertThat(fieldDescriptor.equals(fieldDescriptor)).isTrue();
+        assertThat(fieldDescriptor.equals(new Object())).isFalse();
+
+        FieldDescriptor other = type.getField("transientField");
+        assertThat(fieldDescriptor.equals(other)).isFalse();
+    }
+
+    @Test
+    public void set_static_field() {
+        staticField = null;
+        FieldDescriptor fieldDescriptor = STATIC_FIELDS.get(FieldDescriptorTest.class).getField("staticField");
+        fieldDescriptor.setStatic("static");
+        assertThat(staticField).isEqualTo("static");
+    }
 }

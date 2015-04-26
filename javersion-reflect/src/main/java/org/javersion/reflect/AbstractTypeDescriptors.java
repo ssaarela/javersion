@@ -28,39 +28,31 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 public abstract class AbstractTypeDescriptors<
-            F extends AbstractFieldDescriptor<F, T, Ts>, 
+            F extends AbstractFieldDescriptor<F, T, Ts>,
             T extends AbstractTypeDescriptor<F, T, Ts>,
             Ts extends AbstractTypeDescriptors<F, T, Ts>> {
 
-    public static final Predicate<Field> NON_STATIC_OR_SYNTETHIC_FIELD = new Predicate<Field>() {
-        @Override
-        public boolean apply(Field field) {
+    public static final Predicate<Field> NON_STATIC_OR_SYNTETHIC_FIELD = field -> {
             int mod = field.getModifiers();
             return !(Modifier.isStatic(mod) || field.isSynthetic());
-        }
-    };
-    
-    public final Function<Class<?>, T> getTypeDescriptor = new Function<Class<?>, T>() {
-        @Override
-        public T apply(Class<?> input) {
-            return get(input);
-        }
-    };
-    
+        };
+
+    public final Function<Class<?>, T> getTypeDescriptor = input -> get(input);
+
     private final Map<TypeToken<?>, T> cache = Maps.newHashMap();
 
     protected final Predicate<? super Field> fieldFilter;
-    
-    
+
+
     public AbstractTypeDescriptors() {
         this(NON_STATIC_OR_SYNTETHIC_FIELD);
     }
-    
+
     public AbstractTypeDescriptors(Predicate<? super Field> fieldFilter) {
         this.fieldFilter = Check.notNull(fieldFilter, "fieldFilter");
     }
-    
-    
+
+
     public T get(Class<?> clazz) {
         return get(TypeToken.of(clazz));
     }
@@ -68,7 +60,7 @@ public abstract class AbstractTypeDescriptors<
     public T get(Type type) {
         return get(TypeToken.of(type));
     }
-    
+
     public T get(TypeToken<?> typeToken) {
         synchronized (cache) {
             T descriptor = cache.get(typeToken);
@@ -81,7 +73,7 @@ public abstract class AbstractTypeDescriptors<
     }
 
     protected abstract F newFieldDescriptor(Field field);
-    
+
     protected abstract T newTypeDescriptor(TypeToken<?> typeToken);
 
 }
