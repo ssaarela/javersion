@@ -31,6 +31,9 @@ public class FieldDescriptorTest {
 
     private transient String transientField;
 
+    @Deprecated
+    private String deprecatedField;
+
     private static TypeDescriptor type = TYPES.get(FieldDescriptorTest.class);
 
     @Test
@@ -121,5 +124,15 @@ public class FieldDescriptorTest {
         FieldDescriptor fieldDescriptor = STATIC_FIELDS.get(FieldDescriptorTest.class).getField("staticField");
         fieldDescriptor.setStatic("static");
         assertThat(staticField).isEqualTo("static");
+    }
+
+    @Test
+    public void inspect_annotations() {
+        FieldDescriptor field = type.getField("deprecatedField");
+        assertThat(field.getAnnotation(Deprecated.class)).isNotNull();
+        assertThat(field.hasAnnotation(Deprecated.class)).isTrue();
+        assertThat(field.getAnnotation(SuppressWarnings.class)).isNull();
+        assertThat(field.hasAnnotation(SuppressWarnings.class)).isFalse();
+        assertThat(field.getAnnotations()).hasSize(1);
     }
 }
