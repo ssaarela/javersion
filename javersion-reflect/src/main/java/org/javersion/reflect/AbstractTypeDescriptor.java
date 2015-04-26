@@ -203,7 +203,7 @@ public abstract class AbstractTypeDescriptor<
             constructor.setAccessible(true);
             return constructor.newInstance();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new ReflectionException(e);
         }
     }
 

@@ -16,10 +16,7 @@
 package org.javersion.reflect;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -39,6 +36,13 @@ public class TypeDescriptorTest {
 
     public static class Cycle {
         Cycle cycle;
+        public Cycle() {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public enum E {
+        EVAL
     }
 
     public static class Generic {
@@ -63,22 +67,130 @@ public class TypeDescriptorTest {
     public void Get_Super_Classes() {
         TypeDescriptor type = TYPES.get(LinkedHashMap.class);
         Set<Class<?>> superClasses = type.getSuperClasses();
-        assertThat(superClasses, contains(expectedSuperClasses));
+        assertThat(superClasses).contains(expectedSuperClasses);
     }
 
     @Test
     public void Get_Interfaces() {
         TypeDescriptor type = TYPES.get(LinkedHashMap.class);
         Set<Class<?>> superClasses = type.getInterfaces();
-        assertThat(superClasses, contains(expectedInterfaces));
+        assertThat(superClasses).contains(expectedInterfaces);
     }
 
     @Test
     public void Get_Fields() {
         TypeDescriptor type = TYPES.get(ArrayList.class);
-        assertThat(type.getFields().keySet(), equalTo((Set<String>) newHashSet(
+        assertThat(type.getFields().keySet()).isEqualTo((Set<String>) newHashSet(
                 "elementData", "size",
-                "modCount")));
+                "modCount"));
+    }
+
+    @Test
+    public void to_string() {
+        TypeDescriptor type = TYPES.get(Cycle.class);
+        assertThat(type.toString()).isEqualTo("org.javersion.reflect.TypeDescriptorTest$Cycle");
+
+        type = TYPES.get(TypeDescriptorTest.class);
+        assertThat(type.toString()).isEqualTo("org.javersion.reflect.TypeDescriptorTest");
+    }
+
+    @Test
+    public void simple_name() {
+        TypeDescriptor type = TYPES.get(Cycle.class);
+        assertThat(type.getSimpleName()).isEqualTo("TypeDescriptorTest$Cycle");
+
+        type = TYPES.get(TypeDescriptorTest.class);
+        assertThat(type.getSimpleName()).isEqualTo("TypeDescriptorTest");
+    }
+
+    @Test
+    public void raw_type_equality_check() {
+        TypeDescriptor setType = TYPES.get(Set.class);
+        assertThat(setType.equalTo(Set.class)).isTrue();
+        assertThat(setType.equalTo(Collection.class)).isFalse();
+    }
+
+    @Test
+    public void field_existence_check() {
+        TypeDescriptor type = TYPES.get(FieldDescriptorTest.class);
+        assertThat(type.hasField("privateField")).isTrue();
+        assertThat(type.hasField("foobar")).isFalse();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void field_not_found() {
+        TypeDescriptor type = TYPES.get(FieldDescriptorTest.class);
+        type.getField("foobar");
+    }
+
+    @Test
+    public void get_element_returns_raw_type() {
+        assertThat(TYPES.get(Set.class).getElement()).isEqualTo(Set.class);
+    }
+
+    @Test
+    public void create_instance() {
+        TypeDescriptor type = TYPES.get(TypeDescriptorTest.class);
+        TypeDescriptorTest instance = (TypeDescriptorTest) type.newInstance();
+        assertThat(instance).isNotSameAs(this);
+    }
+
+    @Test(expected = ReflectionException.class)
+    public void constructor_not_found() {
+        TypeDescriptor type = TYPES.get(FieldDescriptor.class);
+        type.newInstance();
+    }
+
+    @Test(expected = ReflectionException.class)
+    public void construction_exception() {
+        TypeDescriptor type = TYPES.get(Cycle.class);
+        type.newInstance();
+    }
+
+    @Test
+    public void enum_check() {
+        TypeDescriptor type = TYPES.get(FieldDescriptor.class);
+        assertThat(type.isEnum()).isFalse();
+
+        type = TYPES.get(E.class);
+        assertThat(type.isEnum()).isTrue();
+    }
+
+    @Test
+    public void super_type_check() {
+        TypeDescriptor setType = TYPES.get(Set.class);
+        assertThat(setType.isSuperTypeOf(Collection.class)).isFalse();
+        assertThat(setType.isSuperTypeOf(Set.class)).isTrue();
+        assertThat(setType.isSuperTypeOf(SortedSet.class)).isTrue();
+        assertThat(setType.isSuperTypeOf(TreeSet.class)).isTrue();
+    }
+
+    @Test
+    public void sub_type_check() {
+        TypeDescriptor setType = TYPES.get(Set.class);
+        assertThat(setType.isSubTypeOf(Collection.class)).isTrue();
+        assertThat(setType.isSubTypeOf(Set.class)).isTrue();
+        assertThat(setType.isSubTypeOf(SortedSet.class)).isFalse();
+    }
+
+    @Test
+    public void not_equal() {
+        assertThat(TYPES.get(Object.class)).isNotEqualTo(new Object());
+    }
+
+    @Test
+    public void primitive_or_wrapper() {
+        TypeDescriptor type = TYPES.get(Cycle.class);
+        assertThat(type.isPrimitiveOrWrapper()).isFalse();
+
+        type = TYPES.get(int.class);
+        assertThat(type.isPrimitiveOrWrapper()).isTrue();
+
+        type = TYPES.get(Boolean.class);
+        assertThat(type.isPrimitiveOrWrapper()).isTrue();
+
+        type = TYPES.get(String.class);
+        assertThat(type.isPrimitiveOrWrapper()).isFalse();
     }
 
     @Test
@@ -89,11 +201,11 @@ public class TypeDescriptorTest {
         TypeDescriptor fieldType = field.getType();
         FieldDescriptor fieldTypeField = fieldType.getField("cycle");
 
-        assertThat(type.hashCode(), equalTo(fieldType.hashCode()));
-        assertThat(field.hashCode(), equalTo(fieldTypeField.hashCode()));
+        assertThat(type.hashCode()).isEqualTo(fieldType.hashCode());
+        assertThat(field.hashCode()).isEqualTo(fieldTypeField.hashCode());
 
-        assertThat(type, equalTo(fieldType));
-        assertThat(field, equalTo(fieldTypeField));
+        assertThat(type).isEqualTo(fieldType);
+        assertThat(field).isEqualTo(fieldTypeField);
     }
 
     @Test
@@ -102,10 +214,10 @@ public class TypeDescriptorTest {
         FieldDescriptor mapField = type.getField("map");
         FieldDescriptor mapOfMapsField = type.getField("mapOfMaps");
 
-        assertThat(mapField.getType(), not(equalTo(mapOfMapsField.getType())));
+        assertThat(mapField.getType()).isNotEqualTo(mapOfMapsField.getType());
 
         TypeDescriptor mapOfMapsValueType = mapOfMapsField.getType().resolveGenericParameter(Map.class, 1);
-        assertThat(mapField.getType(), equalTo(mapOfMapsValueType));
+        assertThat(mapField.getType()).isEqualTo(mapOfMapsValueType);
     }
 
     @Test(expected=RuntimeException.class)
@@ -134,11 +246,11 @@ public class TypeDescriptorTest {
 
         TypeDescriptor fieldType = fieldDescriptor.getType();
 
-        assertThat(fieldType.resolveGenericParameter(AbstractTypeDescriptors.class, 0),
-                equalTo(STATIC_FIELDS.get(FieldDescriptor.class)));
+        assertThat(fieldType.resolveGenericParameter(AbstractTypeDescriptors.class, 0))
+            .isEqualTo(STATIC_FIELDS.get(FieldDescriptor.class));
 
-        assertThat(fieldType.resolveGenericParameter(AbstractTypeDescriptors.class, 1),
-                equalTo(STATIC_FIELDS.get(TypeDescriptor.class)));
+        assertThat(fieldType.resolveGenericParameter(AbstractTypeDescriptors.class, 1))
+                .isEqualTo(STATIC_FIELDS.get(TypeDescriptor.class));
     }
 
 }
