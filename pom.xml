@@ -54,8 +54,8 @@
     <module>javersion-core</module>
     <module>javersion-spring-jdbc</module>
     <module>javersion-object</module>
-    <!--<module>javersion-json-webapp</module>-->
     <module>javersion-json</module>
+    <!--<module>javersion-json-webapp</module>-->
   </modules>
 
   <properties>

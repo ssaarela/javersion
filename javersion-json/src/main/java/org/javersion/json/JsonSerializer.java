@@ -64,7 +64,7 @@ public class JsonSerializer {
 
     public static final String META_PREFIX = "_";
 
-    private final Schema<Persistent.Type> schemaRoot;
+    private final Schema<?> schemaRoot;
 
     private final Config config;
 
@@ -76,7 +76,7 @@ public class JsonSerializer {
         this(new Config(), schemaRoot);
     }
 
-    public JsonSerializer(Config config, Schema<Persistent.Type> schemaRoot) {
+    public JsonSerializer(Config config, Schema<?> schemaRoot) {
         this.config = config;
         this.schemaRoot = schemaRoot;
     }
@@ -215,7 +215,7 @@ public class JsonSerializer {
     private boolean isMap(PropertyPath path) {
         if (schemaRoot != null) {
             Schema schema = this.schemaRoot.find(path);
-            return schema != null && schema.hasChild(NodeId.ANY_KEY);
+            return schema != null && schema.hasChild(NodeId.ANY_KEY) || schema.hasChild(NodeId.ANY);
         }
         return false;
     }
