@@ -2,9 +2,6 @@ package org.javersion.store;
 
 import javax.sql.DataSource;
 
-import org.javersion.core.VersionStore;
-import org.javersion.object.ObjectVersionGraph;
-import org.javersion.path.PropertyPath;
 import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +14,7 @@ import com.mysema.query.sql.SQLQueryFactory;
 
 @Configuration
 @EnableAutoConfiguration
-@EnableTransactionManagement
+@EnableTransactionManagement(proxyTargetClass = true)
 public class PersistenceTestConfiguration {
 
     @Bean
@@ -33,10 +30,7 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public VersionStore<String,
-                PropertyPath, Object, Void,
-                ObjectVersionGraph<Void>,
-                ObjectVersionGraph.Builder<Void>> versionStore(ObjectVersionStoreJdbc.Initializer initializer) {
+    public ObjectVersionStoreJdbc<Void> versionStore(ObjectVersionStoreJdbc.Initializer initializer) {
         return new ObjectVersionStoreJdbc<>(initializer);
     }
 

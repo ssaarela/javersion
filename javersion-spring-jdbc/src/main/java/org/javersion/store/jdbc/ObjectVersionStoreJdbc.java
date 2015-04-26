@@ -12,15 +12,14 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 import java.math.BigDecimal;
 import java.util.*;
 
+import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionNode;
 import org.javersion.core.VersionType;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
-import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
-import org.javersion.core.VersionStore;
 import org.javersion.store.sql.QRepository;
 import org.javersion.store.sql.QVersion;
 import org.javersion.store.sql.QVersionParent;
@@ -46,10 +45,7 @@ import com.mysema.query.types.QTuple;
 import com.mysema.query.types.path.StringPath;
 import com.mysema.query.types.query.NumberSubQuery;
 
-public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
-        PropertyPath, Object, M,
-        ObjectVersionGraph<M>,
-        ObjectVersionGraph.Builder<M>> {
+public class ObjectVersionStoreJdbc<M> {
 
     public static class Initializer {
         private final SQLQueryFactory queryFactory;
@@ -168,18 +164,15 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         return queryFactory.subQuery().from(qVersion).unique(qVersion.ordinal.max());
     }
 
-    @Override
     public long getNode() {
         return node;
     }
 
-    @Override
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(String id, VersionNode<PropertyPath, Object, M> version) {
         append(id, singleton(version));
     }
 
-    @Override
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(String docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
         String tx = null;
@@ -208,7 +201,6 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
         }
     }
 
-    @Override
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRES_NEW)
     public void commit() {
         long repositoryOrdinal = getLastOrdinalForUpdate();
@@ -230,7 +222,11 @@ public class ObjectVersionStoreJdbc<M> implements VersionStore<String,
                 .execute();
     }
 
-    @Override
+    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public ObjectVersionGraph<M> load(String docId) {
+        return load(singleton(docId));
+    }
+
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> load(Iterable<String> docIds) {
         return ObjectVersionGraph.init(loadVersions(ImmutableSet.copyOf(docIds)));

@@ -8,7 +8,6 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
-import org.javersion.core.VersionStore;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.object.ObjectVersion;
@@ -17,6 +16,7 @@ import org.javersion.object.ObjectVersionGraph;
 import org.javersion.object.ObjectVersionManager;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
+import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
@@ -52,10 +52,7 @@ public class ObjectVersionStoreJdbcTest {
     private final ObjectVersionManager<Product, Void> versionManager = new ObjectVersionManager<Product, Void>(Product.class).init();
 
     @Resource
-    private VersionStore<String,
-                PropertyPath, Object, Void,
-                ObjectVersionGraph<Void>,
-                ObjectVersionGraph.Builder<Void>> versionStore;
+    private ObjectVersionStoreJdbc<Void> versionStore;
 
     @Test
     public void insert_and_load() {
