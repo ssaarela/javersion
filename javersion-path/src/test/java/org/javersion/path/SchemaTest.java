@@ -12,6 +12,36 @@ import org.junit.Test;
 public class SchemaTest {
 
     @Test
+    public void secured_path_besides_anything() {
+        // : "root"
+        // secure.property: "secure property"
+        // *: "any"
+        // **: @*
+
+        Builder<String> root = new Builder<>("root");
+        Builder<String> any = new Builder<>("any");
+
+        root.addChild(NodeId.ANY, any);
+        any.addChild(NodeId.ANY, any);
+        root.getOrCreate(ROOT.property("secure").property("property"), "secure property");
+
+        Schema<String> schema = root.build();
+        assertThat(schema.get(ROOT.property("foo")).getValue()).isEqualTo("any");
+        assertThat(schema.get(ROOT.key("foo").key("bar")).getValue()).isEqualTo("any");
+        assertThat(schema.get(ROOT.index(123).index(456)).getValue()).isEqualTo("any");
+        assertThat(schema.get((ROOT.property("foo").property("secure"))).getValue()).isEqualTo("any");
+
+        assertThat(schema.get(ROOT.property("secure").property("property")).getValue()).isEqualTo("secure property");
+
+        try {
+            schema.get(ROOT.property("secure").property("insecure"));
+            fail("Found insecure under secure");
+        } catch (IllegalArgumentException e) {
+            // as expected
+        }
+    }
+
+    @Test
     public void anything_goes() {
         Builder<String> root = new Builder<>("root");
         root.connect(ROOT.any(), root);
