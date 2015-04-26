@@ -175,7 +175,12 @@ public class TypeDescriptorTest {
 
     @Test
     public void not_equal() {
-        assertThat(TYPES.get(Object.class)).isNotEqualTo(new Object());
+        assertThat(TypeDescriptors.getTypeDescriptor(Object.class)).isNotEqualTo(new Object());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void get_type_descriptor_of_null() {
+        TypeDescriptors.getTypeDescriptor(null);
     }
 
     @Test
