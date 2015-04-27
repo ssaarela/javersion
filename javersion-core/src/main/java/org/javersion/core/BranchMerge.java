@@ -33,8 +33,8 @@ public class BranchMerge<K, V, M> extends Merge<K, V, M> {
 
     private Set<Revision> heads;
 
-    public <T extends Version<K, V, M>> BranchMerge(Iterable<? extends Merge<K, V, M>> versions) {
-        super(new Builder<K, V, M>(versions));
+    public <T extends Version<K, V, M>> BranchMerge(Iterable<? extends Merge<K, V, M>> branchMerges) {
+        super(new Builder<K, V, M>(branchMerges));
     }
 
     @Override

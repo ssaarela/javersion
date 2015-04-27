@@ -120,6 +120,7 @@ public class MergeBuilder<K, V, M> {
             nextVersion(node);
         }
         conflicts.putAll(node.conflicts);
+        // FIXME: Analyze actual heads! -> heads.removeAll(?):
         heads.addAll(node.getMergeHeads());
         return this;
     }

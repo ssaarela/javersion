@@ -17,15 +17,19 @@ package org.javersion.object;
 
 import static java.lang.String.format;
 import static java.util.Collections.unmodifiableMap;
+import static org.javersion.path.PropertyPath.ROOT;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.Schema;
+import org.javersion.util.Check;
 
 import com.google.common.collect.Maps;
 
@@ -41,9 +45,9 @@ public class WriteContext {
 
     private final Map<PropertyPath, Object> properties = Maps.newLinkedHashMap();
 
-    public WriteContext(Schema<ValueType> schemaRoot, Object root) {
+    public WriteContext(Schema<ValueType> schemaRoot, @Nullable Object root) {
+        this.schemaRoot = Check.notNull(schemaRoot, "schemaRoot");
         this.root = root;
-        this.schemaRoot = schemaRoot;
     }
 
     public void serialize(PropertyPath path, Object object) {
@@ -51,7 +55,7 @@ public class WriteContext {
     }
 
     public Map<PropertyPath, Object> getMap() {
-        serialize(PropertyPath.ROOT, root);
+        serialize(ROOT, root);
         QueueItem<PropertyPath, Object> currentItem;
         while ((currentItem = queue.pollFirst()) != null) {
             PropertyPath path = currentItem.key;
