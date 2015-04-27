@@ -14,7 +14,7 @@ import com.google.common.collect.Maps;
 
 public class MapTest {
 
-    @Versionable(alias="kv", reference = true)
+    @Versionable(alias="kv", targetPath = "kvs")
     public static class KeyValue {
         @Id public int id;
         @SuppressWarnings("unused")

@@ -29,6 +29,8 @@ import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
+import com.google.common.base.Strings;
+
 public class VersionableReferenceTypeMapping implements TypeMapping {
 
     @Override
@@ -36,16 +38,12 @@ public class VersionableReferenceTypeMapping implements TypeMapping {
         TypeDescriptor type = localTypeDescriptor.typeDescriptor;
         Versionable versionable = type.getAnnotation(Versionable.class);
         return versionable != null
-                && versionable.reference()
+                && !isNullOrEmpty(versionable.targetPath())
                 && (!path.isPresent() || isReferencePath(getTargetPath(versionable, type), path.get()));
     }
 
     private PropertyPath getTargetPath(Versionable versionable, TypeDescriptor type) {
-        if (!isNullOrEmpty(versionable.targetPath())) {
-            return PropertyPath.parse(versionable.targetPath());
-        } else {
-            return ROOT.property(Versionable.REFERENCES).property(getAlias(versionable, type));
-        }
+        return PropertyPath.parse(versionable.targetPath());
     }
 
     @Override

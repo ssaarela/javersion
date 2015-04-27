@@ -33,7 +33,7 @@ public class SetTest {
     public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
             .havingSubClasses(NodeExt.class)
-            .asReferenceWithAlias("nodes")
+            .asReferenceForPath("nodes")
             .build();
 
     private final ObjectSerializer<NodeSet> nodeSetSerializer = new ObjectSerializer<>(NodeSet.class, typeMappings);

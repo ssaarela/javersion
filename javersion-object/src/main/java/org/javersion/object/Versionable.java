@@ -27,12 +27,8 @@ import java.lang.annotation.Target;
 @Documented
 public @interface Versionable {
 
-    String REFERENCES = "$REF";
-
     String alias() default "";
 
     String targetPath() default "";
-
-    boolean reference() default false;
 
 }

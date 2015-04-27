@@ -49,7 +49,7 @@ public class ReferencesTest {
 
     public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
-            .asReferenceWithAlias("nodes")
+            .asReferenceForPath("nodes")
             .build();
 
     private final ObjectSerializer<Node> nodeSerializer = new ObjectSerializer<>(Node.class, typeMappings);
@@ -67,15 +67,15 @@ public class ReferencesTest {
         Map<PropertyPath, Object> expectedProperties = properties(
                 ROOT, 1l,
 
-                property("$REF.nodes[1]"), NODE_ALIAS,
-                property("$REF.nodes[1].id"), 1l,
-                property("$REF.nodes[1].left"), 2l,
-                property("$REF.nodes[1].right"), 1l,
+                property("nodes[1]"), NODE_ALIAS,
+                property("nodes[1].id"), 1l,
+                property("nodes[1].left"), 2l,
+                property("nodes[1].right"), 1l,
 
-                property("$REF.nodes[2]"), NODE_ALIAS,
-                property("$REF.nodes[2].id"), 2l,
-                property("$REF.nodes[2].left"), 1l,
-                property("$REF.nodes[2].right"), 2l
+                property("nodes[2]"), NODE_ALIAS,
+                property("nodes[2].id"), 2l,
+                property("nodes[2].left"), 1l,
+                property("nodes[2].right"), 2l
         );
 
         assertThat(properties).isEqualTo(expectedProperties);
