@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.javersion.util.*;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -120,12 +121,24 @@ public class MergeBuilder<K, V, M> {
             nextVersion(node);
         }
         conflicts.putAll(node.conflicts);
-        // FIXME: Analyze actual heads! -> heads.removeAll(?):
-        heads.addAll(node.getMergeHeads());
         return this;
     }
 
     private void nextVersion(final Merge<K, V, M> node) {
+        heads.removeAll(node.mergedRevisions.asSet());
+        boolean newHeads = false;
+        for (Revision mergeHead : node.getMergeHeads()) {
+            if (!mergedRevisions.contains(mergeHead)) {
+                newHeads = true;
+                heads.add(mergeHead);
+            }
+        }
+        if (newHeads) {
+            handleMerge(node);
+        }
+    }
+
+    private void handleMerge(final Merge<K, V, M> node) {
         final Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
             @Override
             public boolean merge(Entry<K, VersionProperty<V>> oldEntry, Entry<K, VersionProperty<V>> newEntry) {
@@ -151,10 +164,8 @@ public class MergeBuilder<K, V, M> {
 
             }
         };
-
         mergedProperties.mergeAll(node.mergedProperties, merger);
         mergedRevisions.addAllFrom(node.mergedRevisions);
-        heads.removeAll(node.mergedRevisions.asSet());
     }
 
     private boolean handleMergeConflict(K key, VersionProperty<V> prevValue, VersionProperty<V> nextValue) {
@@ -171,6 +182,7 @@ public class MergeBuilder<K, V, M> {
         first = false;
         mergedProperties = node.mergedProperties.toMutableMap();
         mergedRevisions = node.mergedRevisions.toMutableSet();
+        heads.addAll(node.getMergeHeads());
     }
 
     protected boolean shouldResolveToNext(VersionProperty<V> prevValue, VersionProperty<V> nextValue) {

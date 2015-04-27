@@ -252,8 +252,20 @@ public class SimpleVersionGraphTest {
                                 "married", "2013-10-12")) // 4
         );
         b.add(
-                then("Merge alt-branch and default")
+                then("Merge default to alt-branch")
                         .mergeBranches(setOf(ALT_BRANCH, DEFAULT_BRANCH))
+                        .expectMergeHeads(setOf(REV[6]))
+                        .expectProperties(mapOf(
+                                "firstName", "John",
+                                "lastName", "Foe",
+                                "status", "Just married")) // 4
+                        .expectConflicts(multimapOf(
+                                "status", "Single" // 2 - unresolved conflict
+                        ))
+        );
+        b.add(
+                then("Merge alt-branch to default")
+                        .mergeBranches(setOf(DEFAULT_BRANCH, ALT_BRANCH))
                         .expectMergeHeads(setOf(REV[6]))
                         .expectProperties(mapOf(
                                 "firstName", "John",
