@@ -3,8 +3,7 @@ create table version_type (
   primary key (name)
 );
 insert into version_type values ('NORMAL');
-insert into version_type values ('ROOT');
-insert into version_type values ('REWRITE');
+insert into version_type values ('RESET');
 
 create table version (
   doc_id varchar(255) not null,
