@@ -102,10 +102,10 @@ public class Version<K, V, M> {
         return toStringHelper(this)
                 .add("revision", revision)
                 .add("branch", branch)
-                .add("parentRevisions", parentRevisions)
                 .add("type", type)
-                .add("changeset", changeset)
                 .add("meta", meta)
+                .add("parentRevisions", parentRevisions)
+                .add("changeset", changeset)
                 .toString();
     }
 
