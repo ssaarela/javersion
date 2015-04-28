@@ -85,4 +85,8 @@ public class ObjectVersionManager<O, M> {
     public VersionNode<PropertyPath, Object, M> getVersionNode(Revision revision) {
         return versionGraph.getVersionNode(revision);
     }
+
+    public Set<String> getBranches() {
+        return versionGraph.getBranches();
+    }
 }
