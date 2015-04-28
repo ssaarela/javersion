@@ -17,6 +17,7 @@ package org.javersion.core;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Maps.filterValues;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static com.google.common.collect.Maps.transformValues;
 import static java.util.Arrays.asList;
@@ -26,6 +27,8 @@ import static org.javersion.core.VersionType.NORMAL;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import org.javersion.path.PropertyPath;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -165,6 +168,17 @@ public class Version<K, V, M> {
 
         public This meta(M meta) {
             this.meta = meta;
+            return self();
+        }
+
+        public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?, ?> versionGraph) {
+            if (parentRevisions != null) {
+                changeset(versionGraph.mergeRevisions(parentRevisions).diff(newProperties));
+            } else if (newProperties != null) {
+                changeset(filterValues(newProperties, v -> v != null));
+            } else {
+                changeset(null);
+            }
             return self();
         }
 

@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
+import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
@@ -68,7 +69,7 @@ public class ObjectVersionManager<O, M> {
         return versionGraph.mergeRevisions(revisions);
     }
 
-    void commit(ObjectVersion<M> version) {
+    public void commit(Version<PropertyPath, Object, M> version) {
         versionGraph = versionGraph.commit(version);
         heads = of(version.revision);
     }

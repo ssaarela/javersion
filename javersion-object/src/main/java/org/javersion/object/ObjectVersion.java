@@ -20,7 +20,7 @@ import org.javersion.path.PropertyPath;
 
 public class ObjectVersion<M> extends Version<PropertyPath, Object, M> {
 
-    public ObjectVersion(ObjectVersionBuilder<M> builder) {
+    public ObjectVersion(Version.BuilderBase<PropertyPath, Object, M, ?> builder) {
         super(builder);
     }
 

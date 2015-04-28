@@ -22,13 +22,4 @@ public class ObjectVersionBuilder<M> extends Version.BuilderBase<PropertyPath, O
         return new ObjectVersion<>(this);
     }
 
-    public void changeset(Map<PropertyPath, Object> newProperties, VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ?> versionGraph) {
-        if (parentRevisions != null) {
-            changeset(versionGraph.mergeRevisions(parentRevisions).diff(newProperties));
-        } else if (newProperties != null) {
-            changeset(filterValues(newProperties, v -> v != null));
-        } else {
-            changeset(null);
-        }
-    }
 }
