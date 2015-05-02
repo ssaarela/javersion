@@ -90,7 +90,7 @@ public class ObjectVersionStoreJdbcTest {
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(lastVersion);
 
         versionManager.init(versionGraph);
-        Product persisted = versionManager.mergeObject(Version.DEFAULT_BRANCH).object;
+        Product persisted = versionManager.mergeBranches(Version.DEFAULT_BRANCH).object;
         assertThat(persisted.id).isEqualTo(product.id);
         assertThat(persisted.name).isEqualTo(product.name);
         assertThat(persisted.outOfStock).isEqualTo(product.outOfStock);

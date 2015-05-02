@@ -31,6 +31,10 @@ public class Schema<T> extends SchemaBase<Schema<T>> {
 
     private final Map<NodeId, Schema<T>> children;
 
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
+    }
+
     protected Schema(Builder<T> builder) {
         this(builder, new IdentityHashMap<Builder<T>, Schema<T>>());
     }

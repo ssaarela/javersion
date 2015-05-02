@@ -22,23 +22,16 @@ import static com.google.common.collect.Maps.transformValues;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.path.PropertyPath;
 import org.javersion.util.PersistentHashMap;
 import org.javersion.util.PersistentHashSet;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
 public abstract class Merge<K, V, M> {
-
-//    protected static <K, V, M> Iterable<Merge<K, V, M>> toMergeNodes(Iterable<VersionNode<K, V, M>> nodes) {
-//        return Iterables.transform(nodes, new Function<VersionNode<K, V, M>, Merge<K, V, M>>() {
-//            @Override
-//            public Merge<K, V, M> apply(VersionNode<K, V, M> input) {
-//                return input;
-//            }
-//        });
-//    }
 
     public final Function<VersionProperty<V>, V> getVersionPropertyValue = new Function<VersionProperty<V>, V>() {
 
@@ -67,7 +60,11 @@ public abstract class Merge<K, V, M> {
     protected abstract void setMergeHeads(Set<Revision> heads);
 
     public Map<K, V> diff(Map<K, V> newProperties) {
-        Map<K, V> diff = Diff.diff(getProperties(), newProperties);
+        return diff(newProperties, p -> true);
+    }
+
+    public Map<K, V> diff(Map<K, V> newProperties, Predicate<K> filter) {
+        Map<K, V> diff = Diff.diff(getProperties(), newProperties, filter);
         conflicts.keySet().stream().forEach(k -> {
             // Mark persistent conflict resolved by default
             if (!diff.containsKey(k) && newProperties.containsKey(k)) {

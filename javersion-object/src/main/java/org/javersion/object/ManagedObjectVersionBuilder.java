@@ -5,6 +5,7 @@ import java.util.Map;
 import org.javersion.core.Version;
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.SchemaPathFilter;
 
 public class ManagedObjectVersionBuilder<M> extends Version.BuilderBase<PropertyPath, Object, M, ManagedObjectVersionBuilder<M>> {
 
@@ -18,7 +19,11 @@ public class ManagedObjectVersionBuilder<M> extends Version.BuilderBase<Property
     }
 
     public ObjectVersion<M> build(boolean commit) {
-        changeset(newProperties, manager.getVersionGraph());
+        if (manager.useSchemaFilter) {
+            changeset(newProperties, manager.getVersionGraph(), new SchemaPathFilter(manager.getSchema()));
+        } else {
+            changeset(newProperties, manager.getVersionGraph());
+        }
         ObjectVersion<M> version = new ObjectVersion<>(this);
         if (commit) {
             manager.commit(version);

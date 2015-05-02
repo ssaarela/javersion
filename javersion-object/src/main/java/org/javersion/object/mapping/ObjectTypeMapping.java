@@ -15,14 +15,13 @@
  */
 package org.javersion.object.mapping;
 
-import static org.javersion.object.types.ObjectType.ignore;
-
 import java.util.Optional;
 import java.util.Set;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.Id;
 import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.VersionIgnore;
 import org.javersion.object.types.IdentifiableObjectType;
 import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.ObjectType;
@@ -32,6 +31,7 @@ import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 
+import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
@@ -39,18 +39,23 @@ import com.google.common.collect.Sets;
 
 public class ObjectTypeMapping<O> implements TypeMapping {
 
+    public static final Predicate<FieldDescriptor> DEFAULT_FILTER = field -> !field.isTransient() && !field.hasAnnotation(VersionIgnore.class);
+
     private final BiMap<String, TypeDescriptor> typesByAlias;
 
-    public ObjectTypeMapping(TypeDescriptor typeDescriptor) {
-        this(getAlias(typeDescriptor), typeDescriptor);
+    private final Predicate<FieldDescriptor> filter;
+
+    public ObjectTypeMapping(TypeDescriptor typeDescriptor, Predicate<FieldDescriptor> filter) {
+        this(getAlias(typeDescriptor), typeDescriptor, filter);
     }
 
-    public ObjectTypeMapping(String alias, TypeDescriptor typeDescriptor) {
-        this(ImmutableBiMap.of(alias, typeDescriptor));
+    public ObjectTypeMapping(String alias, TypeDescriptor typeDescriptor, Predicate<FieldDescriptor> filter) {
+        this(ImmutableBiMap.of(alias, typeDescriptor), filter);
     }
 
-    public ObjectTypeMapping(BiMap<String, TypeDescriptor> typesByAlias) {
+    public ObjectTypeMapping(BiMap<String, TypeDescriptor> typesByAlias, Predicate<FieldDescriptor> filter) {
         this.typesByAlias = typesByAlias;
+        this.filter = filter;
     }
 
     @Override
@@ -67,18 +72,14 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
 
     @Override
-    public  synchronized ValueType describe(Optional<PropertyPath> path, TypeDescriptor type, DescribeContext context) {
-        return describe(path.get(), typesByAlias, context);
-    }
-
-    public static ValueType describe(PropertyPath path, BiMap<String, TypeDescriptor> typesByAlias, DescribeContext context) {
+    public  synchronized ValueType describe(Optional<PropertyPath> optionalPath, TypeDescriptor typeDescriptor, DescribeContext context) {
+        PropertyPath path = optionalPath.get();
         Set<FieldDescriptor> uniqueFields = Sets.newHashSet();
         FieldDescriptor idField = null;
         IdentifiableType idType = null;
         for (TypeDescriptor type : typesByAlias.values()) {
             for (FieldDescriptor fieldDescriptor : type.getFields().values()) {
-                // TODO: @VersionIgnore / transient?
-                if (!ignore(fieldDescriptor) && uniqueFields.add(fieldDescriptor)) {
+                if (uniqueFields.add(fieldDescriptor) && filter.apply(fieldDescriptor)) {
                     SubPath subPath = path.property(fieldDescriptor.getName());
                     if (fieldDescriptor.hasAnnotation(Id.class)) {
                         idField = fieldDescriptor;

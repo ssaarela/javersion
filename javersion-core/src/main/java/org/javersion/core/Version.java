@@ -17,6 +17,7 @@ package org.javersion.core;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.Maps.filterEntries;
 import static com.google.common.collect.Maps.filterValues;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static com.google.common.collect.Maps.transformValues;
@@ -31,6 +32,8 @@ import java.util.Set;
 import org.javersion.path.PropertyPath;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -172,10 +175,14 @@ public class Version<K, V, M> {
         }
 
         public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?, ?> versionGraph) {
+            return changeset(newProperties, versionGraph, p -> true);
+        }
+
+        public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?, ?> versionGraph, Predicate<K> filter) {
             if (parentRevisions != null) {
-                changeset(versionGraph.mergeRevisions(parentRevisions).diff(newProperties));
+                changeset(versionGraph.mergeRevisions(parentRevisions).diff(newProperties, filter));
             } else if (newProperties != null) {
-                changeset(filterValues(newProperties, v -> v != null));
+                changeset(filterEntries(newProperties, entry -> filter.apply(entry.getKey()) && entry.getValue() != null));
             } else {
                 changeset(null);
             }

@@ -88,6 +88,10 @@ public class ReadContext {
         return propertyTree != null ? prepareObject(propertyTree) : null;
     }
 
+    public boolean isMappedPath(PropertyPath path) {
+        return schemaRoot.find(path) != null;
+    }
+
     public Object prepareObject(PropertyTree propertyTree) {
         return getObject(propertyTree, true);
     }

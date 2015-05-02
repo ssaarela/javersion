@@ -57,8 +57,32 @@ public class DiffTest {
 
     @Test
     public void All_Different_2() {
-        Map<Object, Object> diff = diff(map(1, 1, 2, 2), map(3, 3, 4, 4, 5, 5));
+        Map<Object, Object> diff = diff(map(1,1, 2,2), map(3,3, 4,4, 5,5));
         assertThat(diff, equalTo(map(1,null, 2,null, 3,3, 4,4, 5,5)));
+    }
+
+    @Test
+    public void filtered_difference_all_filtered() {
+        Map<Object, Object> diff = diff(map(1,1, 2,2), map(3,3, 4,4, 5,5), k -> false);
+        assertThat(diff, equalTo(map()));
+    }
+
+    @Test
+    public void filtered_difference() {
+        Map<Object, Object> diff = diff(map(1,1, 2,2, 3,3), map(1,1, 2,4, 3,5), k -> (Integer) k != 2);
+        assertThat(diff, equalTo(map(3, 5)));
+    }
+
+    @Test
+    public void filtered_difference_deleted_keys1() {
+        Map<Object, Object> diff = diff(map(1, 1, 2, 2, 3, 3), map(), k -> false);
+        assertThat(diff, equalTo(map()));
+    }
+
+    @Test
+    public void filtered_difference_deleted_keys2() {
+        Map<Object, Object> diff = diff(map(), map(1,1, 2,2, 3,3), k -> false);
+        assertThat(diff, equalTo(map()));
     }
 
     private static Map<Object, Object> map(Object... keysAndValues) {

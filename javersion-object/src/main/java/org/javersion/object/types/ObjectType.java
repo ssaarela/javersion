@@ -19,7 +19,6 @@ import java.util.Map;
 
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
-import org.javersion.object.VersionIgnore;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.NodeId;
@@ -76,7 +75,7 @@ public class ObjectType<O> implements ValueType {
         TypeDescriptor typeDescriptor = getAlias(object.getClass());
         for (PropertyTree child : propertyTree.getChildren()) {
             NodeId nodeId = child.getNodeId();
-            if (nodeId.isKey() && typeDescriptor.hasField(nodeId.getKey())) {
+            if (context.isMappedPath(child.path) && nodeId.isKey() && typeDescriptor.hasField(nodeId.getKey())) {
                 FieldDescriptor fieldDescriptor = typeDescriptor.getField(nodeId.getKey());
                 Object value = context.getObject(child);
                 fieldDescriptor.set(object, value);
@@ -94,16 +93,12 @@ public class ObjectType<O> implements ValueType {
         context.put(path, Persistent.object(alias));
         TypeDescriptor typeDescriptor = typesByAlias.get(alias);
         for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {
-            if (!ignore(fieldDescriptor)) {
+            PropertyPath subPath = path.property(fieldDescriptor.getName());
+            if (context.isMappedPath(subPath)) {
                 Object value = fieldDescriptor.get(object);
-                PropertyPath subPath = path.property(fieldDescriptor.getName());
                 context.serialize(subPath, value);
             }
         }
-    }
-
-    public static boolean ignore(FieldDescriptor field) {
-        return field.isTransient() || field.hasAnnotation(VersionIgnore.class);
     }
 
     public String toString() {

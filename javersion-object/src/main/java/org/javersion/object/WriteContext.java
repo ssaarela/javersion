@@ -77,6 +77,10 @@ public class WriteContext {
         return unmodifiableMap(properties);
     }
 
+    public boolean isMappedPath(PropertyPath path) {
+        return schemaRoot.find(path) != null;
+    }
+
     private Schema<ValueType> getSchema(PropertyPath path) {
         return schemaRoot.get(path);
     }

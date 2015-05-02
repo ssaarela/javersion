@@ -23,51 +23,66 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.base.Predicate;
+
 public final class Diff {
 
     private Diff() {}
 
     public static <K, V> Map<K, V> diff(Map<K, V> from, Map<K, V> to) {
+        return diff(from, to, p -> true);
+    }
+
+    public static <K, V> Map<K, V> diff(Map<K, V> from, Map<K, V> to, Predicate<K> filter) {
         notNull(from, "from");
         notNull(to, "to");
+        notNull(filter, "filter");
 
         if (from.size() < to.size()) {
-            return diffBySmallerFrom(from, to);
+            return diffBySmallerFrom(from, to, filter);
         } else {
-            return diffBySmallerTo(from, to);
+            return diffBySmallerTo(from, to, filter);
         }
     }
 
-    private static <K, V> Map<K, V> diffBySmallerFrom(Map<K, V> from, Map<K, V> to) {
+    private static <K, V> Map<K, V> diffBySmallerFrom(Map<K, V> from, Map<K, V> to, Predicate<K> filter) {
         Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
         Map<K, V> fromClone = new LinkedHashMap<>(from);
         for (Entry<K, V> entry : to.entrySet()) {
             K key = entry.getKey();
-            V newValue = entry.getValue();
-            V oldValue = fromClone.remove(key);
-            if (!equal(newValue, oldValue)) {
-                diff.put(key, newValue);
+            if (filter.apply(key)) {
+                V newValue = entry.getValue();
+                V oldValue = fromClone.remove(key);
+                if (!equal(newValue, oldValue)) {
+                    diff.put(key, newValue);
+                }
             }
         }
         for (K key : fromClone.keySet()) {
-            diff.put(key, null);
+            if (filter.apply(key)) {
+                diff.put(key, null);
+            }
         }
         return diff;
     }
 
-    private static <K, V> Map<K, V> diffBySmallerTo(Map<K, V> from, Map<K, V> to) {
+    private static <K, V> Map<K, V> diffBySmallerTo(Map<K, V> from, Map<K, V> to, Predicate<K> filter) {
         Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
         Map<K, V> toClone = new LinkedHashMap<>(to);
         for (Entry<K, V> entry : from.entrySet()) {
             K key = entry.getKey();
-            V oldValue = entry.getValue();
-            V newValue = toClone.remove(key);
-            if (!equal(oldValue, newValue)) {
-                diff.put(key, newValue);
+            if (filter.apply(key)) {
+                V oldValue = entry.getValue();
+                V newValue = toClone.remove(key);
+                if (!equal(oldValue, newValue)) {
+                    diff.put(key, newValue);
+                }
             }
         }
         for (Entry<K, V> entry : toClone.entrySet()) {
-            diff.put(entry.getKey(), entry.getValue());
+            if (filter.apply(entry.getKey())) {
+                diff.put(entry.getKey(), entry.getValue());
+            }
         }
         return diff;
     }

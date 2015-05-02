@@ -21,10 +21,9 @@ import org.junit.Test;
 
 public class ObjectVersionManagerTest {
 
-    public static enum ProductStatus {
+    public enum ProductStatus {
         PRE_ORDER,
-        IN_STOCK,
-        DISCONTINUED
+        IN_STOCK
     }
 
     @Versionable
@@ -55,7 +54,7 @@ public class ObjectVersionManagerTest {
     }
 
     private MergeObject<Product, Void> defaultMergeNoConflicts(Product expected) {
-        MergeObject<Product, Void> mergeObject = versionManager.mergeObject(DEFAULT_BRANCH);
+        MergeObject<Product, Void> mergeObject = versionManager.mergeBranches(DEFAULT_BRANCH);
         Product actual = mergeObject.object;
         if (expected != null) {
             assertThat(actual, not(sameInstance(expected)));
@@ -112,7 +111,7 @@ public class ObjectVersionManagerTest {
         Revision r3 = versionManager.versionBuilder(product).parents(r1).build().revision;
 
         // Merged
-        MergeObject<Product, Void> mergeObject = versionManager.mergeObject(Version.DEFAULT_BRANCH);
+        MergeObject<Product, Void> mergeObject = versionManager.mergeBranches(Version.DEFAULT_BRANCH);
         assertThat(mergeObject.merge.getMergeHeads(), equalTo(set(r2, r3)));
         assertThat(mergeObject.merge.getConflicts().isEmpty(), equalTo(true));
 
