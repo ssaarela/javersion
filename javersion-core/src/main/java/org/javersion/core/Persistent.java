@@ -18,6 +18,8 @@ import com.google.common.collect.ImmutableMap;
  */
 public final class Persistent {
 
+    private Persistent() {}
+
     public enum Type {
         NULL(Void.class),
         OBJECT(Object.class),
@@ -54,7 +56,7 @@ public final class Persistent {
     public static final String GENERIC_TYPE = "Map";
 
     public static Object object() {
-        return object(GENERIC_TYPE);
+        return GENERIC_OBJECT;
     }
 
     public static Object object(String alias) {
@@ -83,7 +85,7 @@ public final class Persistent {
 
     public static final class Object {
         public final String type;
-        public Object(String type) {
+        private Object(String type) {
             this.type = Check.notNull(type, "type");
         }
         @Override
@@ -109,6 +111,8 @@ public final class Persistent {
             return "Object(" + type + ")";
         }
     }
+
+    private static final Object GENERIC_OBJECT = new Object(GENERIC_TYPE);
 
     private static final Array ARRAY = new Array();
 

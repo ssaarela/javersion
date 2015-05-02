@@ -62,7 +62,7 @@ public abstract class VersionGraphBuilder<K, V, M,
     public final void add(Version<K, V, M> version) {
         Check.notNull(version, "version");
         MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads = heads.toMutableMap();
-        MergeBuilder<K, V, M> mergeBuilder = new MergeBuilder<K, V, M>();
+        MergeBuilder<K, V, M> mergeBuilder = new MergeBuilder<>();
 
         if (version.type == RESET) {
             resetVersion(version, mutableHeads);

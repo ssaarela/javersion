@@ -36,6 +36,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 public class Version<K, V, M> {
 
@@ -180,7 +181,13 @@ public class Version<K, V, M> {
 
         public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?, ?> versionGraph, Predicate<K> filter) {
             if (parentRevisions != null) {
-                changeset(versionGraph.mergeRevisions(parentRevisions).diff(newProperties, filter));
+                Merge<K, V, M> merge = versionGraph.mergeRevisions(parentRevisions);
+                if (newProperties == null) {
+                    changeset(Maps.transformValues(merge.getProperties(), v -> null));
+                } else {
+
+                    changeset(merge.diff(newProperties, filter));
+                }
             } else if (newProperties != null) {
                 changeset(filterEntries(newProperties, entry -> filter.apply(entry.getKey()) && entry.getValue() != null));
             } else {

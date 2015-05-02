@@ -85,7 +85,7 @@ public class DiffTest {
         assertThat(diff, equalTo(map()));
     }
 
-    private static Map<Object, Object> map(Object... keysAndValues) {
+    public static Map<Object, Object> map(Object... keysAndValues) {
         if (keysAndValues.length % 2 != 0) {
             throw new IllegalArgumentException("Expected even keysAndValues.size()");
         }

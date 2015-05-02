@@ -33,14 +33,8 @@ import com.google.common.collect.Multimap;
 
 public abstract class Merge<K, V, M> {
 
-    public final Function<VersionProperty<V>, V> getVersionPropertyValue = new Function<VersionProperty<V>, V>() {
-
-        @Override
-        public V apply(VersionProperty<V> input) {
-            return input != null ? input.value : null;
-        }
-
-    };
+    public final Function<VersionProperty<V>, V> getVersionPropertyValue =
+            input -> input != null ? input.value : null;
 
     public final PersistentHashMap<K, VersionProperty<V>> mergedProperties;
 
