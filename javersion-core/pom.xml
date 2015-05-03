@@ -4,7 +4,7 @@
 
   <parent>
     <groupId>org.javersion</groupId>
-    <version>0.3.1-SNAPSHOT</version>
+    <version>0.3.2-SNAPSHOT</version>
     <artifactId>javersion-root</artifactId>
     <relativePath>../pom.xml</relativePath>
   </parent>
