@@ -18,6 +18,7 @@ package org.javersion.core;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Maps.filterEntries;
+import static com.google.common.collect.Maps.filterKeys;
 import static com.google.common.collect.Maps.filterValues;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static com.google.common.collect.Maps.transformValues;
@@ -183,13 +184,13 @@ public class Version<K, V, M> {
             if (parentRevisions != null) {
                 Merge<K, V, M> merge = versionGraph.mergeRevisions(parentRevisions);
                 if (newProperties == null) {
-                    changeset(Maps.transformValues(merge.getProperties(), v -> null));
+                    Map<K, V> oldProperties = filterKeys(merge.getProperties(), filter);
+                    changeset(transformValues(oldProperties, v -> null));
                 } else {
-
                     changeset(merge.diff(newProperties, filter));
                 }
             } else if (newProperties != null) {
-                changeset(filterEntries(newProperties, entry -> filter.apply(entry.getKey()) && entry.getValue() != null));
+                changeset(filterEntries(newProperties, entry -> entry.getValue() != null && filter.apply(entry.getKey())));
             } else {
                 changeset(null);
             }

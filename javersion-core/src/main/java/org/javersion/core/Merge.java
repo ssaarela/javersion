@@ -16,6 +16,7 @@
 package org.javersion.core;
 
 import static com.google.common.base.Predicates.notNull;
+import static com.google.common.collect.Maps.filterKeys;
 import static com.google.common.collect.Maps.filterValues;
 import static com.google.common.collect.Maps.transformValues;
 
@@ -29,6 +30,7 @@ import org.javersion.util.PersistentHashSet;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
 public abstract class Merge<K, V, M> {
@@ -54,14 +56,17 @@ public abstract class Merge<K, V, M> {
     protected abstract void setMergeHeads(Set<Revision> heads);
 
     public Map<K, V> diff(Map<K, V> newProperties) {
-        return diff(newProperties, p -> true);
+        return diff(newProperties, k -> true);
     }
 
     public Map<K, V> diff(Map<K, V> newProperties, Predicate<K> filter) {
-        Map<K, V> diff = Diff.diff(getProperties(), newProperties, filter);
+        final Map<K, V> oldPropertiesFiltered = filterKeys(getProperties(), filter);
+        final Map<K, V> newPropertiesFiltered = filterKeys(newProperties, filter);
+
+        Map<K, V> diff = Diff.diff(oldPropertiesFiltered, newPropertiesFiltered);
         conflicts.keySet().stream().forEach(k -> {
             // Mark persistent conflict resolved by default
-            if (!diff.containsKey(k) && newProperties.containsKey(k)) {
+            if (!diff.containsKey(k) && newPropertiesFiltered.containsKey(k)) {
                 diff.put(k, newProperties.get(k));
             }
         });

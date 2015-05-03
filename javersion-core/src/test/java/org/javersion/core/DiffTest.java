@@ -61,35 +61,11 @@ public class DiffTest {
         assertThat(diff, equalTo(map(1,null, 2,null, 3,3, 4,4, 5,5)));
     }
 
-    @Test
-    public void filtered_difference_all_filtered() {
-        Map<Object, Object> diff = diff(map(1,1, 2,2), map(3,3, 4,4, 5,5), k -> false);
-        assertThat(diff, equalTo(map()));
-    }
-
-    @Test
-    public void filtered_difference() {
-        Map<Object, Object> diff = diff(map(1,1, 2,2, 3,3), map(1,1, 2,4, 3,5), k -> (Integer) k != 2);
-        assertThat(diff, equalTo(map(3, 5)));
-    }
-
-    @Test
-    public void filtered_difference_deleted_keys1() {
-        Map<Object, Object> diff = diff(map(1, 1, 2, 2, 3, 3), map(), k -> false);
-        assertThat(diff, equalTo(map()));
-    }
-
-    @Test
-    public void filtered_difference_deleted_keys2() {
-        Map<Object, Object> diff = diff(map(), map(1,1, 2,2, 3,3), k -> false);
-        assertThat(diff, equalTo(map()));
-    }
-
-    public static Map<Object, Object> map(Object... keysAndValues) {
+    public static <K> Map<K, K> map(K... keysAndValues) {
         if (keysAndValues.length % 2 != 0) {
             throw new IllegalArgumentException("Expected even keysAndValues.size()");
         }
-        Map<Object, Object> map = Maps.newHashMap();
+        Map<K, K> map = Maps.newHashMap();
         for (int i=0; i < keysAndValues.length; i+=2) {
             map.put(keysAndValues[i], keysAndValues[i+1]);
         }

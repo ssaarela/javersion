@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 import static org.assertj.core.api.Assertions.*;
+import static org.javersion.core.DiffTest.map;
 
 import javafx.scene.shape.SVGPath;
 
@@ -14,7 +15,7 @@ public class VersionTest {
     @Test
     public void get_version_properties() {
         Version<String, String, String> version = new Version.Builder<String, String, String>()
-                .changeset(ImmutableMap.of("key", "value"))
+                .changeset(map("key", "value"))
                 .build();
         Map<String, VersionProperty<String>> props = version.getVersionProperties();
         assertThat(props).hasSize(1);
@@ -33,23 +34,61 @@ public class VersionTest {
         assertThat(version.changeset).isEmpty();
 
         version = new Version.Builder<String, String, String>()
-                .changeset(ImmutableMap.of("key", "value"), versionGraph)
+                .changeset(map("key", "value"), versionGraph)
                 .build();
-        assertThat(version.changeset).isEqualTo(ImmutableMap.of("key", "value"));
+        assertThat(version.changeset).isEqualTo(map("key", "value"));
 
         versionGraph = versionGraph.commit(version);
 
         Revision parent = version.revision;
         version = new Version.Builder<String, String, String>()
                 .parents(parent)
-                .changeset(ImmutableMap.of("key", "value2"), versionGraph)
+                .changeset(map("key", "value2"), versionGraph)
                 .build();
-        assertThat(version.changeset).isEqualTo(ImmutableMap.of("key", "value2"));
+        assertThat(version.changeset).isEqualTo(map("key", "value2"));
 
         version = new Version.Builder<String, String, String>()
                 .parents(parent)
                 .changeset(null, versionGraph)
                 .build();
-        assertThat(version.changeset).isEqualTo(DiffTest.map("key", null));
+        assertThat(version.changeset).isEqualTo(map("key", null));
     }
+
+    public static class FilteredChangesetTests {
+
+        final SimpleVersion v1 = new SimpleVersion.Builder()
+                .changeset(map("key1", "value1", "key2", "value2"))
+                .build();
+
+        final SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1);
+
+        @Test
+        public void all() {
+            SimpleVersion version = new SimpleVersion.Builder()
+                    .parents(v1.revision)
+                    .changeset(map("key", "value2"), versionGraph, k -> false)
+                    .build();
+            assertThat(version.changeset).isEqualTo(map());
+        }
+
+        @Test
+        public void changes() {
+            SimpleVersion version = new SimpleVersion.Builder()
+                    .parents(v1.revision)
+                    .changeset(map("key1", "change", "key2", "change"), versionGraph,
+                            k -> k.equals("key1"))
+                    .build();
+            assertThat(version.changeset).isEqualTo(map("key1", "change"));
+        }
+
+        @Test
+        public void delete() {
+            SimpleVersion version = new SimpleVersion.Builder()
+                    .parents(v1.revision)
+                    .changeset(null, versionGraph, k -> k.equals("key1"))
+                    .build();
+            assertThat(version.changeset).isEqualTo(map("key1",null));
+        }
+    }
+
 }
