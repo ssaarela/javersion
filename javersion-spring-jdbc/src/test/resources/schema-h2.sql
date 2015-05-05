@@ -1,66 +1,63 @@
-create table version_type (
-  name varchar(8),
-  primary key (name)
+create table VERSION_TYPE (
+  NAME varchar(8),
+  primary key (NAME)
 );
-insert into version_type values ('NORMAL');
-insert into version_type values ('RESET');
+insert into VERSION_TYPE values ('NORMAL');
+insert into VERSION_TYPE values ('RESET');
 
-create table version (
-  doc_id varchar(255) not null,
-  revision varchar(32) not null,
-  ordinal bigint not null,
-  tx varchar(32),
-
-  branch varchar(128) not null,
-  type varchar(8) not null,
-
-  primary key (revision),
-
-  constraint version_type_fk foreign key (type) references version_type (name)
+create table REPOSITORY (
+  KEY varchar(32) not null,
+  VAL bigint
 );
 
-create sequence version_ordinal_seq start with 1 increment by 1 no cycle;
-create index version_ordinal_idx on version (ordinal);
-create index version_tx_ordinal_idx on version (tx, ordinal);
-create index version_doc_id_idx on version (doc_id);
+create table VERSION (
+  DOC_ID varchar(255) not null,
+  REVISION varchar(32) not null,
+  ORDINAL bigint not null,
+  TX varchar(32),
 
-create table version_parent (
-  child_revision varchar(32) not null,
-  parent_revision varchar(32) not null,
-  parent_doc_id varchar(255) not null,
+  BRANCH varchar(128) not null,
+  TYPE varchar(8) not null,
 
-  primary key (child_revision, parent_revision),
+  primary key (REVISION),
 
-  constraint version_parent_child_revision_fk
-    foreign key (child_revision)
-    references version (revision),
-
-  constraint version_parent_parent_revision_fk
-    foreign key (parent_revision)
-    references version (revision)
+  constraint VERSION_TYPE_FK foreign key (TYPE) references VERSION_TYPE (name)
 );
 
-create table version_property (
-  doc_id varchar(255) not null,
-  revision varchar(32) not null,
+create sequence VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
+create index VERSION_TX_ORDINAL_IDX on VERSION (TX, ORDINAL);
+create index VERSION_DOC_ID_IDX on VERSION (DOC_ID);
 
-  path varchar(512) not null,
+create table VERSION_PARENT (
+  REVISION varchar(32) not null,
+  PARENT_REVISION varchar(32) not null,
+
+  primary key (REVISION, PARENT_REVISION),
+
+  constraint VERSION_PARENT_REVISION_FK
+    foreign key (REVISION)
+    references VERSION (REVISION),
+
+  constraint VERSION_PARENT_PARENT_REVISION_FK
+    foreign key (PARENT_REVISION)
+    references VERSION (REVISION)
+);
+
+create table VERSION_PROPERTY (
+  DOC_ID varchar(255) not null,
+  REVISION varchar(32) not null,
+
+  PATH varchar(512) not null,
   -- n=null, O=object, A=array, s=string,
   -- b=boolean, l=long, d=double, D=bigdecimal
-  type char(1),
-  str varchar(1024),
-  nbr bigint,
+  TYPE char(1),
+  STR varchar(1024),
+  NBR bigint,
 
-  primary key (revision, path),
+  primary key (REVISION, PATH),
 
-  constraint version_property_revision_fk
-    foreign key (revision) references version (revision)
+  constraint VERSION_PROPERTY_REVISION_FK
+    foreign key (REVISION) references VERSION (REVISION)
 );
 
-create index version_property_doc_id_idx on version_property (doc_id);
-
-create table repository (
-  -- NODE, ORDINAL
-  key varchar(32) not null,
-  val bigint
-);
+create index VERSION_PROPERTY_DOC_ID_IDX on VERSION_PROPERTY (DOC_ID);

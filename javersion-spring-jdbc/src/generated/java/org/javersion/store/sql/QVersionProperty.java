@@ -1,17 +1,16 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.forVariable;
+import static com.mysema.query.types.PathMetadataFactory.*;
 
-import java.sql.Types;
+import com.mysema.query.types.path.*;
 
+import com.mysema.query.types.PathMetadata;
 import javax.annotation.Generated;
+import com.mysema.query.types.Path;
 
 import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.PathMetadata;
-import com.mysema.query.types.path.NumberPath;
-import com.mysema.query.types.path.StringPath;
+import java.sql.Types;
+
 
 
 
@@ -19,7 +18,7 @@ import com.mysema.query.types.path.StringPath;
  * QVersionProperty is a Querydsl query type for QVersionProperty
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QVersionProperty extends RelationalPathBase<QVersionProperty> {
+public class QVersionProperty extends com.mysema.query.sql.RelationalPathBase<QVersionProperty> {
 
     private static final long serialVersionUID = 1518143584;
 
@@ -31,7 +30,7 @@ public class QVersionProperty extends RelationalPathBase<QVersionProperty> {
 
     public final StringPath path = createString("path");
 
-    public final StringPath revision = createString("revision");
+    public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
     public final StringPath str = createString("str");
 

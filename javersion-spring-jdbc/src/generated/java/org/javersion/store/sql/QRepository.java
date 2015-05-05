@@ -1,17 +1,16 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.forVariable;
+import static com.mysema.query.types.PathMetadataFactory.*;
 
-import java.sql.Types;
+import com.mysema.query.types.path.*;
 
+import com.mysema.query.types.PathMetadata;
 import javax.annotation.Generated;
+import com.mysema.query.types.Path;
 
 import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.PathMetadata;
-import com.mysema.query.types.path.EnumPath;
-import com.mysema.query.types.path.NumberPath;
+import java.sql.Types;
+
 
 
 
@@ -19,14 +18,13 @@ import com.mysema.query.types.path.NumberPath;
  * QRepository is a Querydsl query type for QRepository
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QRepository extends RelationalPathBase<QRepository> {
+public class QRepository extends com.mysema.query.sql.RelationalPathBase<QRepository> {
 
     private static final long serialVersionUID = -1904416297;
 
     public static final QRepository repository = new QRepository("REPOSITORY");
 
-    public final EnumPath<org.javersion.store.jdbc.ObjectVersionStoreJdbc.ConfigProp> key = createEnum("key", org.javersion.store.jdbc.ObjectVersionStoreJdbc
-            .ConfigProp.class);
+    public final StringPath key = createString("key");
 
     public final NumberPath<Long> val = createNumber("val", Long.class);
 

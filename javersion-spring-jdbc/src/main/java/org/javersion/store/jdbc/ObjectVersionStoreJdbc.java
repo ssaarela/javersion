@@ -1,16 +1,19 @@
 package org.javersion.store.jdbc;
 
 import static com.mysema.query.group.GroupBy.groupBy;
+import static java.lang.System.arraycopy;
 import static java.util.Collections.singleton;
 import static java.util.Map.Entry;
-import static org.javersion.store.jdbc.ObjectVersionStoreJdbc.ConfigProp.NODE;
-import static org.javersion.store.jdbc.ObjectVersionStoreJdbc.ConfigProp.ORDINAL;
+import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
@@ -24,14 +27,10 @@ import org.javersion.store.sql.QRepository;
 import org.javersion.store.sql.QVersion;
 import org.javersion.store.sql.QVersionParent;
 import org.javersion.store.sql.QVersionProperty;
-import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.eaio.uuid.UUIDGen;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.mysema.query.Tuple;
-import com.mysema.query.dml.StoreClause;
 import com.mysema.query.group.Group;
 import com.mysema.query.group.GroupBy;
 import com.mysema.query.sql.Configuration;
@@ -40,54 +39,19 @@ import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.sql.dml.SQLInsertClause;
 import com.mysema.query.sql.types.EnumByNameType;
 import com.mysema.query.types.Expression;
-import com.mysema.query.types.MappingProjection;
 import com.mysema.query.types.QTuple;
-import com.mysema.query.types.path.StringPath;
 import com.mysema.query.types.query.NumberSubQuery;
 
 public class ObjectVersionStoreJdbc<M> {
 
-    public static class Initializer {
-        private final SQLQueryFactory queryFactory;
+    public static void registerTypes(String tablePrefix, Configuration configuration) {
+        configuration.register(tablePrefix + "VERSION", "TYPE", new EnumByNameType<>(VersionType.class));
+        configuration.register(tablePrefix + "VERSION", "REVISION", REVISION_TYPE);
 
-        public Initializer() {
-            this.queryFactory = null;
-        }
+        configuration.register(tablePrefix + "VERSION_PARENT", "REVISION", REVISION_TYPE);
+        configuration.register(tablePrefix + "VERSION_PARENT", "PARENT_REVISION", REVISION_TYPE);
 
-        public Initializer(SQLQueryFactory queryFactory) {
-            this.queryFactory = Check.notNull(queryFactory, "queryFactory");
-        }
-
-        public SQLQueryFactory getQueryFactory() {
-            return queryFactory;
-        }
-
-        @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-        public long initialize() {
-            Long node = queryFactory.from(qRepository).where(qRepository.key.eq(NODE)).singleResult(qRepository.val);
-            if (node == null) {
-                node = UUIDGen.getClockSeqAndNode();
-                queryFactory
-                        .insert(qRepository)
-                        .set(qRepository.key, NODE)
-                        .set(qRepository.val, node)
-                        .addBatch()
-                        .set(qRepository.key, ORDINAL)
-                        .setNull(qRepository.val)
-                        .execute();
-            }
-            return node;
-        }
-
-    }
-
-    public enum ConfigProp {
-        NODE, ORDINAL
-    }
-
-    public static void registerTypes(Configuration configuration) {
-        configuration.register("VERSION", "TYPE", new EnumByNameType<>(VersionType.class));
-        configuration.register("REPOSITORY", "KEY", new EnumByNameType<>(ConfigProp.class));
+        configuration.register(tablePrefix + "VERSION_PROPERTY", "REVISION", REVISION_TYPE);
     }
 
     private static final class OrdinalAndRevision implements Comparable<OrdinalAndRevision> {
@@ -106,66 +70,33 @@ public class ObjectVersionStoreJdbc<M> {
         }
     }
 
-    private static final class RevisionMapping extends MappingProjection<Revision> {
+    private final Expression<Long> nextOrdinal = SQLExpressions.nextval("version_ordinal_seq");
 
-        private final StringPath revisionPath;
+    private final QVersion qVersion = QVersion.version;
 
-        public RevisionMapping(StringPath revisionPath) {
-            super(Revision.class, revisionPath);
-            this.revisionPath = revisionPath;
-        }
+    private final QVersionParent qParent = QVersionParent.versionParent;
 
-        @Override
-        protected Revision map(Tuple row) {
-            String rev = row.get(revisionPath);
-            return rev != null ? new Revision(rev) : null;
-        }
+    private final QVersionProperty qProperty = QVersionProperty.versionProperty;
 
-        public <T extends StoreClause<T>> T populate(Revision revision, T store) {
-            return store.set(revisionPath, revision.toString());
-        }
-    }
-
-    private static final Expression<Long> nextOrdinal = SQLExpressions.nextval("version_ordinal_seq");
-
-    private static final QVersion qVersion = QVersion.version;
-
-    private static final QVersionParent qParent = QVersionParent.versionParent;
-
-    private static final QVersion qParentVersion = new QVersion("parent");
-
-    private static final QVersionProperty qProperty = QVersionProperty.versionProperty;
-
-    private static final QRepository qRepository = QRepository.repository;
-
-    private static final RevisionMapping versionRevision = new RevisionMapping(qVersion.revision);
-
-    private static final RevisionMapping versionChild = new RevisionMapping(qParent.childRevision);
-
-    private static final RevisionMapping versionParent = new RevisionMapping(qParent.parentRevision);
-
-    private static final RevisionMapping propertyRevision = new RevisionMapping(qProperty.revision);
+    private final static QRepository qRepository = QRepository.repository;
 
     private final SQLQueryFactory queryFactory;
 
-    private final long node;
+    private final String repositoryKey;
 
+    @SuppressWarnings("unused")
     protected ObjectVersionStoreJdbc() {
         queryFactory = null;
-        node = 0;
+        repositoryKey = null;
     }
 
-    public ObjectVersionStoreJdbc(Initializer initializer) {
-        this.queryFactory = initializer.getQueryFactory();
-        this.node = initializer.initialize();
+    public ObjectVersionStoreJdbc(SQLQueryFactory queryFactory) {
+        this.queryFactory = queryFactory;
+        this.repositoryKey = "repository"; // FIXME: name of version table
     }
 
     private NumberSubQuery<Long> maxOrdinalQuery() {
         return queryFactory.subQuery().from(qVersion).unique(qVersion.ordinal.max());
-    }
-
-    public long getNode() {
-        return node;
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
@@ -217,56 +148,33 @@ public class ObjectVersionStoreJdbc<M> {
 
         queryFactory
                 .update(qRepository)
-                .where(qRepository.key.eq(ORDINAL))
+                .where(qRepository.key.eq(repositoryKey))
                 .set(qRepository.val, maxOrdinalQuery())
                 .execute();
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> load(String docId) {
-        return load(singleton(docId));
-    }
-
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public ObjectVersionGraph<M> load(Iterable<String> docIds) {
-        return ObjectVersionGraph.init(loadVersions(ImmutableSet.copyOf(docIds)));
-    }
-
-    private Iterable<ObjectVersion<M>> loadVersions(Set<String> docIds) {
         SortedMap<OrdinalAndRevision, ObjectVersion<M>> versions = new TreeMap<>();
-        Set<String> retrievedDocIds = new HashSet<>();
-        Set<String> nextBatch = docIds;
+        Map<Revision, Group> versionsAndParents = getVersionsAndParents(docId);
+        Map<Revision, List<Tuple>> properties = getPropertiesByDocId(docId);
 
-        while (!nextBatch.isEmpty()) {
-            Map<Revision, Group> versionsAndParents = getVersionsAndParents(nextBatch);
-            Map<Revision, List<Tuple>> properties = getPropertiesByDocId(nextBatch);
+        for (Group versionAndParents : versionsAndParents.values()) {
+            Revision rev = versionAndParents.getOne(qVersion.revision);
+            long ordinal = versionAndParents.getOne(qVersion.ordinal);
+            Map<PropertyPath, Object> changeset = toChangeSet(properties.get(rev));
 
-            retrievedDocIds.addAll(nextBatch);
-            nextBatch = new HashSet<>();
+            ObjectVersion<M> version = buildVersion(rev, versionAndParents, changeset);
 
-            for (Group versionAndParents : versionsAndParents.values()) {
-                Revision rev = versionAndParents.getOne(versionRevision);
-                long ordinal = versionAndParents.getOne(qVersion.ordinal);
-                Map<PropertyPath, Object> changeset = toChangeSet(properties.get(rev));
-
-                ObjectVersion<M> version = buildVersion(rev, versionAndParents, changeset);
-
-                versions.put(new OrdinalAndRevision(ordinal, rev), version);
-
-                for (String parentDocId : versionAndParents.getSet(qParent.parentDocId)) {
-                    if (!retrievedDocIds.contains(parentDocId)) {
-                        nextBatch.add(parentDocId);
-                    }
-                }
-            }
+            versions.put(new OrdinalAndRevision(ordinal, rev), version);
         }
-        return versions.values();
+        return ObjectVersionGraph.init(versions.values());
     }
 
     private long getLastOrdinalForUpdate() {
         Long lastOrdinal = queryFactory
                 .from(qRepository)
-                .where(qRepository.key.eq(ORDINAL))
+                .where(qRepository.key.eq(repositoryKey))
                 .forUpdate()
                 .singleResult(qRepository.val);
         return lastOrdinal != null ? lastOrdinal : 0;
@@ -299,8 +207,8 @@ public class ObjectVersionStoreJdbc<M> {
 
     private void addProperties(String docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {
         for (Entry<PropertyPath, Object> entry : version.getChangeset().entrySet()) {
-            propertyRevision
-                    .populate(version.revision, propertyBatch)
+            propertyBatch
+                    .set(qProperty.revision, version.revision)
                     .set(qProperty.docId, docId)
                     .set(qProperty.path, entry.getKey().toString());
             setValue(entry.getValue(), propertyBatch);
@@ -357,18 +265,16 @@ public class ObjectVersionStoreJdbc<M> {
 
     private void addParents(VersionNode<PropertyPath, Object, M> version, SQLInsertClause parentBatch) {
         for (Revision parentRevision : version.parentRevisions) {
-            parentBatch.set(qParent.parentDocId, queryFactory.subQuery()
-                    .from(qParentVersion)
-                    .where(qParentVersion.revision.eq(parentRevision.toString()))
-                    .distinct().unique(qParentVersion.docId));
-            versionChild.populate(version.revision, parentBatch);
-            versionParent.populate(parentRevision, parentBatch).addBatch();
+            parentBatch
+                    .set(qParent.revision, version.revision)
+                    .set(qParent.parentRevision, parentRevision)
+                    .addBatch();
         }
     }
 
     private void addVersion(String docId, VersionNode<PropertyPath, Object, M> version, String tx, SQLInsertClause versionBatch) {
-        versionRevision
-                .populate(version.revision, versionBatch)
+        versionBatch
+                .set(qVersion.revision, version.revision)
                 .set(qVersion.docId, docId)
                 .set(qVersion.tx, tx)
                 .set(qVersion.ordinal, nextOrdinal)
@@ -381,28 +287,32 @@ public class ObjectVersionStoreJdbc<M> {
         return new ObjectVersionBuilder<M>(rev)
                 .branch(versionAndParents.getOne(qVersion.branch))
                 .type(versionAndParents.getOne(qVersion.type))
-                .parents(versionAndParents.getSet(versionParent))
+                .parents(versionAndParents.getSet(qParent.parentRevision))
                 .changeset(changeset)
                 .build();
     }
 
-    private Map<Revision, List<Tuple>> getPropertiesByDocId(Set<String> nextBatch) {
+    private Map<Revision, List<Tuple>> getPropertiesByDocId(String docId) {
         return queryFactory
                 .from(qProperty)
-                .where(qProperty.docId.in(nextBatch))
-                .transform(groupBy(propertyRevision).as(GroupBy.list(new QTuple(qProperty.all()))));
+                .where(qProperty.docId.eq(docId))
+                .transform(groupBy(qProperty.revision).as(GroupBy.list(new QTuple(qProperty.all()))));
     }
 
-    private Map<Revision, Group> getVersionsAndParents(Set<String> nextBatch) {
+    private Map<Revision, Group> getVersionsAndParents(String docId) {
         return queryFactory
                 .from(qVersion)
-                .leftJoin(qVersion._versionParentChildRevisionFk, qParent)
-                .where(qVersion.docId.in(nextBatch), qVersion.tx.isNull())
-//                .orderBy(qVersion.ordinal.asc(), qVersion.revision.asc())
-                .transform(groupBy(versionRevision)
-                        .as(versionRevision, qVersion.branch, qVersion.type, qVersion.ordinal,
-                                GroupBy.set(qParent.parentDocId),
-                                GroupBy.set(versionParent)));
+                .leftJoin(qVersion._versionParentRevisionFk, qParent)
+                .where(qVersion.docId.eq(docId), qVersion.tx.isNull())
+                .transform(groupBy(qVersion.revision)
+                        .as(concat(qVersion.all(), GroupBy.set(qParent.parentRevision))));
+    }
+
+    private static Expression<?>[] concat(Expression<?>[] expr1, Expression<?>... expr2) {
+        Expression<?>[] expressions = new Expression<?>[expr1.length + expr2.length];
+        arraycopy(expr1, 0, expressions, 0, expr1.length);
+        arraycopy(expr2, 0, expressions, expr1.length, expr2.length);
+        return expressions;
     }
 
     private Map<PropertyPath, Object> toChangeSet(List<Tuple> properties) {

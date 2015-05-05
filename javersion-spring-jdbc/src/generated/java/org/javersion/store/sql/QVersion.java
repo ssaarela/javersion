@@ -1,18 +1,16 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.forVariable;
+import static com.mysema.query.types.PathMetadataFactory.*;
 
-import java.sql.Types;
+import com.mysema.query.types.path.*;
 
+import com.mysema.query.types.PathMetadata;
 import javax.annotation.Generated;
+import com.mysema.query.types.Path;
 
 import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.PathMetadata;
-import com.mysema.query.types.path.EnumPath;
-import com.mysema.query.types.path.NumberPath;
-import com.mysema.query.types.path.StringPath;
+import java.sql.Types;
+
 
 
 
@@ -20,7 +18,7 @@ import com.mysema.query.types.path.StringPath;
  * QVersion is a Querydsl query type for QVersion
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QVersion extends RelationalPathBase<QVersion> {
+public class QVersion extends com.mysema.query.sql.RelationalPathBase<QVersion> {
 
     private static final long serialVersionUID = 103506283;
 
@@ -32,7 +30,7 @@ public class QVersion extends RelationalPathBase<QVersion> {
 
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
-    public final StringPath revision = createString("revision");
+    public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
     public final StringPath tx = createString("tx");
 
@@ -44,9 +42,9 @@ public class QVersion extends RelationalPathBase<QVersion> {
 
     public final com.mysema.query.sql.ForeignKey<QVersionProperty> _versionPropertyRevisionFk = createInvForeignKey(revision, "REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QVersionParent> _versionParentChildRevisionFk = createInvForeignKey(revision, "CHILD_REVISION");
-
     public final com.mysema.query.sql.ForeignKey<QVersionParent> _versionParentParentRevisionFk = createInvForeignKey(revision, "PARENT_REVISION");
+
+    public final com.mysema.query.sql.ForeignKey<QVersionParent> _versionParentRevisionFk = createInvForeignKey(revision, "REVISION");
 
     public QVersion(String variable) {
         super(QVersion.class, forVariable(variable), "PUBLIC", "VERSION");

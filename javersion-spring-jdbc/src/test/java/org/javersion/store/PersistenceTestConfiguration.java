@@ -20,18 +20,13 @@ public class PersistenceTestConfiguration {
     @Bean
     public SQLQueryFactory queryFactory(final DataSource dataSource) {
         com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new H2Templates());
-        ObjectVersionStoreJdbc.registerTypes(configuration);
+        ObjectVersionStoreJdbc.registerTypes("", configuration);
         return new SQLQueryFactory(configuration, () -> DataSourceUtils.getConnection(dataSource));
     }
 
     @Bean
-    public ObjectVersionStoreJdbc.Initializer storeInitializer(SQLQueryFactory queryFactory) {
-        return new ObjectVersionStoreJdbc.Initializer(queryFactory);
-    }
-
-    @Bean
-    public ObjectVersionStoreJdbc<Void> versionStore(ObjectVersionStoreJdbc.Initializer initializer) {
-        return new ObjectVersionStoreJdbc<>(initializer);
+    public ObjectVersionStoreJdbc<Void> versionStore(SQLQueryFactory queryFactory) {
+        return new ObjectVersionStoreJdbc<>(queryFactory);
     }
 
 }

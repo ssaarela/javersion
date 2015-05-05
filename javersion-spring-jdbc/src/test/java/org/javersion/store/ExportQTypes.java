@@ -49,7 +49,7 @@ public class ExportQTypes {
             @Override
             public void run(String... args) throws Exception {
                 Configuration configuration = new Configuration(new H2Templates());
-                ObjectVersionStoreJdbc.registerTypes(configuration);
+                ObjectVersionStoreJdbc.registerTypes("", configuration);
 
                 MetaDataExporter exporter = new MetaDataExporter();
                 exporter.setPackageName(PACKAGE_NAME);
