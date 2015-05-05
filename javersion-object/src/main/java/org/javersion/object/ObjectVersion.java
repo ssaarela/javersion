@@ -24,4 +24,17 @@ public class ObjectVersion<M> extends Version<PropertyPath, Object, M> {
         super(builder);
     }
 
+    public static <M> Builder<M> builder() {
+        return new Builder<>();
+    }
+
+    public static class Builder<M> extends Version.BuilderBase<PropertyPath, Object, M, ObjectVersion.Builder<M>> {
+
+        @Override
+        public ObjectVersion<M> build() {
+            return new ObjectVersion<>(this);
+        }
+
+    }
+
 }
