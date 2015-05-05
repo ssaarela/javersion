@@ -24,9 +24,9 @@ public class QRepository extends com.mysema.query.sql.RelationalPathBase<QReposi
 
     public static final QRepository repository = new QRepository("REPOSITORY");
 
-    public final StringPath key = createString("key");
+    public final StringPath id = createString("id");
 
-    public final NumberPath<Long> val = createNumber("val", Long.class);
+    public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
     public QRepository(String variable) {
         super(QRepository.class, forVariable(variable), "PUBLIC", "REPOSITORY");
@@ -49,8 +49,8 @@ public class QRepository extends com.mysema.query.sql.RelationalPathBase<QReposi
     }
 
     public void addMetadata() {
-        addMetadata(key, ColumnMetadata.named("KEY").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
-        addMetadata(val, ColumnMetadata.named("VAL").withIndex(2).ofType(Types.BIGINT).withSize(19));
+        addMetadata(id, ColumnMetadata.named("ID").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(2).ofType(Types.BIGINT).withSize(19));
     }
 
 }

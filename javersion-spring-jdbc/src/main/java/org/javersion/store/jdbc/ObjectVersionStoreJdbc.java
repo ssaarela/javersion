@@ -82,17 +82,17 @@ public class ObjectVersionStoreJdbc<M> {
 
     private final SQLQueryFactory queryFactory;
 
-    private final String repositoryKey;
+    private final String repositoryId;
 
     @SuppressWarnings("unused")
     protected ObjectVersionStoreJdbc() {
         queryFactory = null;
-        repositoryKey = null;
+        repositoryId = null;
     }
 
     public ObjectVersionStoreJdbc(SQLQueryFactory queryFactory) {
         this.queryFactory = queryFactory;
-        this.repositoryKey = "repository"; // FIXME: name of version table
+        this.repositoryId = "repository"; // FIXME: name of version table
     }
 
     private NumberSubQuery<Long> maxOrdinalQuery() {
@@ -148,8 +148,8 @@ public class ObjectVersionStoreJdbc<M> {
 
         queryFactory
                 .update(qRepository)
-                .where(qRepository.key.eq(repositoryKey))
-                .set(qRepository.val, maxOrdinalQuery())
+                .where(qRepository.id.eq(repositoryId))
+                .set(qRepository.ordinal, maxOrdinalQuery())
                 .execute();
     }
 
@@ -174,9 +174,9 @@ public class ObjectVersionStoreJdbc<M> {
     private long getLastOrdinalForUpdate() {
         Long lastOrdinal = queryFactory
                 .from(qRepository)
-                .where(qRepository.key.eq(repositoryKey))
+                .where(qRepository.id.eq(repositoryId))
                 .forUpdate()
-                .singleResult(qRepository.val);
+                .singleResult(qRepository.ordinal);
         return lastOrdinal != null ? lastOrdinal : 0;
     }
 
@@ -205,7 +205,7 @@ public class ObjectVersionStoreJdbc<M> {
                 .map(qVersion.tx, qVersion.ordinal.min());
     }
 
-    private void addProperties(String docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {
+    protected void addProperties(String docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {
         for (Entry<PropertyPath, Object> entry : version.getChangeset().entrySet()) {
             propertyBatch
                     .set(qProperty.revision, version.revision)
@@ -263,7 +263,7 @@ public class ObjectVersionStoreJdbc<M> {
                 .addBatch();
     }
 
-    private void addParents(VersionNode<PropertyPath, Object, M> version, SQLInsertClause parentBatch) {
+    protected void addParents(VersionNode<PropertyPath, Object, M> version, SQLInsertClause parentBatch) {
         for (Revision parentRevision : version.parentRevisions) {
             parentBatch
                     .set(qParent.revision, version.revision)
@@ -272,7 +272,7 @@ public class ObjectVersionStoreJdbc<M> {
         }
     }
 
-    private void addVersion(String docId, VersionNode<PropertyPath, Object, M> version, String tx, SQLInsertClause versionBatch) {
+    protected void addVersion(String docId, VersionNode<PropertyPath, Object, M> version, String tx, SQLInsertClause versionBatch) {
         versionBatch
                 .set(qVersion.revision, version.revision)
                 .set(qVersion.docId, docId)
@@ -292,14 +292,14 @@ public class ObjectVersionStoreJdbc<M> {
                 .build();
     }
 
-    private Map<Revision, List<Tuple>> getPropertiesByDocId(String docId) {
+    protected Map<Revision, List<Tuple>> getPropertiesByDocId(String docId) {
         return queryFactory
                 .from(qProperty)
                 .where(qProperty.docId.eq(docId))
                 .transform(groupBy(qProperty.revision).as(GroupBy.list(new QTuple(qProperty.all()))));
     }
 
-    private Map<Revision, Group> getVersionsAndParents(String docId) {
+    protected Map<Revision, Group> getVersionsAndParents(String docId) {
         return queryFactory
                 .from(qVersion)
                 .leftJoin(qVersion._versionParentRevisionFk, qParent)

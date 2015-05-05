@@ -6,8 +6,8 @@ insert into VERSION_TYPE values ('NORMAL');
 insert into VERSION_TYPE values ('RESET');
 
 create table REPOSITORY (
-  KEY varchar(32) not null,
-  VAL bigint
+  ID varchar(32) not null,
+  ORDINAL bigint
 );
 
 create table VERSION (
