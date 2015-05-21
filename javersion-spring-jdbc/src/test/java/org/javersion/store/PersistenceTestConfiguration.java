@@ -26,7 +26,7 @@ public class PersistenceTestConfiguration {
 
     @Bean
     public ObjectVersionStoreJdbc<Void> versionStore(SQLQueryFactory queryFactory) {
-        return new ObjectVersionStoreJdbc<>(queryFactory);
+        return new ObjectVersionStoreJdbc<>("PUBLIC", "", queryFactory);
     }
 
 }

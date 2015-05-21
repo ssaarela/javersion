@@ -9,6 +9,7 @@ create table REPOSITORY (
   ID varchar(32) not null,
   ORDINAL bigint
 );
+insert into REPOSITORY (ID) values ('repository');
 
 create table VERSION (
   DOC_ID varchar(255) not null,
