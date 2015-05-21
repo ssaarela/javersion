@@ -2,6 +2,8 @@ package org.javersion.store;
 
 import javax.sql.DataSource;
 
+import org.javersion.store.jdbc.JVersion;
+import org.javersion.store.jdbc.JVersionProperty;
 import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import com.mysema.query.sql.H2Templates;
 import com.mysema.query.sql.SQLQueryFactory;
+import com.mysema.query.types.path.StringPath;
 
 @Configuration
 @EnableAutoConfiguration
@@ -25,8 +28,29 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public ObjectVersionStoreJdbc<Void> versionStore(SQLQueryFactory queryFactory) {
-        return new ObjectVersionStoreJdbc<>("PUBLIC", "", queryFactory);
+    public ObjectVersionStoreJdbc<String, Void> versionStore(SQLQueryFactory queryFactory) {
+        return new ObjectVersionStoreJdbc<String, Void>("PUBLIC", "", queryFactory) {
+
+            private StringPath versionDocId;
+
+            private StringPath propertyDocId;
+
+            @Override
+            protected void initIdColumns(JVersion jVersion, JVersionProperty jProperty) {
+                versionDocId = new StringPath(jVersion, "DOC_ID");
+                propertyDocId = new StringPath(jProperty, "DOC_ID");
+            }
+
+            @Override
+            protected StringPath versionDocId() {
+                return versionDocId;
+            }
+
+            @Override
+            protected StringPath propertyDocId() {
+                return propertyDocId;
+            }
+        };
     }
 
 }

@@ -4,18 +4,12 @@ import static com.mysema.query.types.PathMetadataFactory.forVariable;
 
 import java.sql.Types;
 
-import javax.annotation.Generated;
-
 import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.PathMetadata;
 import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.SimplePath;
 import com.mysema.query.types.path.StringPath;
 
 public class JVersionProperty extends com.mysema.query.sql.RelationalPathBase<JVersionProperty> {
-
-    public final StringPath docId = createString("docId");
 
     public final NumberPath<Long> nbr = createNumber("nbr", Long.class);
 
@@ -37,7 +31,6 @@ public class JVersionProperty extends com.mysema.query.sql.RelationalPathBase<JV
     }
 
     public void addMetadata() {
-        addMetadata(docId, ColumnMetadata.named("DOC_ID").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
         addMetadata(nbr, ColumnMetadata.named("NBR").withIndex(6).ofType(Types.BIGINT).withSize(19));
         addMetadata(path, ColumnMetadata.named("PATH").withIndex(3).ofType(Types.VARCHAR).withSize(512).notNull());
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());

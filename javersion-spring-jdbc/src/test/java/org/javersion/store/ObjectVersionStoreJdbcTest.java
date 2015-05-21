@@ -52,7 +52,7 @@ public class ObjectVersionStoreJdbcTest {
     private final ObjectVersionManager<Product, Void> versionManager = new ObjectVersionManager<Product, Void>(Product.class).init();
 
     @Resource
-    private ObjectVersionStoreJdbc<Void> versionStore;
+    private ObjectVersionStoreJdbc<String, Void> versionStore;
 
     @Test
     public void insert_and_load() {
