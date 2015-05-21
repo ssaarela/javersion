@@ -21,9 +21,11 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.javersion.core.Revision;
 import org.javersion.object.mapping.*;
+import org.javersion.object.types.PropertyPathType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
@@ -69,7 +71,8 @@ public class TypeMappings {
                     new MapTypeMapping(),
                     new CollectionTypeMapping(),
                     new ToStringTypeMapping(Revision.class),
-                    new PropertyPathTypeMapping(),
+                    new SimpleValueMapping(PropertyPath.class, new PropertyPathType()),
+                    new SimpleValueMapping(UUID.class, new UUIDType()),
                     DATE_TIME,
                     ENUM,
                     BIG_INTEGER,
