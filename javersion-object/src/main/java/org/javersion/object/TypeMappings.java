@@ -165,7 +165,7 @@ public class TypeMappings {
                 return TypeDescriptors.DEFAULT.getTypeDescriptor.apply(clazz);
             }
 
-            public Builder withTypeMapping(TypeMapping typeMapping) {
+            public Builder withMapping(TypeMapping typeMapping) {
                 return register().withMapping(typeMapping);
             }
 
