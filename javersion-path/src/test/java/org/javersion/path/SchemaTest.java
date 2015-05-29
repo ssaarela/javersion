@@ -42,6 +42,15 @@ public class SchemaTest {
     }
 
     @Test
+    public void any_property() {
+        Builder<String> root = new Builder<>("root");
+        root.connect(ROOT.anyProperty(), new Builder<>("anyProperty"));
+
+        Schema<String> schema = root.build();
+        assertThat(schema.get(parse("anything")).getValue()).isEqualTo("anyProperty");
+    }
+
+    @Test
     public void anything_goes() {
         Builder<String> root = new Builder<>("root");
         root.connect(ROOT.any(), root);

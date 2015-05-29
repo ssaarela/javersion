@@ -39,18 +39,13 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public static abstract class NodeId {
 
-        public static final NodeId ANY = new SpecialNodeId("*") {
-            @Override
-            public NodeId fallbackId() {
-                return null;
-            }
-        };
+        public static final NodeId ANY = new SpecialNodeId("*", null);
 
-        public static final NodeId ANY_PROPERTY = new SpecialNodeId(".*");
+        public static final NodeId ANY_INDEX = new SpecialNodeId("[]", ANY);
 
-        public static final NodeId ANY_INDEX = new SpecialNodeId("[]");
+        public static final NodeId ANY_KEY = new SpecialNodeId("{}", ANY);
 
-        public static final NodeId ANY_KEY = new SpecialNodeId("{}");
+        public static final NodeId ANY_PROPERTY = new SpecialNodeId(".*", ANY_KEY);
 
 
         private static final IndexId[] INDEXES;
@@ -84,7 +79,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             }
         }
 
-        private NodeId() {}
+        NodeId() {}
 
         public boolean isIndex() {
             return false;
@@ -118,7 +113,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         public final long index;
 
-        private IndexId(long index) {
+        IndexId(long index) {
             Preconditions.checkArgument(index >= 0, "index should be >= 0");
             this.index = index;
         }
@@ -160,11 +155,12 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
     }
 
-    public static final class KeyId extends NodeId {
+    public static class KeyId extends NodeId {
 
         public final String key;
 
-        private KeyId(String key) {
+        KeyId(String key) {
+            super();
             Preconditions.checkNotNull(key);
             this.key = key;
         }
@@ -206,12 +202,27 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         }
     }
 
+    public static final class PropertyId extends KeyId {
+
+        PropertyId(String key) {
+            super(key);
+        }
+
+        @Override
+        public NodeId fallbackId() {
+            return ANY_PROPERTY;
+        }
+    }
+
     private static class SpecialNodeId extends NodeId {
 
         private final String str;
 
-        private SpecialNodeId(String str) {
+        private final NodeId fallback;
+
+        private SpecialNodeId(String str, NodeId fallback) {
             this.str = str;
+            this.fallback = fallback;
         }
 
         @Override
@@ -237,7 +248,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public NodeId fallbackId() {
-            return ANY;
+            return fallback;
         }
     }
 
@@ -468,7 +479,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public static final class Root extends PropertyPath {
 
-        public static final NodeId ID = new SpecialNodeId(EMPTY_STRING);
+        public static final NodeId ID = new SpecialNodeId(EMPTY_STRING, null);
 
         private static final Root ROOT = new Root();
 
@@ -516,7 +527,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         public final PropertyPath parent;
 
-        private SubPath(PropertyPath parent, NodeId nodeId) {
+        SubPath(PropertyPath parent, NodeId nodeId) {
             this.parent = checkNotNull(parent, "parent");
             this.nodeId = checkNotNull(nodeId, "nodeId");
         }
@@ -567,11 +578,11 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public static final class Property extends SubPath {
 
-        private Property(PropertyPath parent, String name) {
-            super(parent, new KeyId(name));
+        Property(PropertyPath parent, String name) {
+            super(parent, new PropertyId(name));
         }
 
-        private Property(PropertyPath parent, NodeId nodeId) {
+        Property(PropertyPath parent, PropertyId nodeId) {
             super(parent, nodeId);
         }
 
@@ -583,7 +594,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         Property withParent(PropertyPath newParent) {
-            return newParent.equals(parent) ? this : new Property(newParent, nodeId);
+            return newParent.equals(parent) ? this : new Property(newParent, (PropertyId) nodeId);
         }
 
         @Override
