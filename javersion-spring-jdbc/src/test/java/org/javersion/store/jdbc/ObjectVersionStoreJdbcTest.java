@@ -178,6 +178,9 @@ public class ObjectVersionStoreJdbcTest {
         // Let the first transaction commit
         secondInsertDone.countDown();
 
+        // Allow time to commit
+        Thread.sleep(50);
+
         count = queryFactory.from(jVersion)
                 .where(jVersionId.eq(docId))
                 .count();
