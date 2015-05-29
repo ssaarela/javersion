@@ -36,6 +36,17 @@ public final class ObjectVersionGraph<M> extends VersionGraph<PropertyPath, Obje
         return builder.build();
     }
 
+    public static <M> ObjectVersionGraph<M> init(Version<PropertyPath, Object, M> v1,
+                                                 Version<PropertyPath, Object, M> v2, Version<PropertyPath, Object, M>... rest) {
+        Builder<M> builder = new Builder<M>();
+        builder.add(v1);
+        builder.add(v2);
+        for (Version<PropertyPath, Object, M> version : rest) {
+            builder.add(version);
+        }
+        return builder.build();
+    }
+
     public static <M> ObjectVersionGraph<M> init(Iterable<? extends Version<PropertyPath, Object, M>> versions) {
         Builder<M> builder = new Builder<M>();
         for (Version<PropertyPath, Object, M> version : versions) {

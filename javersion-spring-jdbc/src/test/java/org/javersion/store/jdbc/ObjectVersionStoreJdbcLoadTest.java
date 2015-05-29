@@ -13,7 +13,6 @@ import java.util.UUID;
 import javax.annotation.Resource;
 
 import org.javersion.object.ObjectVersion;
-import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.PersistenceTestConfiguration;
@@ -22,8 +21,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import com.mysema.query.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)

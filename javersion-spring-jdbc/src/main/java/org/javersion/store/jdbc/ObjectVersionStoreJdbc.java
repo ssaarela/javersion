@@ -10,10 +10,12 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+
+import javax.annotation.Nullable;
 
 import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
@@ -23,8 +25,10 @@ import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
+import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.mysema.query.ResultTransformer;
 import com.mysema.query.Tuple;
@@ -32,6 +36,7 @@ import com.mysema.query.group.Group;
 import com.mysema.query.group.GroupBy;
 import com.mysema.query.sql.Configuration;
 import com.mysema.query.sql.SQLExpressions;
+import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.sql.dml.SQLInsertClause;
 import com.mysema.query.sql.types.EnumByNameType;
@@ -50,22 +55,6 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         configuration.register(tablePrefix + "VERSION_PARENT", "PARENT_REVISION", REVISION_TYPE);
 
         configuration.register(tablePrefix + "VERSION_PROPERTY", "REVISION", REVISION_TYPE);
-    }
-
-    private static final class OrdinalAndRevision implements Comparable<OrdinalAndRevision> {
-        final long ordinal;
-        final Revision revision;
-
-        private OrdinalAndRevision(long ordinal, Revision revision) {
-            this.ordinal = ordinal;
-            this.revision = revision;
-        }
-
-        @Override
-        public int compareTo(OrdinalAndRevision other) {
-            int result = Long.compare(this.ordinal, other.ordinal);
-            return result != 0 ? result : this.revision.compareTo(other.revision);
-        }
     }
 
     protected final Expression<Long> nextOrdinal;
@@ -164,20 +153,64 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> load(Id docId) {
-        SortedMap<OrdinalAndRevision, ObjectVersion<M>> versions = new TreeMap<>();
-        Map<Revision, Group> versionsAndParents = getVersionsAndParents(docId);
-        Map<Revision, List<Tuple>> properties = getPropertiesByDocId(docId);
+        return ObjectVersionGraph.init(fetch(docId, null));
+    }
 
-        for (Group versionAndParents : versionsAndParents.values()) {
+    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
+        Check.notNull(since, "since");
+        return fetch(docId, since);
+    }
+
+    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
+    // TODO: 1) Return also revision of max(ordinal)
+    // TODO: 2) Add "Revision until" parameter to searches
+    public List<Id> findDocuments(@Nullable Revision updatedSince) {
+        Long sinceOrdinal = getOrdinal(updatedSince);
+        SQLQuery qry = queryFactory
+                .from(jVersion)
+                .groupBy(jVersion.revision)
+                .orderBy(jVersion.ordinal.max().asc());
+
+        if (sinceOrdinal == null) {
+            qry.where(jVersion.ordinal.isNotNull());
+        } else {
+            qry.where(jVersion.ordinal.gt(sinceOrdinal));
+        }
+
+        return qry.list((Expression<Id>) versionDocId());
+    }
+
+    private List<ObjectVersion<M>> fetch(Id docId, Revision sinceRevision) {
+        Check.notNull(docId, "docId");
+
+        Long sinceOrdinal = getOrdinal(sinceRevision);
+
+        List<Group> versionsAndParents = getVersionsAndParents(docId, sinceOrdinal);
+        if (versionsAndParents.isEmpty()) {
+            return ImmutableList.of();
+        }
+
+        List<ObjectVersion<M>> versions = new ArrayList<>(versionsAndParents.size());
+        Map<Revision, List<Tuple>> properties = getPropertiesByDocId(docId, sinceOrdinal);
+
+        for (Group versionAndParents : versionsAndParents) {
             Revision rev = versionAndParents.getOne(jVersion.revision);
-            long ordinal = versionAndParents.getOne(jVersion.ordinal);
             Map<PropertyPath, Object> changeset = toChangeSet(properties.get(rev));
 
-            ObjectVersion<M> version = buildVersion(rev, versionAndParents, changeset);
-
-            versions.put(new OrdinalAndRevision(ordinal, rev), version);
+            versions.add(buildVersion(rev, versionAndParents, changeset));
         }
-        return ObjectVersionGraph.init(versions.values());
+        return versions;
+    }
+
+    private Long getOrdinal(Revision sinceRevision) {
+        if (sinceRevision == null) {
+            return null;
+        }
+        return queryFactory
+                .from(jVersion)
+                .where(jVersion.revision.eq(sinceRevision))
+                .singleResult(jVersion.ordinal);
     }
 
     private long getLastOrdinalForUpdate() {
@@ -290,19 +323,30 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
                 .build();
     }
 
-    protected Map<Revision, List<Tuple>> getPropertiesByDocId(Id docId) {
-        return queryFactory
-                .from(jProperty)
-                .where(propertyDocId().eq(docId))
-                .transform(properties);
+    protected Map<Revision, List<Tuple>> getPropertiesByDocId(Id docId, @Nullable Long sinceOrdinal) {
+        SQLQuery qry = queryFactory.from(jProperty);
+
+        if (sinceOrdinal == null) {
+            qry.where(propertyDocId().eq(docId));
+        } else {
+            qry.innerJoin(jProperty.versionPropertyRevisionFk, jVersion);
+            qry.where(versionDocId().eq(docId), jVersion.ordinal.gt(sinceOrdinal));
+        }
+        return qry.transform(properties);
     }
 
-    protected Map<Revision, Group> getVersionsAndParents(Id docId) {
-        return queryFactory
+    protected List<Group> getVersionsAndParents(Id docId, @Nullable Long sinceOrdinal) {
+        SQLQuery qry = queryFactory
                 .from(jVersion)
                 .leftJoin(jVersion._versionParentRevisionFk, jParent)
                 .where(versionDocId().eq(docId), jVersion.ordinal.isNotNull())
-                .transform(groupBy(jVersion.revision).as(versionAndParents));
+                .orderBy(jVersion.ordinal.asc());
+
+        if (sinceOrdinal != null) {
+            qry.where(jVersion.ordinal.gt(sinceOrdinal));
+        }
+
+        return qry.transform(groupBy(jVersion.revision).list(versionAndParents));
     }
 
     protected Expression<?>[] allVersionColumns() {

@@ -1,16 +1,20 @@
 package org.javersion.store.jdbc;
 
+import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import javax.annotation.Resource;
 
+import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
@@ -192,5 +196,58 @@ public class ObjectVersionStoreJdbcTest {
                 .where(jVersionId.eq(docId))
                 .map(jVersion.revision, jVersion.ordinal);
         assertThat(ordinals.get(r1)).isEqualTo(ordinals.get(r2) + 1);
+    }
+
+    @Test
+    public void load_updates() {
+        String docId = randomUUID().toString();
+
+        ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
+                .changeset(ImmutableMap.of(ROOT.property("property"), "value1"))
+                .build();
+
+        ObjectVersion<Void> v2 = ObjectVersion.<Void>builder()
+                .changeset(ImmutableMap.of(ROOT.property("property"), "value2"))
+                .build();
+
+        ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2);
+        versionStore.append(docId, versionGraph.getVersionNode(v1.revision));
+        versionStore.publish(); // v1
+        versionStore.append(docId, versionGraph.getVersionNode(v2.revision));
+
+        List<ObjectVersion<Void>> updates = versionStore.fetchUpdates(docId, v1.revision);
+        assertThat(updates).isEmpty();
+        List<String> updatedDocs = versionStore.findDocuments(v1.revision);
+        assertThat(updatedDocs).isEmpty();
+
+        assertThat(versionStore.findDocuments(null)).isNotEmpty();
+
+        versionStore.publish(); // v2
+        updates = versionStore.fetchUpdates(docId, v1.revision);
+        assertThat(updates).hasSize(1);
+        assertThat(updates.get(0)).isEqualTo(v2);
+
+        updatedDocs = versionStore.findDocuments(v1.revision);
+        assertThat(updatedDocs).isEqualTo(asList(docId));
+    }
+
+    @Test
+    public void supported_value_types() {
+        String docId = randomUUID().toString();
+
+        Map<PropertyPath, Object> changeset = new HashMap<>();
+        changeset.put(ROOT.property("Object"), Persistent.object("Object"));
+        changeset.put(ROOT.property("Array"), Persistent.array());
+        changeset.put(ROOT.property("String"), "String");
+        changeset.put(ROOT.property("Boolean"), true);
+        changeset.put(ROOT.property("Long"), 123l);
+        changeset.put(ROOT.property("Double"), 123.456);
+        changeset.put(ROOT.property("BigDecimal"), BigDecimal.TEN);
+        changeset.put(ROOT.property("Void"), null);
+
+        ObjectVersion<Void> version = ObjectVersion.<Void>builder().changeset(changeset).build();
+        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        versionStore.publish();
+        assertThat(versionStore.load(docId).getTip().getVersion()).isEqualTo(version);
     }
 }

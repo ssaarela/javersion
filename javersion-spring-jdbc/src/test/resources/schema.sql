@@ -26,9 +26,13 @@ create table VERSION (
 );
 
 create sequence VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
-create index VERSION_ORDINAL_IDX on VERSION (ORDINAL);
-create index VERSION_TX_ORDINAL_IDX on VERSION (TX_ORDINAL);
-create index VERSION_DOC_ID_IDX on VERSION (DOC_ID);
+
+-- findDocuments(sinceOrdinal)
+create index VERSION_ORDINAL_IDX on VERSION (ORDINAL, DOC_ID, REVISION);
+-- findUncommittedRevisions
+create index VERSION_TX_ORDINAL_IDX on VERSION (TX_ORDINAL, REVISION);
+-- getVersionsAndParents and getPropertiesByDocId
+create index VERSION_DOC_ID_IDX on VERSION (DOC_ID, ORDINAL, REVISION);
 
 create table VERSION_PARENT (
   REVISION varchar(32) not null,
