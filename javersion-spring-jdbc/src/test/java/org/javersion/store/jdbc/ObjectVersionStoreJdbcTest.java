@@ -1,13 +1,17 @@
-package org.javersion.store;
+package org.javersion.store.jdbc;
 
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.javersion.path.PropertyPath.ROOT;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import javax.annotation.Resource;
 
+import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.object.ObjectVersion;
@@ -16,13 +20,19 @@ import org.javersion.object.ObjectVersionGraph;
 import org.javersion.object.ObjectVersionManager;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
+import org.javersion.store.PersistenceTestConfiguration;
 import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.mysema.query.QueryFactory;
+import com.mysema.query.sql.SQLQueryFactory;
+import com.mysema.query.types.path.StringPath;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -51,8 +61,17 @@ public class ObjectVersionStoreJdbcTest {
 
     private final ObjectVersionManager<Product, Void> versionManager = new ObjectVersionManager<Product, Void>(Product.class).init();
 
+    private final JVersion jVersion = new JVersion("PUBLIC", "", "version");
+    private final StringPath jVersionId = new StringPath(jVersion, "DOC_ID");
+
     @Resource
-    private ObjectVersionStoreJdbc<String, Void> versionStore;
+    ObjectVersionStoreJdbc<String, Void> versionStore;
+
+    @Resource
+    TransactionTemplate transactionTemplate;
+
+    @Resource
+    SQLQueryFactory queryFactory;
 
     @Test
     public void insert_and_load() {
@@ -112,4 +131,67 @@ public class ObjectVersionStoreJdbcTest {
         assertThat(versions.get(0)).isEqualTo(emptyVersion);
     }
 
+    @Test
+    public void ordinal_is_moved_by_commit() throws InterruptedException {
+        final CountDownLatch firstInsertDone = new CountDownLatch(1);
+        final CountDownLatch secondInsertDone = new CountDownLatch(1);
+
+        final String docId = randomUUID().toString();
+        final Revision r1 = new Revision();
+        final Revision r2 = new Revision();
+
+        new Thread(() -> {
+            transactionTemplate.execute(status -> {
+                ObjectVersion<Void> version1 = ObjectVersion.<Void>builder(r1)
+                        .changeset(ImmutableMap.of(ROOT.property("concurrency"), " slow"))
+                        .build();
+                versionStore.append(docId, ObjectVersionGraph.init(version1).getTip());
+
+                // First insert is done, but transaction is not committed yet
+                firstInsertDone.countDown();
+                try {
+                    // Wait until second insert is committed before committing this
+                    secondInsertDone.await();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+        }).start();
+
+        // Wait until first insert is done, but not committed yet
+        firstInsertDone.await();
+
+        ObjectVersion<Void> version2 = ObjectVersion.<Void>builder(r2)
+                .changeset(ImmutableMap.of(ROOT.property("concurrency"), "fast"))
+                .build();
+        versionStore.append(docId, ObjectVersionGraph.init(version2).getTip());
+        versionStore.commit();
+
+        long count = queryFactory.from(jVersion)
+                .where(jVersionId.eq(docId))
+                .count();
+        assertThat(count).isEqualTo(1);
+
+        // Let the first transaction commit
+        secondInsertDone.countDown();
+
+        count = queryFactory.from(jVersion)
+                .where(jVersionId.eq(docId))
+                .count();
+        assertThat(count).isEqualTo(2);
+
+        // Before fixing ordinals (i.e. versionStore.commit()), first insert should have smaller
+        Map<Revision, Long> ordinals = queryFactory.from(jVersion)
+                .where(jVersionId.eq(docId))
+                .map(jVersion.revision, jVersion.ordinal);
+        assertThat(ordinals.get(r1)).isLessThan(ordinals.get(r2));
+
+        // versionStore.commit() should fix ordinals
+        versionStore.commit();
+        ordinals = queryFactory.from(jVersion)
+                .where(jVersionId.eq(docId))
+                .map(jVersion.revision, jVersion.ordinal);
+        assertThat(ordinals.get(r1)).isGreaterThan(ordinals.get(r2));
+    }
 }

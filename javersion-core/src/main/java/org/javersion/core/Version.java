@@ -146,6 +146,11 @@ public class Version<K, V, M> {
             this.revision = revision;
         }
 
+        public This revision(Revision revision) {
+            this.revision = revision;
+            return self();
+        }
+
         public This type(VersionType versionType) {
             this.type = versionType;
             return self();

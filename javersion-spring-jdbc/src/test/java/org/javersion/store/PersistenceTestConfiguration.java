@@ -1,5 +1,9 @@
 package org.javersion.store;
 
+import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
+import static org.springframework.transaction.annotation.Propagation.REQUIRED;
+
+import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import org.javersion.store.jdbc.JVersion;
@@ -9,7 +13,10 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.mysema.query.sql.H2Templates;
 import com.mysema.query.sql.SQLQueryFactory;
@@ -19,6 +26,9 @@ import com.mysema.query.types.path.StringPath;
 @EnableAutoConfiguration
 @EnableTransactionManagement(proxyTargetClass = true)
 public class PersistenceTestConfiguration {
+
+    @Inject
+    PlatformTransactionManager transactionManager;
 
     @Bean
     public SQLQueryFactory queryFactory(final DataSource dataSource) {
@@ -53,4 +63,8 @@ public class PersistenceTestConfiguration {
         };
     }
 
+    @Bean
+    public TransactionTemplate transactionTemplate() {
+        return new TransactionTemplate(transactionManager);
+    }
 }

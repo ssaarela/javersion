@@ -15,6 +15,7 @@
  */
 package org.javersion.object;
 
+import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.path.PropertyPath;
 
@@ -28,7 +29,17 @@ public class ObjectVersion<M> extends Version<PropertyPath, Object, M> {
         return new Builder<>();
     }
 
+    public static <M> Builder<M> builder(Revision revision) {
+        return new Builder<>(revision);
+    }
+
     public static class Builder<M> extends Version.BuilderBase<PropertyPath, Object, M, ObjectVersion.Builder<M>> {
+
+        public Builder() {}
+
+        public Builder(Revision revision) {
+            super(revision);
+        }
 
         @Override
         public ObjectVersion<M> build() {
