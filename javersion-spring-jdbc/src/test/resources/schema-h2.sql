@@ -7,15 +7,15 @@ insert into VERSION_TYPE values ('RESET');
 
 create table REPOSITORY (
   ID varchar(32) not null,
-  ORDINAL bigint
+  ORDINAL bigint not null
 );
-insert into REPOSITORY (ID) values ('repository');
+insert into REPOSITORY (ID, ORDINAL) values ('repository', 0);
 
 create table VERSION (
   DOC_ID varchar(255) not null,
   REVISION varchar(32) not null,
-  ORDINAL bigint not null,
-  TX varchar(32),
+  ORDINAL bigint,
+  TX_ORDINAL bigint,
 
   BRANCH varchar(128) not null,
   TYPE varchar(8) not null,
@@ -26,7 +26,8 @@ create table VERSION (
 );
 
 create sequence VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
-create index VERSION_TX_ORDINAL_IDX on VERSION (TX, ORDINAL);
+create index VERSION_ORDINAL_IDX on VERSION (ORDINAL);
+create index VERSION_TX_ORDINAL_IDX on VERSION (TX_ORDINAL);
 create index VERSION_DOC_ID_IDX on VERSION (DOC_ID);
 
 create table VERSION_PARENT (

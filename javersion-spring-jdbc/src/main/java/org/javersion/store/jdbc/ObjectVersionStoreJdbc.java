@@ -39,7 +39,6 @@ import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 import com.mysema.query.types.QTuple;
 import com.mysema.query.types.expr.SimpleExpression;
-import com.mysema.query.types.query.NumberSubQuery;
 
 public abstract class ObjectVersionStoreJdbc<Id, M> {
 
@@ -115,10 +114,6 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
 
     protected abstract void initIdColumns(JVersion jVersion, JVersionProperty jProperty);
 
-    private NumberSubQuery<Long> maxOrdinalQuery() {
-        return queryFactory.subQuery().from(jVersion).unique(jVersion.ordinal.max());
-    }
-
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
         append(docId, singleton(version));
@@ -126,17 +121,12 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
-        String tx = null;
-
         SQLInsertClause versionBatch = queryFactory.insert(jVersion);
         SQLInsertClause parentBatch = queryFactory.insert(jParent);
         SQLInsertClause propertyBatch = queryFactory.insert(jProperty);
 
         for (VersionNode<PropertyPath, Object, M> version : versions) {
-            if (tx == null) {
-                tx = version.revision.toString();
-            }
-            addVersion(docId, version, tx, versionBatch);
+            addVersion(docId, version, versionBatch);
             addParents(version, parentBatch);
             addProperties(docId, version, propertyBatch);
         }
@@ -153,23 +143,22 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRES_NEW)
-    public void commit() {
-        long repositoryOrdinal = getLastOrdinalForUpdate();
+    public void publish() {
+        long lastOrdinal = getLastOrdinalForUpdate();
 
-        for (Map.Entry<String, Long> entry : findUncommittedTransactions().entrySet()) {
-            String tx = entry.getKey();
-            long versionOrdinal = entry.getValue();
-            if (versionOrdinal <= repositoryOrdinal) {
-                shiftOrdinalsAndClearTx(tx, repositoryOrdinal - versionOrdinal + 1);
-            } else {
-                clearTx(tx);
-            }
+        for (Revision revision : findUncommittedRevisions()) {
+            queryFactory
+                    .update(jVersion)
+                    .where(jVersion.revision.eq(revision))
+                    .set(jVersion.ordinal, ++lastOrdinal)
+                    .setNull(jVersion.txOrdinal)
+                    .execute();
         }
 
         queryFactory
                 .update(jRepository)
                 .where(jRepository.id.eq(REPOSITORY_ID))
-                .set(jRepository.ordinal, maxOrdinalQuery())
+                .set(jRepository.ordinal, lastOrdinal)
                 .execute();
     }
 
@@ -192,37 +181,19 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
     }
 
     private long getLastOrdinalForUpdate() {
-        Long lastOrdinal = queryFactory
+        return queryFactory
                 .from(jRepository)
                 .where(jRepository.id.eq(REPOSITORY_ID))
                 .forUpdate()
                 .singleResult(jRepository.ordinal);
-        return lastOrdinal != null ? lastOrdinal : 0;
     }
 
-    private void clearTx(String tx) {
-        queryFactory
-                .update(jVersion)
-                .setNull(jVersion.tx)
-                .where(jVersion.tx.eq(tx))
-                .execute();
-    }
-
-    private void shiftOrdinalsAndClearTx(String tx, long shift) {
-        queryFactory
-                .update(jVersion)
-                .set(jVersion.ordinal, jVersion.ordinal.add(shift))
-                .setNull(jVersion.tx)
-                .where(jVersion.tx.eq(tx))
-                .execute();
-    }
-
-    private Map<String, Long> findUncommittedTransactions() {
+    private List<Revision> findUncommittedRevisions() {
         return queryFactory
                 .from(jVersion)
-                .where(jVersion.tx.isNotNull())
-                .groupBy(jVersion.tx)
-                .map(jVersion.tx, jVersion.ordinal.min());
+                .where(jVersion.txOrdinal.isNotNull())
+                .orderBy(jVersion.txOrdinal.asc())
+                .list(jVersion.revision);
     }
 
     protected void addProperties(Id docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {
@@ -300,12 +271,11 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         }
     }
 
-    protected void addVersion(Id docId, VersionNode<PropertyPath, Object, M> version, String tx, SQLInsertClause versionBatch) {
+    protected void addVersion(Id docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause versionBatch) {
         versionBatch
                 .set(jVersion.revision, version.revision)
                 .set(versionDocId(), docId)
-                .set(jVersion.tx, tx)
-                .set(jVersion.ordinal, nextOrdinal)
+                .set(jVersion.txOrdinal, nextOrdinal)
                 .set(jVersion.type, version.type)
                 .set(jVersion.branch, version.branch)
                 .addBatch();
@@ -331,7 +301,7 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         return queryFactory
                 .from(jVersion)
                 .leftJoin(jVersion._versionParentRevisionFk, jParent)
-                .where(versionDocId().eq(docId), jVersion.tx.isNull())
+                .where(versionDocId().eq(docId), jVersion.ordinal.isNotNull())
                 .transform(groupBy(jVersion.revision).as(versionAndParents));
     }
 

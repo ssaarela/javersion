@@ -21,7 +21,6 @@ import org.javersion.object.ObjectVersionManager;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.PersistenceTestConfiguration;
-import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
@@ -30,7 +29,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.mysema.query.QueryFactory;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.types.path.StringPath;
 
@@ -87,7 +85,7 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.append(docId, versionManager.getVersionNode(versionOne.revision));
         assertThat(versionStore.load(docId).isEmpty()).isTrue();
 
-        versionStore.commit();
+        versionStore.publish();
         VersionGraph versionGraph = versionStore.load(docId);
         assertThat(versionGraph.isEmpty()).isFalse();
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(versionOne);
@@ -104,7 +102,7 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.append(docId, versionManager.getVersionNode(lastVersion.revision));
         assertThat(versionStore.load(docId).getTip().getVersion()).isEqualTo(versionOne);
 
-        versionStore.commit();
+        versionStore.publish();
         versionGraph = versionStore.load(docId);
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(lastVersion);
 
@@ -124,7 +122,7 @@ public class ObjectVersionStoreJdbcTest {
         ObjectVersion<Void> emptyVersion = new ObjectVersionBuilder<Void>().build();
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(emptyVersion);
         versionStore.append(docId, versionGraph.getTip());
-        versionStore.commit();
+        versionStore.publish();
         versionGraph = versionStore.load(docId);
         List<Version<PropertyPath, Object, Void>> versions = versionGraph.getVersions();
         assertThat(versions).hasSize(1);
@@ -132,7 +130,7 @@ public class ObjectVersionStoreJdbcTest {
     }
 
     @Test
-    public void ordinal_is_moved_by_commit() throws InterruptedException {
+    public void ordinal_is_assigned_by_publish() throws InterruptedException {
         final CountDownLatch firstInsertDone = new CountDownLatch(1);
         final CountDownLatch secondInsertDone = new CountDownLatch(1);
 
@@ -166,7 +164,7 @@ public class ObjectVersionStoreJdbcTest {
                 .changeset(ImmutableMap.of(ROOT.property("concurrency"), "fast"))
                 .build();
         versionStore.append(docId, ObjectVersionGraph.init(version2).getTip());
-        versionStore.commit();
+        versionStore.publish();
 
         long count = queryFactory.from(jVersion)
                 .where(jVersionId.eq(docId))
@@ -181,17 +179,18 @@ public class ObjectVersionStoreJdbcTest {
                 .count();
         assertThat(count).isEqualTo(2);
 
-        // Before fixing ordinals (i.e. versionStore.commit()), first insert should have smaller
+        // Before versionStore.publish(), unpublished version should not have ordinal
         Map<Revision, Long> ordinals = queryFactory.from(jVersion)
                 .where(jVersionId.eq(docId))
                 .map(jVersion.revision, jVersion.ordinal);
-        assertThat(ordinals.get(r1)).isLessThan(ordinals.get(r2));
+        assertThat(ordinals.get(r1)).isNull();
+        assertThat(ordinals.get(r2)).isNotNull();
 
-        // versionStore.commit() should fix ordinals
-        versionStore.commit();
+        // versionStore.publish() should assign ordinal
+        versionStore.publish();
         ordinals = queryFactory.from(jVersion)
                 .where(jVersionId.eq(docId))
                 .map(jVersion.revision, jVersion.ordinal);
-        assertThat(ordinals.get(r1)).isGreaterThan(ordinals.get(r2));
+        assertThat(ordinals.get(r1)).isEqualTo(ordinals.get(r2) + 1);
     }
 }
