@@ -18,15 +18,16 @@ package org.javersion.core;
 import static com.google.common.collect.Iterables.getFirst;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
 import static org.javersion.util.MapUtils.mapValueFunction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.javersion.util.PersistentMap;
 import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
@@ -38,21 +39,24 @@ public abstract class VersionGraph<K, V, M,
                           B extends VersionGraphBuilder<K, V, M, This, B>>
         implements Function<Revision, VersionNode<K, V, M>> {
 
-    public final PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes;
+    public final PersistentMap<Revision, VersionNode<K, V, M>> versionNodes;
 
     private final VersionNode<K, V, M> at;
 
+    private final VersionNode<K, V, M> tip;
+
     public VersionGraph() {
-        this(PersistentTreeMap.<Revision, VersionNode<K, V, M>> empty(), null);
+        this(PersistentTreeMap.<Revision, VersionNode<K, V, M>> empty(), null, null);
     }
 
     protected VersionGraph(VersionGraphBuilder<K, V, M, This, B> builder) {
-        this(builder.versionNodes.toPersistentMap(), builder.at);
+        this(builder.versionNodes.toPersistentMap(), builder.tip, builder.at);
     }
 
-    private VersionGraph(PersistentSortedMap<Revision, VersionNode<K, V, M>> versionNodes, VersionNode<K, V, M> at) {
+    private VersionGraph(PersistentMap<Revision, VersionNode<K, V, M>> versionNodes, VersionNode<K, V, M> tip, VersionNode<K, V, M> at) {
         this.versionNodes = versionNodes;
-        this.at = (at != null || versionNodes.isEmpty() ? at : versionNodes.getLastEntry().getValue());
+        this.tip = tip;
+        this.at = (at != null ? at : tip);
     }
 
     public final This commit(Version<K, V, M> version) {
@@ -129,10 +133,7 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public final VersionNode<K, V, M> getTip() {
-        if (isEmpty()) {
-            return null;
-        }
-        return versionNodes.getLastEntry().getValue();
+        return tip;
     }
 
     public final Set<String> getBranches() {
@@ -140,6 +141,12 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public final List<Version<K, V, M>> getVersions() {
-        return versionNodes.valueStream().map(node -> node.getVersion()).collect(toList());
+        List<Version<K, V, M>> versions = new ArrayList<>(versionNodes.size());
+        VersionNode<K, V, M> current = tip;
+        while (current != null) {
+            versions.add(current.getVersion());
+            current = (current.previousRevision != null ? versionNodes.get(current.previousRevision) : null);
+        }
+        return Lists.reverse(versions);
     }
 }

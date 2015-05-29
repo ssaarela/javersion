@@ -22,14 +22,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.javersion.util.Check;
-import org.javersion.util.MutableSortedMap;
-import org.javersion.util.MutableTreeMap;
-import org.javersion.util.PersistentSortedMap;
-import org.javersion.util.PersistentTreeMap;
+import org.javersion.util.*;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 
 public abstract class VersionGraphBuilder<K, V, M,
                                G extends VersionGraph<K, V, M, G, B>,
@@ -37,7 +32,9 @@ public abstract class VersionGraphBuilder<K, V, M,
 
     PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;
 
-    MutableSortedMap<Revision, VersionNode<K, V, M>> versionNodes;
+    MutableMap<Revision, VersionNode<K, V, M>> versionNodes;
+
+    VersionNode<K, V, M> tip;
 
     VersionNode<K, V, M> at;
 
@@ -52,6 +49,7 @@ public abstract class VersionGraphBuilder<K, V, M,
     protected VersionGraphBuilder(G parentGraph) {
         this.versionNodes = parentGraph.versionNodes.toMutableMap();
         this.heads = parentGraph.getHeads();
+        this.tip = parentGraph.getTip();
     }
 
     public final B at(VersionNode<K, V, M> at) {
@@ -70,9 +68,9 @@ public abstract class VersionGraphBuilder<K, V, M,
             normalVersion(version, mutableHeads, mergeBuilder);
         }
         mergeBuilder.overwrite(version);
-        VersionNode<K, V, M> versionNode = new VersionNode<>(version, mergeBuilder, mutableHeads);
-        heads = versionNode.heads;
-        versionNodes.put(version.revision, versionNode);
+        tip = new VersionNode<>(version, (tip != null ? tip.revision : null), mergeBuilder, mutableHeads);
+        heads = tip.heads;
+        versionNodes.put(tip.revision, tip);
     }
 
     private void normalVersion(Version<K, V, M> version, MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads, MergeBuilder<K, V, M> mergeBuilder) {

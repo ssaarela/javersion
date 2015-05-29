@@ -22,6 +22,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -527,7 +528,7 @@ public class SimpleVersionGraphTest {
                 .build();
         SimpleVersion v2 = new SimpleVersion.Builder()
                 .branch("branch2")
-                .changeset(ImmutableMap.of("key","value2", "bar","foo"))
+                .changeset(ImmutableMap.of("key", "value2", "bar", "foo"))
                 .build();
 
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v1, v2));
@@ -539,6 +540,25 @@ public class SimpleVersionGraphTest {
         assertThat("Order doesn't matter",
                 merge.getProperties(),
                 equalTo(versionGraph.mergeRevisions(v2.revision, v1.revision).getProperties()));
+    }
+
+    @Test
+    public void version_order_is_maintained() {
+        SimpleVersion v1 = new SimpleVersion.Builder()
+                .changeset(ImmutableMap.of("key", "value1"))
+                .build();
+        SimpleVersion v2 = new SimpleVersion.Builder()
+                .changeset(ImmutableMap.of("key", "value2"))
+                .build();
+
+        assertThat(v1.revision, lessThan(v2.revision));
+
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v2, v1));
+        Merge<String, String, String> merge = versionGraph.mergeBranches(DEFAULT_BRANCH);
+        // Insertion order doesn't affect merge
+        assertThat(merge.getProperties().get("key"), equalTo("value2"));
+
+        assertThat(versionGraph.getTip().revision, equalTo(v1.revision));
     }
 
     private int findIndex(List<VersionExpectation> expectations, int versionNumber) {

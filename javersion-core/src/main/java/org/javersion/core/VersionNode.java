@@ -29,6 +29,8 @@ import com.google.common.collect.Maps;
 
 public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
+    public final Revision previousRevision;
+
     public final Revision revision;
 
     public final String branch;
@@ -42,11 +44,13 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
     public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;
 
     public VersionNode(Version<K, V, M> version,
+                       Revision previousRevision,
                        MergeBuilder<K, V, M> mergeBuilder,
                        MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads) {
         super(mergeBuilder);
         Check.notNull(version, "version");
         this.revision = version.revision;
+        this.previousRevision = previousRevision;
         this.branch = version.branch;
         this.parentRevisions = version.parentRevisions;
         this.type = version.type;
