@@ -1,8 +1,9 @@
 package org.javersion.core;
 
-import org.junit.Test;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
+
+import org.junit.Test;
 
 public class BranchAndRevisionTest {
 

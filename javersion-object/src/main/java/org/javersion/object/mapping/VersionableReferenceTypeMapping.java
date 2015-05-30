@@ -17,8 +17,6 @@ package org.javersion.object.mapping;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.javersion.object.mapping.ReferenceTypeMapping.isReferencePath;
-import static org.javersion.object.mapping.VersionableTypeMapping.getAlias;
-import static org.javersion.path.PropertyPath.ROOT;
 
 import java.util.Optional;
 
@@ -28,8 +26,6 @@ import org.javersion.object.Versionable;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
-
-import com.google.common.base.Strings;
 
 public class VersionableReferenceTypeMapping implements TypeMapping {
 

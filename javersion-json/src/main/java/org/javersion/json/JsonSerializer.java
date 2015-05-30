@@ -23,10 +23,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.javersion.core.Persistent;
-import org.javersion.path.Schema;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
+import org.javersion.path.Schema;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;

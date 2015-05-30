@@ -3,8 +3,6 @@ package org.javersion.object;
 import static com.google.common.collect.ImmutableSet.of;
 import static java.util.Arrays.asList;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Set;
 
 import org.javersion.core.Merge;

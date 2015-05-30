@@ -1,8 +1,9 @@
 package org.javersion.path;
 
-import org.junit.Test;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
+
+import org.junit.Test;
 
 public class SchemaPathFilterTest {
 

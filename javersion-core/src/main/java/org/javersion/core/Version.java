@@ -19,7 +19,6 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Maps.filterEntries;
 import static com.google.common.collect.Maps.filterKeys;
-import static com.google.common.collect.Maps.filterValues;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static com.google.common.collect.Maps.transformValues;
 import static java.util.Arrays.asList;
@@ -30,14 +29,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.javersion.path.PropertyPath;
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 
 public class Version<K, V, M> {
 

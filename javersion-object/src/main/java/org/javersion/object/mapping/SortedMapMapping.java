@@ -2,7 +2,6 @@ package org.javersion.object.mapping;
 
 import java.util.SortedMap;
 
-import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.ScalarType;
 import org.javersion.object.types.SortedMapType;
 import org.javersion.object.types.ValueType;

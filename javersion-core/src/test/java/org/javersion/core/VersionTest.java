@@ -1,14 +1,11 @@
 package org.javersion.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.javersion.core.DiffTest.map;
+
 import java.util.Map;
 
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import static org.assertj.core.api.Assertions.*;
-import static org.javersion.core.DiffTest.map;
-
-import javafx.scene.shape.SVGPath;
 
 public class VersionTest {
 

@@ -23,14 +23,11 @@ import static com.google.common.collect.Maps.transformValues;
 import java.util.Map;
 import java.util.Set;
 
-import org.javersion.path.PropertyPath;
 import org.javersion.util.PersistentHashMap;
 import org.javersion.util.PersistentHashSet;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
 public abstract class Merge<K, V, M> {

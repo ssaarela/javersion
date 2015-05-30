@@ -34,11 +34,10 @@ import java.util.UUID;
 import javax.inject.Inject;
 
 import org.javersion.core.Merge;
+import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.json.JsonSerializer;
-import org.javersion.object.*;
-import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.http.HttpHeaders;

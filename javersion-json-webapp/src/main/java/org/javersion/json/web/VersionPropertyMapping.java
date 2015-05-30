@@ -2,11 +2,11 @@ package org.javersion.json.web;
 
 import java.util.Optional;
 
+import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionProperty;
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
-import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.object.mapping.TypeMapping;

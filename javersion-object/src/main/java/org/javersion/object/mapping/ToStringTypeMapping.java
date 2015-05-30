@@ -15,12 +15,7 @@
  */
 package org.javersion.object.mapping;
 
-import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.ToStringValueType;
-import org.javersion.object.types.ValueType;
-import org.javersion.path.PropertyPath;
-import org.javersion.reflect.TypeDescriptor;
-import org.javersion.util.Check;
 
 public class ToStringTypeMapping extends SimpleValueMapping {
 

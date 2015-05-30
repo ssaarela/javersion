@@ -1,5 +1,8 @@
 package org.javersion.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.javersion.core.VersionType.RESET;
+
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -8,9 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.javersion.core.VersionType.RESET;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;

@@ -20,7 +20,6 @@ import java.util.Optional;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
-import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.MapType;
 import org.javersion.object.types.ScalarType;
 import org.javersion.object.types.ValueType;

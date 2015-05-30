@@ -1,13 +1,14 @@
 package org.javersion.object;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.javersion.object.TestUtil.properties;
+import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
+
 import java.util.Map;
 
 import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
-import static org.assertj.core.api.Assertions.*;
-import static org.javersion.object.TestUtil.properties;
-import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
 
 public class PropertyIgnoreTest {
 

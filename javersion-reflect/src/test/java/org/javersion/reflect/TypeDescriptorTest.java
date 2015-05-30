@@ -16,16 +16,13 @@
 package org.javersion.reflect;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
 import org.junit.Test;
-
-import com.google.common.base.Predicate;
 
 public class TypeDescriptorTest {
 

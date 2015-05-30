@@ -2,6 +2,8 @@ package org.javersion.object;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.javersion.core.Version.DEFAULT_BRANCH;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -11,9 +13,6 @@ import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
-
-import static org.assertj.core.api.Assertions.*;
-import static org.javersion.core.Version.DEFAULT_BRANCH;
 
 public class PartialProjectionTest {
 

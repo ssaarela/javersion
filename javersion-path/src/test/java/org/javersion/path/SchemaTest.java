@@ -1,8 +1,9 @@
 package org.javersion.path;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.javersion.path.PropertyPath.NodeId.valueOf;
 import static org.javersion.path.PropertyPath.ROOT;
-import static org.assertj.core.api.Assertions.*;
 import static org.javersion.path.PropertyPath.parse;
 
 import org.javersion.path.PropertyPath.NodeId;

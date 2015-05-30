@@ -18,14 +18,12 @@ package org.javersion.core;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.javersion.util.Check;
 import org.javersion.util.MutableSortedMap;
 import org.javersion.util.PersistentSortedMap;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 
 public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 

@@ -15,14 +15,11 @@
  */
 package org.javersion.object;
 
-import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionGraphBuilder;
-import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersionGraph.Builder;
 import org.javersion.path.PropertyPath;
-import org.javersion.util.PersistentSortedMap;
 
 public final class ObjectVersionGraph<M> extends VersionGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
 
