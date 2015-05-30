@@ -13,12 +13,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
-import org.javersion.core.VersionGraph;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.PersistenceTestConfiguration;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +43,7 @@ public class LoadTest {
     ObjectVersionStoreJdbc<String, Void> versionStore;
 
     @Test
-//    @Ignore
+    @Ignore
     public void performance() {
         long ts;
         final int docCount = 100;

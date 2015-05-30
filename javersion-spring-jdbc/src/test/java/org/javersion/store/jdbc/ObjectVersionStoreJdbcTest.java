@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.types.path.StringPath;
 
@@ -202,6 +202,14 @@ public class ObjectVersionStoreJdbcTest {
     }
 
     @Test
+    public void publish_nothing() {
+        // Flush first if there's pending versions
+        versionStore.publish();
+        assertThat(versionStore.publish()).isEqualTo(ImmutableSet.of());
+
+    }
+
+    @Test
     public void load_updates() {
         String docId = randomUUID().toString();
 
@@ -215,7 +223,7 @@ public class ObjectVersionStoreJdbcTest {
 
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2);
         versionStore.append(docId, versionGraph.getVersionNode(v1.revision));
-        versionStore.publish(); // v1
+        assertThat(versionStore.publish()).isEqualTo(ImmutableSet.of(docId)); // v1
         versionStore.append(docId, versionGraph.getVersionNode(v2.revision));
 
         List<ObjectVersion<Void>> updates = versionStore.fetchUpdates(docId, v1.revision);
@@ -225,7 +233,7 @@ public class ObjectVersionStoreJdbcTest {
 
         assertThat(versionStore.findDocuments(null)).isNotEmpty();
 
-        versionStore.publish(); // v2
+        assertThat(versionStore.publish()).isEqualTo(ImmutableSet.of(docId)); // v2
         updates = versionStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).hasSize(1);
         assertThat(updates.get(0)).isEqualTo(v2);

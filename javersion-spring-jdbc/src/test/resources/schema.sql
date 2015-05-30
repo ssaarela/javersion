@@ -30,7 +30,7 @@ create sequence VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
 -- findDocuments(sinceOrdinal)
 create index VERSION_ORDINAL_IDX on VERSION (ORDINAL, DOC_ID, REVISION);
 -- findUncommittedRevisions
-create index VERSION_TX_ORDINAL_IDX on VERSION (TX_ORDINAL, REVISION);
+create index VERSION_TX_ORDINAL_IDX on VERSION (TX_ORDINAL, REVISION, DOC_ID);
 -- getVersionsAndParents and getPropertiesByDocId
 create index VERSION_DOC_ID_IDX on VERSION (DOC_ID, ORDINAL, REVISION);
 

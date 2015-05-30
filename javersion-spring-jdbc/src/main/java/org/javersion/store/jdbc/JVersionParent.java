@@ -4,11 +4,7 @@ import static com.mysema.query.types.PathMetadataFactory.forVariable;
 
 import java.sql.Types;
 
-import javax.annotation.Generated;
-
 import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.PathMetadata;
 import com.mysema.query.types.path.SimplePath;
 
 public class JVersionParent extends com.mysema.query.sql.RelationalPathBase<JVersionParent> {

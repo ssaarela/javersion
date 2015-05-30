@@ -11,7 +11,6 @@ import javax.annotation.Nullable;
 import org.javersion.core.Revision;
 
 import com.mysema.query.sql.types.AbstractType;
-import com.sun.org.apache.bcel.internal.generic.RET;
 
 public class RevisionType extends AbstractType<Revision> {
 

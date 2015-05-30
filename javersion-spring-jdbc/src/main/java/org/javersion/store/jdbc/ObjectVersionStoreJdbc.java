@@ -11,9 +11,9 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -30,10 +30,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.mysema.commons.lang.Pair;
 import com.mysema.query.ResultTransformer;
 import com.mysema.query.Tuple;
 import com.mysema.query.group.Group;
 import com.mysema.query.group.GroupBy;
+import com.mysema.query.group.QPair;
 import com.mysema.query.sql.Configuration;
 import com.mysema.query.sql.SQLExpressions;
 import com.mysema.query.sql.SQLQuery;
@@ -71,6 +74,8 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
 
     protected final Expression<?>[] versionAndParents;
 
+    protected final QPair<Revision, Id> revisionAndDocId;
+
     protected final ResultTransformer<Map<Revision, List<Tuple>>> properties;
 
     protected static final String REPOSITORY_ID = "repository";
@@ -83,6 +88,7 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         jProperty = null;
         jRepository = null;
         versionAndParents = null;
+        revisionAndDocId = null;
         properties = null;
         queryFactory = null;
     }
@@ -94,11 +100,11 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         this.jParent = new JVersionParent(schema, tablePrefix, "parent");
         this.jProperty = new JVersionProperty(schema, tablePrefix, "property");
         this.queryFactory = queryFactory;
+        initIdColumns(jVersion, jProperty);
 
         versionAndParents = concat(allVersionColumns(), GroupBy.set(jParent.parentRevision));
+        revisionAndDocId = new QPair<>(jVersion.revision, (Expression<Id>) versionDocId());
         properties = groupBy(jProperty.revision).as(GroupBy.list(new QTuple(allPropertyColumns())));
-
-        initIdColumns(jVersion, jProperty);
     }
 
     protected abstract void initIdColumns(JVersion jVersion, JVersionProperty jProperty);
@@ -132,13 +138,16 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRES_NEW)
-    public void publish() {
+    public Set<Id> publish() {
         long lastOrdinal = getLastOrdinalForUpdate();
+        List<Pair<Revision, Id>> uncommittedRevisions = findUncommittedRevisions();
+        Set<Id> committedDocs = Sets.newLinkedHashSetWithExpectedSize(uncommittedRevisions.size());
 
-        for (Revision revision : findUncommittedRevisions()) {
+        for (Pair<Revision, Id> revisionAndDocId : uncommittedRevisions) {
+            committedDocs.add(revisionAndDocId.getSecond());
             queryFactory
                     .update(jVersion)
-                    .where(jVersion.revision.eq(revision))
+                    .where(jVersion.revision.eq(revisionAndDocId.getFirst()))
                     .set(jVersion.ordinal, ++lastOrdinal)
                     .setNull(jVersion.txOrdinal)
                     .execute();
@@ -149,6 +158,8 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
                 .where(jRepository.id.eq(REPOSITORY_ID))
                 .set(jRepository.ordinal, lastOrdinal)
                 .execute();
+
+        return committedDocs;
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
@@ -220,12 +231,12 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
                 .singleResult(jRepository.ordinal);
     }
 
-    private List<Revision> findUncommittedRevisions() {
+    private List<Pair<Revision, Id>> findUncommittedRevisions() {
         return queryFactory
                 .from(jVersion)
                 .where(jVersion.txOrdinal.isNotNull())
                 .orderBy(jVersion.txOrdinal.asc())
-                .list(jVersion.revision);
+                .list(revisionAndDocId);
     }
 
     protected void addProperties(Id docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {

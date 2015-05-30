@@ -1,8 +1,5 @@
 package org.javersion.store;
 
-import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
-import static org.springframework.transaction.annotation.Propagation.REQUIRED;
-
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
@@ -15,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.mysema.query.sql.H2Templates;
