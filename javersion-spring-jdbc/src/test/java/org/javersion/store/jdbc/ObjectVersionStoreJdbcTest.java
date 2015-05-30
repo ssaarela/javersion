@@ -136,6 +136,7 @@ public class ObjectVersionStoreJdbcTest {
     @Test
     public void ordinal_is_assigned_by_publish() throws InterruptedException {
         final CountDownLatch firstInsertDone = new CountDownLatch(1);
+        final CountDownLatch firstInsertCommitted = new CountDownLatch(1);
         final CountDownLatch secondInsertDone = new CountDownLatch(1);
 
         final String docId = randomUUID().toString();
@@ -159,6 +160,7 @@ public class ObjectVersionStoreJdbcTest {
                 }
                 return null;
             });
+            firstInsertCommitted.countDown();
         }).start();
 
         // Wait until first insert is done, but not committed yet
@@ -178,8 +180,7 @@ public class ObjectVersionStoreJdbcTest {
         // Let the first transaction commit
         secondInsertDone.countDown();
 
-        // Allow time to commit
-        Thread.sleep(50);
+        firstInsertCommitted.await();
 
         count = queryFactory.from(jVersion)
                 .where(jVersionId.eq(docId))
