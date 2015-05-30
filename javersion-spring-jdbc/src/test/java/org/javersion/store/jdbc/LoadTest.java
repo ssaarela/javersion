@@ -9,22 +9,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import org.javersion.core.VersionGraph;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.PersistenceTestConfiguration;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import com.google.common.cache.CacheBuilder;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
-public class ObjectVersionStoreJdbcLoadTest {
+public class LoadTest {
 
     private static final String[] VALUES = {"Lorem","ipsum","dolor","sit","amet,","consectetuer","adipiscing","elit.","Sed","posuere","interdum","sem.",
             "Quisque","ligula","eros","ullamcorper","quis,","lacinia","quis","facilisis","sed","sapien.","Mauris","varius","diam","vitae","arcu.","Sed",
@@ -40,18 +45,26 @@ public class ObjectVersionStoreJdbcLoadTest {
     ObjectVersionStoreJdbc<String, Void> versionStore;
 
     @Test
-    @Ignore
+//    @Ignore
     public void performance() {
         long ts;
         final int docCount = 100;
         final int docVersionCount = 100;
         final int propCount = 100;
 
+        VersionGraphCache<String, Void> cache = new VersionGraphCache<>(versionStore,
+                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
+                        .maximumSize(docCount)
+                        .refreshAfterWrite(1, TimeUnit.NANOSECONDS));
+
         List<String> docIds = generateDocIds(docCount);
         for (int round=1; round <= docVersionCount; round++) {
             for (String docId : docIds) {
                 ts = currentTimeMillis();
-                ObjectVersionGraph<Void> versionGraph = versionStore.load(docId);
+
+//                ObjectVersionGraph<Void> versionGraph = versionStore.load(docId);
+                ObjectVersionGraph<Void> versionGraph = cache.load(docId);
+
                 print(round, "load", ts);
 
                 ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()

@@ -157,8 +157,7 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
-        Check.notNull(since, "since");
+    public List<ObjectVersion<M>> fetchUpdates(Id docId, @Nullable Revision since) {
         return fetch(docId, since);
     }
 
@@ -181,7 +180,7 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         return qry.list((Expression<Id>) versionDocId());
     }
 
-    private List<ObjectVersion<M>> fetch(Id docId, Revision sinceRevision) {
+    private List<ObjectVersion<M>> fetch(Id docId, @Nullable Revision sinceRevision) {
         Check.notNull(docId, "docId");
 
         Long sinceOrdinal = getOrdinal(sinceRevision);
