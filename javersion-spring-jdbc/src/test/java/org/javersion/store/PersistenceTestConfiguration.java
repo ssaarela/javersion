@@ -29,13 +29,13 @@ public class PersistenceTestConfiguration {
     @Bean
     public SQLQueryFactory queryFactory(final DataSource dataSource) {
         com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new H2Templates());
-        ObjectVersionStoreJdbc.registerTypes("", configuration);
+        ObjectVersionStoreJdbc.registerTypes("TEST_", configuration);
         return new SQLQueryFactory(configuration, () -> DataSourceUtils.getConnection(dataSource));
     }
 
     @Bean
     public ObjectVersionStoreJdbc<String, Void> versionStore(SQLQueryFactory queryFactory) {
-        return new ObjectVersionStoreJdbc<String, Void>("PUBLIC", "", queryFactory) {
+        return new ObjectVersionStoreJdbc<String, Void>("PUBLIC", "TEST_", queryFactory) {
 
             private StringPath versionDocId;
 

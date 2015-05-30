@@ -63,7 +63,7 @@ public class ObjectVersionStoreJdbcTest {
 
     private final ObjectVersionManager<Product, Void> versionManager = new ObjectVersionManager<Product, Void>(Product.class).init();
 
-    private final JVersion jVersion = new JVersion("PUBLIC", "", "version");
+    private final JVersion jVersion = new JVersion("PUBLIC", "TEST_", "version");
     private final StringPath jVersionId = new StringPath(jVersion, "DOC_ID");
 
     @Resource
