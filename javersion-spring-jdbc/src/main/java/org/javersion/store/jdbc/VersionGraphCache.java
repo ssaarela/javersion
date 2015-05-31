@@ -27,28 +27,7 @@ public class VersionGraphCache<Id, M> {
     public VersionGraphCache(ObjectVersionStoreJdbc<Id, M> versionStore, CacheBuilder<Object, Object> cacheBuilder) {
         this.versionStore = versionStore;
 
-        this.cache = cacheBuilder.build(new CacheLoader<Id, ObjectVersionGraph<M>>() {
-
-                    @Override
-                    public ObjectVersionGraph<M> load(Id docId) throws Exception {
-                        return versionStore.load(docId);
-                    }
-
-                    @Override
-                    public ListenableFuture<ObjectVersionGraph<M>> reload(Id docId, ObjectVersionGraph<M> oldValue) throws Exception {
-                        Revision since = null;
-                        if (!oldValue.isEmpty()) {
-                            since = oldValue.getTip().getRevision();
-                        }
-                        ObjectVersionGraph<M> newValue = oldValue;
-                        List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
-                        if (!updates.isEmpty()) {
-                            newValue = oldValue.commit(updates);
-                        }
-                        return Futures.immediateFuture(newValue);
-                    }
-
-                });
+        this.cache = cacheBuilder.build(newCacheLoader(versionStore));
         this.cachedDocIds = cache.asMap().keySet();
     }
 
@@ -76,6 +55,31 @@ public class VersionGraphCache<Id, M> {
 
     public void refresh(Id docId) {
         cache.refresh(docId);
+    }
+
+    private CacheLoader<Id, ObjectVersionGraph<M>> newCacheLoader(final ObjectVersionStoreJdbc<Id, M> versionStore) {
+        return new CacheLoader<Id, ObjectVersionGraph<M>>() {
+
+            @Override
+            public ObjectVersionGraph<M> load(Id docId) throws Exception {
+                return versionStore.load(docId);
+            }
+
+            @Override
+            public ListenableFuture<ObjectVersionGraph<M>> reload(Id docId, ObjectVersionGraph<M> oldValue) throws Exception {
+                Revision since = null;
+                if (!oldValue.isEmpty()) {
+                    since = oldValue.getTip().getRevision();
+                }
+                ObjectVersionGraph<M> newValue = oldValue;
+                List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
+                if (!updates.isEmpty()) {
+                    newValue = oldValue.commit(updates);
+                }
+                return Futures.immediateFuture(newValue);
+            }
+
+        };
     }
 
 }
