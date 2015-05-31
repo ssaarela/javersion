@@ -28,6 +28,10 @@ public class QTestVersion extends com.mysema.query.sql.RelationalPathBase<QTestV
 
     public final StringPath docId = createString("docId");
 
+    public final NumberPath<Long> id = createNumber("id", Long.class);
+
+    public final StringPath name = createString("name");
+
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
     public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
@@ -69,6 +73,8 @@ public class QTestVersion extends com.mysema.query.sql.RelationalPathBase<QTestV
     public void addMetadata() {
         addMetadata(branch, ColumnMetadata.named("BRANCH").withIndex(5).ofType(Types.VARCHAR).withSize(128).notNull());
         addMetadata(docId, ColumnMetadata.named("DOC_ID").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
+        addMetadata(id, ColumnMetadata.named("ID").withIndex(7).ofType(Types.BIGINT).withSize(19));
+        addMetadata(name, ColumnMetadata.named("NAME").withIndex(8).ofType(Types.VARCHAR).withSize(255));
         addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(3).ofType(Types.BIGINT).withSize(19));
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
         addMetadata(txOrdinal, ColumnMetadata.named("TX_ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));

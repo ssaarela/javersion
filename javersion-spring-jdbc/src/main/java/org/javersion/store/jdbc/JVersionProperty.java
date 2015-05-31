@@ -16,15 +16,11 @@
 package org.javersion.store.jdbc;
 
 import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.expr.SimpleExpression;
 import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.SimplePath;
 import com.mysema.query.types.path.StringPath;
 
-public class JVersionProperty<Id> extends com.mysema.query.sql.RelationalPathBase<JVersionProperty> {
-
-    public final Column<Id> docId;
+public class JVersionProperty extends com.mysema.query.sql.RelationalPathBase<JVersionProperty> {
 
     public final NumberPath<Long> nbr = createNumber("nbr", Long.class);
 
@@ -36,9 +32,8 @@ public class JVersionProperty<Id> extends com.mysema.query.sql.RelationalPathBas
 
     public final StringPath type = createString("type");
 
-    public <P extends SimpleExpression<Id> & Path<Id>> JVersionProperty(RelationalPathBase<?> table, P docId) {
+    public JVersionProperty(RelationalPathBase<?> table) {
         super(JVersionProperty.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
-        this.docId = new Column<Id>(docId);
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
     }
 

@@ -56,7 +56,6 @@ create table TEST_VERSION_PARENT (
 
 
 create table TEST_VERSION_PROPERTY (
-  DOC_ID varchar(255) not null,
   REVISION varchar(32) not null,
 
   PATH varchar(512) not null,
@@ -68,8 +67,5 @@ create table TEST_VERSION_PROPERTY (
 
   primary key (REVISION, PATH),
 
-  constraint TEST_VERSION_PROPERTY_REVISION_FK
-    foreign key (REVISION) references TEST_VERSION (REVISION)
+  constraint TEST_VERSION_PROPERTY_REVISION_FK foreign key (REVISION) references TEST_VERSION (REVISION)
 );
-
-create index TEST_VERSION_PROPERTY_DOC_ID_IDX on TEST_VERSION_PROPERTY (DOC_ID);

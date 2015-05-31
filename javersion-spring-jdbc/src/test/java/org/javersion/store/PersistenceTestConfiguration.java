@@ -52,7 +52,7 @@ public class PersistenceTestConfiguration {
                 SQLExpressions.nextval("TEST_VERSION_ORDINAL_SEQ"),
                 new JVersion(testVersion, testVersion.docId),
                 new JVersionParent(testVersionParent),
-                new JVersionProperty(testVersionProperty, testVersionProperty.docId),
+                new JVersionProperty(testVersionProperty),
                 queryFactory
         );
     }

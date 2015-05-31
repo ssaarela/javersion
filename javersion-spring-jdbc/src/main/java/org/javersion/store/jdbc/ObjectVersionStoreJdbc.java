@@ -43,6 +43,8 @@ import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -80,7 +82,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
 
     protected final JVersionParent jParent;
 
-    protected final JVersionProperty<Id> jProperty;
+    protected final JVersionProperty jProperty;
 
     protected final JRepository jRepository;
 
@@ -110,7 +112,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
     public <P extends SimpleExpression<Id> & Path<Id>> ObjectVersionStoreJdbc(
             JRepository jRepository,
             Expression<Long> nextOrdinal,
-            JVersion jVersion,
+            JVersion<Id> jVersion,
             JVersionParent jParent,
             JVersionProperty jProperty,
             SQLQueryFactory queryFactory) {
@@ -263,7 +265,6 @@ public class ObjectVersionStoreJdbc<Id, M> {
     protected void addProperties(Id docId, Revision revision, Map<PropertyPath, Object> changeset, SQLInsertClause propertyBatch) {
         for (Entry<PropertyPath, Object> entry : changeset.entrySet()) {
             propertyBatch
-                    .set(jProperty.docId.path, docId)
                     .set(jProperty.revision, revision)
                     .set(jProperty.path, entry.getKey().toString());
             setValue(entry.getKey(), entry.getValue(), propertyBatch);
@@ -347,13 +348,15 @@ public class ObjectVersionStoreJdbc<Id, M> {
     }
 
     protected Map<Revision, List<Tuple>> getPropertiesByDocId(Id docId, @Nullable Long sinceOrdinal) {
-        SQLQuery qry = queryFactory.from(jProperty);
+        SQLQuery qry = queryFactory
+                .from(jProperty)
+                .innerJoin(jVersion).on(jVersion.revision.eq(jProperty.revision))
+                .where(jVersion.docId.expr.eq(docId));
 
         if (sinceOrdinal == null) {
-            qry.where(jProperty.docId.expr.eq(docId));
+            qry.where(jVersion.ordinal.isNotNull());
         } else {
-            qry.innerJoin(jVersion).on(jVersion.revision.eq(jProperty.revision));
-            qry.where(jVersion.docId.expr.eq(docId), jVersion.ordinal.gt(sinceOrdinal));
+            qry.where(jVersion.ordinal.gt(sinceOrdinal));
         }
         return qry.transform(properties);
     }
