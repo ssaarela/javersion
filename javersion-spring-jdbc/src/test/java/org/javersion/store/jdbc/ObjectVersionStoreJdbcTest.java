@@ -5,6 +5,7 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.store.sql.QTestVersion.testVersion;
+import static org.javersion.store.sql.QTestVersionProperty.testVersionProperty;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -65,6 +66,9 @@ public class ObjectVersionStoreJdbcTest {
 
     @Resource
     ObjectVersionStoreJdbc<String, Void> versionStore;
+
+    @Resource
+    ObjectVersionStoreJdbc<String, Void> mappedVersionStore;
 
     @Resource
     TransactionTemplate transactionTemplate;
@@ -258,5 +262,74 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
         versionStore.publish();
         assertThat(versionStore.load(docId).getTip().getVersion()).isEqualTo(version);
+    }
+
+    @Test
+    public void id_and_name_mapped_to_version_table() {
+        String docId = randomUUID().toString();
+
+        ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
+                .changeset(ImmutableMap.<PropertyPath, Object>of(
+                        ROOT.property("name"), "name",
+                        ROOT.property("id"), 5l))
+                .build();
+
+        mappedVersionStore.append(docId, ObjectVersionGraph.init(v1).getTip());
+        mappedVersionStore.publish();
+        assertThat(mappedVersionStore.load(docId).getTip().getVersion()).isEqualTo(v1);
+
+        long count = queryFactory.from(testVersionProperty)
+                .innerJoin(testVersionProperty.testVersionPropertyRevisionFk, testVersion)
+                .where(testVersion.docId.eq(docId))
+                .count();
+        assertThat(count).isEqualTo(0);
+
+        ObjectVersion<Void> v2 = ObjectVersion.<Void>builder()
+                .parents(v1.revision)
+                .build();
+
+        mappedVersionStore.append(docId, ObjectVersionGraph.init(v1, v2).getTip());
+        mappedVersionStore.publish();
+
+        // Inherited values
+        count = queryFactory.from(testVersion)
+                .where(testVersion.docId.eq(docId),
+                        testVersion.revision.eq(v2.revision),
+                        testVersion.name.eq("name"),
+                        testVersion.id.eq(5l))
+                .count();
+        assertThat(count).isEqualTo(1);
+        assertThat(mappedVersionStore.load(docId).getTip().getVersion()).isEqualTo(v2);
+    }
+
+    @Test
+    public void generic_property_overwrites_version_table_property() {
+        // This allows one to start with generic mappings and later
+        // add column mappings to version table, without need to
+        // convert old version_property values into version table
+
+        String docId = randomUUID().toString();
+
+        Version<PropertyPath, Object, Void> version = ObjectVersion.<Void>builder()
+                .changeset(ImmutableMap.<PropertyPath, Object>of(
+                        ROOT.property("name"), "name",
+                        ROOT.property("id"), 5l))
+                .build();
+
+        mappedVersionStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        mappedVersionStore.publish();
+
+        queryFactory.insert(testVersionProperty)
+                .set(testVersionProperty.revision, version.revision)
+                .set(testVersionProperty.path, "name")
+                .set(testVersionProperty.type, "s")
+                .set(testVersionProperty.str, "another name")
+                .execute();
+
+        version = mappedVersionStore.load(docId).getTip().getVersion();
+
+        assertThat(version.changeset).isEqualTo(ImmutableMap.of(
+                ROOT.property("name"), "another name",
+                ROOT.property("id"), 5l));
     }
 }

@@ -47,21 +47,21 @@ public class LoadTest {
     public void performance() {
         long ts;
         final int docCount = 100;
-        final int docVersionCount = 100;
+        final int docVersionCount = 50;
         final int propCount = 100;
 
-        VersionGraphCache<String, Void> cache = new VersionGraphCache<>(versionStore,
-                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
-                        .maximumSize(docCount)
-                        .refreshAfterWrite(1, TimeUnit.NANOSECONDS));
+//        VersionGraphCache<String, Void> cache = new VersionGraphCache<>(versionStore,
+//                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
+//                        .maximumSize(docCount)
+//                        .refreshAfterWrite(1, TimeUnit.NANOSECONDS));
 
         List<String> docIds = generateDocIds(docCount);
         for (int round=1; round <= docVersionCount; round++) {
             for (String docId : docIds) {
                 ts = currentTimeMillis();
 
-//                ObjectVersionGraph<Void> versionGraph = versionStore.load(docId);
-                ObjectVersionGraph<Void> versionGraph = cache.load(docId);
+                ObjectVersionGraph<Void> versionGraph = versionStore.load(docId);
+//                ObjectVersionGraph<Void> versionGraph = cache.load(docId);
 
                 print(round, "load", ts);
 
@@ -86,7 +86,7 @@ public class LoadTest {
 
     private void print(int round, String type, long ts) {
         double expired = currentTimeMillis() - ts;
-        System.out.println(format("%s, %s, %s", round, type, expired));
+        System.out.println(format("%s,%s,%s", round, type, expired));
     }
 
     private Map<PropertyPath, Object> generateProperties(int count) {

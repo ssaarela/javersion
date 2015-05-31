@@ -26,6 +26,7 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRES_NE
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,9 +44,8 @@ import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.mysema.commons.lang.Pair;
@@ -96,6 +96,8 @@ public class ObjectVersionStoreJdbc<Id, M> {
 
     protected static final String REPOSITORY_ID = "repository";
 
+    protected final Map<PropertyPath, Column> versionTableProperties;
+
     @SuppressWarnings("unused")
     protected ObjectVersionStoreJdbc() {
         nextOrdinal = null;
@@ -103,6 +105,8 @@ public class ObjectVersionStoreJdbc<Id, M> {
         jParent = null;
         jProperty = null;
         jRepository = null;
+
+        versionTableProperties = null;
         versionAndParents = null;
         revisionAndDocId = null;
         properties = null;
@@ -116,6 +120,17 @@ public class ObjectVersionStoreJdbc<Id, M> {
             JVersionParent jParent,
             JVersionProperty jProperty,
             SQLQueryFactory queryFactory) {
+        this(jRepository, nextOrdinal, jVersion, jParent, jProperty, queryFactory, ImmutableMap.of());
+    }
+
+    public <P extends SimpleExpression<Id> & Path<Id>> ObjectVersionStoreJdbc(
+            JRepository jRepository,
+            Expression<Long> nextOrdinal,
+            JVersion<Id> jVersion,
+            JVersionParent jParent,
+            JVersionProperty jProperty,
+            SQLQueryFactory queryFactory,
+            Map<PropertyPath, Column> versionTableProperties) {
         this.nextOrdinal = nextOrdinal;
         this.jRepository = jRepository;
         this.jVersion = jVersion;
@@ -123,6 +138,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
         this.jProperty = jProperty;
         this.queryFactory = queryFactory;
 
+        this.versionTableProperties = versionTableProperties;
         versionAndParents = concat(jVersion.all(), GroupBy.set(jParent.parentRevision));
         revisionAndDocId = new QPair<>(jVersion.revision, jVersion.docId.expr);
         properties = groupBy(jProperty.revision).as(GroupBy.list(new QTuple(jProperty.all())));
@@ -242,7 +258,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
                 .singleResult(jVersion.ordinal);
     }
 
-    private long getLastOrdinalForUpdate() {
+    private Long getLastOrdinalForUpdate() {
         return queryFactory
                 .from(jRepository)
                 .where(jRepository.id.eq(REPOSITORY_ID))
@@ -264,11 +280,13 @@ public class ObjectVersionStoreJdbc<Id, M> {
 
     protected void addProperties(Id docId, Revision revision, Map<PropertyPath, Object> changeset, SQLInsertClause propertyBatch) {
         for (Entry<PropertyPath, Object> entry : changeset.entrySet()) {
-            propertyBatch
-                    .set(jProperty.revision, revision)
-                    .set(jProperty.path, entry.getKey().toString());
-            setValue(entry.getKey(), entry.getValue(), propertyBatch);
-            propertyBatch.addBatch();
+            if (!versionTableProperties.containsKey(entry.getKey())) {
+                propertyBatch
+                        .set(jProperty.revision, revision)
+                        .set(jProperty.path, entry.getKey().toString());
+                setValue(entry.getKey(), entry.getValue(), propertyBatch);
+                propertyBatch.addBatch();
+            }
         }
     }
 
@@ -334,11 +352,34 @@ public class ObjectVersionStoreJdbc<Id, M> {
                 .set(jVersion.revision, version.revision)
                 .set(jVersion.txOrdinal, nextOrdinal)
                 .set(jVersion.type, version.type)
-                .set(jVersion.branch, version.branch)
-                .addBatch();
+                .set(jVersion.branch, version.branch);
+
+        if (!versionTableProperties.isEmpty()) {
+            Map<PropertyPath, Object> properties = version.getProperties();
+            for (Entry<PropertyPath, Column> entry : versionTableProperties.entrySet()) {
+                PropertyPath path = entry.getKey();
+                @SuppressWarnings("unchecked")
+                Column<Object> column = (Column<Object>) entry.getValue();
+                versionBatch.set(column.path, properties.get(path));
+            }
+        }
+        versionBatch.addBatch();
     }
 
     protected ObjectVersion<M> buildVersion(Revision rev, Group versionAndParents, Map<PropertyPath, Object> changeset) {
+        if (!versionTableProperties.isEmpty()) {
+            if (changeset == null) {
+                changeset = new HashMap<>();
+            }
+            for (Entry<PropertyPath, Column> entry : versionTableProperties.entrySet()) {
+                PropertyPath path = entry.getKey();
+                @SuppressWarnings("unchecked")
+                Column<Object> column = (Column<Object>) entry.getValue();
+                if (!changeset.containsKey(path)) {
+                    changeset.put(path, versionAndParents.getOne(column.expr));
+                }
+            }
+        }
         return new ObjectVersionBuilder<M>(rev)
                 .branch(versionAndParents.getOne(jVersion.branch))
                 .type(versionAndParents.getOne(jVersion.type))
@@ -397,7 +438,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
             case 'O': return Persistent.object(str);
             case 'A': return Persistent.array();
             case 's': return str;
-            case 'b': return Boolean.valueOf(nbr != 0);
+            case 'b': return nbr != 0;
             case 'l': return nbr;
             case 'd': return Double.longBitsToDouble(nbr);
             case 'D': return new BigDecimal(str);
