@@ -15,16 +15,16 @@
  */
 package org.javersion.store.jdbc;
 
-import static com.mysema.query.types.PathMetadataFactory.forVariable;
-
-import java.sql.Types;
-
-import com.mysema.query.sql.ColumnMetadata;
+import com.mysema.query.sql.RelationalPathBase;
+import com.mysema.query.types.Path;
+import com.mysema.query.types.expr.SimpleExpression;
 import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.SimplePath;
 import com.mysema.query.types.path.StringPath;
 
-public class JVersionProperty extends com.mysema.query.sql.RelationalPathBase<JVersionProperty> {
+public class JVersionProperty<Id> extends com.mysema.query.sql.RelationalPathBase<JVersionProperty> {
+
+    public final Column<Id> docId;
 
     public final NumberPath<Long> nbr = createNumber("nbr", Long.class);
 
@@ -36,21 +36,10 @@ public class JVersionProperty extends com.mysema.query.sql.RelationalPathBase<JV
 
     public final StringPath type = createString("type");
 
-    public final com.mysema.query.sql.PrimaryKey<JVersionProperty> constraint38 = createPrimaryKey(path, revision);
-
-    public final com.mysema.query.sql.ForeignKey<JVersion> versionPropertyRevisionFk = createForeignKey(revision, "REVISION");
-
-    public JVersionProperty(String schema, String tablePrefix, String alias) {
-        super(JVersionProperty.class, forVariable(alias), schema, tablePrefix + "VERSION_PROPERTY");
-        addMetadata();
-    }
-
-    public void addMetadata() {
-        addMetadata(nbr, ColumnMetadata.named("NBR").withIndex(6).ofType(Types.BIGINT).withSize(19));
-        addMetadata(path, ColumnMetadata.named("PATH").withIndex(3).ofType(Types.VARCHAR).withSize(512).notNull());
-        addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
-        addMetadata(str, ColumnMetadata.named("STR").withIndex(5).ofType(Types.VARCHAR).withSize(1024));
-        addMetadata(type, ColumnMetadata.named("TYPE").withIndex(4).ofType(Types.CHAR).withSize(1));
+    public <P extends SimpleExpression<Id> & Path<Id>> JVersionProperty(RelationalPathBase<?> table, P docId) {
+        super(JVersionProperty.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
+        this.docId = new Column<Id>(docId);
+        table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
     }
 
 }

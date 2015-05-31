@@ -4,6 +4,7 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.store.sql.QTestVersion.testVersion;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -34,7 +35,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mysema.query.sql.SQLQueryFactory;
-import com.mysema.query.types.path.StringPath;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -62,9 +62,6 @@ public class ObjectVersionStoreJdbcTest {
     }
 
     private final ObjectVersionManager<Product, Void> versionManager = new ObjectVersionManager<Product, Void>(Product.class).init();
-
-    private final JVersion jVersion = new JVersion("PUBLIC", "TEST_", "version");
-    private final StringPath jVersionId = new StringPath(jVersion, "DOC_ID");
 
     @Resource
     ObjectVersionStoreJdbc<String, Void> versionStore;
@@ -172,8 +169,8 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.append(docId, ObjectVersionGraph.init(version2).getTip());
         versionStore.publish();
 
-        long count = queryFactory.from(jVersion)
-                .where(jVersionId.eq(docId))
+        long count = queryFactory.from(testVersion)
+                .where(testVersion.docId.eq(docId))
                 .count();
         assertThat(count).isEqualTo(1);
 
@@ -182,23 +179,23 @@ public class ObjectVersionStoreJdbcTest {
 
         firstInsertCommitted.await();
 
-        count = queryFactory.from(jVersion)
-                .where(jVersionId.eq(docId))
+        count = queryFactory.from(testVersion)
+                .where(testVersion.docId.eq(docId))
                 .count();
         assertThat(count).isEqualTo(2);
 
         // Before versionStore.publish(), unpublished version should not have ordinal
-        Map<Revision, Long> ordinals = queryFactory.from(jVersion)
-                .where(jVersionId.eq(docId))
-                .map(jVersion.revision, jVersion.ordinal);
+        Map<Revision, Long> ordinals = queryFactory.from(testVersion)
+                .where(testVersion.docId.eq(docId))
+                .map(testVersion.revision, testVersion.ordinal);
         assertThat(ordinals.get(r1)).isNull();
         assertThat(ordinals.get(r2)).isNotNull();
 
         // versionStore.publish() should assign ordinal
         versionStore.publish();
-        ordinals = queryFactory.from(jVersion)
-                .where(jVersionId.eq(docId))
-                .map(jVersion.revision, jVersion.ordinal);
+        ordinals = queryFactory.from(testVersion)
+                .where(testVersion.docId.eq(docId))
+                .map(testVersion.revision, testVersion.ordinal);
         assertThat(ordinals.get(r1)).isEqualTo(ordinals.get(r2) + 1);
     }
 

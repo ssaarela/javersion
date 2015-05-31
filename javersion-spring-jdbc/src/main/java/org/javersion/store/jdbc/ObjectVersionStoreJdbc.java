@@ -53,7 +53,6 @@ import com.mysema.query.group.Group;
 import com.mysema.query.group.GroupBy;
 import com.mysema.query.group.QPair;
 import com.mysema.query.sql.Configuration;
-import com.mysema.query.sql.SQLExpressions;
 import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.sql.dml.SQLInsertClause;
@@ -63,7 +62,7 @@ import com.mysema.query.types.Path;
 import com.mysema.query.types.QTuple;
 import com.mysema.query.types.expr.SimpleExpression;
 
-public abstract class ObjectVersionStoreJdbc<Id, M> {
+public class ObjectVersionStoreJdbc<Id, M> {
 
     public static void registerTypes(String tablePrefix, Configuration configuration) {
         configuration.register(tablePrefix + "VERSION", "TYPE", new EnumByNameType<>(VersionType.class));
@@ -77,11 +76,11 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
 
     protected final Expression<Long> nextOrdinal;
 
-    protected final JVersion jVersion;
+    protected final JVersion<Id> jVersion;
 
     protected final JVersionParent jParent;
 
-    protected final JVersionProperty jProperty;
+    protected final JVersionProperty<Id> jProperty;
 
     protected final JRepository jRepository;
 
@@ -108,21 +107,24 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         queryFactory = null;
     }
 
-    public ObjectVersionStoreJdbc(String schema, String tablePrefix, SQLQueryFactory queryFactory) {
-        this.nextOrdinal = SQLExpressions.nextval(tablePrefix + "VERSION_ORDINAL_SEQ");
-        this.jRepository = new JRepository(schema, tablePrefix, "repository");
-        this.jVersion = new JVersion(schema, tablePrefix, "version");
-        this.jParent = new JVersionParent(schema, tablePrefix, "parent");
-        this.jProperty = new JVersionProperty(schema, tablePrefix, "property");
+    public <P extends SimpleExpression<Id> & Path<Id>> ObjectVersionStoreJdbc(
+            JRepository jRepository,
+            Expression<Long> nextOrdinal,
+            JVersion jVersion,
+            JVersionParent jParent,
+            JVersionProperty jProperty,
+            SQLQueryFactory queryFactory) {
+        this.nextOrdinal = nextOrdinal;
+        this.jRepository = jRepository;
+        this.jVersion = jVersion;
+        this.jParent = jParent;
+        this.jProperty = jProperty;
         this.queryFactory = queryFactory;
-        initIdColumns(jVersion, jProperty);
 
-        versionAndParents = concat(allVersionColumns(), GroupBy.set(jParent.parentRevision));
-        revisionAndDocId = new QPair<>(jVersion.revision, (Expression<Id>) versionDocId());
-        properties = groupBy(jProperty.revision).as(GroupBy.list(new QTuple(allPropertyColumns())));
+        versionAndParents = concat(jVersion.all(), GroupBy.set(jParent.parentRevision));
+        revisionAndDocId = new QPair<>(jVersion.revision, jVersion.docId.expr);
+        properties = groupBy(jProperty.revision).as(GroupBy.list(new QTuple(jProperty.all())));
     }
-
-    protected abstract void initIdColumns(JVersion jVersion, JVersionProperty jProperty);
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
@@ -203,7 +205,7 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
             qry.where(jVersion.ordinal.gt(sinceOrdinal));
         }
 
-        return qry.list((Expression<Id>) versionDocId());
+        return qry.list(jVersion.docId.expr);
     }
 
     private List<ObjectVersion<M>> fetch(Id docId, @Nullable Revision sinceRevision) {
@@ -261,17 +263,13 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
     protected void addProperties(Id docId, Revision revision, Map<PropertyPath, Object> changeset, SQLInsertClause propertyBatch) {
         for (Entry<PropertyPath, Object> entry : changeset.entrySet()) {
             propertyBatch
-                    .set(propertyDocId(), docId)
+                    .set(jProperty.docId.path, docId)
                     .set(jProperty.revision, revision)
                     .set(jProperty.path, entry.getKey().toString());
             setValue(entry.getKey(), entry.getValue(), propertyBatch);
             propertyBatch.addBatch();
         }
     }
-
-    protected abstract <T extends SimpleExpression<Id> & Path<Id>> T versionDocId();
-
-    protected abstract <T extends SimpleExpression<Id> & Path<Id>> T propertyDocId();
 
     protected void setValue(PropertyPath path, Object value, SQLInsertClause propertyBatch) {
         // type:
@@ -331,8 +329,8 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
 
     protected void addVersion(Id docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause versionBatch) {
         versionBatch
+                .set(jVersion.docId.path, docId)
                 .set(jVersion.revision, version.revision)
-                .set(versionDocId(), docId)
                 .set(jVersion.txOrdinal, nextOrdinal)
                 .set(jVersion.type, version.type)
                 .set(jVersion.branch, version.branch)
@@ -352,10 +350,10 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         SQLQuery qry = queryFactory.from(jProperty);
 
         if (sinceOrdinal == null) {
-            qry.where(propertyDocId().eq(docId));
+            qry.where(jProperty.docId.expr.eq(docId));
         } else {
-            qry.innerJoin(jProperty.versionPropertyRevisionFk, jVersion);
-            qry.where(versionDocId().eq(docId), jVersion.ordinal.gt(sinceOrdinal));
+            qry.innerJoin(jVersion).on(jVersion.revision.eq(jProperty.revision));
+            qry.where(jVersion.docId.expr.eq(docId), jVersion.ordinal.gt(sinceOrdinal));
         }
         return qry.transform(properties);
     }
@@ -363,8 +361,8 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
     protected List<Group> getVersionsAndParents(Id docId, @Nullable Long sinceOrdinal) {
         SQLQuery qry = queryFactory
                 .from(jVersion)
-                .leftJoin(jVersion._versionParentRevisionFk, jParent)
-                .where(versionDocId().eq(docId), jVersion.ordinal.isNotNull())
+                .leftJoin(jParent).on(jParent.revision.eq(jVersion.revision))
+                .where(jVersion.docId.expr.eq(docId), jVersion.ordinal.isNotNull())
                 .orderBy(jVersion.ordinal.asc());
 
         if (sinceOrdinal != null) {
@@ -374,14 +372,6 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         return qry.transform(groupBy(jVersion.revision).list(versionAndParents));
     }
 
-    protected Expression<?>[] allVersionColumns() {
-        return jVersion.all();
-    }
-
-    protected Expression<?>[] allPropertyColumns() {
-        return jProperty.all();
-    }
-
     protected Map<PropertyPath, Object> toChangeSet(List<Tuple> properties) {
         if (properties == null) {
             return null;
@@ -389,13 +379,13 @@ public abstract class ObjectVersionStoreJdbc<Id, M> {
         Map<PropertyPath, Object> changeset = Maps.newHashMapWithExpectedSize(properties.size());
         for (Tuple tuple : properties) {
             PropertyPath path = PropertyPath.parse(tuple.get(jProperty.path));
-            Object value = getPropertyValue(tuple);
+            Object value = getPropertyValue(path, tuple);
             changeset.put(path, value);
         }
         return changeset;
     }
 
-    protected Object getPropertyValue(Tuple tuple) {
+    protected Object getPropertyValue(PropertyPath path, Tuple tuple) {
         String type = tuple.get(jProperty.type);
         String str = tuple.get(jProperty.str);
         Long nbr = tuple.get(jProperty.nbr);

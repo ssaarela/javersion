@@ -23,7 +23,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.mysema.query.types.path.StringPath;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -119,12 +118,6 @@ public class VersionGraphCacheTest {
             }
             @Override
             public Set<String> publish() { return versionStore.publish(); }
-            @Override
-            protected void initIdColumns(JVersion jVersion, JVersionProperty jProperty) {}
-            @Override
-            protected StringPath versionDocId() { return null; }
-            @Override
-            protected StringPath propertyDocId() { return null; }
             @Override
             public ObjectVersionGraph<Void> load(String docId) {
                 cacheRefreshed.setTrue();

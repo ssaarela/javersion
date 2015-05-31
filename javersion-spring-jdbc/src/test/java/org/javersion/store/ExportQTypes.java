@@ -14,19 +14,19 @@ import java.sql.SQLException;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 
 import com.mysema.query.sql.Configuration;
-import com.mysema.query.sql.H2Templates;
 import com.mysema.query.sql.codegen.DefaultNamingStrategy;
 import com.mysema.query.sql.codegen.MetaDataExporter;
 
 @org.springframework.context.annotation.Configuration
 @EnableAutoConfiguration
+@Import(PersistenceTestConfiguration.class)
 //@Import(DataSourceAutoConfiguration.class)
 public class ExportQTypes {
 
@@ -43,14 +43,14 @@ public class ExportQTypes {
     @Inject
     DataSource dataSource;
 
+    @Inject
+    Configuration configuration;
+
     @Bean
     public CommandLineRunner runner() {
         return new CommandLineRunner() {
             @Override
             public void run(String... args) throws Exception {
-                Configuration configuration = new Configuration(new H2Templates());
-                ObjectVersionStoreJdbc.registerTypes("", configuration);
-
                 MetaDataExporter exporter = new MetaDataExporter();
                 exporter.setPackageName(PACKAGE_NAME);
                 exporter.setInnerClassesForKeys(false);
