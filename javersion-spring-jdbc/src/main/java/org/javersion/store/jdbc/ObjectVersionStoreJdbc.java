@@ -138,7 +138,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
         this.jProperty = jProperty;
         this.queryFactory = queryFactory;
 
-        this.versionTableProperties = versionTableProperties;
+        this.versionTableProperties = ImmutableMap.copyOf(versionTableProperties);
         versionAndParents = concat(jVersion.all(), GroupBy.set(jParent.parentRevision));
         revisionAndDocId = new QPair<>(jVersion.revision, jVersion.docId.expr);
         properties = groupBy(jProperty.revision).as(GroupBy.list(new QTuple(jProperty.all())));
