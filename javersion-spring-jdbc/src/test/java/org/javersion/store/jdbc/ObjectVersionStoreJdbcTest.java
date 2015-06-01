@@ -303,6 +303,7 @@ public class ObjectVersionStoreJdbcTest {
     }
 
     @Test
+    // FIXME: This only works if path is in the latest version changeset
     public void generic_property_overwrites_version_table_property() {
         // This allows one to start with generic mappings and later
         // add column mappings to version table, without need to

@@ -375,6 +375,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
                 PropertyPath path = entry.getKey();
                 @SuppressWarnings("unchecked")
                 Column<Object> column = (Column<Object>) entry.getValue();
+                // FIXME: This only works if path is in the latest version changeset
                 if (!changeset.containsKey(path)) {
                     changeset.put(path, versionAndParents.getOne(column.expr));
                 }
