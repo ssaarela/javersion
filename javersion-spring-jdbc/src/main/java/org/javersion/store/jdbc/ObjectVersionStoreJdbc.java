@@ -15,6 +15,7 @@
  */
 package org.javersion.store.jdbc;
 
+import static com.google.common.collect.Maps.transformValues;
 import static com.mysema.query.group.GroupBy.groupBy;
 import static java.lang.System.arraycopy;
 import static java.util.Collections.singleton;
@@ -25,6 +26,7 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,14 +150,22 @@ public class ObjectVersionStoreJdbc<Id, M> {
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
+        ImmutableMultimap.Builder<Id, VersionNode<PropertyPath, Object, M>> builder = ImmutableMultimap.builder();
+        append(builder.putAll(docId, versions).build());
+    }
+
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
         SQLInsertClause versionBatch = queryFactory.insert(jVersion);
         SQLInsertClause parentBatch = queryFactory.insert(jParent);
         SQLInsertClause propertyBatch = queryFactory.insert(jProperty);
 
-        for (VersionNode<PropertyPath, Object, M> version : versions) {
-            addVersion(docId, version, versionBatch);
-            addParents(version, parentBatch);
-            addProperties(docId, version, propertyBatch);
+        for (Id docId : versionsByDocId.keySet()) {
+            for (VersionNode<PropertyPath, Object, M> version : versionsByDocId.get(docId)) {
+                addVersion(docId, version, versionBatch);
+                addParents(version, parentBatch);
+                addProperties(docId, version, propertyBatch);
+            }
         }
 
         if (!versionBatch.isEmpty()) {
@@ -198,6 +208,12 @@ public class ObjectVersionStoreJdbc<Id, M> {
     public ObjectVersionGraph<M> load(Id docId) {
         Multimap<Id, ObjectVersion<M>> results = fetch(jVersion.docId.expr.eq(docId));
         return results.containsKey(docId) ? ObjectVersionGraph.init(results.get(docId)) : ObjectVersionGraph.init();
+    }
+
+    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public Map<Id, ObjectVersionGraph<M>> load(Collection<Id> docId) {
+        Map<Id, Collection<ObjectVersion<M>>> results = fetch(jVersion.docId.expr.in(docId)).asMap();
+        return transformValues(results, versions -> ObjectVersionGraph.<M>init(versions));
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)

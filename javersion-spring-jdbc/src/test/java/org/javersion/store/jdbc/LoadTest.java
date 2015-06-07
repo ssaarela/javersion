@@ -9,10 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
@@ -23,7 +23,8 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -39,6 +40,10 @@ public class LoadTest {
 
     private int nextValue = 0;
 
+    private final int docCount = 100;
+    private final int docVersionCount = 50;
+    private final int propCount = 100;
+
     @Resource
     ObjectVersionStoreJdbc<String, Void> versionStore;
 
@@ -46,9 +51,6 @@ public class LoadTest {
     @Ignore
     public void performance() {
         long ts;
-        final int docCount = 100;
-        final int docVersionCount = 50;
-        final int propCount = 100;
 
 //        VersionGraphCache<String, Void> cache = new VersionGraphCache<>(versionStore,
 //                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
@@ -84,8 +86,57 @@ public class LoadTest {
         }
     }
 
+    @Test
+    @Ignore
+    public void batch_performance() {
+        String appendLabel = "append" + docCount;
+        String loadLabel = "load" + docCount;
+        long ts;
+
+        List<String> docIds = generateDocIds(docCount);
+        Multimap<String, VersionNode<PropertyPath, Object, Void>> versions = ArrayListMultimap.create(docCount, propCount);
+        for (String docId : docIds) {
+            ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
+                    .changeset(generateProperties(propCount));
+
+            ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.<Void>init(builder.build());
+
+            versions.put(docId, versionGraph.getTip());
+        }
+        ts = currentTimeMillis();
+        versionStore.append(versions);
+        print(1, appendLabel, ts);
+
+        versionStore.publish();
+
+        for (int round=2; round <= docVersionCount; round++) {
+
+            ts = currentTimeMillis();
+            Map<String, ObjectVersionGraph<Void>> versionGraphs = versionStore.load(docIds);
+            print(round, loadLabel, ts);
+
+            versions = ArrayListMultimap.create(docCount, propCount);
+            for (String docId : docIds) {
+                ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
+                        .changeset(generateProperties(propCount));
+
+                ObjectVersionGraph<Void> versionGraph = versionGraphs.get(docId);
+                builder.parents(versionGraph.getTip().getRevision());
+
+                versionGraph = versionGraph.commit(builder.build());
+                versions.put(docId, versionGraph.getTip());
+            }
+
+            ts = currentTimeMillis();
+            versionStore.append(versions);
+            print(round, appendLabel, ts);
+
+            versionStore.publish();
+        }
+    }
+
     private void print(int round, String type, long ts) {
-        double expired = currentTimeMillis() - ts;
+        long expired = currentTimeMillis() - ts;
         System.out.println(format("%s,%s,%s", round, type, expired));
     }
 
