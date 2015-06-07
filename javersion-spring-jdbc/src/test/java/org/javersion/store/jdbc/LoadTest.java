@@ -112,7 +112,7 @@ public class LoadTest {
         for (int round=2; round <= docVersionCount; round++) {
 
             ts = currentTimeMillis();
-            Map<String, ObjectVersionGraph<Void>> versionGraphs = versionStore.load(docIds);
+            FetchResults<String, Void> results = versionStore.load(docIds);
             print(round, loadLabel, ts);
 
             versions = ArrayListMultimap.create(docCount, propCount);
@@ -120,7 +120,7 @@ public class LoadTest {
                 ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
                         .changeset(generateProperties(propCount));
 
-                ObjectVersionGraph<Void> versionGraph = versionGraphs.get(docId);
+                ObjectVersionGraph<Void> versionGraph = results.getVersionGraph(docId).get();
                 builder.parents(versionGraph.getTip().getRevision());
 
                 versionGraph = versionGraph.commit(builder.build());

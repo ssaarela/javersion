@@ -15,7 +15,6 @@
  */
 package org.javersion.store.jdbc;
 
-import static com.google.common.collect.Maps.transformValues;
 import static com.mysema.query.group.GroupBy.groupBy;
 import static java.lang.System.arraycopy;
 import static java.util.Collections.singleton;
@@ -31,8 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.annotation.Nullable;
 
 import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
@@ -96,6 +93,8 @@ public class ObjectVersionStoreJdbc<Id, M> {
     protected static final String REPOSITORY_ID = "repository";
 
     protected final Map<PropertyPath, Column> versionTableProperties;
+
+    protected final FetchResults<Id, M> noResults = new FetchResults<>();
 
     @SuppressWarnings("unused")
     protected ObjectVersionStoreJdbc() {
@@ -206,61 +205,48 @@ public class ObjectVersionStoreJdbc<Id, M> {
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> load(Id docId) {
-        Multimap<Id, ObjectVersion<M>> results = fetch(jVersion.docId.expr.eq(docId));
-        return results.containsKey(docId) ? ObjectVersionGraph.init(results.get(docId)) : ObjectVersionGraph.init();
+        FetchResults<Id, M> results = fetch(jVersion.docId.expr.eq(docId));
+        return results.containsKey(docId) ? results.getVersionGraph(docId).get() : ObjectVersionGraph.init();
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public Map<Id, ObjectVersionGraph<M>> load(Collection<Id> docId) {
-        Map<Id, Collection<ObjectVersion<M>>> results = fetch(jVersion.docId.expr.in(docId)).asMap();
-        return transformValues(results, versions -> ObjectVersionGraph.<M>init(versions));
+    public FetchResults<Id, M> load(Collection<Id> docId) {
+        return fetch(jVersion.docId.expr.in(docId));
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
         Predicate predicate = jVersion.docId.expr.eq(docId).and(jVersion.ordinal.gt(getOrdinal(since)));
 
-        ListMultimap<Id, ObjectVersion<M>> results = fetch(predicate);
-        return results.containsKey(docId) ? results.get(docId) : ImmutableList.of();
+        FetchResults<Id, M> results = fetch(predicate);
+        return results.containsKey(docId) ? results.getVersions(docId).get() : ImmutableList.of();
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    // TODO: 1) Return also revision of max(ordinal)
-    // TODO: 2) Add "Revision until" parameter to searches
-    public List<Id> findDocumentIds(@Nullable Revision updatedSince) {
-        SQLQuery qry = queryFactory
-                .from(jVersion)
-                .groupBy(jVersion.revision)
-                .orderBy(jVersion.ordinal.max().asc());
-
-        if (updatedSince == null) {
-            qry.where(jVersion.ordinal.isNotNull());
-        } else {
-            qry.where(jVersion.ordinal.gt(getOrdinal(updatedSince)));
-        }
-
-        return qry.list(jVersion.docId.expr);
+    public FetchResults<Id, M> fetchUpdates(Collection<Id> docId, Revision since) {
+        return fetch(jVersion.docId.expr.in(docId).and(jVersion.ordinal.gt(getOrdinal(since))));
     }
 
-    private ListMultimap<Id, ObjectVersion<M>> fetch(Predicate predicate) {
+    private FetchResults<Id, M> fetch(Predicate predicate) {
         Check.notNull(predicate, "predicate");
 
         List<Group> versionsAndParents = getVersionsAndParents(predicate);
         if (versionsAndParents.isEmpty()) {
-            return ImmutableListMultimap.of();
+            return noResults;
         }
 
         ListMultimap<Id, ObjectVersion<M>> results = ArrayListMultimap.create();
         Map<Revision, List<Tuple>> properties = getPropertiesByDocId(predicate);
+        Revision latestRevision = null;
 
         for (Group versionAndParents : versionsAndParents) {
             Id id = versionAndParents.getOne(jVersion.docId.expr);
-            Revision rev = versionAndParents.getOne(jVersion.revision);
-            Map<PropertyPath, Object> changeset = toChangeSet(properties.get(rev));
+            latestRevision = versionAndParents.getOne(jVersion.revision);
+            Map<PropertyPath, Object> changeset = toChangeSet(properties.get(latestRevision));
 
-            results.put(id, buildVersion(rev, versionAndParents, changeset));
+            results.put(id, buildVersion(latestRevision, versionAndParents, changeset));
         }
-        return results;
+        return new FetchResults<>(results, latestRevision);
     }
 
     protected Long getOrdinal(Revision revision) {
@@ -387,10 +373,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
                 PropertyPath path = entry.getKey();
                 @SuppressWarnings("unchecked")
                 Column<Object> column = (Column<Object>) entry.getValue();
-                // FIXME: This only works if path is in the latest version changeset
-                if (!changeset.containsKey(path)) {
-                    changeset.put(path, versionAndParents.getOne(column.expr));
-                }
+                changeset.put(path, versionAndParents.getOne(column.expr));
             }
         }
         return new ObjectVersionBuilder<M>(rev)

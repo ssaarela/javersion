@@ -6,15 +6,10 @@ import static org.javersion.store.sql.QTestVersion.testVersion;
 import static org.javersion.store.sql.QTestVersionParent.testVersionParent;
 import static org.javersion.store.sql.QTestVersionProperty.testVersionProperty;
 
-import java.util.Map;
-
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-import org.javersion.core.Persistent;
-import org.javersion.path.PropertyPath;
 import org.javersion.store.jdbc.*;
-import org.javersion.store.sql.QTestVersion;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,6 +1,5 @@
 package org.javersion.store.jdbc;
 
-import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
@@ -230,18 +229,11 @@ public class ObjectVersionStoreJdbcTest {
 
         List<ObjectVersion<Void>> updates = versionStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).isEmpty();
-        List<String> updatedDocs = versionStore.findDocumentIds(v1.revision);
-        assertThat(updatedDocs).isEmpty();
-
-        assertThat(versionStore.findDocumentIds(null)).isNotEmpty();
 
         assertThat(versionStore.publish()).isEqualTo(ImmutableSet.of(docId)); // v2
         updates = versionStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).hasSize(1);
         assertThat(updates.get(0)).isEqualTo(v2);
-
-        updatedDocs = versionStore.findDocumentIds(v1.revision);
-        assertThat(updatedDocs).isEqualTo(asList(docId));
     }
 
     @Test
@@ -302,35 +294,4 @@ public class ObjectVersionStoreJdbcTest {
         assertThat(mappedVersionStore.load(docId).getTip().getVersion()).isEqualTo(v2);
     }
 
-    @Test
-    // FIXME: This only works if path is in the latest version changeset
-    public void generic_property_overwrites_version_table_property() {
-        // This allows one to start with generic mappings and later
-        // add column mappings to version table, without need to
-        // convert old version_property values into version table
-
-        String docId = randomUUID().toString();
-
-        Version<PropertyPath, Object, Void> version = ObjectVersion.<Void>builder()
-                .changeset(ImmutableMap.<PropertyPath, Object>of(
-                        ROOT.property("name"), "name",
-                        ROOT.property("id"), 5l))
-                .build();
-
-        mappedVersionStore.append(docId, ObjectVersionGraph.init(version).getTip());
-        mappedVersionStore.publish();
-
-        queryFactory.insert(testVersionProperty)
-                .set(testVersionProperty.revision, version.revision)
-                .set(testVersionProperty.path, "name")
-                .set(testVersionProperty.type, "s")
-                .set(testVersionProperty.str, "another name")
-                .execute();
-
-        version = mappedVersionStore.load(docId).getTip().getVersion();
-
-        assertThat(version.changeset).isEqualTo(ImmutableMap.of(
-                ROOT.property("name"), "another name",
-                ROOT.property("id"), 5l));
-    }
 }
