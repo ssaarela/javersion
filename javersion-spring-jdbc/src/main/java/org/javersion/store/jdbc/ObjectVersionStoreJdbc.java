@@ -176,10 +176,10 @@ public class ObjectVersionStoreJdbc<Id, M> {
     public Set<Id> publish() {
         long lastOrdinal = getLastOrdinalForUpdate();
         List<Pair<Revision, Id>> uncommittedRevisions = findUncommittedRevisions();
-        Set<Id> committedDocs = Sets.newLinkedHashSetWithExpectedSize(uncommittedRevisions.size());
+        Set<Id> publishedDocs = Sets.newLinkedHashSetWithExpectedSize(uncommittedRevisions.size());
 
         for (Pair<Revision, Id> revisionAndDocId : uncommittedRevisions) {
-            committedDocs.add(revisionAndDocId.getSecond());
+            publishedDocs.add(revisionAndDocId.getSecond());
             queryFactory
                     .update(jVersion)
                     .where(jVersion.revision.eq(revisionAndDocId.getFirst()))
@@ -194,7 +194,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
                 .set(jRepository.ordinal, lastOrdinal)
                 .execute();
 
-        return committedDocs;
+        return publishedDocs;
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)

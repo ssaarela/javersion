@@ -15,6 +15,8 @@
  */
 package org.javersion.store.jdbc;
 
+import static com.google.common.util.concurrent.Futures.immediateFuture;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -26,7 +28,6 @@ import org.javersion.object.ObjectVersionGraph;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class VersionGraphCache<Id, M> {
@@ -91,7 +92,7 @@ public class VersionGraphCache<Id, M> {
                 if (!updates.isEmpty()) {
                     newValue = oldValue.commit(updates);
                 }
-                return Futures.immediateFuture(newValue);
+                return immediateFuture(newValue);
             }
 
         };

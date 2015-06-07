@@ -137,8 +137,8 @@ public class ObjectVersionStoreJdbcTest {
     @Test
     public void ordinal_is_assigned_by_publish() throws InterruptedException {
         final CountDownLatch firstInsertDone = new CountDownLatch(1);
-        final CountDownLatch firstInsertCommitted = new CountDownLatch(1);
         final CountDownLatch secondInsertDone = new CountDownLatch(1);
+        final CountDownLatch firstInsertCommitted = new CountDownLatch(1);
 
         final String docId = randomUUID().toString();
         final Revision r1 = new Revision();
