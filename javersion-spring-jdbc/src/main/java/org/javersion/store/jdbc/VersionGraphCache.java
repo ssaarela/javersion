@@ -83,11 +83,11 @@ public class VersionGraphCache<Id, M> {
 
             @Override
             public ListenableFuture<ObjectVersionGraph<M>> reload(Id docId, ObjectVersionGraph<M> oldValue) throws Exception {
-                Revision since = null;
-                if (!oldValue.isEmpty()) {
-                    since = oldValue.getTip().getRevision();
+                if (oldValue.isEmpty()) {
+                    return immediateFuture(versionStore.load(docId));
                 }
                 ObjectVersionGraph<M> newValue = oldValue;
+                Revision since = oldValue.getTip().getRevision();
                 List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
                 if (!updates.isEmpty()) {
                     newValue = oldValue.commit(updates);

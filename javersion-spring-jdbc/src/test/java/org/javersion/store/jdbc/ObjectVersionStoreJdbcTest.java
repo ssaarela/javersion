@@ -230,17 +230,17 @@ public class ObjectVersionStoreJdbcTest {
 
         List<ObjectVersion<Void>> updates = versionStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).isEmpty();
-        List<String> updatedDocs = versionStore.findDocuments(v1.revision);
+        List<String> updatedDocs = versionStore.findDocumentIds(v1.revision);
         assertThat(updatedDocs).isEmpty();
 
-        assertThat(versionStore.findDocuments(null)).isNotEmpty();
+        assertThat(versionStore.findDocumentIds(null)).isNotEmpty();
 
         assertThat(versionStore.publish()).isEqualTo(ImmutableSet.of(docId)); // v2
         updates = versionStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).hasSize(1);
         assertThat(updates.get(0)).isEqualTo(v2);
 
-        updatedDocs = versionStore.findDocuments(v1.revision);
+        updatedDocs = versionStore.findDocumentIds(v1.revision);
         assertThat(updatedDocs).isEqualTo(asList(docId));
     }
 

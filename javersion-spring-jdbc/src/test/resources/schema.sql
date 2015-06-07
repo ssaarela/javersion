@@ -31,7 +31,7 @@ create table TEST_VERSION (
 
 create sequence TEST_VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
 
--- findDocuments(sinceOrdinal)
+-- findDocumentIds(sinceOrdinal)
 create index TEST_VERSION_ORDINAL_IDX on TEST_VERSION (ORDINAL, DOC_ID, REVISION);
 -- findUncommittedRevisions
 create index TEST_VERSION_TX_ORDINAL_IDX on TEST_VERSION (TX_ORDINAL, REVISION, DOC_ID);
