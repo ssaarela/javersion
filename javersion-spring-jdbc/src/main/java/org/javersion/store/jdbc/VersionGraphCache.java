@@ -60,7 +60,7 @@ public class VersionGraphCache<Id, M> {
      * AND cached graphs.
      */
     public Set<Id> publish() {
-        Set<Id> publishedDocIds = versionStore.publish();
+        Set<Id> publishedDocIds = versionStore.publish().keySet();
         for (Id docId : publishedDocIds) {
             if (cachedDocIds.contains(docId)) {
                 refresh(docId);

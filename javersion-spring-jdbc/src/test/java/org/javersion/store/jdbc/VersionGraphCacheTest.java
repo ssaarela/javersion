@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.javersion.core.Revision;
 import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
@@ -23,6 +24,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -117,7 +119,7 @@ public class VersionGraphCacheTest {
                 versionStore.append(docId, version);
             }
             @Override
-            public Set<String> publish() { return versionStore.publish(); }
+            public Multimap<String, Revision> publish() { return versionStore.publish(); }
             @Override
             public ObjectVersionGraph<Void> load(String docId) {
                 cacheRefreshed.setTrue();

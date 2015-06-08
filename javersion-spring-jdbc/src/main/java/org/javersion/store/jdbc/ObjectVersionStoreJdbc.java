@@ -17,6 +17,7 @@ package org.javersion.store.jdbc;
 
 import static com.mysema.query.group.GroupBy.groupBy;
 import static java.lang.System.arraycopy;
+import static java.lang.System.identityHashCode;
 import static java.util.Collections.singleton;
 import static java.util.Map.Entry;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
@@ -178,17 +179,28 @@ public class ObjectVersionStoreJdbc<Id, M> {
         }
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRES_NEW)
-    public Set<Id> publish() {
+    /**
+     * NOTE: publish() needs to be called in a separate transaction from append()!
+     * E.g. asynchronously in TransactionSynchronization.afterCommit.
+     *
+     * Calling publish() in the same transaction with append() severely limits concurrency
+     * and might end up in deadlock.
+     *
+     * @return
+     */
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public Multimap<Id, Revision> publish() {
         long lastOrdinal = getLastOrdinalForUpdate();
-        List<Pair<Revision, Id>> uncommittedRevisions = findUncommittedRevisions();
-        Set<Id> publishedDocs = Sets.newLinkedHashSetWithExpectedSize(uncommittedRevisions.size());
+        Map<Revision, Id> uncommittedRevisions = findUncommittedRevisions();
+        Multimap<Id, Revision> publishedDocs = ArrayListMultimap.create();
 
-        for (Pair<Revision, Id> revisionAndDocId : uncommittedRevisions) {
-            publishedDocs.add(revisionAndDocId.getSecond());
+        for (Map.Entry<Revision, Id> entry : uncommittedRevisions.entrySet()) {
+            Revision revision = entry.getKey();
+            Id docId = entry.getValue();
+            publishedDocs.put(docId, revision);
             queryFactory
                     .update(jVersion)
-                    .where(jVersion.revision.eq(revisionAndDocId.getFirst()))
+                    .where(jVersion.revision.eq(revision))
                     .set(jVersion.ordinal, ++lastOrdinal)
                     .setNull(jVersion.txOrdinal)
                     .execute();
@@ -200,7 +212,12 @@ public class ObjectVersionStoreJdbc<Id, M> {
                 .set(jRepository.ordinal, lastOrdinal)
                 .execute();
 
+        afterPublish(publishedDocs);
         return publishedDocs;
+    }
+
+    protected void afterPublish(Multimap<Id, Revision> publishedDocs) {
+        // After publish hook for sub classes to override
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
@@ -264,12 +281,12 @@ public class ObjectVersionStoreJdbc<Id, M> {
                 .singleResult(jRepository.ordinal);
     }
 
-    private List<Pair<Revision, Id>> findUncommittedRevisions() {
+    private Map<Revision, Id> findUncommittedRevisions() {
         return queryFactory
                 .from(jVersion)
                 .where(jVersion.txOrdinal.isNotNull())
                 .orderBy(jVersion.txOrdinal.asc())
-                .list(revisionAndDocId);
+                .map(jVersion.revision, jVersion.docId.expr);
     }
 
     protected void addProperties(Id docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause propertyBatch) {

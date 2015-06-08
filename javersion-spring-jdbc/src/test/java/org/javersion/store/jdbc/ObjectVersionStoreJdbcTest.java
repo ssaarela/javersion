@@ -33,6 +33,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.mysema.query.sql.SQLQueryFactory;
 
@@ -206,7 +207,7 @@ public class ObjectVersionStoreJdbcTest {
     public void publish_nothing() {
         // Flush first if there's pending versions
         versionStore.publish();
-        assertThat(versionStore.publish()).isEqualTo(ImmutableSet.of());
+        assertThat(versionStore.publish()).isEqualTo(ImmutableMultimap.of());
 
     }
 
@@ -224,13 +225,13 @@ public class ObjectVersionStoreJdbcTest {
 
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2);
         versionStore.append(docId, versionGraph.getVersionNode(v1.revision));
-        assertThat(versionStore.publish()).isEqualTo(ImmutableSet.of(docId)); // v1
+        assertThat(versionStore.publish()).isEqualTo(ImmutableMultimap.of(docId, v1.revision)); // v1
         versionStore.append(docId, versionGraph.getVersionNode(v2.revision));
 
         List<ObjectVersion<Void>> updates = versionStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).isEmpty();
 
-        assertThat(versionStore.publish()).isEqualTo(ImmutableSet.of(docId)); // v2
+        assertThat(versionStore.publish()).isEqualTo(ImmutableMultimap.of(docId, v2.revision)); // v2
         updates = versionStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).hasSize(1);
         assertThat(updates.get(0)).isEqualTo(v2);
