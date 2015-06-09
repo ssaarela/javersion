@@ -9,7 +9,11 @@ import static org.javersion.store.sql.QTestVersionProperty.testVersionProperty;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-import org.javersion.store.jdbc.*;
+import org.javersion.store.jdbc.JRepository;
+import org.javersion.store.jdbc.JVersion;
+import org.javersion.store.jdbc.JVersionParent;
+import org.javersion.store.jdbc.JVersionProperty;
+import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -64,8 +68,8 @@ public class PersistenceTestConfiguration {
                 new JVersionProperty(testVersionProperty),
                 queryFactory,
                 ImmutableMap.of(
-                        ROOT.property("name"), new Column(testVersion.name),
-                        ROOT.property("id"), new Column(testVersion.id)));
+                        ROOT.property("name"), testVersion.name,
+                        ROOT.property("id"), testVersion.id));
     }
 
     @Bean

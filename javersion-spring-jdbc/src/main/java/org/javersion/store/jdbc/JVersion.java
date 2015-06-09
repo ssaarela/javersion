@@ -20,7 +20,6 @@ import org.javersion.core.VersionType;
 
 import com.mysema.query.sql.RelationalPathBase;
 import com.mysema.query.types.Path;
-import com.mysema.query.types.expr.SimpleExpression;
 import com.mysema.query.types.path.EnumPath;
 import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.SimplePath;
@@ -28,7 +27,7 @@ import com.mysema.query.types.path.StringPath;
 
 public class JVersion<Id> extends com.mysema.query.sql.RelationalPathBase<JVersion>  {
 
-    public final Column<Id> docId;
+    public final Path<Id> docId;
 
     public final StringPath branch = createString("branch");
 
@@ -40,9 +39,9 @@ public class JVersion<Id> extends com.mysema.query.sql.RelationalPathBase<JVersi
 
     public final EnumPath<VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 
-    public <P extends SimpleExpression<Id> & Path<Id>> JVersion(RelationalPathBase<?> table, P docId) {
+    public JVersion(RelationalPathBase<?> table, Path<Id> docId) {
         super(JVersion.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
-        this.docId = new Column<Id>(docId);
+        this.docId = docId;
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
     }
 

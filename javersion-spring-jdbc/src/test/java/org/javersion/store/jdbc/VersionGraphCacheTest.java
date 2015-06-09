@@ -4,7 +4,6 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
 
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
