@@ -18,6 +18,7 @@ package org.javersion.core;
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
 import static org.hamcrest.Matchers.equalTo;
@@ -390,7 +391,7 @@ public class SimpleVersionGraphTest {
     }
 
     static List<List<VersionExpectation>> getBulkExpectations() {
-        List<List<VersionExpectation>> bulks = Lists.newArrayList();
+        List<List<VersionExpectation>> bulks = newArrayList();
         for (int i=1; i<= EXPECTATIONS.size(); i++) {
             bulks.add(EXPECTATIONS.subList(0, i));
         }
@@ -428,7 +429,7 @@ public class SimpleVersionGraphTest {
     public void Tip_of_an_Empty_Graph() {
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init();
         assertNull(versionGraph.getTip());
-        assertTrue(versionGraph.getVersions().isEmpty());
+        assertTrue(newArrayList(versionGraph.getVersions()).isEmpty());
     }
 
     @Test(expected = VersionNotFoundException.class)

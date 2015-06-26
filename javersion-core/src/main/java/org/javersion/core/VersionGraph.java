@@ -26,6 +26,7 @@ import static org.javersion.util.MapUtils.mapValueFunction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.javersion.util.PersistentMap;
 import org.javersion.util.PersistentSortedMap;
@@ -75,6 +76,8 @@ public abstract class VersionGraph<K, V, M,
 
     protected abstract B newBuilder();
 
+    protected abstract B newEmptyBuilder();
+
     @Override
     public final VersionNode<K, V, M> apply(Revision input) {
         return input != null ? getVersionNode(input) : null;
@@ -120,6 +123,10 @@ public abstract class VersionGraph<K, V, M,
         return at != null ? at.heads : PersistentTreeMap.empty();
     }
 
+    public final Iterable<Revision> getHeadRevisions() {
+        return getHeads().valueStream().map(VersionNode::getRevision).collect(Collectors.toList());
+    }
+
     public final This at(Revision revision) {
         return newBuilder().at(getVersionNode(revision)).build();
     }
@@ -140,13 +147,29 @@ public abstract class VersionGraph<K, V, M,
         return getHeads().keyStream().map(k -> k.branch).collect(toSet());
     }
 
-    public final List<Version<K, V, M>> getVersions() {
+    /**
+     * @return versions in newest first (or reverse topological) order.
+     */
+    public final Iterable<Version<K, V, M>> getVersions() {
+        // TODO: custom Iterable using current.previousVersion links for Iterator
         List<Version<K, V, M>> versions = new ArrayList<>(versionNodes.size());
         VersionNode<K, V, M> current = tip;
         while (current != null) {
             versions.add(current.getVersion());
             current = (current.previousRevision != null ? versionNodes.get(current.previousRevision) : null);
         }
-        return Lists.reverse(versions);
+        return versions;
+    }
+
+    public This optimize(Revision... revisions) {
+        return optimize(asList(revisions));
+    }
+
+    public This optimize(Iterable<Revision> revisions) {
+        B builder = newEmptyBuilder();
+        for (Version<K, V, M> version : new OptimizedGraph<>(this, revisions).getOptimizedVersions()) {
+            builder.add(version);
+        }
+        return builder.build();
     }
 }

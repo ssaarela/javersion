@@ -65,6 +65,10 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
         return branch;
     }
 
+    public M getMeta() {
+        return meta;
+    }
+
     @Override
     public Set<Revision> getMergeHeads() {
         return ImmutableSet.of(revision);
@@ -92,5 +96,9 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
                 .parents(parentRevisions)
                 .changeset(getChangeset())
                 .build();
+    }
+
+    public Set<Revision> getParentRevisions() {
+        return parentRevisions;
     }
 }

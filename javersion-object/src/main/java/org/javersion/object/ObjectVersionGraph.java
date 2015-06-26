@@ -65,6 +65,11 @@ public final class ObjectVersionGraph<M> extends VersionGraph<PropertyPath, Obje
         return new Builder<M>(this);
     }
 
+    @Override
+    protected Builder<M> newEmptyBuilder() {
+        return new Builder<>();
+    }
+
     public static class Builder<M> extends VersionGraphBuilder<PropertyPath, Object, M, ObjectVersionGraph<M>, Builder<M>> {
 
         public Builder() {

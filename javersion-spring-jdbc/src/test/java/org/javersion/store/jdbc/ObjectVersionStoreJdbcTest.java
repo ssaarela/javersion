@@ -1,5 +1,6 @@
 package org.javersion.store.jdbc;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
@@ -128,7 +129,7 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.append(docId, versionGraph.getTip());
         versionStore.publish();
         versionGraph = versionStore.load(docId);
-        List<Version<PropertyPath, Object, Void>> versions = versionGraph.getVersions();
+        List<Version<PropertyPath, Object, Void>> versions = newArrayList(versionGraph.getVersions());
         assertThat(versions).hasSize(1);
         assertThat(versions.get(0)).isEqualTo(emptyVersion);
     }
