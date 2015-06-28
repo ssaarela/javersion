@@ -23,7 +23,6 @@ import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
 import static org.javersion.util.MapUtils.mapValueFunction;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,6 +32,7 @@ import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 public abstract class VersionGraph<K, V, M,
@@ -151,14 +151,11 @@ public abstract class VersionGraph<K, V, M,
      * @return versions in newest first (or reverse topological) order.
      */
     public final Iterable<Version<K, V, M>> getVersions() {
-        // TODO: custom Iterable using current.previousVersion links for Iterator
-        List<Version<K, V, M>> versions = new ArrayList<>(versionNodes.size());
-        VersionNode<K, V, M> current = tip;
-        while (current != null) {
-            versions.add(current.getVersion());
-            current = (current.previousRevision != null ? versionNodes.get(current.previousRevision) : null);
-        }
-        return versions;
+        return Iterables.transform(getVersionNodes(), VersionNode::getVersion);
+    }
+
+    public final Iterable<VersionNode<K, V, M>> getVersionNodes() {
+        return new VersionNodeIterable<>(getTip(), versionNodes);
     }
 
     public This optimize(Revision... revisions) {

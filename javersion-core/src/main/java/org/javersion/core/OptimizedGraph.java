@@ -1,42 +1,58 @@
+/*
+ * Copyright 2015 Samppa Saarela
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.javersion.core;
 
-import static com.google.common.collect.Lists.reverse;
 import static java.util.function.Function.identity;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableList;
+
 
 public class OptimizedGraph<K, V, M> {
 
-    private List<OptimizedVersionBuilder<K, V, M>> optimizedVersions;
+    private final List<OptimizedVersionBuilder<K, V, M>> optimizedVersions;
 
     public OptimizedGraph(VersionGraph<K, V, M, ?, ?> versionGraph, Iterable<Revision> revisions) {
         Map<Revision, OptimizedVersionBuilder<K, V, M>> optimizedVersionsByRevision = new LinkedHashMap<>();
         for (Revision revision : revisions) {
             optimizedVersionsByRevision.put(revision, new OptimizedVersionBuilder<>(versionGraph.getVersionNode(revision)));
         }
-        VersionNode<K, V, M> current = versionGraph.getTip();
-        while (current != null) {
-            if (!optimizedVersionsByRevision.containsKey(current.getRevision())) {
-                Set<Revision> childRevisions = new HashSet<>();
-                for (OptimizedVersionBuilder<K, V, M> versionBuilder : optimizedVersionsByRevision.values()) {
-                    if (versionBuilder.requiresParent(current.revision)) {
-                        childRevisions.add(versionBuilder.getRevision());
-                    }
-                }
+        for (VersionNode<K, V, M> versionNode : versionGraph.getVersionNodes()) {
+            if (!optimizedVersionsByRevision.containsKey(versionNode.revision)) {
+                Set<Revision> childRevisions = getChildRevisions(optimizedVersionsByRevision.values(), versionNode.revision);
                 if (childRevisions.size() > 1) {
                     for (Revision childRevision : childRevisions) {
                         OptimizedVersionBuilder<K, V, M> versionBuilder = optimizedVersionsByRevision.get(childRevision);
-                        versionBuilder.addParent(current);
+                        versionBuilder.addParent(versionNode);
                     }
-                    optimizedVersionsByRevision.put(current.revision, new OptimizedVersionBuilder<>(current));
+                    optimizedVersionsByRevision.put(versionNode.revision, new OptimizedVersionBuilder<>(versionNode));
                 }
             }
-            current = (current.previousRevision != null ? versionGraph.getVersionNode(current.previousRevision) : null);
         }
-        optimizedVersions = reverse(new ArrayList<>(optimizedVersionsByRevision.values()));
+        optimizedVersions = ImmutableList.copyOf(optimizedVersionsByRevision.values()).reverse();
+    }
+
+    private Set<Revision> getChildRevisions(Collection<OptimizedVersionBuilder<K, V, M>> optimizedVersions, Revision currentRevision) {
+        return optimizedVersions.stream()
+                .filter(childCandidate -> childCandidate.requiresParent(currentRevision))
+                .map(OptimizedVersionBuilder::getRevision)
+                .collect(Collectors.toSet());
     }
 
     public Iterable<Version<K, V, M>> getOptimizedVersions() {
