@@ -234,6 +234,8 @@ public class VersionGraphOptimizationTest {
         System.out.println("keep all revisions: " + time);
         assertThat(optimizedGraph.getTip().getProperties()).isEqualTo(mapOf("key", Integer.toString(COUNT - 1)));
         assertThat(Lists.newArrayList(optimizedGraph.getVersionNodes())).hasSize(COUNT);
+
+        System.out.flush();
     }
 
     private void assertNotFound(SimpleVersionGraph graph, Revision revision) {
