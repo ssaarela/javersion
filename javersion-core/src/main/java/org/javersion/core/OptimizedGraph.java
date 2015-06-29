@@ -17,8 +17,13 @@ package org.javersion.core;
 
 import static java.util.function.Function.identity;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
@@ -28,31 +33,38 @@ public class OptimizedGraph<K, V, M> {
 
     private final List<OptimizedVersionBuilder<K, V, M>> optimizedVersions;
 
-    public OptimizedGraph(VersionGraph<K, V, M, ?, ?> versionGraph, Iterable<Revision> revisions) {
-        Map<Revision, OptimizedVersionBuilder<K, V, M>> optimizedVersionsByRevision = new LinkedHashMap<>();
-        for (Revision revision : revisions) {
-            optimizedVersionsByRevision.put(revision, new OptimizedVersionBuilder<>(versionGraph.getVersionNode(revision)));
-        }
+    public OptimizedGraph(VersionGraph<K, V, M, ?, ?> versionGraph, Predicate<VersionNode<K, V, M>> keep) {
+        ImmutableList.Builder<OptimizedVersionBuilder<K, V, M>> results = ImmutableList.builder();
+        List<OptimizedVersionBuilder<K, V, M>> heads = new ArrayList<>();
         for (VersionNode<K, V, M> versionNode : versionGraph.getVersionNodes()) {
-            if (!optimizedVersionsByRevision.containsKey(versionNode.revision)) {
-                Set<Revision> childRevisions = getChildRevisions(optimizedVersionsByRevision.values(), versionNode.revision);
-                if (childRevisions.size() > 1) {
-                    for (Revision childRevision : childRevisions) {
-                        OptimizedVersionBuilder<K, V, M> versionBuilder = optimizedVersionsByRevision.get(childRevision);
-                        versionBuilder.addParent(versionNode);
+            List<OptimizedVersionBuilder<K, V, M>> childVersions = findChildRevisions(heads, versionNode.revision);
+            if (childVersions.size() > 1 || keep.test(versionNode)) {
+                for (OptimizedVersionBuilder<K, V, M> childVersion : childVersions) {
+                    childVersion.addParent(versionNode);
+                    if (childVersion.isResolved()) {
+                        results.add(childVersion);
+                        heads.remove(childVersion);
                     }
-                    optimizedVersionsByRevision.put(versionNode.revision, new OptimizedVersionBuilder<>(versionNode));
                 }
+                OptimizedVersionBuilder<K, V, M> optimizedVersion = new OptimizedVersionBuilder<>(versionNode);
+                if (optimizedVersion.isResolved()) {
+                    results.add(optimizedVersion);
+                } else {
+                    heads.add(optimizedVersion);
+                }
+            } else if (!childVersions.isEmpty()){
+                childVersions.get(0).squashParent(versionNode);
             }
         }
-        optimizedVersions = ImmutableList.copyOf(optimizedVersionsByRevision.values()).reverse();
+        results.addAll(heads);
+        optimizedVersions = results.build().reverse();
     }
 
-    private Set<Revision> getChildRevisions(Collection<OptimizedVersionBuilder<K, V, M>> optimizedVersions, Revision currentRevision) {
+    private List<OptimizedVersionBuilder<K, V, M>> findChildRevisions (
+            Collection<OptimizedVersionBuilder < K, V, M >> optimizedVersions, Revision parentRevision) {
         return optimizedVersions.stream()
-                .filter(childCandidate -> childCandidate.requiresParent(currentRevision))
-                .map(OptimizedVersionBuilder::getRevision)
-                .collect(Collectors.toSet());
+                .filter(childCandidate -> childCandidate.hasParent(parentRevision))
+                .collect(Collectors.toList());
     }
 
     public Iterable<Version<K, V, M>> getOptimizedVersions() {
@@ -63,31 +75,36 @@ public class OptimizedGraph<K, V, M> {
 
     private static class OptimizedVersionBuilder<K, V, M> {
 
+        private Set<Revision> parentRevisions;
+
         private VersionNode<K, V, M> versionNode;
 
         private Set<VersionNode<K, V, M>> newParents = new HashSet<>();
 
         OptimizedVersionBuilder(VersionNode<K, V, M> versionNode) {
             this.versionNode = versionNode;
+            this.parentRevisions = new HashSet<>(versionNode.parentRevisions);
         }
 
-        boolean requiresParent(Revision revision) {
-            return versionNode.mergedRevisions.contains(revision)
-                    && newParents.stream().noneMatch(parent -> parent.mergedRevisions.contains(revision));
+        public boolean hasParent(Revision revision) {
+            return parentRevisions.contains(revision);
         }
 
         public Revision getRevision() {
             return versionNode.revision;
         }
 
-        public void addParent(VersionNode<K, V, M> parentCandidate) {
-            for (VersionNode<K, V, M> parent : newParents) {
-                // parentCandidate is inherited
-                if (parent.mergedRevisions.contains(parentCandidate)) {
-                    return;
-                }
-            }
-            newParents.add(parentCandidate);
+        public void addParent(VersionNode<K, V, M> newParent) {
+            newParents.add(newParent);
+            parentRevisions.remove(newParent.revision);
+        }
+
+        public void squashParent(VersionNode<K, V, M> parent) {
+            parentRevisions.remove(parent.revision);
+        }
+
+        public boolean isResolved() {
+            return parentRevisions.isEmpty();
         }
 
         public Version<K, V, M> build(Function<Revision, Revision> idMapper) {

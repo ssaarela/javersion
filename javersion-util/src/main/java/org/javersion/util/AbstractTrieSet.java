@@ -27,7 +27,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
 
-public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extends AbstractHashTrie<E, EntryNode<E>, S> implements Iterable<E> {
+public abstract class AbstractTrieSet<E, This extends AbstractTrieSet<E, This>> extends AbstractHashTrie<E, EntryNode<E>, This> implements Iterable<E> {
 
     @SuppressWarnings("rawtypes")
     private static final Function ELEMENT_TO_ENTRY = new Function() {
@@ -46,7 +46,7 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
         }
     };
 
-    public S conj(E element) {
+    public This conj(E element) {
         final UpdateContext<EntryNode<E>> updateContext = updateContext(1, null);
         try {
             return doAdd(updateContext, new EntryNode<E>(element));
@@ -55,32 +55,41 @@ public abstract class AbstractTrieSet<E, S extends AbstractTrieSet<E, S>> extend
         }
     }
 
-    public S conjAll(final Collection<? extends E> elements) {
+    public This conjAll(final Collection<? extends E> elements) {
         return conjAll(elements, elements.size());
     }
 
-    public S conjAll(AbstractTrieSet<? extends E, ?> elements) {
+    public This conjAll(AbstractTrieSet<? extends E, ?> elements) {
         return conjAll(elements, elements.size());
     }
 
-    public S conjAll(final Iterable<? extends E> elements) {
+    public This conjAll(final Iterable<? extends E> elements) {
         return conjAll(elements, 32);
     }
 
     @SuppressWarnings("unchecked")
-    private S conjAll(final Iterable<? extends E> elements, int size) {
+    private This conjAll(final Iterable<? extends E> elements, int size) {
         final UpdateContext<EntryNode<E>> updateContext = updateContext(size, null);
         try {
-            return (S) doAddAll(updateContext, transform(elements.iterator(), ELEMENT_TO_ENTRY));
+            return (This) doAddAll(updateContext, transform(elements.iterator(), ELEMENT_TO_ENTRY));
         } finally {
             commit(updateContext);
         }
     }
 
-    public S disj(Object element) {
+    public This disj(Object element) {
         final UpdateContext<EntryNode<E>> updateContext = updateContext(1, null);
         try {
             return doRemove(updateContext, element);
+        } finally {
+            commit(updateContext);
+        }
+    }
+
+    public This disjAll(final Iterable<? extends E> elements) {
+        final UpdateContext<EntryNode<E>> updateContext = updateContext(1, null);
+        try {
+            return doRemoveAll(updateContext, elements.iterator());
         } finally {
             commit(updateContext);
         }

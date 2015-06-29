@@ -25,6 +25,7 @@ import static org.javersion.util.MapUtils.mapValueFunction;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.javersion.util.PersistentMap;
@@ -32,6 +33,7 @@ import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
@@ -159,10 +161,14 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public This optimize(Revision... revisions) {
-        return optimize(asList(revisions));
+        return optimize(ImmutableSet.copyOf(revisions));
     }
 
-    public This optimize(Iterable<Revision> revisions) {
+    public This optimize(Set<Revision> revisions) {
+        return optimize(versionNode -> revisions.contains(versionNode.revision));
+    }
+
+    public This optimize(Predicate<VersionNode<K, V, M>> revisions) {
         B builder = newEmptyBuilder();
         for (Version<K, V, M> version : new OptimizedGraph<>(this, revisions).getOptimizedVersions()) {
             builder.add(version);

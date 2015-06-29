@@ -73,5 +73,4 @@ public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E
     public String toString() {
         return stream().map(Objects::toString).collect(Collectors.joining(", ", "[", "]"));
     }
-
 }
