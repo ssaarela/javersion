@@ -205,7 +205,7 @@ public class VersionGraphOptimizationTest {
 
     @Test
     public void performance() {
-        int COUNT = 100000;
+        int COUNT = 10000;
         Set<Revision> revisions = Sets.newHashSetWithExpectedSize(COUNT);
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init();
         Revision prev = null;

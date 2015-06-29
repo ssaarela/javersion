@@ -26,50 +26,60 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 
 public class OptimizedGraph<K, V, M> {
 
-    private final List<OptimizedVersionBuilder<K, V, M>> optimizedVersions;
+    private List<OptimizedVersionBuilder<K, V, M>> heads = new ArrayList<>();
+
+    private List<OptimizedVersionBuilder<K, V, M>> optimizedVersions = new ArrayList<>();
 
     public OptimizedGraph(VersionGraph<K, V, M, ?, ?> versionGraph, Predicate<VersionNode<K, V, M>> keep) {
-        ImmutableList.Builder<OptimizedVersionBuilder<K, V, M>> results = ImmutableList.builder();
-        List<OptimizedVersionBuilder<K, V, M>> heads = new ArrayList<>();
         for (VersionNode<K, V, M> versionNode : versionGraph.getVersionNodes()) {
             List<OptimizedVersionBuilder<K, V, M>> childVersions = findChildRevisions(heads, versionNode.revision);
             if (childVersions.size() > 1 || keep.test(versionNode)) {
                 for (OptimizedVersionBuilder<K, V, M> childVersion : childVersions) {
                     childVersion.addParent(versionNode);
-                    if (childVersion.isResolved()) {
-                        results.add(childVersion);
-                        heads.remove(childVersion);
-                    }
+                    handleResolvedChild(childVersion);
                 }
-                OptimizedVersionBuilder<K, V, M> optimizedVersion = new OptimizedVersionBuilder<>(versionNode);
-                if (optimizedVersion.isResolved()) {
-                    results.add(optimizedVersion);
-                } else {
-                    heads.add(optimizedVersion);
-                }
+                handleNewOptimizedVersion(new OptimizedVersionBuilder<>(versionNode));
             } else if (!childVersions.isEmpty()){
-                childVersions.get(0).squashParent(versionNode);
+                OptimizedVersionBuilder<K, V, M> childVersion = childVersions.get(0);
+                childVersion.squashParent(versionNode);
+                handleResolvedChild(childVersion);
             }
         }
-        results.addAll(heads);
-        optimizedVersions = results.build().reverse();
+        optimizedVersions.addAll(heads);
+        heads = null;
+        optimizedVersions = Lists.reverse(optimizedVersions);
+    }
+
+    public Iterable<Version<K, V, M>> getOptimizedVersions() {
+        return optimizedVersions.stream()
+                .map(optimizedVersion -> optimizedVersion.build(identity()))
+                .collect(Collectors.toList());
+    }
+
+    private void handleNewOptimizedVersion(OptimizedVersionBuilder<K, V, M> optimizedVersion) {
+        if (optimizedVersion.isResolved()) {
+            optimizedVersions.add(optimizedVersion);
+        } else {
+            heads.add(optimizedVersion);
+        }
+    }
+
+    private void handleResolvedChild(OptimizedVersionBuilder<K, V, M> childVersion) {
+        if (childVersion.isResolved()) {
+            optimizedVersions.add(childVersion);
+            heads.remove(childVersion);
+        }
     }
 
     private List<OptimizedVersionBuilder<K, V, M>> findChildRevisions (
             Collection<OptimizedVersionBuilder < K, V, M >> optimizedVersions, Revision parentRevision) {
         return optimizedVersions.stream()
                 .filter(childCandidate -> childCandidate.hasParent(parentRevision))
-                .collect(Collectors.toList());
-    }
-
-    public Iterable<Version<K, V, M>> getOptimizedVersions() {
-        return optimizedVersions.stream()
-                .map(optimizedVersion -> optimizedVersion.build(identity()))
                 .collect(Collectors.toList());
     }
 
