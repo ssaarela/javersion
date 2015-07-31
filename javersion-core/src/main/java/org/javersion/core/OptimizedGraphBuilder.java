@@ -15,6 +15,7 @@
  */
 package org.javersion.core;
 
+import static java.util.Collections.unmodifiableList;
 import static java.util.function.Function.identity;
 
 import java.util.ArrayList;
@@ -26,16 +27,27 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
 
-public class OptimizedGraph<K, V, M> {
+public class OptimizedGraphBuilder<K, V, M> {
 
     private List<OptimizedVersionBuilder<K, V, M>> heads = new ArrayList<>();
 
     private List<OptimizedVersionBuilder<K, V, M>> optimizedVersions = new ArrayList<>();
 
-    public OptimizedGraph(VersionGraph<K, V, M, ?, ?> versionGraph, Predicate<VersionNode<K, V, M>> keep) {
+    private List<Revision> squashedRevisions = new ArrayList<>();
+
+    public OptimizedGraphBuilder(VersionGraph<K, V, M, ?, ?> versionGraph, Revision... keepRevisions) {
+        this(versionGraph, ImmutableSet.copyOf(keepRevisions));
+    }
+
+    public OptimizedGraphBuilder(VersionGraph<K, V, M, ?, ?> versionGraph, Set<Revision> keepRevisions) {
+        this(versionGraph, versionNode -> keepRevisions.contains(versionNode.revision));
+    }
+
+    public OptimizedGraphBuilder(VersionGraph<K, V, M, ?, ?> versionGraph, Predicate<VersionNode<K, V, M>> keep) {
         for (VersionNode<K, V, M> versionNode : versionGraph.getVersionNodes()) {
             List<OptimizedVersionBuilder<K, V, M>> childVersions = findChildRevisions(heads, versionNode.revision);
             if (childVersions.size() > 1 || keep.test(versionNode)) {
@@ -48,17 +60,28 @@ public class OptimizedGraph<K, V, M> {
                 OptimizedVersionBuilder<K, V, M> childVersion = childVersions.get(0);
                 childVersion.squashParent(versionNode);
                 handleResolvedChild(childVersion);
+                squashedRevisions.add(versionNode.revision);
+            } else {
+                squashedRevisions.add(versionNode.revision);
             }
         }
         optimizedVersions.addAll(heads);
         heads = null;
-        optimizedVersions = Lists.reverse(optimizedVersions);
+        optimizedVersions = unmodifiableList(Lists.reverse(optimizedVersions));
     }
 
     public Iterable<Version<K, V, M>> getOptimizedVersions() {
         return optimizedVersions.stream()
                 .map(optimizedVersion -> optimizedVersion.build(identity()))
                 .collect(Collectors.toList());
+    }
+
+    public List<Revision> getSquashedRevisions() {
+        return squashedRevisions;
+    }
+
+    public List<Revision> getKeptRevisions() {
+        return Lists.transform(optimizedVersions, optimizedVersion -> optimizedVersion.getRevision());
     }
 
     private void handleNewOptimizedVersion(OptimizedVersionBuilder<K, V, M> optimizedVersion) {

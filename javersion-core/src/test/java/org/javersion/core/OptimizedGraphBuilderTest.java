@@ -1,9 +1,12 @@
 package org.javersion.core;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.javersion.core.SimpleVersionGraphTest.mapOf;
+import static org.javersion.core.SimpleVersionGraphTest.setOf;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
@@ -12,7 +15,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-public class VersionGraphOptimizationTest {
+public class OptimizedGraphBuilderTest {
 
     /**
      *  1
@@ -37,6 +40,8 @@ public class VersionGraphOptimizationTest {
                 .build();
 
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1, v2, v3);
+
+        assertRevisions(versionGraph, setOf(v3.revision), asList(v3.revision), asList(v2.revision, v1.revision));
 
         SimpleVersionGraph graph = versionGraph.optimize(v3.revision);
 
@@ -73,6 +78,8 @@ public class VersionGraphOptimizationTest {
                 .build();
 
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1, v2, v3, v4);
+
+        assertRevisions(versionGraph, setOf(v3.revision, v4.revision), asList(v2.revision, v3.revision, v4.revision), asList(v1.revision));
 
         SimpleVersionGraph graph = versionGraph.optimize(v3.revision, v4.revision);
 
@@ -116,6 +123,9 @@ public class VersionGraphOptimizationTest {
                 .build();
 
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1, v2, v3, v4);
+        assertRevisions(versionGraph, setOf(v4.revision), asList(v4.revision), asList(v3.revision, v2.revision, v1.revision));
+        assertRevisions(versionGraph, setOf(v3.revision, v4.revision), asList(v3.revision, v4.revision), asList(v2.revision, v1.revision));
+        assertRevisions(versionGraph, setOf(v1.revision, v4.revision), asList(v1.revision, v4.revision), asList(v3.revision, v2.revision));
 
         SimpleVersionGraph graph = versionGraph.optimize(v4.revision);
 
@@ -159,9 +169,15 @@ public class VersionGraphOptimizationTest {
 
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1, v2, v3, v4, v5);
 
+        assertRevisions(versionGraph, setOf(v5.revision), asList(v5.revision), asList(v4.revision, v3.revision, v2.revision, v1.revision));
+        assertRevisions(versionGraph, setOf(v3.revision, v4.revision), asList(v2.revision, v3.revision, v4.revision),
+                asList(v5.revision, v1.revision));
+        assertRevisions(versionGraph, setOf(v5.revision, v2.revision), asList(v2.revision, v5.revision),
+                asList(v4.revision, v3.revision, v1.revision));
+
         SimpleVersionGraph graph = versionGraph.optimize(v5.revision);
 
-        // Keep only v4
+        // Keep only v5
         assertNotFound(graph, v1.revision);
         assertNotFound(graph, v2.revision);
         assertNotFound(graph, v3.revision);
@@ -236,6 +252,12 @@ public class VersionGraphOptimizationTest {
         assertThat(Lists.newArrayList(optimizedGraph.getVersionNodes())).hasSize(COUNT);
 
         System.out.flush();
+    }
+
+    private void assertRevisions(SimpleVersionGraph versionGraph, Set<Revision> keepRevisions, List<Revision> keptRevisions, List<Revision> squashedRevisions) {
+        OptimizedGraphBuilder<String, String, String> optimizedGraphBuilder = new OptimizedGraphBuilder<>(versionGraph, keepRevisions);
+        assertThat(optimizedGraphBuilder.getKeptRevisions()).isEqualTo(keptRevisions);
+        assertThat(optimizedGraphBuilder.getSquashedRevisions()).isEqualTo(squashedRevisions);
     }
 
     private void assertNotFound(SimpleVersionGraph graph, Revision revision) {
