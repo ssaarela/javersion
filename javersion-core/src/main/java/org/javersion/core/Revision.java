@@ -27,7 +27,7 @@ public final class Revision implements Comparable<Revision> {
 
     public static final Revision MAX_VALUE = new Revision(-1, -1);
 
-    private static final long NODE = UUIDGen.getClockSeqAndNode();
+    public static final long NODE = UUIDGen.getClockSeqAndNode();
 
     public final long timeSeq;
 

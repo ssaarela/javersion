@@ -101,4 +101,8 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
     public Set<Revision> getParentRevisions() {
         return parentRevisions;
     }
+
+    public String toString() {
+        return revision.toString();
+    }
 }

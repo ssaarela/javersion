@@ -156,6 +156,9 @@ public abstract class VersionGraph<K, V, M,
         return Iterables.transform(getVersionNodes(), VersionNode::getVersion);
     }
 
+    /**
+     * @return versions in newest first (or reverse topological) order.
+     */
     public final Iterable<VersionNode<K, V, M>> getVersionNodes() {
         return new VersionNodeIterable<>(getTip(), versionNodes);
     }

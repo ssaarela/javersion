@@ -59,6 +59,9 @@ public abstract class VersionGraphBuilder<K, V, M,
 
     public final void add(Version<K, V, M> version) {
         Check.notNull(version, "version");
+        if (versionNodes.containsKey(version.revision)) {
+            throw new IllegalArgumentException("Duplicate revision: " + version);
+        }
         MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads = heads.toMutableMap();
         MergeBuilder<K, V, M> mergeBuilder = new MergeBuilder<>();
 

@@ -560,6 +560,17 @@ public class SimpleVersionGraphTest {
         assertThat(versionGraph.getTip().revision, equalTo(v1.revision));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void duplicate_revision_throws_exception() {
+        Revision rev = new Revision();
+        SimpleVersion v1 = new SimpleVersion.Builder(rev)
+                .build();
+        SimpleVersion v2 = new SimpleVersion.Builder(rev)
+                .build();
+
+        SimpleVersionGraph.init(asList(v1, v2));
+    }
+
     private int findIndex(List<VersionExpectation> expectations, int versionNumber) {
         for (int i=0; i < expectations.size(); i++) {
             Revision revision = expectations.get(i).getRevision();

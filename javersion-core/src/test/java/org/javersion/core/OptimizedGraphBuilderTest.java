@@ -1,16 +1,21 @@
 package org.javersion.core;
 
 import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.javersion.core.Revision.NODE;
 import static org.javersion.core.SimpleVersionGraphTest.mapOf;
 import static org.javersion.core.SimpleVersionGraphTest.setOf;
+import static org.javersion.path.PropertyPath.parse;
 
 import java.util.List;
 import java.util.Set;
 
+import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -24,16 +29,16 @@ public class OptimizedGraphBuilderTest {
      */
     @Test
     public void squash_linear_history() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new SimpleVersion.Builder(rev(1))
                 .changeset(mapOf("key", "value1"))
                 .meta("v1 meta")
                 .build();
-        SimpleVersion v2 = new SimpleVersion.Builder()
+        SimpleVersion v2 = new SimpleVersion.Builder(rev(2))
                 .parents(v1.revision)
                 .changeset(mapOf("key", "value2"))
                 .meta("v2 meta")
                 .build();
-        SimpleVersion v3 = new SimpleVersion.Builder()
+        SimpleVersion v3 = new SimpleVersion.Builder(rev(3))
                 .parents(v2.revision)
                 .changeset(mapOf("key2", "value1"))
                 .meta("v3 meta")
@@ -61,18 +66,18 @@ public class OptimizedGraphBuilderTest {
      */
     @Test
     public void y_inheritance() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new SimpleVersion.Builder(rev(1))
                 .changeset(mapOf("key", "value1"))
                 .build();
-        SimpleVersion v2 = new SimpleVersion.Builder()
+        SimpleVersion v2 = new SimpleVersion.Builder(rev(2))
                 .parents(v1.revision)
                 .changeset(mapOf("key", "value2"))
                 .build();
-        SimpleVersion v3 = new SimpleVersion.Builder()
+        SimpleVersion v3 = new SimpleVersion.Builder(rev(3))
                 .parents(v2.revision)
                 .changeset(mapOf("key2", "value1"))
                 .build();
-        SimpleVersion v4 = new SimpleVersion.Builder()
+        SimpleVersion v4 = new SimpleVersion.Builder(rev(4))
                 .parents(v2.revision)
                 .changeset(mapOf("key3", "value1"))
                 .build();
@@ -106,18 +111,18 @@ public class OptimizedGraphBuilderTest {
      */
     @Test
     public void diamond_inheritance() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new SimpleVersion.Builder(rev(1))
                 .changeset(mapOf("key1", "value1"))
                 .build();
-        SimpleVersion v2 = new SimpleVersion.Builder()
+        SimpleVersion v2 = new SimpleVersion.Builder(rev(2))
                 .parents(v1.revision)
                 .changeset(mapOf("key2", "value1"))
                 .build();
-        SimpleVersion v3 = new SimpleVersion.Builder()
+        SimpleVersion v3 = new SimpleVersion.Builder(rev(3))
                 .parents(v1.revision)
                 .changeset(mapOf("key2", "value2"))
                 .build();
-        SimpleVersion v4 = new SimpleVersion.Builder()
+        SimpleVersion v4 = new SimpleVersion.Builder(rev(4))
                 .parents(v2.revision, v3.revision)
                 .changeset(mapOf("key3", "value1"))
                 .build();
@@ -126,6 +131,7 @@ public class OptimizedGraphBuilderTest {
         assertRevisions(versionGraph, setOf(v4.revision), asList(v4.revision), asList(v3.revision, v2.revision, v1.revision));
         assertRevisions(versionGraph, setOf(v3.revision, v4.revision), asList(v3.revision, v4.revision), asList(v2.revision, v1.revision));
         assertRevisions(versionGraph, setOf(v1.revision, v4.revision), asList(v1.revision, v4.revision), asList(v3.revision, v2.revision));
+        assertRevisions(versionGraph, setOf(v2.revision, v3.revision), asList(v1.revision, v2.revision, v3.revision), asList(v4.revision));
 
         SimpleVersionGraph graph = versionGraph.optimize(v4.revision);
 
@@ -140,6 +146,40 @@ public class OptimizedGraphBuilderTest {
     }
 
     /**
+     *    1+
+     *   2 \
+     *  /| \
+     * 3 4*5*
+     *  \|/
+     *   6*
+     */
+    @Test
+    public void extended_diamond_inheritance() {
+        SimpleVersion v1 = new SimpleVersion.Builder(rev(1))
+                .build();
+        SimpleVersion v2 = new SimpleVersion.Builder(rev(2))
+                .parents(v1.revision)
+                .build();
+        SimpleVersion v3 = new SimpleVersion.Builder(rev(3))
+                .parents(v2.revision)
+                .build();
+        SimpleVersion v4 = new SimpleVersion.Builder(rev(4))
+                .parents(v2.revision)
+                .build();
+        SimpleVersion v5 = new SimpleVersion.Builder(rev(5))
+                .parents(v1.revision)
+                .build();
+        SimpleVersion v6 = new SimpleVersion.Builder(rev(6))
+                .parents(v3.revision, v4.revision, v5.revision)
+                .build();
+
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1, v2, v3, v4, v5, v6);
+        assertRevisions(versionGraph, setOf(v4.revision, v5.revision, v6.revision),
+                asList(v1.revision, v4.revision, v5.revision, v6.revision),
+                asList(v3.revision, v2.revision));
+    }
+
+    /**
      *   1
      *   2
      *  3 4
@@ -147,22 +187,22 @@ public class OptimizedGraphBuilderTest {
      */
     @Test
     public void remove_tombstones() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new SimpleVersion.Builder(rev(1))
                 .changeset(mapOf("key1", "value1", "key2", "value1", "key3", "value1"))
                 .build();
-        SimpleVersion v2 = new SimpleVersion.Builder()
+        SimpleVersion v2 = new SimpleVersion.Builder(rev(2))
                 .parents(v1.revision)
                 .changeset(mapOf("key1", null))
                 .build();
-        SimpleVersion v3 = new SimpleVersion.Builder()
+        SimpleVersion v3 = new SimpleVersion.Builder(rev(3))
                 .parents(v2.revision)
                 .changeset(mapOf("key2", null))
                 .build();
-        SimpleVersion v4 = new SimpleVersion.Builder()
+        SimpleVersion v4 = new SimpleVersion.Builder(rev(4))
                 .parents(v2.revision)
                 .changeset(mapOf("key3", null))
                 .build();
-        SimpleVersion v5 = new SimpleVersion.Builder()
+        SimpleVersion v5 = new SimpleVersion.Builder(rev(5))
                 .parents(v3.revision, v4.revision)
                 .changeset(mapOf("key4", "value1"))
                 .build();
@@ -186,6 +226,76 @@ public class OptimizedGraphBuilderTest {
         VersionNode<String, String, String> v4node = graph.getVersionNode(v5.revision);
         assertThat(v4node.getChangeset()).isEqualTo(mapOf("key4", "value1"));
         assertThat(v4node.getParentRevisions()).isEmpty();
+    }
+
+    /**
+     *   v1
+     *   |
+     *   v2
+     *   |
+     *   v3+
+     *  /  \
+     * v4  v5*
+     * |
+     * v6*
+     */
+    @Test
+    public void mixed_optimizations() {
+        SimpleVersion v1 = SimpleVersion.builder()
+                .changeset(mapOf(
+                        // This should ve moved to v3
+                        "property1", "value1",
+                        "property2", "value1"))
+                .build();
+
+        SimpleVersion v2 = SimpleVersion.builder()
+                // Toombstones should be removed
+                .changeset(mapOf("property2", null))
+                .parents(v1.revision)
+                .build();
+
+        SimpleVersion v3 = SimpleVersion.builder()
+                .parents(v2.revision)
+                .build();
+
+        // This intermediate version should be removed
+        SimpleVersion v4 = SimpleVersion.builder()
+                .changeset(mapOf(
+                        // These should be left as is
+                        "property1", "value2",
+                        "property2", "value1"))
+                .parents(v3.revision)
+                .build();
+
+        SimpleVersion v5 = SimpleVersion.builder()
+                // This should be in conflict with v4
+                .changeset(mapOf("property2", "value2"))
+                .parents(v3.revision)
+                .build();
+
+        SimpleVersion v6 = SimpleVersion.builder()
+                // This should be replaced with v3
+                .parents(v4.revision)
+                .build();
+
+        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1, v2, v3, v4, v5, v6);
+        versionGraph = versionGraph.optimize(v5.revision, v6.revision);
+
+        VersionNode<String, String, String> versionNode = versionGraph.getVersionNode(v3.revision);
+        assertThat(versionNode.getParentRevisions()).isEmpty();
+        // Toombstone is removed
+        assertThat(versionNode.getChangeset()).isEqualTo(mapOf("property1", "value1"));
+        assertThat(versionNode.getProperties()).doesNotContainKey("property2");
+
+        versionNode = versionGraph.getVersionNode(v5.revision);
+        assertThat(versionNode.getParentRevisions()).isEqualTo(ImmutableSet.of(v3.revision));
+        assertThat(versionNode.getChangeset()).isEqualTo(mapOf("property2", "value2"));
+
+        versionNode = versionGraph.getVersionNode(v6.revision);
+        assertThat(versionNode.getParentRevisions()).isEqualTo(ImmutableSet.of(v3.revision));
+        assertThat(versionNode.getChangeset()).isEqualTo(mapOf(
+                "property1", "value2",
+                "property2", "value1"));
     }
 
     @Test
@@ -256,8 +366,8 @@ public class OptimizedGraphBuilderTest {
 
     private void assertRevisions(SimpleVersionGraph versionGraph, Set<Revision> keepRevisions, List<Revision> keptRevisions, List<Revision> squashedRevisions) {
         OptimizedGraphBuilder<String, String, String> optimizedGraphBuilder = new OptimizedGraphBuilder<>(versionGraph, keepRevisions);
-        assertThat(optimizedGraphBuilder.getKeptRevisions()).isEqualTo(keptRevisions);
-        assertThat(optimizedGraphBuilder.getSquashedRevisions()).isEqualTo(squashedRevisions);
+        assertThat(optimizedGraphBuilder.getKeptRevisions()).as("keptRevisions").isEqualTo(keptRevisions);
+        assertThat(optimizedGraphBuilder.getSquashedRevisions()).as("squashedRevisions").isEqualTo(squashedRevisions);
     }
 
     private void assertNotFound(SimpleVersionGraph graph, Revision revision) {
@@ -269,5 +379,8 @@ public class OptimizedGraphBuilderTest {
         }
     }
 
+    private Revision rev(long number) {
+        return new Revision(NODE, number);
+    }
 
 }
