@@ -31,7 +31,7 @@ import java.util.stream.StreamSupport;
 
 import org.junit.Test;
 
-public class PersitentTreeSetTest {
+public class PersistentTreeSetTest {
 
     private static final Random RANDOM = new Random(2007);
 

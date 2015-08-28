@@ -68,6 +68,10 @@ public class Version<K, V, M> {
         this.parentRevisions = builder.parentRevisions != null ? copyOf(builder.parentRevisions) : EMPTY_PARENTS;
         this.changeset = builder.changeset != null ? unmodifiableMap(newLinkedHashMap(builder.changeset)) : ImmutableMap.of();
         this.meta = builder.meta;
+
+        if (parentRevisions.contains(revision)) {
+            throw new IllegalArgumentException("parentRevisions should not contain own revision");
+        }
     }
 
     public Map<K, VersionProperty<V>> getVersionProperties() {

@@ -84,6 +84,17 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
         return commitAndReturn(updateContext, newRoot, size() + updateContext.getChangeAndReset());
     }
 
+    @SuppressWarnings("rawtypes")
+    protected final This doRemoveAll(UpdateContext<? super E> updateContext, Iterator keys) {
+        Node<K, E> newRoot = root();
+        int size = size();
+        while (keys.hasNext()) {
+            newRoot = newRoot.dissoc(updateContext, keys.next());
+            size += updateContext.getChangeAndReset();
+        }
+        return commitAndReturn(updateContext, newRoot, size);
+    }
+
     protected void commit(UpdateContext<?> updateContext) {
         updateContext.commit();
     }

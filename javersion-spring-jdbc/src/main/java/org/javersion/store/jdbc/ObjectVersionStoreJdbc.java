@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.javersion.core.OptimizedGraphBuilder;
 import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionNode;
@@ -163,7 +164,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
         for (Id docId : versionsByDocId.keySet()) {
             for (VersionNode<PropertyPath, Object, M> version : versionsByDocId.get(docId)) {
                 addVersion(docId, version, versionBatch);
-                addParents(version, parentBatch);
+                addParents(docId, version, parentBatch);
                 addProperties(docId, version, propertyBatch);
             }
         }
@@ -216,6 +217,59 @@ public class ObjectVersionStoreJdbc<Id, M> {
         return publishedDocs;
     }
 
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public void optimize(Id docId, java.util.function.Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+        ObjectVersionGraph<M> graph = load(docId);
+        OptimizedGraphBuilder<PropertyPath, Object, M> optimizedGraphBuilder = new OptimizedGraphBuilder<>(graph, keep);
+
+        List<Revision> keptRevisions = optimizedGraphBuilder.getKeptRevisions();
+        List<Revision> squashedRevisions = optimizedGraphBuilder.getSquashedRevisions();
+
+        if (squashedRevisions.isEmpty()) {
+            return;
+        }
+        if (keptRevisions.isEmpty()) {
+            throw new IllegalArgumentException("keep-predicate didn't match any version");
+        }
+        deleteOldParentsAndProperties(squashedRevisions, keptRevisions);
+        deleteSquashedVersions(squashedRevisions);
+        insertOptimizedParentsAndProperties(docId, ObjectVersionGraph.init(optimizedGraphBuilder.getOptimizedVersions()), keptRevisions);
+    }
+
+    private void insertOptimizedParentsAndProperties(Id docId, ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {;
+        SQLInsertClause parentBatch = queryFactory.insert(jParent);
+        SQLInsertClause propertyBatch = queryFactory.insert(jProperty);
+
+        for (Revision revision : keptRevisions) {
+            VersionNode<PropertyPath, Object, M> version = optimizedGraph.getVersionNode(revision);
+            addParents(docId, version, parentBatch);
+            addProperties(docId, version, propertyBatch);
+        }
+
+        if (!parentBatch.isEmpty()) {
+            parentBatch.execute();
+        }
+        if (!propertyBatch.isEmpty()) {
+            propertyBatch.execute();
+        }
+    }
+
+    private void deleteOldParentsAndProperties(List<Revision> squashedRevisions, List<Revision> keptRevisions) {
+        queryFactory.delete(jParent)
+                .where(jParent.revision.in(keptRevisions).or(jParent.revision.in(squashedRevisions)))
+                .execute();
+        queryFactory.delete(jProperty)
+                .where(jProperty.revision.in(keptRevisions).or(jProperty.revision.in(squashedRevisions)))
+                .execute();
+    }
+
+    private void deleteSquashedVersions(List<Revision> squashedRevisions) {
+        // Delete squashed versions
+        queryFactory.delete(jVersion)
+                .where(jVersion.revision.in(squashedRevisions))
+                .execute();
+    }
+
     protected void afterPublish(Multimap<Id, Revision> publishedDocs) {
         // After publish hook for sub classes to override
     }
@@ -227,8 +281,8 @@ public class ObjectVersionStoreJdbc<Id, M> {
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public FetchResults<Id, M> load(Collection<Id> docId) {
-        return fetch(predicate(IN, constant(docId)));
+    public FetchResults<Id, M> load(Collection<Id> docIds) {
+        return fetch(predicate(IN, constant(docIds)));
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
@@ -238,8 +292,8 @@ public class ObjectVersionStoreJdbc<Id, M> {
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public FetchResults<Id, M> fetchUpdates(Collection<Id> docId, Revision since) {
-        return fetch(predicate(IN, jVersion.docId, constant(docId)).and(jVersion.ordinal.gt(getOrdinal(since))));
+    public FetchResults<Id, M> fetchUpdates(Collection<Id> docIds, Revision since) {
+        return fetch(predicate(IN, jVersion.docId, constant(docIds)).and(jVersion.ordinal.gt(getOrdinal(since))));
     }
 
     private FetchResults<Id, M> fetch(Predicate predicate) {
@@ -350,7 +404,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
                 .set(jProperty.nbr, nbr);
     }
 
-    protected void addParents(VersionNode<PropertyPath, Object, M> version, SQLInsertClause parentBatch) {
+    protected void addParents(Id docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause parentBatch) {
         for (Revision parentRevision : version.parentRevisions) {
             parentBatch
                     .set(jParent.revision, version.revision)

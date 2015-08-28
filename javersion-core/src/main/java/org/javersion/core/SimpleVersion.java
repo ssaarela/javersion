@@ -21,6 +21,10 @@ public class SimpleVersion extends Version<String, String, String> {
         super(builder);
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public static class Builder extends BuilderBase<String, String, String, Builder> {
 
         public Builder() {

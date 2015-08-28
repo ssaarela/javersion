@@ -17,11 +17,7 @@ package org.javersion.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -31,7 +27,7 @@ import org.assertj.core.api.Assertions;
 import org.javersion.util.PersistentHashMapTest.HashKey;
 import org.junit.Test;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 
 public class PersistentHashSetTest {
 
@@ -75,11 +71,14 @@ public class PersistentHashSetTest {
     }
 
     @Test
-    public void Add_All() {
+    public void add_and_remove_all() {
         PersistentHashSet<Integer> set = new PersistentHashSet<>();
         Set<Integer> ints = integers();
         set = set.conjAll(ints);
         assertThat(set.asSet()).isEqualTo(ints);
+        set = set.disjAll(ints);
+        assertThat(set.asSet()).isEqualTo(new HashSet<>());
+        assertThat(set.size()).isEqualTo(0);
     }
 
     @Test

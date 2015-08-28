@@ -1,13 +1,15 @@
 package org.javersion.store.jdbc;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Collections.unmodifiableMap;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.path.PropertyPath.parse;
 import static org.javersion.store.sql.QTestVersion.testVersion;
 import static org.javersion.store.sql.QTestVersionProperty.testVersionProperty;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -18,6 +20,7 @@ import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
+import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
@@ -32,8 +35,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.mysema.query.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -128,7 +132,7 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.append(docId, versionGraph.getTip());
         versionStore.publish();
         versionGraph = versionStore.load(docId);
-        List<Version<PropertyPath, Object, Void>> versions = versionGraph.getVersions();
+        List<Version<PropertyPath, Object, Void>> versions = newArrayList(versionGraph.getVersions());
         assertThat(versions).hasSize(1);
         assertThat(versions.get(0)).isEqualTo(emptyVersion);
     }
@@ -146,7 +150,7 @@ public class ObjectVersionStoreJdbcTest {
         new Thread(() -> {
             transactionTemplate.execute(status -> {
                 ObjectVersion<Void> version1 = ObjectVersion.<Void>builder(r1)
-                        .changeset(ImmutableMap.of(ROOT.property("concurrency"), " slow"))
+                        .changeset(mapOf(ROOT.property("concurrency"), " slow"))
                         .build();
                 versionStore.append(docId, ObjectVersionGraph.init(version1).getTip());
 
@@ -167,7 +171,7 @@ public class ObjectVersionStoreJdbcTest {
         firstInsertDone.await();
 
         ObjectVersion<Void> version2 = ObjectVersion.<Void>builder(r2)
-                .changeset(ImmutableMap.of(ROOT.property("concurrency"), "fast"))
+                .changeset(mapOf("concurrency", "fast"))
                 .build();
         versionStore.append(docId, ObjectVersionGraph.init(version2).getTip());
         versionStore.publish();
@@ -215,11 +219,11 @@ public class ObjectVersionStoreJdbcTest {
         String docId = randomUUID().toString();
 
         ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
-                .changeset(ImmutableMap.of(ROOT.property("property"), "value1"))
+                .changeset(mapOf("property", "value1"))
                 .build();
 
         ObjectVersion<Void> v2 = ObjectVersion.<Void>builder()
-                .changeset(ImmutableMap.of(ROOT.property("property"), "value2"))
+                .changeset(mapOf("property", "value2"))
                 .build();
 
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2);
@@ -236,19 +240,146 @@ public class ObjectVersionStoreJdbcTest {
         assertThat(updates.get(0)).isEqualTo(v2);
     }
 
+    /**
+     *   v1
+     *   |
+     *   v2
+     *   |
+     *   v3*
+     *  /  \
+     * v4  v5*
+     * |
+     * v6*
+     */
+    @Test
+    public void optimize() {
+        String docId = randomUUID().toString();
+
+        ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
+                .changeset(mapOf(
+                        // This should ve moved to v3
+                        "property1", "value1",
+                        "property2", "value1"))
+                .build();
+
+        ObjectVersion<Void> v2 = ObjectVersion.<Void>builder()
+                // Toombstones should be removed
+                .changeset(mapOf("property2", null))
+                .parents(v1.revision)
+                .build();
+
+        ObjectVersion<Void> v3 = ObjectVersion.<Void>builder()
+                .parents(v2.revision)
+                .build();
+
+        // This intermediate version should be removed
+        ObjectVersion<Void> v4 = ObjectVersion.<Void>builder()
+                .changeset(mapOf(
+                        // These should be left as is
+                        "property1", "value2",
+                        "property2", "value1"))
+                .parents(v3.revision)
+                .build();
+
+        ObjectVersion<Void> v5 = ObjectVersion.<Void>builder()
+                // This should be in conflict with v4
+                .changeset(mapOf("property2", "value2"))
+                .parents(v3.revision)
+                .build();
+
+        ObjectVersion<Void> v6 = ObjectVersion.<Void>builder()
+                // This should be replaced with v3
+                .parents(v4.revision)
+                .build();
+
+        ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2, v3, v4, v5, v6);
+        versionStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
+        versionStore.publish();
+
+        assertThat(queryFactory.from(testVersion).where(testVersion.docId.eq(docId)).count()).isEqualTo(6);
+
+        versionStore.optimize(docId,
+                versionNode -> versionNode.revision.equals(v5.revision) || versionNode.revision.equals(v6.revision));
+
+        assertThat(queryFactory.from(testVersion).where(testVersion.docId.eq(docId)).count()).isEqualTo(3);
+
+        versionGraph = versionStore.load(docId);
+
+        VersionNode<PropertyPath, Object, Void> versionNode = versionGraph.getVersionNode(v3.revision);
+        assertThat(versionNode.getParentRevisions()).isEmpty();
+        // Toombstone is removed
+        assertThat(versionNode.getChangeset()).isEqualTo(mapOf("property1", "value1"));
+        assertThat(versionNode.getProperties()).doesNotContainKey(parse("property2"));
+
+        versionNode = versionGraph.getVersionNode(v5.revision);
+        assertThat(versionNode.getParentRevisions()).isEqualTo(ImmutableSet.of(v3.revision));
+        assertThat(versionNode.getChangeset()).isEqualTo(mapOf("property2", "value2"));
+
+        versionNode = versionGraph.getVersionNode(v6.revision);
+        assertThat(versionNode.getParentRevisions()).isEqualTo(ImmutableSet.of(v3.revision));
+        assertThat(versionNode.getChangeset()).isEqualTo(mapOf(
+                "property1", "value2",
+                "property2", "value1"));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void optimize_should_not_delete_all_versions() {
+        String docId = randomUUID().toString();
+
+        ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
+                .changeset(mapOf("property1", "value1"))
+                .build();
+
+        ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1);
+        versionStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
+        versionStore.publish();
+
+        versionStore.optimize(docId, v -> false);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void unpublished_version_may_prevent_optimization() {
+        String docId = randomUUID().toString();
+
+        ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
+                .changeset(mapOf("property1", "value1"))
+                .build();
+
+        ObjectVersion<Void> v2 = ObjectVersion.<Void>builder()
+                .changeset(mapOf("property1", "value2"))
+                .parents(v1.revision)
+                .build();
+
+        ObjectVersion<Void> v3 = ObjectVersion.<Void>builder()
+                .changeset(mapOf("property1", "value3"))
+                // v1 is to be squashed...
+                .parents(v1.revision)
+                .build();
+
+        ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2);
+        versionStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
+        versionStore.publish();
+
+        versionGraph = versionGraph.commit(v3);
+        versionStore.append(docId, versionGraph.getVersionNode(v3.revision));
+
+        // v3 is not published yet!
+        versionStore.optimize(docId, v -> v.revision.equals(v2.revision));
+    }
+
     @Test
     public void supported_value_types() {
         String docId = randomUUID().toString();
 
-        Map<PropertyPath, Object> changeset = new HashMap<>();
-        changeset.put(ROOT.property("Object"), Persistent.object("Object"));
-        changeset.put(ROOT.property("Array"), Persistent.array());
-        changeset.put(ROOT.property("String"), "String");
-        changeset.put(ROOT.property("Boolean"), true);
-        changeset.put(ROOT.property("Long"), 123l);
-        changeset.put(ROOT.property("Double"), 123.456);
-        changeset.put(ROOT.property("BigDecimal"), BigDecimal.TEN);
-        changeset.put(ROOT.property("Void"), null);
+        Map<PropertyPath, Object> changeset = mapOf(
+            "Object", Persistent.object("Object"),
+            "Array", Persistent.array(),
+            "String", "String",
+            "Boolean", true,
+            "Long", 123l,
+            "Double", 123.456,
+            "BigDecimal", BigDecimal.TEN,
+            "Void", null);
 
         ObjectVersion<Void> version = ObjectVersion.<Void>builder().changeset(changeset).build();
         versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
@@ -261,9 +392,9 @@ public class ObjectVersionStoreJdbcTest {
         String docId = randomUUID().toString();
 
         ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
-                .changeset(ImmutableMap.<PropertyPath, Object>of(
-                        ROOT.property("name"), "name",
-                        ROOT.property("id"), 5l))
+                .changeset(mapOf(
+                        "name", "name",
+                        "id", 5l))
                 .build();
 
         mappedVersionStore.append(docId, ObjectVersionGraph.init(v1).getTip());
@@ -292,6 +423,15 @@ public class ObjectVersionStoreJdbcTest {
                 .count();
         assertThat(count).isEqualTo(1);
         assertThat(mappedVersionStore.load(docId).getTip().getVersion()).isEqualTo(v2);
+    }
+
+
+    public static Map<PropertyPath, Object> mapOf(Object... entries) {
+        Map<PropertyPath, Object> map = Maps.newHashMap();
+        for (int i=0; i+1 < entries.length; i+=2) {
+            map.put(parse(entries[i].toString()), entries[i+1]);
+        }
+        return unmodifiableMap(map);
     }
 
 }

@@ -15,21 +15,21 @@
  */
 package org.javersion.core;
 
+import static java.util.Arrays.asList;
+
 public final class SimpleVersionGraph extends VersionGraph<String, String, String, SimpleVersionGraph, SimpleVersionGraph.Builder> {
 
     public static SimpleVersionGraph init() {
         return new SimpleVersionGraph();
     }
 
-    public static SimpleVersionGraph init(SimpleVersion version) {
-        Builder builder = new Builder();
-        builder.add(version);
-        return builder.build();
+    public static SimpleVersionGraph init(Version<String, String, String>... versions) {
+        return init(asList(versions));
     }
 
-    public static SimpleVersionGraph init(Iterable<SimpleVersion> versions) {
+    public static SimpleVersionGraph init(Iterable<? extends Version<String, String, String>> versions) {
         Builder builder = new Builder();
-        for (SimpleVersion version : versions) {
+        for (Version<String, String, String> version : versions) {
             builder.add(version);
         }
         return builder.build();
@@ -46,6 +46,11 @@ public final class SimpleVersionGraph extends VersionGraph<String, String, Strin
     @Override
     protected Builder newBuilder() {
         return new Builder(this);
+    }
+
+    @Override
+    protected Builder newEmptyBuilder() {
+        return new Builder();
     }
 
     static class Builder extends VersionGraphBuilder<String, String, String, SimpleVersionGraph, Builder> {
