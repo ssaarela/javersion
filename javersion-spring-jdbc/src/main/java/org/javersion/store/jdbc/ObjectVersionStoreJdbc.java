@@ -55,6 +55,7 @@ import com.mysema.query.sql.Configuration;
 import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.sql.dml.SQLInsertClause;
+import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.sql.types.EnumByNameType;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
@@ -191,26 +192,35 @@ public class ObjectVersionStoreJdbc<Id, M> {
      */
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public Multimap<Id, Revision> publish() {
+        // Lock repository with select for update
         long lastOrdinal = getLastOrdinalForUpdate();
+
         Map<Revision, Id> uncommittedRevisions = findUncommittedRevisions();
+        if (uncommittedRevisions.isEmpty()) {
+            return ImmutableMultimap.of();
+        }
+
         Multimap<Id, Revision> publishedDocs = ArrayListMultimap.create();
+
+        SQLUpdateClause versionUpdateBatch = queryFactory.update(jVersion);
 
         for (Map.Entry<Revision, Id> entry : uncommittedRevisions.entrySet()) {
             Revision revision = entry.getKey();
             Id docId = entry.getValue();
             publishedDocs.put(docId, revision);
-            queryFactory
-                    .update(jVersion)
-                    .where(jVersion.revision.eq(revision))
+            versionUpdateBatch
                     .set(jVersion.ordinal, ++lastOrdinal)
                     .setNull(jVersion.txOrdinal)
-                    .execute();
+                    .where(jVersion.revision.eq(revision))
+                    .addBatch();
         }
+
+        versionUpdateBatch.execute();
 
         queryFactory
                 .update(jRepository)
-                .where(jRepository.id.eq(REPOSITORY_ID))
                 .set(jRepository.ordinal, lastOrdinal)
+                .where(jRepository.id.eq(REPOSITORY_ID))
                 .execute();
 
         afterPublish(publishedDocs);
