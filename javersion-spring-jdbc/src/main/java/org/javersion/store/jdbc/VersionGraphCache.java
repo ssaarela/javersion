@@ -61,16 +61,14 @@ public class VersionGraphCache<Id, M> {
      */
     public Set<Id> publish() {
         Set<Id> publishedDocIds = versionStore.publish().keySet();
-        for (Id docId : publishedDocIds) {
-            if (cachedDocIds.contains(docId)) {
-                refresh(docId);
-            }
-        }
+        publishedDocIds.forEach(this::refresh);
         return publishedDocIds;
     }
 
     public void refresh(Id docId) {
-        cache.refresh(docId);
+        if (cachedDocIds.contains(docId)) {
+            cache.refresh(docId);
+        }
     }
 
     private CacheLoader<Id, ObjectVersionGraph<M>> newCacheLoader(final ObjectVersionStoreJdbc<Id, M> versionStore) {
