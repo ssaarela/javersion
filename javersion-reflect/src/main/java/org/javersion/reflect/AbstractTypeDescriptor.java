@@ -203,7 +203,7 @@ public abstract class AbstractTypeDescriptor<
             constructor.setAccessible(true);
             return constructor.newInstance();
         } catch (Exception e) {
-            throw new ReflectionException(e);
+            throw new ReflectionException("Failed to instantiate " + toString(), e);
         }
     }
 
