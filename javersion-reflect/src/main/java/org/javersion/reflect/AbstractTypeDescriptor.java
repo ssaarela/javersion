@@ -54,14 +54,7 @@ public abstract class AbstractTypeDescriptor<
         WRAPPER_TO_PRIMITIVE = primitives.build();
     }
 
-    private static final Predicate<Class<?>> isInterface = new Predicate<Class<?>>() {
-
-        @Override
-        public boolean apply(Class<?> input) {
-            return input.isInterface();
-        }
-
-    };
+    private static final Predicate<Class<?>> isInterface = (input) -> input.isInterface();
 
     protected final TypeToken<?> typeToken;
 
