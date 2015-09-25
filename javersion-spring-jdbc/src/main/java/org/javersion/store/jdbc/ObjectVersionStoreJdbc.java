@@ -61,6 +61,7 @@ import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 import com.mysema.query.types.Predicate;
 import com.mysema.query.types.QTuple;
+import com.mysema.query.types.SubQueryExpression;
 import com.mysema.query.types.expr.SimpleExpression;
 
 public class ObjectVersionStoreJdbc<Id, M> {
@@ -328,11 +329,11 @@ public class ObjectVersionStoreJdbc<Id, M> {
         return new FetchResults<>(results, latestRevision);
     }
 
-    protected Long getOrdinal(Revision revision) {
+    protected SubQueryExpression<Long> getOrdinal(Revision revision) {
         return queryFactory
-                .from(jVersion)
+                .subQuery(jVersion)
                 .where(jVersion.revision.eq(revision))
-                .singleResult(jVersion.ordinal);
+                .unique(jVersion.ordinal);
     }
 
     private Long getLastOrdinalForUpdate() {
