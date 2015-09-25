@@ -15,14 +15,14 @@ import java.sql.Types;
 
 
 /**
- * QTestVersion is a Querydsl query type for QTestVersion
+ * QDocumentVersion is a Querydsl query type for QDocumentVersion
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QTestVersion extends com.mysema.query.sql.RelationalPathBase<QTestVersion> {
+public class QDocumentVersion extends com.mysema.query.sql.RelationalPathBase<QDocumentVersion> {
 
-    private static final long serialVersionUID = 706366201;
+    private static final long serialVersionUID = 2075230416;
 
-    public static final QTestVersion testVersion = new QTestVersion("TEST_VERSION");
+    public static final QDocumentVersion documentVersion = new QDocumentVersion("DOCUMENT_VERSION");
 
     public final StringPath branch = createString("branch");
 
@@ -40,33 +40,33 @@ public class QTestVersion extends com.mysema.query.sql.RelationalPathBase<QTestV
 
     public final EnumPath<org.javersion.core.VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 
-    public final com.mysema.query.sql.PrimaryKey<QTestVersion> constraint4 = createPrimaryKey(revision);
+    public final com.mysema.query.sql.PrimaryKey<QDocumentVersion> constraint4 = createPrimaryKey(revision);
 
-    public final com.mysema.query.sql.ForeignKey<QVersionType> testVersionTypeFk = createForeignKey(type, "NAME");
+    public final com.mysema.query.sql.ForeignKey<QVersionType> documentVersionTypeFk = createForeignKey(type, "NAME");
 
-    public final com.mysema.query.sql.ForeignKey<QTestVersionParent> _testVersionParentRevisionFk = createInvForeignKey(revision, "REVISION");
+    public final com.mysema.query.sql.ForeignKey<QDocumentVersionParent> _documentVersionParentRevisionFk = createInvForeignKey(revision, "REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QTestVersionProperty> _testVersionPropertyRevisionFk = createInvForeignKey(revision, "REVISION");
+    public final com.mysema.query.sql.ForeignKey<QDocumentVersionParent> _documentVersionParentParentRevisionFk = createInvForeignKey(revision, "PARENT_REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QTestVersionParent> _testVersionParentParentRevisionFk = createInvForeignKey(revision, "PARENT_REVISION");
+    public final com.mysema.query.sql.ForeignKey<QDocumentVersionProperty> _documentVersionPropertyRevisionFk = createInvForeignKey(revision, "REVISION");
 
-    public QTestVersion(String variable) {
-        super(QTestVersion.class, forVariable(variable), "PUBLIC", "TEST_VERSION");
+    public QDocumentVersion(String variable) {
+        super(QDocumentVersion.class, forVariable(variable), "PUBLIC", "DOCUMENT_VERSION");
         addMetadata();
     }
 
-    public QTestVersion(String variable, String schema, String table) {
-        super(QTestVersion.class, forVariable(variable), schema, table);
+    public QDocumentVersion(String variable, String schema, String table) {
+        super(QDocumentVersion.class, forVariable(variable), schema, table);
         addMetadata();
     }
 
-    public QTestVersion(Path<? extends QTestVersion> path) {
-        super(path.getType(), path.getMetadata(), "PUBLIC", "TEST_VERSION");
+    public QDocumentVersion(Path<? extends QDocumentVersion> path) {
+        super(path.getType(), path.getMetadata(), "PUBLIC", "DOCUMENT_VERSION");
         addMetadata();
     }
 
-    public QTestVersion(PathMetadata<?> metadata) {
-        super(QTestVersion.class, metadata, "PUBLIC", "TEST_VERSION");
+    public QDocumentVersion(PathMetadata<?> metadata) {
+        super(QDocumentVersion.class, metadata, "PUBLIC", "DOCUMENT_VERSION");
         addMetadata();
     }
 

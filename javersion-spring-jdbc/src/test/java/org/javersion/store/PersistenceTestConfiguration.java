@@ -1,10 +1,10 @@
 package org.javersion.store;
 
 import static org.javersion.path.PropertyPath.ROOT;
-import static org.javersion.store.sql.QTestRepository.testRepository;
-import static org.javersion.store.sql.QTestVersion.testVersion;
-import static org.javersion.store.sql.QTestVersionParent.testVersionParent;
-import static org.javersion.store.sql.QTestVersionProperty.testVersionProperty;
+import static org.javersion.store.sql.QDocumentRepository.documentRepository;
+import static org.javersion.store.sql.QDocumentVersion.documentVersion;
+import static org.javersion.store.sql.QDocumentVersionParent.documentVersionParent;
+import static org.javersion.store.sql.QDocumentVersionProperty.documentVersionProperty;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -13,7 +13,7 @@ import org.javersion.store.jdbc.JRepository;
 import org.javersion.store.jdbc.JVersion;
 import org.javersion.store.jdbc.JVersionParent;
 import org.javersion.store.jdbc.JVersionProperty;
-import org.javersion.store.jdbc.ObjectVersionStoreJdbc;
+import org.javersion.store.jdbc.DocumentVersionStoreJdbc;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,7 +38,7 @@ public class PersistenceTestConfiguration {
     @Bean
     public com.mysema.query.sql.Configuration configuration() {
         com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new H2Templates());
-        ObjectVersionStoreJdbc.registerTypes("TEST_", configuration);
+        DocumentVersionStoreJdbc.registerTypes("DOCUMENT_", configuration);
         return configuration;
     }
 
@@ -48,28 +48,28 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public ObjectVersionStoreJdbc<String, Void> versionStore(SQLQueryFactory queryFactory) {
-        return new ObjectVersionStoreJdbc<String, Void>(
-                new JRepository(testRepository),
-                SQLExpressions.nextval("TEST_VERSION_ORDINAL_SEQ"),
-                new JVersion<>(testVersion, testVersion.docId),
-                new JVersionParent(testVersionParent),
-                new JVersionProperty(testVersionProperty),
+    public DocumentVersionStoreJdbc<String, Void> versionStore(SQLQueryFactory queryFactory) {
+        return new DocumentVersionStoreJdbc<String, Void>(
+                new JRepository(documentRepository),
+                SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"),
+                new JVersion<>(documentVersion, documentVersion.docId),
+                new JVersionParent(documentVersionParent),
+                new JVersionProperty(documentVersionProperty),
                 queryFactory);
     }
 
     @Bean
-    public ObjectVersionStoreJdbc<String, Void> mappedVersionStore(SQLQueryFactory queryFactory) {
-        return new ObjectVersionStoreJdbc<String, Void>(
-                new JRepository(testRepository),
-                SQLExpressions.nextval("TEST_VERSION_ORDINAL_SEQ"),
-                new JVersion<>(testVersion, testVersion.docId),
-                new JVersionParent(testVersionParent),
-                new JVersionProperty(testVersionProperty),
+    public DocumentVersionStoreJdbc<String, Void> mappedVersionStore(SQLQueryFactory queryFactory) {
+        return new DocumentVersionStoreJdbc<String, Void>(
+                new JRepository(documentRepository),
+                SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"),
+                new JVersion<>(documentVersion, documentVersion.docId),
+                new JVersionParent(documentVersionParent),
+                new JVersionProperty(documentVersionProperty),
                 queryFactory,
                 ImmutableMap.of(
-                        ROOT.property("name"), testVersion.name,
-                        ROOT.property("id"), testVersion.id));
+                        ROOT.property("name"), documentVersion.name,
+                        ROOT.property("id"), documentVersion.id));
     }
 
     @Bean

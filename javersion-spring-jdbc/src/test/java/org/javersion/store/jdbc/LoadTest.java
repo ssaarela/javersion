@@ -45,7 +45,7 @@ public class LoadTest {
     private final int propCount = 100;
 
     @Resource
-    ObjectVersionStoreJdbc<String, Void> versionStore;
+    DocumentVersionStoreJdbc<String, Void> versionStore;
 
     @Test
     @Ignore

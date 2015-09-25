@@ -15,14 +15,14 @@ import java.sql.Types;
 
 
 /**
- * QTestVersionProperty is a Querydsl query type for QTestVersionProperty
+ * QDocumentVersionProperty is a Querydsl query type for QDocumentVersionProperty
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QTestVersionProperty extends com.mysema.query.sql.RelationalPathBase<QTestVersionProperty> {
+public class QDocumentVersionProperty extends com.mysema.query.sql.RelationalPathBase<QDocumentVersionProperty> {
 
-    private static final long serialVersionUID = 929596398;
+    private static final long serialVersionUID = -1301024059;
 
-    public static final QTestVersionProperty testVersionProperty = new QTestVersionProperty("TEST_VERSION_PROPERTY");
+    public static final QDocumentVersionProperty documentVersionProperty = new QDocumentVersionProperty("DOCUMENT_VERSION_PROPERTY");
 
     public final NumberPath<Long> nbr = createNumber("nbr", Long.class);
 
@@ -34,27 +34,27 @@ public class QTestVersionProperty extends com.mysema.query.sql.RelationalPathBas
 
     public final StringPath type = createString("type");
 
-    public final com.mysema.query.sql.PrimaryKey<QTestVersionProperty> constraintE = createPrimaryKey(path, revision);
+    public final com.mysema.query.sql.PrimaryKey<QDocumentVersionProperty> constraint80 = createPrimaryKey(path, revision);
 
-    public final com.mysema.query.sql.ForeignKey<QTestVersion> testVersionPropertyRevisionFk = createForeignKey(revision, "REVISION");
+    public final com.mysema.query.sql.ForeignKey<QDocumentVersion> documentVersionPropertyRevisionFk = createForeignKey(revision, "REVISION");
 
-    public QTestVersionProperty(String variable) {
-        super(QTestVersionProperty.class, forVariable(variable), "PUBLIC", "TEST_VERSION_PROPERTY");
+    public QDocumentVersionProperty(String variable) {
+        super(QDocumentVersionProperty.class, forVariable(variable), "PUBLIC", "DOCUMENT_VERSION_PROPERTY");
         addMetadata();
     }
 
-    public QTestVersionProperty(String variable, String schema, String table) {
-        super(QTestVersionProperty.class, forVariable(variable), schema, table);
+    public QDocumentVersionProperty(String variable, String schema, String table) {
+        super(QDocumentVersionProperty.class, forVariable(variable), schema, table);
         addMetadata();
     }
 
-    public QTestVersionProperty(Path<? extends QTestVersionProperty> path) {
-        super(path.getType(), path.getMetadata(), "PUBLIC", "TEST_VERSION_PROPERTY");
+    public QDocumentVersionProperty(Path<? extends QDocumentVersionProperty> path) {
+        super(path.getType(), path.getMetadata(), "PUBLIC", "DOCUMENT_VERSION_PROPERTY");
         addMetadata();
     }
 
-    public QTestVersionProperty(PathMetadata<?> metadata) {
-        super(QTestVersionProperty.class, metadata, "PUBLIC", "TEST_VERSION_PROPERTY");
+    public QDocumentVersionProperty(PathMetadata<?> metadata) {
+        super(QDocumentVersionProperty.class, metadata, "PUBLIC", "DOCUMENT_VERSION_PROPERTY");
         addMetadata();
     }
 

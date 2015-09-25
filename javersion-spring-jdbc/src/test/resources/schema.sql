@@ -6,16 +6,16 @@ insert into VERSION_TYPE values ('NORMAL');
 insert into VERSION_TYPE values ('RESET');
 
 --------------------------------------------
--- For custom repositories, replace TEST_ --
+-- For custom repositories, replace DOCUMENT_ --
 --------------------------------------------
 
-create table TEST_REPOSITORY (
+create table DOCUMENT_REPOSITORY (
   ID varchar(32) not null,
   ORDINAL bigint not null
 );
-insert into TEST_REPOSITORY (ID, ORDINAL) values ('repository', 0);
+insert into DOCUMENT_REPOSITORY (ID, ORDINAL) values ('repository', 0);
 
-create table TEST_VERSION (
+create table DOCUMENT_VERSION (
   DOC_ID varchar(255) not null,
   REVISION varchar(32) not null,
   ORDINAL bigint,
@@ -26,36 +26,36 @@ create table TEST_VERSION (
 
   primary key (REVISION),
 
-  constraint TEST_VERSION_TYPE_FK foreign key (TYPE) references VERSION_TYPE (name)
+  constraint DOCUMENT_VERSION_TYPE_FK foreign key (TYPE) references VERSION_TYPE (name)
 );
 
-create sequence TEST_VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
+create sequence DOCUMENT_VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
 
 -- findDocumentIds(sinceOrdinal)
-create index TEST_VERSION_ORDINAL_IDX on TEST_VERSION (ORDINAL, DOC_ID, REVISION);
+create index DOCUMENT_VERSION_ORDINAL_IDX on DOCUMENT_VERSION (ORDINAL, DOC_ID, REVISION);
 -- findUncommittedRevisions
-create index TEST_VERSION_TX_ORDINAL_IDX on TEST_VERSION (TX_ORDINAL, REVISION, DOC_ID);
+create index DOCUMENT_VERSION_TX_ORDINAL_IDX on DOCUMENT_VERSION (TX_ORDINAL, REVISION, DOC_ID);
 -- getVersionsAndParents and getPropertiesByDocId
-create index TEST_VERSION_DOC_ID_IDX on TEST_VERSION (DOC_ID, ORDINAL, REVISION);
+create index DOCUMENT_VERSION_DOC_ID_IDX on DOCUMENT_VERSION (DOC_ID, ORDINAL, REVISION);
 
 
-create table TEST_VERSION_PARENT (
+create table DOCUMENT_VERSION_PARENT (
   REVISION varchar(32) not null,
   PARENT_REVISION varchar(32) not null,
 
   primary key (REVISION, PARENT_REVISION),
 
-  constraint TEST_VERSION_PARENT_REVISION_FK
+  constraint DOCUMENT_VERSION_PARENT_REVISION_FK
     foreign key (REVISION)
-    references TEST_VERSION (REVISION),
+    references DOCUMENT_VERSION (REVISION),
 
-  constraint TEST_VERSION_PARENT_PARENT_REVISION_FK
+  constraint DOCUMENT_VERSION_PARENT_PARENT_REVISION_FK
     foreign key (PARENT_REVISION)
-    references TEST_VERSION (REVISION)
+    references DOCUMENT_VERSION (REVISION)
 );
 
 
-create table TEST_VERSION_PROPERTY (
+create table DOCUMENT_VERSION_PROPERTY (
   REVISION varchar(32) not null,
 
   PATH varchar(512) not null,

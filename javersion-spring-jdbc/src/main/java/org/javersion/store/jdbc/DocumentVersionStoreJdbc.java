@@ -64,7 +64,7 @@ import com.mysema.query.types.QTuple;
 import com.mysema.query.types.SubQueryExpression;
 import com.mysema.query.types.expr.SimpleExpression;
 
-public class ObjectVersionStoreJdbc<Id, M> {
+public class DocumentVersionStoreJdbc<Id, M> {
 
     public static void registerTypes(String tablePrefix, Configuration configuration) {
         configuration.register(tablePrefix + "VERSION", "TYPE", new EnumByNameType<>(VersionType.class));
@@ -101,7 +101,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
     protected final FetchResults<Id, M> noResults = new FetchResults<>();
 
     @SuppressWarnings("unused")
-    protected ObjectVersionStoreJdbc() {
+    protected DocumentVersionStoreJdbc() {
         nextOrdinal = null;
         jVersion = null;
         jParent = null;
@@ -115,7 +115,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
         queryFactory = null;
     }
 
-    public <P extends SimpleExpression<Id> & Path<Id>> ObjectVersionStoreJdbc(
+    public <P extends SimpleExpression<Id> & Path<Id>> DocumentVersionStoreJdbc(
             JRepository jRepository,
             Expression<Long> nextOrdinal,
             JVersion<Id> jVersion,
@@ -125,7 +125,7 @@ public class ObjectVersionStoreJdbc<Id, M> {
         this(jRepository, nextOrdinal, jVersion, jParent, jProperty, queryFactory, ImmutableMap.of());
     }
 
-    public <P extends SimpleExpression<Id> & Path<Id>> ObjectVersionStoreJdbc(
+    public <P extends SimpleExpression<Id> & Path<Id>> DocumentVersionStoreJdbc(
             JRepository jRepository,
             Expression<Long> nextOrdinal,
             JVersion<Id> jVersion,

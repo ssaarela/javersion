@@ -6,8 +6,8 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.path.PropertyPath.parse;
-import static org.javersion.store.sql.QTestVersion.testVersion;
-import static org.javersion.store.sql.QTestVersionProperty.testVersionProperty;
+import static org.javersion.store.sql.QDocumentVersion.documentVersion;
+import static org.javersion.store.sql.QDocumentVersionProperty.documentVersionProperty;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -42,7 +42,7 @@ import com.mysema.query.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
-public class ObjectVersionStoreJdbcTest {
+public class DocumentVersionStoreJdbcTest {
 
     @Versionable
     public static class Price {
@@ -68,10 +68,10 @@ public class ObjectVersionStoreJdbcTest {
     private final ObjectVersionManager<Product, Void> versionManager = new ObjectVersionManager<Product, Void>(Product.class).init();
 
     @Resource
-    ObjectVersionStoreJdbc<String, Void> versionStore;
+    DocumentVersionStoreJdbc<String, Void> versionStore;
 
     @Resource
-    ObjectVersionStoreJdbc<String, Void> mappedVersionStore;
+    DocumentVersionStoreJdbc<String, Void> mappedVersionStore;
 
     @Resource
     TransactionTemplate transactionTemplate;
@@ -176,8 +176,8 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.append(docId, ObjectVersionGraph.init(version2).getTip());
         versionStore.publish();
 
-        long count = queryFactory.from(testVersion)
-                .where(testVersion.docId.eq(docId))
+        long count = queryFactory.from(documentVersion)
+                .where(documentVersion.docId.eq(docId))
                 .count();
         assertThat(count).isEqualTo(1);
 
@@ -186,23 +186,23 @@ public class ObjectVersionStoreJdbcTest {
 
         firstInsertCommitted.await();
 
-        count = queryFactory.from(testVersion)
-                .where(testVersion.docId.eq(docId))
+        count = queryFactory.from(documentVersion)
+                .where(documentVersion.docId.eq(docId))
                 .count();
         assertThat(count).isEqualTo(2);
 
         // Before versionStore.publish(), unpublished version should not have ordinal
-        Map<Revision, Long> ordinals = queryFactory.from(testVersion)
-                .where(testVersion.docId.eq(docId))
-                .map(testVersion.revision, testVersion.ordinal);
+        Map<Revision, Long> ordinals = queryFactory.from(documentVersion)
+                .where(documentVersion.docId.eq(docId))
+                .map(documentVersion.revision, documentVersion.ordinal);
         assertThat(ordinals.get(r1)).isNull();
         assertThat(ordinals.get(r2)).isNotNull();
 
         // versionStore.publish() should assign ordinal
         versionStore.publish();
-        ordinals = queryFactory.from(testVersion)
-                .where(testVersion.docId.eq(docId))
-                .map(testVersion.revision, testVersion.ordinal);
+        ordinals = queryFactory.from(documentVersion)
+                .where(documentVersion.docId.eq(docId))
+                .map(documentVersion.revision, documentVersion.ordinal);
         assertThat(ordinals.get(r1)).isEqualTo(ordinals.get(r2) + 1);
     }
 
@@ -296,12 +296,12 @@ public class ObjectVersionStoreJdbcTest {
         versionStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
         versionStore.publish();
 
-        assertThat(queryFactory.from(testVersion).where(testVersion.docId.eq(docId)).count()).isEqualTo(6);
+        assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).count()).isEqualTo(6);
 
         versionStore.optimize(docId,
                 versionNode -> versionNode.revision.equals(v5.revision) || versionNode.revision.equals(v6.revision));
 
-        assertThat(queryFactory.from(testVersion).where(testVersion.docId.eq(docId)).count()).isEqualTo(3);
+        assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).count()).isEqualTo(3);
 
         versionGraph = versionStore.load(docId);
 
@@ -401,9 +401,9 @@ public class ObjectVersionStoreJdbcTest {
         mappedVersionStore.publish();
         assertThat(mappedVersionStore.load(docId).getTip().getVersion()).isEqualTo(v1);
 
-        long count = queryFactory.from(testVersionProperty)
-                .innerJoin(testVersionProperty.testVersionPropertyRevisionFk, testVersion)
-                .where(testVersion.docId.eq(docId))
+        long count = queryFactory.from(documentVersionProperty)
+                .innerJoin(documentVersionProperty.documentVersionPropertyRevisionFk, documentVersion)
+                .where(documentVersion.docId.eq(docId))
                 .count();
         assertThat(count).isEqualTo(0);
 
@@ -415,11 +415,11 @@ public class ObjectVersionStoreJdbcTest {
         mappedVersionStore.publish();
 
         // Inherited values
-        count = queryFactory.from(testVersion)
-                .where(testVersion.docId.eq(docId),
-                        testVersion.revision.eq(v2.revision),
-                        testVersion.name.eq("name"),
-                        testVersion.id.eq(5l))
+        count = queryFactory.from(documentVersion)
+                .where(documentVersion.docId.eq(docId),
+                        documentVersion.revision.eq(v2.revision),
+                        documentVersion.name.eq("name"),
+                        documentVersion.id.eq(5l))
                 .count();
         assertThat(count).isEqualTo(1);
         assertThat(mappedVersionStore.load(docId).getTip().getVersion()).isEqualTo(v2);

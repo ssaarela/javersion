@@ -32,7 +32,7 @@ import com.mysema.query.sql.SQLQueryFactory;
 public class VersionGraphCacheTest {
 
     @Resource
-    ObjectVersionStoreJdbc<String, Void> versionStore;
+    DocumentVersionStoreJdbc<String, Void> versionStore;
 
     @Resource
     SQLQueryFactory queryFactory;
@@ -156,7 +156,7 @@ public class VersionGraphCacheTest {
     @Test
     public void auto_refresh_only_cached_graphs() {
         final MutableBoolean cacheRefreshed = new MutableBoolean(false);
-        ObjectVersionStoreJdbc<String, Void> proxyStore = new ObjectVersionStoreJdbc<String, Void>() {
+        DocumentVersionStoreJdbc<String, Void> proxyStore = new DocumentVersionStoreJdbc<String, Void>() {
             @Override
             public void append(String docId, VersionNode<PropertyPath, Object, Void> version) {
                 versionStore.append(docId, version);
