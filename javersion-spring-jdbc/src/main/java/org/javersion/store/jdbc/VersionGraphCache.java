@@ -114,7 +114,7 @@ public class VersionGraphCache<Id, M> {
                     if (log.isInfoEnabled()) {
                         log.info("Failed to refresh " + docId, e);
                     }
-                    return immediateFuture(ObjectVersionGraph.<M>init());
+                    return immediateFuture(versionStore.load(docId));
                 }
             }
 
