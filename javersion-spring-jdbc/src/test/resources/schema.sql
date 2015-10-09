@@ -67,5 +67,7 @@ create table TEST_VERSION_PROPERTY (
 
   primary key (REVISION, PATH),
 
-  constraint TEST_VERSION_PROPERTY_REVISION_FK foreign key (REVISION) references TEST_VERSION (REVISION)
+  constraint TEST_VERSION_PROPERTY_REVISION_FK
+    foreign key (REVISION)
+    references TEST_VERSION (REVISION)
 );

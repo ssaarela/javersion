@@ -3,6 +3,7 @@ package org.javersion.store.jdbc;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.store.sql.QTestVersion.testVersion;
 
 import java.util.concurrent.TimeUnit;
 
@@ -24,6 +25,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import com.mysema.query.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -31,6 +33,9 @@ public class VersionGraphCacheTest {
 
     @Resource
     ObjectVersionStoreJdbc<String, Void> versionStore;
+
+    @Resource
+    SQLQueryFactory queryFactory;
 
     @Test
     public void load_and_refresh() {
@@ -110,6 +115,45 @@ public class VersionGraphCacheTest {
     }
 
     @Test
+    public void clear_cache() throws InterruptedException {
+        String docId = randomUUID().toString();
+        VersionGraphCache<String, Void> cache = newRefreshingCache(100_000_000); // 100 ms
+
+        ObjectVersion<Void> version = ObjectVersion.<Void>builder().build(); // empty version
+        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        cache.publish();
+
+        assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
+
+        queryFactory.delete(testVersion).where(testVersion.revision.eq(version.revision)).execute();
+
+        // Does not hit database
+        assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
+
+        cache.evictAll();
+
+        assertThat(cache.load(docId).isEmpty()).isEqualTo(true);
+    }
+
+    @Test
+    public void return_empty_if_fetch_fails() throws InterruptedException {
+        String docId = randomUUID().toString();
+        VersionGraphCache<String, Void> cache = newRefreshingCache(1); // 100 ms
+
+        ObjectVersion<Void> version = ObjectVersion.<Void>builder().build(); // empty version
+        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        cache.publish();
+
+        assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
+
+        queryFactory.delete(testVersion).where(testVersion.revision.eq(version.revision)).execute();
+
+        Thread.sleep(1);
+
+        assertThat(cache.load(docId).isEmpty()).isEqualTo(true);
+    }
+
+    @Test
     public void auto_refresh_only_cached_graphs() {
         final MutableBoolean cacheRefreshed = new MutableBoolean(false);
         ObjectVersionStoreJdbc<String, Void> proxyStore = new ObjectVersionStoreJdbc<String, Void>() {
@@ -143,10 +187,14 @@ public class VersionGraphCacheTest {
     }
 
     private VersionGraphCache<String, Void> newRefreshingCache() {
+        return newRefreshingCache(1);
+    }
+
+    private VersionGraphCache<String, Void> newRefreshingCache(long refreshAfterNanos) {
         return new VersionGraphCache<>(versionStore,
                 CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
                         .maximumSize(8)
-                        .refreshAfterWrite(1, TimeUnit.NANOSECONDS)
+                        .refreshAfterWrite(refreshAfterNanos, TimeUnit.NANOSECONDS)
         );
     }
 

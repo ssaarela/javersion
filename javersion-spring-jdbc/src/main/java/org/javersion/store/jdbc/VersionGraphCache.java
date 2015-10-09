@@ -17,13 +17,17 @@ package org.javersion.store.jdbc;
 
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.javersion.core.Revision;
+import org.javersion.core.VersionGraph;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -32,11 +36,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class VersionGraphCache<Id, M> {
 
-    private final LoadingCache<Id, ObjectVersionGraph<M>> cache;
+    protected final Logger log = LoggerFactory.getLogger(VersionGraph.class);
 
-    private final ObjectVersionStoreJdbc<Id, M> versionStore;
+    protected final LoadingCache<Id, ObjectVersionGraph<M>> cache;
 
-    private final Set<Id> cachedDocIds;
+    protected final ObjectVersionStoreJdbc<Id, M> versionStore;
+
+    protected final Set<Id> cachedDocIds;
 
 
     // About CacheBuilder generics: https://code.google.com/p/guava-libraries/issues/detail?id=738
@@ -71,7 +77,19 @@ public class VersionGraphCache<Id, M> {
         }
     }
 
-    private CacheLoader<Id, ObjectVersionGraph<M>> newCacheLoader(final ObjectVersionStoreJdbc<Id, M> versionStore) {
+    public void evict(Id docId) {
+        cache.invalidate(docId);
+    }
+
+    public void evict(Iterator<Id> docIds) {
+        cache.invalidate(docIds);
+    }
+
+    public void evictAll() {
+        cache.invalidateAll();
+    }
+
+    protected CacheLoader<Id, ObjectVersionGraph<M>> newCacheLoader(final ObjectVersionStoreJdbc<Id, M> versionStore) {
         return new CacheLoader<Id, ObjectVersionGraph<M>>() {
 
             @Override
@@ -86,11 +104,18 @@ public class VersionGraphCache<Id, M> {
                 }
                 ObjectVersionGraph<M> newValue = oldValue;
                 Revision since = oldValue.getTip().getRevision();
-                List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
-                if (!updates.isEmpty()) {
-                    newValue = oldValue.commit(updates);
+                try {
+                    List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
+                    if (!updates.isEmpty()) {
+                        newValue = oldValue.commit(updates);
+                    }
+                    return immediateFuture(newValue);
+                } catch (RuntimeException e) {
+                    if (log.isInfoEnabled()) {
+                        log.info("Failed to refresh " + docId, e);
+                    }
+                    return immediateFuture(ObjectVersionGraph.<M>init());
                 }
-                return immediateFuture(newValue);
             }
 
         };
