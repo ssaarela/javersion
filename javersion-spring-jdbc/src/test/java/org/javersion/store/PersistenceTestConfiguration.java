@@ -9,11 +9,7 @@ import static org.javersion.store.sql.QDocumentVersionProperty.documentVersionPr
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-import org.javersion.store.jdbc.JRepository;
-import org.javersion.store.jdbc.JVersion;
-import org.javersion.store.jdbc.JVersionParent;
-import org.javersion.store.jdbc.JVersionProperty;
-import org.javersion.store.jdbc.DocumentVersionStoreJdbc;
+import org.javersion.store.jdbc.*;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,7 +34,7 @@ public class PersistenceTestConfiguration {
     @Bean
     public com.mysema.query.sql.Configuration configuration() {
         com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new H2Templates());
-        DocumentVersionStoreJdbc.registerTypes("DOCUMENT_", configuration);
+        AbstractVersionStoreJdbc.registerTypes("DOCUMENT_", configuration);
         return configuration;
     }
 

@@ -19,7 +19,7 @@ create table DOCUMENT_VERSION (
   DOC_ID varchar(255) not null,
   REVISION varchar(32) not null,
   ORDINAL bigint,
-  TX_ORDINAL bigint,
+  LOCAL_ORDINAL bigint,
 
   BRANCH varchar(128) not null,
   TYPE varchar(8) not null,
@@ -34,7 +34,7 @@ create sequence DOCUMENT_VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycl
 -- findDocumentIds(sinceOrdinal)
 create index DOCUMENT_VERSION_ORDINAL_IDX on DOCUMENT_VERSION (ORDINAL, DOC_ID, REVISION);
 -- findUncommittedRevisions
-create index DOCUMENT_VERSION_TX_ORDINAL_IDX on DOCUMENT_VERSION (TX_ORDINAL, REVISION, DOC_ID);
+create index DOCUMENT_VERSION_LOCAL_ORDINAL_IDX on DOCUMENT_VERSION (LOCAL_ORDINAL, REVISION, DOC_ID);
 -- getVersionsAndParents and getPropertiesByDocId
 create index DOCUMENT_VERSION_DOC_ID_IDX on DOCUMENT_VERSION (DOC_ID, ORDINAL, REVISION);
 

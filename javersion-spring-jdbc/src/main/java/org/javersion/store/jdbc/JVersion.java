@@ -31,13 +31,13 @@ public class JVersion<Id> extends com.mysema.query.sql.RelationalPathBase<JVersi
 
     public final StringPath branch = createString("branch");
 
-    public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
-
     public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
-    public final NumberPath<Long> txOrdinal = createNumber("txOrdinal", Long.class);
-
     public final EnumPath<VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
+
+    public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
+
+    public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
 
     public JVersion(RelationalPathBase<?> table, Path<Id> docId) {
         super(JVersion.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
