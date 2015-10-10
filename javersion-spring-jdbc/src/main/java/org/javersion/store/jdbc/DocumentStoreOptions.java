@@ -13,7 +13,7 @@ public class DocumentStoreOptions<Id> extends StoreOptions<Id> {
         this.nextOrdinal = Check.notNull(builder.nextOrdinal, "nextOrdinal");
     }
 
-    public static class Builder<Id> extends StoreOptions.Builder<Id> {
+    public static class Builder<Id> extends AbstractBuilder<Id, Builder<Id>> {
 
         protected Expression<Long> nextOrdinal;
 
@@ -22,6 +22,15 @@ public class DocumentStoreOptions<Id> extends StoreOptions<Id> {
             return this;
         }
 
+        @Override
+        public DocumentStoreOptions<Id> build() {
+            return new DocumentStoreOptions<>(this);
+        }
+
+        @Override
+        public Builder<Id> self() {
+            return this;
+        }
     }
 
 }

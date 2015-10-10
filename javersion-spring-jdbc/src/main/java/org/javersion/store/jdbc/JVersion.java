@@ -25,7 +25,7 @@ import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.SimplePath;
 import com.mysema.query.types.path.StringPath;
 
-public class JVersion<Id> extends com.mysema.query.sql.RelationalPathBase<JVersion>  {
+public class JVersion<Id> extends RelationalPathBase<JVersion>  {
 
     public final Path<Id> docId;
 

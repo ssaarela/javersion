@@ -10,6 +10,7 @@ import javax.inject.Inject;
 import javax.sql.DataSource;
 
 import org.javersion.store.jdbc.*;
+import org.javersion.store.jdbc.DocumentStoreOptions.Builder;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,31 +46,33 @@ public class PersistenceTestConfiguration {
 
     @Bean
     public DocumentVersionStoreJdbc<String, Void> versionStore(SQLQueryFactory queryFactory) {
-        return new DocumentVersionStoreJdbc<String, Void>(
-                new JRepository(documentRepository),
-                SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"),
-                new JVersion<>(documentVersion, documentVersion.docId),
-                new JVersionParent(documentVersionParent),
-                new JVersionProperty(documentVersionProperty),
-                queryFactory);
+
+        return new DocumentVersionStoreJdbc<String, Void>(optionsBuilder(queryFactory).build());
     }
 
     @Bean
     public DocumentVersionStoreJdbc<String, Void> mappedVersionStore(SQLQueryFactory queryFactory) {
         return new DocumentVersionStoreJdbc<String, Void>(
-                new JRepository(documentRepository),
-                SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"),
-                new JVersion<>(documentVersion, documentVersion.docId),
-                new JVersionParent(documentVersionParent),
-                new JVersionProperty(documentVersionProperty),
-                queryFactory,
-                ImmutableMap.of(
-                        ROOT.property("name"), documentVersion.name,
-                        ROOT.property("id"), documentVersion.id));
+                optionsBuilder(queryFactory)
+                        .versionTableProperties(ImmutableMap.of(
+                                ROOT.property("name"), documentVersion.name,
+                                ROOT.property("id"), documentVersion.id))
+                        .build());
     }
 
     @Bean
     public TransactionTemplate transactionTemplate() {
         return new TransactionTemplate(transactionManager);
+    }
+
+
+    private Builder<String> optionsBuilder(SQLQueryFactory queryFactory) {
+        return new Builder<String>()
+                .repository(new JRepository(documentRepository))
+                .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))
+                .version(new JVersion<>(documentVersion, documentVersion.docId))
+                .parent(new JVersionParent(documentVersionParent))
+                .property(new JVersionProperty(documentVersionProperty))
+                .queryFactory(queryFactory);
     }
 }

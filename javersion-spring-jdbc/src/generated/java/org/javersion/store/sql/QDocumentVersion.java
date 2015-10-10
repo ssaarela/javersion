@@ -1,15 +1,18 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.*;
+import static com.mysema.query.types.PathMetadataFactory.forVariable;
 
-import com.mysema.query.types.path.*;
+import java.sql.Types;
 
-import com.mysema.query.types.PathMetadata;
 import javax.annotation.Generated;
-import com.mysema.query.types.Path;
 
 import com.mysema.query.sql.ColumnMetadata;
-import java.sql.Types;
+import com.mysema.query.types.Path;
+import com.mysema.query.types.PathMetadata;
+import com.mysema.query.types.path.EnumPath;
+import com.mysema.query.types.path.NumberPath;
+import com.mysema.query.types.path.SimplePath;
+import com.mysema.query.types.path.StringPath;
 
 
 
@@ -36,7 +39,7 @@ public class QDocumentVersion extends com.mysema.query.sql.RelationalPathBase<QD
 
     public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
-    public final NumberPath<Long> txOrdinal = createNumber("txOrdinal", Long.class);
+    public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
 
     public final EnumPath<org.javersion.core.VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 
@@ -77,7 +80,7 @@ public class QDocumentVersion extends com.mysema.query.sql.RelationalPathBase<QD
         addMetadata(name, ColumnMetadata.named("NAME").withIndex(8).ofType(Types.VARCHAR).withSize(255));
         addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(3).ofType(Types.BIGINT).withSize(19));
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
-        addMetadata(txOrdinal, ColumnMetadata.named("TX_ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
+        addMetadata(localOrdinal, ColumnMetadata.named("LOCAL_ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
         addMetadata(type, ColumnMetadata.named("TYPE").withIndex(6).ofType(Types.VARCHAR).withSize(8).notNull());
     }
 

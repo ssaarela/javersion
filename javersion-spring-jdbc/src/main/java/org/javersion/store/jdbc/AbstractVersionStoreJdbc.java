@@ -4,23 +4,21 @@ import static com.mysema.query.group.GroupBy.groupBy;
 import static com.mysema.query.support.Expressions.constant;
 import static com.mysema.query.support.Expressions.predicate;
 import static com.mysema.query.types.Ops.EQ;
-import static com.mysema.query.types.Ops.IN;
+import static com.mysema.query.types.Ops.IS_NULL;
+import static com.mysema.query.types.PathMetadataFactory.forVariable;
 import static java.lang.System.arraycopy;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
 import java.math.BigDecimal;
+import java.sql.Types;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.javersion.core.OptimizedGraphBuilder;
-import org.javersion.core.Persistent;
-import org.javersion.core.Revision;
-import org.javersion.core.VersionNode;
-import org.javersion.core.VersionType;
+import org.javersion.core.*;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
@@ -37,12 +35,33 @@ import com.mysema.query.Tuple;
 import com.mysema.query.group.Group;
 import com.mysema.query.group.GroupBy;
 import com.mysema.query.group.QPair;
+import com.mysema.query.sql.ColumnMetadata;
 import com.mysema.query.sql.Configuration;
+import com.mysema.query.sql.RelationalPathBase;
 import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.types.EnumByNameType;
 import com.mysema.query.types.*;
+import com.mysema.query.types.path.NumberPath;
+import com.mysema.query.types.path.SimplePath;
 
 public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptions<Id>> {
+
+    protected static class JSinceVersion  extends RelationalPathBase<JSinceVersion> {
+
+        public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
+
+        public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
+
+        public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
+
+        public JSinceVersion(String schema, String table) {
+            super(JSinceVersion.class, forVariable("SINCE"), schema, table);
+            addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
+            addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(3).ofType(Types.BIGINT).withSize(19));
+            addMetadata(localOrdinal, ColumnMetadata.named("LOCAL_ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
+        }
+
+    }
 
     public static void registerTypes(String tablePrefix, Configuration configuration) {
         configuration.register(tablePrefix + "VERSION", "TYPE", new EnumByNameType<>(VersionType.class));
@@ -57,7 +76,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
 
     protected final Options options;
 
+    protected final JSinceVersion sinceVersion;
+
     protected final Expression<?>[] versionAndParents;
+
+    protected final Expression<?>[] versionAndParentsSince;
 
     protected final QPair<Revision, Id> revisionAndDocId;
 
@@ -68,6 +91,8 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
     protected  AbstractVersionStoreJdbc() {
         options = null;
         versionAndParents = null;
+        versionAndParentsSince = null;
+        sinceVersion = null;
         revisionAndDocId = null;
         properties = null;
     }
@@ -75,6 +100,8 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
     public AbstractVersionStoreJdbc(Options options) {
         this.options = options;
         versionAndParents = concat(options.version.all(), GroupBy.set(options.parent.parentRevision));
+        sinceVersion = new JSinceVersion(options.version.getSchemaName(), options.version.getTableName());
+        versionAndParentsSince = concat(versionAndParents, sinceVersion.ordinal);
         revisionAndDocId = new QPair<>(options.version.revision, options.version.docId);
         properties = groupBy(options.property.revision).as(GroupBy.list(new QTuple(options.property.all())));
     }
@@ -147,15 +174,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
-        FetchResults<Id, M> results = fetch(
-                predicate(EQ, options.version.docId, constant(docId))
-                .and(options.version.ordinal.gt(getOrdinal(since))));
-        return results.containsKey(docId) ? results.getVersions(docId).get() : ImmutableList.of();
-    }
+        Predicate predicate = predicate(EQ, options.version.docId, constant(docId))
+                .or(predicate(IS_NULL, options.version.docId));
 
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public FetchResults<Id, M> fetchUpdates(Collection<Id> docIds, Revision since) {
-        return fetch(predicate(IN, options.version.docId, constant(docIds)).and(options.version.ordinal.gt(getOrdinal(since))));
+        List<Group> versionsAndParents = versionsAndParentsSince(predicate, since);
+        FetchResults<Id, M> results = fetch(versionsAndParents, predicate);
+        return results.containsKey(docId) ? results.getVersions(docId).get() : ImmutableList.of();
     }
 
     protected abstract Predicate publicVersionsOf(Id docId);
@@ -169,9 +193,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         if (versionsAndParents.isEmpty()) {
             return noResults;
         }
+        return fetch(versionsAndParents, predicate);
+    }
 
-        ListMultimap<Id, ObjectVersion<M>> results = ArrayListMultimap.create();
+    protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, Predicate predicate) {
         Map<Revision, List<Tuple>> properties = getPropertiesByDocId(predicate);
+        ListMultimap<Id, ObjectVersion<M>> results = ArrayListMultimap.create();
         Revision latestRevision = null;
 
         for (Group versionAndParents : versionsAndParents) {
@@ -208,6 +235,27 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
                 .orderBy(publicVersionsOrderBy());
 
         return qry.transform(groupBy(options.version.revision).list(versionAndParents));
+    }
+
+    protected List<Group> versionsAndParentsSince(Predicate predicate, Revision since) {
+        SQLQuery qry = options.queryFactory
+                .from(sinceVersion)
+                .leftJoin(options.version).on(options.version.ordinal.gt(sinceVersion.ordinal))
+                .leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision))
+                .where(sinceVersion.revision.eq(since), predicate)
+                .orderBy(publicVersionsOrderBy());
+
+        return verifyUpdateResults(qry.transform(groupBy(options.version.revision).list(versionAndParents)), since);
+    }
+
+    protected List<Group> verifyUpdateResults(List<Group> versionsAndParents, Revision since) {
+        if (versionsAndParents.isEmpty()) {
+            throw new VersionNotFoundException(since);
+        }
+        if (versionsAndParents.size() == 1 && versionsAndParents.get(0).getOne(options.version.revision) == null) {
+            return ImmutableList.of();
+        }
+        return versionsAndParents;
     }
 
     protected abstract OrderSpecifier<?>[] publicVersionsOrderBy();

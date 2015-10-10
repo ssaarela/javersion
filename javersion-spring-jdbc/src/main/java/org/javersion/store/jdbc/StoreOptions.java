@@ -28,7 +28,7 @@ public class StoreOptions<Id> {
 
     final CacheBuilder<Object, Object> cacheBuilder;
 
-    protected StoreOptions(Builder<Id> builder) {
+    protected StoreOptions(AbstractBuilder<Id, ?> builder) {
         this.repositoryId = Check.notNull(builder.repositoryId, "repositoryId");
         this.repository = Check.notNull(builder.repository, "jRepository");
         this.version = Check.notNull(builder.version, "jVersion");
@@ -41,7 +41,7 @@ public class StoreOptions<Id> {
         this.cacheBuilder = builder.cacheBuilder;
     }
 
-    public static class Builder<Id> {
+    public abstract static class AbstractBuilder<Id, This extends AbstractBuilder<Id, This>> {
 
         protected String repositoryId = "repository";
 
@@ -61,48 +61,48 @@ public class StoreOptions<Id> {
         @Nullable
         protected CacheBuilder<Object, Object> cacheBuilder;
 
-        public Builder<Id> repositoryId(String repositoryId) {
+        public This repositoryId(String repositoryId) {
             this.repositoryId = repositoryId;
-            return this;
+            return self();
         }
 
-        public Builder<Id> repository(JRepository jRepository) {
+        public This repository(JRepository jRepository) {
             this.repository = jRepository;
-            return this;
+            return self();
         }
 
-        public Builder<Id> version(JVersion<Id> jVersion) {
+        public This version(JVersion<Id> jVersion) {
             this.version = jVersion;
-            return this;
+            return self();
         }
 
-        public Builder<Id> parent(JVersionParent jParent) {
+        public This parent(JVersionParent jParent) {
             this.parent = jParent;
-            return this;
+            return self();
         }
 
-        public Builder<Id> property(JVersionProperty jProperty) {
+        public This property(JVersionProperty jProperty) {
             this.property = jProperty;
-            return this;
+            return self();
         }
 
-        public Builder<Id> versionTableProperties(ImmutableMap<PropertyPath, Path<?>> versionTableProperties) {
+        public This versionTableProperties(ImmutableMap<PropertyPath, Path<?>> versionTableProperties) {
             this.versionTableProperties = versionTableProperties;
-            return this;
+            return self();
         }
 
-        public Builder<Id> queryFactory(SQLQueryFactory queryFactory) {
+        public This queryFactory(SQLQueryFactory queryFactory) {
             this.queryFactory = queryFactory;
-            return this;
+            return self();
         }
 
-        public Builder<Id> cacheBuilder(CacheBuilder<Object, Object> cacheBuilder) {
+        public This cacheBuilder(CacheBuilder<Object, Object> cacheBuilder) {
             this.cacheBuilder = cacheBuilder;
-            return this;
+            return self();
         }
 
-        public StoreOptions<Id> build() {
-            return new StoreOptions<>(this);
-        }
+        public abstract <T extends StoreOptions<Id>> T build();
+
+        public abstract This self();
     }
 }

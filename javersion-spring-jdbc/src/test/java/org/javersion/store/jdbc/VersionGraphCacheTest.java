@@ -3,7 +3,7 @@ package org.javersion.store.jdbc;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
-import static org.javersion.store.sql.QTestVersion.testVersion;
+import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 
 import java.util.concurrent.TimeUnit;
 
@@ -125,7 +125,7 @@ public class VersionGraphCacheTest {
 
         assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
 
-        queryFactory.delete(testVersion).where(testVersion.revision.eq(version.revision)).execute();
+        queryFactory.delete(documentVersion).where(documentVersion.revision.eq(version.revision)).execute();
 
         // Does not hit database
         assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
@@ -146,9 +146,9 @@ public class VersionGraphCacheTest {
 
         assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
 
-        queryFactory.delete(testVersion).where(testVersion.revision.eq(version.revision)).execute();
+        queryFactory.delete(documentVersion).where(documentVersion.revision.eq(version.revision)).execute();
 
-        Thread.sleep(1);
+        Thread.sleep(10);
 
         assertThat(cache.load(docId).isEmpty()).isEqualTo(true);
     }

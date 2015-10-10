@@ -170,12 +170,14 @@ public class DocumentVersionStoreJdbcTest {
         // Wait until first insert is done, but not committed yet
         firstInsertDone.await();
 
+        // Insert and commit another before first insert is committed
         ObjectVersion<Void> version2 = ObjectVersion.<Void>builder(r2)
                 .changeset(mapOf("concurrency", "fast"))
                 .build();
         versionStore.append(docId, ObjectVersionGraph.init(version2).getTip());
         versionStore.publish();
 
+        // Verify that first insert is not yet visible
         long count = queryFactory.from(documentVersion)
                 .where(documentVersion.docId.eq(docId))
                 .count();
@@ -186,24 +188,27 @@ public class DocumentVersionStoreJdbcTest {
 
         firstInsertCommitted.await();
 
+        // Verify that first insert is now visible (committed)
         count = queryFactory.from(documentVersion)
                 .where(documentVersion.docId.eq(docId))
                 .count();
         assertThat(count).isEqualTo(2);
 
         // Before versionStore.publish(), unpublished version should not have ordinal
-        Map<Revision, Long> ordinals = queryFactory.from(documentVersion)
-                .where(documentVersion.docId.eq(docId))
-                .map(documentVersion.revision, documentVersion.ordinal);
+        Map<Revision, Long> ordinals = findOrdinals(docId);
         assertThat(ordinals.get(r1)).isNull();
         assertThat(ordinals.get(r2)).isNotNull();
 
         // versionStore.publish() should assign ordinal
         versionStore.publish();
-        ordinals = queryFactory.from(documentVersion)
+        ordinals = findOrdinals(docId);
+        assertThat(ordinals.get(r1)).isGreaterThan(ordinals.get(r2));
+    }
+
+    private Map<Revision, Long> findOrdinals(String docId) {
+        return queryFactory.from(documentVersion)
                 .where(documentVersion.docId.eq(docId))
                 .map(documentVersion.revision, documentVersion.ordinal);
-        assertThat(ordinals.get(r1)).isEqualTo(ordinals.get(r2) + 1);
     }
 
     @Test

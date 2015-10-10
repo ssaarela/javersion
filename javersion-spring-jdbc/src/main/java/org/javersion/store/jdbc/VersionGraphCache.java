@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.javersion.core.Revision;
 import org.javersion.core.VersionGraph;
+import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.slf4j.Logger;
@@ -99,23 +100,20 @@ public class VersionGraphCache<Id, M> {
 
             @Override
             public ListenableFuture<ObjectVersionGraph<M>> reload(Id docId, ObjectVersionGraph<M> oldValue) throws Exception {
-                if (oldValue.isEmpty()) {
-                    return immediateFuture(versionStore.load(docId));
-                }
-                ObjectVersionGraph<M> newValue = oldValue;
-                Revision since = oldValue.getTip().getRevision();
-                try {
-                    List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
-                    if (!updates.isEmpty()) {
-                        newValue = oldValue.commit(updates);
+                if (!oldValue.isEmpty()) {
+                    ObjectVersionGraph<M> newValue = oldValue;
+                    Revision since = oldValue.getTip().getRevision();
+                    try {
+                        List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
+                        if (!updates.isEmpty()) {
+                            newValue = oldValue.commit(updates);
+                        }
+                        return immediateFuture(newValue);
+                    } catch (VersionNotFoundException e) {
+                        // since revision is deleted - reload graph
                     }
-                    return immediateFuture(newValue);
-                } catch (RuntimeException e) {
-                    if (log.isInfoEnabled()) {
-                        log.info("Failed to refresh " + docId, e);
-                    }
-                    return immediateFuture(versionStore.load(docId));
                 }
+                return immediateFuture(versionStore.load(docId));
             }
 
         };
