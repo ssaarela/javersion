@@ -117,7 +117,7 @@ public class VersionGraphCacheTest {
     @Test
     public void clear_cache() throws InterruptedException {
         String docId = randomUUID().toString();
-        VersionGraphCache<String, Void> cache = newRefreshingCache(100_000_000); // 100 ms
+        VersionGraphCache<String, Void> cache = newNonRefreshingCache();
 
         ObjectVersion<Void> version = ObjectVersion.<Void>builder().build(); // empty version
         versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
