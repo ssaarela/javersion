@@ -1,7 +1,7 @@
 package org.javersion.store;
 
 import static org.javersion.path.PropertyPath.ROOT;
-import static org.javersion.store.sql.QDocumentRepository.documentRepository;
+import static org.javersion.store.sql.QRepository.repository;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 import static org.javersion.store.sql.QDocumentVersionParent.documentVersionParent;
 import static org.javersion.store.sql.QDocumentVersionProperty.documentVersionProperty;
@@ -70,7 +70,8 @@ public class PersistenceTestConfiguration {
     private Builder<String> optionsBuilder(SQLQueryFactory queryFactory) {
         QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
         return new Builder<String>()
-                .repository(new JRepository(documentRepository))
+                .repository(new JRepository(repository))
+                .repositoryId("DOCUMENT_VERSION")
                 .version(new JVersion<>(documentVersion, documentVersion.docId))
                 .sinceVersion(new JVersion<>(sinceVersion, sinceVersion.docId))
                 .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))

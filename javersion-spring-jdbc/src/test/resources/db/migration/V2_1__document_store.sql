@@ -1,19 +1,8 @@
-create table VERSION_TYPE (
-  NAME varchar(8),
-  primary key (NAME)
-);
-insert into VERSION_TYPE values ('NORMAL');
-insert into VERSION_TYPE values ('RESET');
-
 ------------------------------------------------
 -- For custom repositories, replace DOCUMENT_ --
 ------------------------------------------------
 
-create table DOCUMENT_REPOSITORY (
-  ID varchar(32) not null,
-  ORDINAL bigint not null
-);
-insert into DOCUMENT_REPOSITORY (ID, ORDINAL) values ('repository', 0);
+insert into REPOSITORY (ID, ORDINAL) values ('DOCUMENT_VERSION', 0);
 
 create table DOCUMENT_VERSION (
   DOC_ID varchar(255) not null,
@@ -37,6 +26,7 @@ create index DOCUMENT_VERSION_LOCAL_ORDINAL_IDX on DOCUMENT_VERSION (LOCAL_ORDIN
 create index DOCUMENT_VERSION_DOC_ID_IDX on DOCUMENT_VERSION (DOC_ID, ORDINAL, REVISION);
 -- Fetch updates since
 create index DOCUMENT_VERSION_REVISION_IDX on DOCUMENT_VERSION (REVISION, ORDINAL, DOC_ID);
+
 
 create table DOCUMENT_VERSION_PARENT (
   REVISION varchar(32) not null,

@@ -1,18 +1,15 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.forVariable;
+import static com.mysema.query.types.PathMetadataFactory.*;
 
-import java.sql.Types;
+import com.mysema.query.types.path.*;
 
+import com.mysema.query.types.PathMetadata;
 import javax.annotation.Generated;
+import com.mysema.query.types.Path;
 
 import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.PathMetadata;
-import com.mysema.query.types.path.EnumPath;
-import com.mysema.query.types.path.NumberPath;
-import com.mysema.query.types.path.SimplePath;
-import com.mysema.query.types.path.StringPath;
+import java.sql.Types;
 
 
 
@@ -33,13 +30,13 @@ public class QDocumentVersion extends com.mysema.query.sql.RelationalPathBase<QD
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
+    public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
+
     public final StringPath name = createString("name");
 
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
     public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
-
-    public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
 
     public final EnumPath<org.javersion.core.VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 
@@ -77,10 +74,10 @@ public class QDocumentVersion extends com.mysema.query.sql.RelationalPathBase<QD
         addMetadata(branch, ColumnMetadata.named("BRANCH").withIndex(5).ofType(Types.VARCHAR).withSize(128).notNull());
         addMetadata(docId, ColumnMetadata.named("DOC_ID").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
         addMetadata(id, ColumnMetadata.named("ID").withIndex(7).ofType(Types.BIGINT).withSize(19));
+        addMetadata(localOrdinal, ColumnMetadata.named("LOCAL_ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
         addMetadata(name, ColumnMetadata.named("NAME").withIndex(8).ofType(Types.VARCHAR).withSize(255));
         addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(3).ofType(Types.BIGINT).withSize(19));
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
-        addMetadata(localOrdinal, ColumnMetadata.named("LOCAL_ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
         addMetadata(type, ColumnMetadata.named("TYPE").withIndex(6).ofType(Types.VARCHAR).withSize(8).notNull());
     }
 
