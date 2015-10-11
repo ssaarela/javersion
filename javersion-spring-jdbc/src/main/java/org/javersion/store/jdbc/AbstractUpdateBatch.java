@@ -49,6 +49,7 @@ public abstract class AbstractUpdateBatch<Id, M, Options extends DocumentStoreOp
         versionBatch
                 .set(options.version.docId, docId)
                 .set(options.version.revision, version.revision)
+                .set(options.version.localOrdinal, options.nextOrdinal)
                 .set(options.version.type, version.type)
                 .set(options.version.branch, version.branch);
 

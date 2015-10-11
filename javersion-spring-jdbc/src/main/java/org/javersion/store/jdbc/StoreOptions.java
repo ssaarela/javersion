@@ -1,5 +1,7 @@
 package org.javersion.store.jdbc;
 
+import java.util.function.Function;
+
 import javax.annotation.Nullable;
 
 import org.javersion.path.PropertyPath;
@@ -18,6 +20,8 @@ public class StoreOptions<Id> {
 
     public final JVersion<Id> version;
 
+    public final JVersion<Id> sinceVersion;
+
     public final JVersionParent parent;
 
     public final JVersionProperty property;
@@ -30,10 +34,11 @@ public class StoreOptions<Id> {
 
     protected StoreOptions(AbstractBuilder<Id, ?> builder) {
         this.repositoryId = Check.notNull(builder.repositoryId, "repositoryId");
-        this.repository = Check.notNull(builder.repository, "jRepository");
-        this.version = Check.notNull(builder.version, "jVersion");
-        this.parent = Check.notNull(builder.parent, "jParent");
-        this.property = Check.notNull(builder.property, "jProperty");
+        this.repository = Check.notNull(builder.repository, "repository");
+        this.version = Check.notNull(builder.version, "version");
+        this.sinceVersion = Check.notNull(builder.sinceVersion, "sinceVersion");
+        this.parent = Check.notNull(builder.parent, "parent");
+        this.property = Check.notNull(builder.property, "property");
         this.versionTableProperties = builder.versionTableProperties != null
                 ? ImmutableMap.copyOf(builder.versionTableProperties)
                 : ImmutableMap.of();
@@ -48,6 +53,10 @@ public class StoreOptions<Id> {
         protected JRepository repository;
 
         protected JVersion<Id> version;
+
+        protected JVersion<Id> sinceVersion;
+
+        protected Function<String, JVersion<Id>> versionFunction;
 
         protected JVersionParent parent;
 
@@ -71,8 +80,13 @@ public class StoreOptions<Id> {
             return self();
         }
 
-        public This version(JVersion<Id> jVersion) {
-            this.version = jVersion;
+        public This sinceVersion(JVersion<Id> sinceVersion) {
+            this.sinceVersion = sinceVersion;
+            return self();
+        }
+
+        public This version(JVersion<Id> version) {
+            this.version = version;
             return self();
         }
 

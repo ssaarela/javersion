@@ -4,15 +4,14 @@ import static com.mysema.query.group.GroupBy.groupBy;
 import static com.mysema.query.support.Expressions.constant;
 import static com.mysema.query.support.Expressions.predicate;
 import static com.mysema.query.types.Ops.EQ;
+import static com.mysema.query.types.Ops.GT;
 import static com.mysema.query.types.Ops.IS_NULL;
-import static com.mysema.query.types.PathMetadataFactory.forVariable;
 import static java.lang.System.arraycopy;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
 import java.math.BigDecimal;
-import java.sql.Types;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -35,33 +34,17 @@ import com.mysema.query.Tuple;
 import com.mysema.query.group.Group;
 import com.mysema.query.group.GroupBy;
 import com.mysema.query.group.QPair;
-import com.mysema.query.sql.ColumnMetadata;
 import com.mysema.query.sql.Configuration;
-import com.mysema.query.sql.RelationalPathBase;
 import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.types.EnumByNameType;
-import com.mysema.query.types.*;
-import com.mysema.query.types.path.NumberPath;
-import com.mysema.query.types.path.SimplePath;
+import com.mysema.query.types.Expression;
+import com.mysema.query.types.OrderSpecifier;
+import com.mysema.query.types.Path;
+import com.mysema.query.types.Predicate;
+import com.mysema.query.types.QTuple;
+import com.mysema.query.types.expr.BooleanExpression;
 
 public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptions<Id>> {
-
-    protected static class JSinceVersion  extends RelationalPathBase<JSinceVersion> {
-
-        public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
-
-        public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
-
-        public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
-
-        public JSinceVersion(String schema, String table) {
-            super(JSinceVersion.class, forVariable("SINCE"), schema, table);
-            addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
-            addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(3).ofType(Types.BIGINT).withSize(19));
-            addMetadata(localOrdinal, ColumnMetadata.named("LOCAL_ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
-        }
-
-    }
 
     public static void registerTypes(String tablePrefix, Configuration configuration) {
         configuration.register(tablePrefix + "VERSION", "TYPE", new EnumByNameType<>(VersionType.class));
@@ -75,8 +58,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
 
 
     protected final Options options;
-
-    protected final JSinceVersion sinceVersion;
 
     protected final Expression<?>[] versionAndParents;
 
@@ -92,7 +73,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         options = null;
         versionAndParents = null;
         versionAndParentsSince = null;
-        sinceVersion = null;
         revisionAndDocId = null;
         properties = null;
     }
@@ -100,8 +80,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
     public AbstractVersionStoreJdbc(Options options) {
         this.options = options;
         versionAndParents = concat(options.version.all(), GroupBy.set(options.parent.parentRevision));
-        sinceVersion = new JSinceVersion(options.version.getSchemaName(), options.version.getTableName());
-        versionAndParentsSince = concat(versionAndParents, sinceVersion.ordinal);
+        versionAndParentsSince = concat(versionAndParents, options.sinceVersion.ordinal);
         revisionAndDocId = new QPair<>(options.version.revision, options.version.docId);
         properties = groupBy(options.property.revision).as(GroupBy.list(new QTuple(options.property.all())));
     }
@@ -174,10 +153,16 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
-        Predicate predicate = predicate(EQ, options.version.docId, constant(docId))
-                .or(predicate(IS_NULL, options.version.docId));
+        BooleanExpression predicate = predicate(EQ, options.version.docId, constant(docId));
 
         List<Group> versionsAndParents = versionsAndParentsSince(predicate, since);
+        if (versionsAndParents.isEmpty()) {
+            return ImmutableList.of();
+        }
+
+        Long sinceOrdinal = versionsAndParents.get(0).getOne(options.sinceVersion.ordinal);
+        predicate = predicate.and(predicate(GT, options.version.ordinal, constant(sinceOrdinal)));
+
         FetchResults<Id, M> results = fetch(versionsAndParents, predicate);
         return results.containsKey(docId) ? results.getVersions(docId).get() : ImmutableList.of();
     }
@@ -197,7 +182,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
     }
 
     protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, Predicate predicate) {
-        Map<Revision, List<Tuple>> properties = getPropertiesByDocId(predicate);
+        Map<Revision, List<Tuple>> properties = getProperties(predicate);
         ListMultimap<Id, ObjectVersion<M>> results = ArrayListMultimap.create();
         Revision latestRevision = null;
 
@@ -211,14 +196,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         return new FetchResults<>(results, latestRevision);
     }
 
-    protected SubQueryExpression<Long> getOrdinal(Revision revision) {
-        return options.queryFactory
-                .subQuery(options.version)
-                .where(options.version.revision.eq(revision))
-                .unique(options.version.ordinal);
-    }
-
-    protected Map<Revision, List<Tuple>> getPropertiesByDocId(Predicate predicate) {
+    protected Map<Revision, List<Tuple>> getProperties(Predicate predicate) {
         SQLQuery qry = options.queryFactory
                 .from(options.property)
                 .innerJoin(options.version).on(options.version.revision.eq(options.property.revision))
@@ -237,18 +215,20 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         return qry.transform(groupBy(options.version.revision).list(versionAndParents));
     }
 
-    protected List<Group> versionsAndParentsSince(Predicate predicate, Revision since) {
+    protected List<Group> versionsAndParentsSince(BooleanExpression predicate, Revision since) {
         SQLQuery qry = options.queryFactory
-                .from(sinceVersion)
-                .leftJoin(options.version).on(options.version.ordinal.gt(sinceVersion.ordinal))
+                .from(options.sinceVersion)
+                .leftJoin(options.version).on(
+                        options.version.ordinal.gt(options.sinceVersion.ordinal),
+                        predicate(EQ, options.version.docId, options.sinceVersion.docId))
                 .leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision))
-                .where(sinceVersion.revision.eq(since), predicate)
+                .where(options.sinceVersion.revision.eq(since), predicate.or(predicate(IS_NULL, options.version.docId)))
                 .orderBy(publicVersionsOrderBy());
 
-        return verifyUpdateResults(qry.transform(groupBy(options.version.revision).list(versionAndParents)), since);
+        return verifyVersionsAndParentsSince(qry.transform(groupBy(options.version.revision).list(versionAndParentsSince)), since);
     }
 
-    protected List<Group> verifyUpdateResults(List<Group> versionsAndParents, Revision since) {
+    protected List<Group> verifyVersionsAndParentsSince(List<Group> versionsAndParents, Revision since) {
         if (versionsAndParents.isEmpty()) {
             throw new VersionNotFoundException(since);
         }

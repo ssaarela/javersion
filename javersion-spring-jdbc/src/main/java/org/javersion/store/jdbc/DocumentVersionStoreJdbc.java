@@ -116,7 +116,7 @@ public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id
         // Lock repository with select for update
         long lastOrdinal = getLastOrdinalForUpdate();
 
-        Map<Revision, Id> uncommittedRevisions = findUncommittedRevisions();
+        Map<Revision, Id> uncommittedRevisions = findUnpublishedRevisions();
         if (uncommittedRevisions.isEmpty()) {
             return ImmutableMultimap.of();
         }
@@ -164,10 +164,10 @@ public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id
                 .singleResult(options.repository.ordinal);
     }
 
-    protected Map<Revision, Id> findUncommittedRevisions() {
+    protected Map<Revision, Id> findUnpublishedRevisions() {
         return options.queryFactory
                 .from(options.version)
-                .where(options.version.ordinal.isNull())
+                .where(options.version.localOrdinal.isNotNull())
                 .orderBy(options.version.localOrdinal.asc())
                 .map(options.version.revision, options.version.docId);
     }

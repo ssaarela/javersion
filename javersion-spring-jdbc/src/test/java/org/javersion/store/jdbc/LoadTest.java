@@ -41,7 +41,7 @@ public class LoadTest {
     private int nextValue = 0;
 
     private final int docCount = 100;
-    private final int docVersionCount = 50;
+    private final int docVersionCount = 30;
     private final int propCount = 100;
 
     @Resource

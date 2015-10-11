@@ -11,6 +11,7 @@ import javax.sql.DataSource;
 
 import org.javersion.store.jdbc.*;
 import org.javersion.store.jdbc.DocumentStoreOptions.Builder;
+import org.javersion.store.sql.QDocumentVersion;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -67,10 +68,12 @@ public class PersistenceTestConfiguration {
 
 
     private Builder<String> optionsBuilder(SQLQueryFactory queryFactory) {
+        QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
         return new Builder<String>()
                 .repository(new JRepository(documentRepository))
-                .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))
                 .version(new JVersion<>(documentVersion, documentVersion.docId))
+                .sinceVersion(new JVersion<>(sinceVersion, sinceVersion.docId))
+                .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))
                 .parent(new JVersionParent(documentVersionParent))
                 .property(new JVersionProperty(documentVersionProperty))
                 .queryFactory(queryFactory);
