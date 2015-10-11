@@ -31,7 +31,6 @@ import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.mysema.query.sql.Configuration;
@@ -102,68 +101,14 @@ public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id
         return new OrderSpecifier<?>[] { options.version.ordinal.asc() };
     }
 
-    /**
-     * NOTE: publish() needs to be called in a separate transaction from append()!
-     * E.g. asynchronously in TransactionSynchronization.afterCommit.
-     *
-     * Calling publish() in the same transaction with append() severely limits concurrency
-     * and might end up in deadlock.
-     *
-     * @return
-     */
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public Multimap<Id, Revision> publish() {
-        // Lock repository with select for update
-        long lastOrdinal = getLastOrdinalForUpdate();
-
-        Map<Revision, Id> uncommittedRevisions = findUnpublishedRevisions();
-        if (uncommittedRevisions.isEmpty()) {
-            return ImmutableMultimap.of();
-        }
-
-        Multimap<Id, Revision> publishedDocs = ArrayListMultimap.create();
-
-        SQLUpdateClause versionUpdateBatch = options.queryFactory.update(options.version);
-
-        for (Map.Entry<Revision, Id> entry : uncommittedRevisions.entrySet()) {
-            Revision revision = entry.getKey();
-            Id docId = entry.getValue();
-            publishedDocs.put(docId, revision);
-            versionUpdateBatch
-                    .set(options.version.ordinal, ++lastOrdinal)
-                    .setNull(options.version.localOrdinal)
-                    .where(options.version.revision.eq(revision))
-                    .addBatch();
-        }
-
-        versionUpdateBatch.execute();
-
-        updateLastOrdinal(lastOrdinal);
-
-        afterPublish(publishedDocs);
-        return publishedDocs;
+    @Override
+    protected SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal) {
+        return versionUpdateBatch
+                .set(options.version.ordinal, ordinal)
+                .setNull(options.version.localOrdinal);
     }
 
-    private void updateLastOrdinal(long lastOrdinal) {
-        options.queryFactory
-                .update(options.repository)
-                .set(options.repository.ordinal, lastOrdinal)
-                .where(options.repository.id.eq(options.repositoryId))
-                .execute();
-    }
-
-    protected void afterPublish(Multimap<Id, Revision> publishedDocs) {
-        // After publish hook for sub classes to override
-    }
-
-    protected Long getLastOrdinalForUpdate() {
-        return options.queryFactory
-                .from(options.repository)
-                .where(options.repository.id.eq(options.repositoryId))
-                .forUpdate()
-                .singleResult(options.repository.ordinal);
-    }
-
+    @Override
     protected Map<Revision, Id> findUnpublishedRevisions() {
         return options.queryFactory
                 .from(options.version)

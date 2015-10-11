@@ -5,9 +5,9 @@ create table VERSION_TYPE (
 insert into VERSION_TYPE values ('NORMAL');
 insert into VERSION_TYPE values ('RESET');
 
---------------------------------------------
+------------------------------------------------
 -- For custom repositories, replace DOCUMENT_ --
---------------------------------------------
+------------------------------------------------
 
 create table DOCUMENT_REPOSITORY (
   ID varchar(32) not null,

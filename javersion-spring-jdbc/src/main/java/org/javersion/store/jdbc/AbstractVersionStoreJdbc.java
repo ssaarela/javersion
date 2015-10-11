@@ -25,10 +25,7 @@ import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
 import com.mysema.query.ResultTransformer;
 import com.mysema.query.Tuple;
 import com.mysema.query.group.Group;
@@ -36,6 +33,7 @@ import com.mysema.query.group.GroupBy;
 import com.mysema.query.group.QPair;
 import com.mysema.query.sql.Configuration;
 import com.mysema.query.sql.SQLQuery;
+import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.sql.types.EnumByNameType;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.OrderSpecifier;
@@ -85,61 +83,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         properties = groupBy(options.property.revision).as(GroupBy.list(new QTuple(options.property.all())));
     }
 
-
-    static Expression<?>[] concat(Expression<?>[] expr1, Expression<?>... expr2) {
-        Expression<?>[] expressions = new Expression<?>[expr1.length + expr2.length];
-        arraycopy(expr1, 0, expressions, 0, expr1.length);
-        arraycopy(expr2, 0, expressions, expr1.length, expr2.length);
-        return expressions;
-    }
-
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void optimize(Id docId, java.util.function.Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        ObjectVersionGraph<M> graph = load(docId);
-        OptimizedGraphBuilder<PropertyPath, Object, M> optimizedGraphBuilder = new OptimizedGraphBuilder<>(graph, keep);
-
-        List<Revision> keptRevisions = optimizedGraphBuilder.getKeptRevisions();
-        List<Revision> squashedRevisions = optimizedGraphBuilder.getSquashedRevisions();
-
-        if (squashedRevisions.isEmpty()) {
-            return;
-        }
-        if (keptRevisions.isEmpty()) {
-            throw new IllegalArgumentException("keep-predicate didn't match any version");
-        }
-        deleteOldParentsAndProperties(squashedRevisions, keptRevisions);
-        deleteSquashedVersions(squashedRevisions);
-        insertOptimizedParentsAndProperties(docId, ObjectVersionGraph.init(optimizedGraphBuilder.getOptimizedVersions()), keptRevisions);
-    }
-
-    private void insertOptimizedParentsAndProperties(Id docId, ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {
-        DocumentUpdateBatch<Id, M> batch = updateBatch();
-        for (Revision revision : keptRevisions) {
-            VersionNode<PropertyPath, Object, M> version = optimizedGraph.getVersionNode(revision);
-            batch.insertParents(docId, version);
-            batch.insertProperties(docId, version);
-        }
-        batch.execute();
-    }
-
-    protected abstract DocumentUpdateBatch<Id, M> updateBatch();
-
-    private void deleteOldParentsAndProperties(List<Revision> squashedRevisions, List<Revision> keptRevisions) {
-        options.queryFactory.delete(options.parent)
-                .where(options.parent.revision.in(keptRevisions).or(options.parent.revision.in(squashedRevisions)))
-                .execute();
-        options.queryFactory.delete(options.property)
-                .where(options.property.revision.in(keptRevisions).or(options.property.revision.in(squashedRevisions)))
-                .execute();
-    }
-
-    private void deleteSquashedVersions(List<Revision> squashedRevisions) {
-        // Delete squashed versions
-        options.queryFactory.delete(options.version)
-                .where(options.version.revision.in(squashedRevisions))
-                .execute();
-    }
-
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> load(Id docId) {
         FetchResults<Id, M> results = fetch(publicVersionsOf(docId));
@@ -167,9 +110,97 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         return results.containsKey(docId) ? results.getVersions(docId).get() : ImmutableList.of();
     }
 
+    /**
+     * NOTE: publish() needs to be called in a separate transaction from append()!
+     * E.g. asynchronously in TransactionSynchronization.afterCommit.
+     *
+     * Calling publish() in the same transaction with append() severely limits concurrency
+     * and might end up in deadlock.
+     *
+     * @return
+     */
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public Multimap<Id, Revision> publish() {
+        // Lock repository with select for update
+        long lastOrdinal = getLastOrdinalForUpdate();
+
+        Map<Revision, Id> uncommittedRevisions = findUnpublishedRevisions();
+        if (uncommittedRevisions.isEmpty()) {
+            return ImmutableMultimap.of();
+        }
+
+        Multimap<Id, Revision> publishedDocs = ArrayListMultimap.create();
+
+        SQLUpdateClause versionUpdateBatch = options.queryFactory.update(options.version);
+
+        for (Map.Entry<Revision, Id> entry : uncommittedRevisions.entrySet()) {
+            Revision revision = entry.getKey();
+            Id docId = entry.getValue();
+            publishedDocs.put(docId, revision);
+            setOrdinal(versionUpdateBatch, ++lastOrdinal)
+                    .where(options.version.revision.eq(revision))
+                    .addBatch();
+        }
+
+        versionUpdateBatch.execute();
+
+        updateLastOrdinal(lastOrdinal);
+
+        afterPublish(publishedDocs);
+        return publishedDocs;
+    }
+
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public void optimize(Id docId, java.util.function.Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+        ObjectVersionGraph<M> graph = load(docId);
+        OptimizedGraphBuilder<PropertyPath, Object, M> optimizedGraphBuilder = new OptimizedGraphBuilder<>(graph, keep);
+
+        List<Revision> keptRevisions = optimizedGraphBuilder.getKeptRevisions();
+        List<Revision> squashedRevisions = optimizedGraphBuilder.getSquashedRevisions();
+
+        if (squashedRevisions.isEmpty()) {
+            return;
+        }
+        if (keptRevisions.isEmpty()) {
+            throw new IllegalArgumentException("keep-predicate didn't match any version");
+        }
+        deleteOldParentsAndProperties(squashedRevisions, keptRevisions);
+        deleteSquashedVersions(squashedRevisions);
+        insertOptimizedParentsAndProperties(docId, ObjectVersionGraph.init(optimizedGraphBuilder.getOptimizedVersions()), keptRevisions);
+    }
+
+    protected abstract DocumentUpdateBatch<Id, M> updateBatch();
+
+    protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
+
     protected abstract Predicate publicVersionsOf(Id docId);
 
     protected abstract Predicate publicVersionsOf(Collection<Id> docIds);
+
+    protected abstract OrderSpecifier<?>[] publicVersionsOrderBy();
+
+    protected abstract Map<Revision, Id> findUnpublishedRevisions();
+
+
+    protected void updateLastOrdinal(long lastOrdinal) {
+        options.queryFactory
+                .update(options.repository)
+                .set(options.repository.ordinal, lastOrdinal)
+                .where(options.repository.id.eq(options.repositoryId))
+                .execute();
+    }
+
+    protected void afterPublish(Multimap<Id, Revision> publishedDocs) {
+        // After publish hook for sub classes to override
+    }
+
+    protected Long getLastOrdinalForUpdate() {
+        return options.queryFactory
+                .from(options.repository)
+                .where(options.repository.id.eq(options.repositoryId))
+                .forUpdate()
+                .singleResult(options.repository.ordinal);
+    }
 
     protected FetchResults<Id, M> fetch(Predicate predicate) {
         Check.notNull(predicate, "predicate");
@@ -238,7 +269,31 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         return versionsAndParents;
     }
 
-    protected abstract OrderSpecifier<?>[] publicVersionsOrderBy();
+    private void insertOptimizedParentsAndProperties(Id docId, ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {
+        DocumentUpdateBatch<Id, M> batch = updateBatch();
+        for (Revision revision : keptRevisions) {
+            VersionNode<PropertyPath, Object, M> version = optimizedGraph.getVersionNode(revision);
+            batch.insertParents(docId, version);
+            batch.insertProperties(docId, version);
+        }
+        batch.execute();
+    }
+
+    private void deleteOldParentsAndProperties(List<Revision> squashedRevisions, List<Revision> keptRevisions) {
+        options.queryFactory.delete(options.parent)
+                .where(options.parent.revision.in(keptRevisions).or(options.parent.revision.in(squashedRevisions)))
+                .execute();
+        options.queryFactory.delete(options.property)
+                .where(options.property.revision.in(keptRevisions).or(options.property.revision.in(squashedRevisions)))
+                .execute();
+    }
+
+    private void deleteSquashedVersions(List<Revision> squashedRevisions) {
+        // Delete squashed versions
+        options.queryFactory.delete(options.version)
+                .where(options.version.revision.in(squashedRevisions))
+                .execute();
+    }
 
     protected ObjectVersion<M> buildVersion(Revision rev, Group versionAndParents, Map<PropertyPath, Object> changeset) {
         if (!options.versionTableProperties.isEmpty()) {
@@ -290,5 +345,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
             default:
                 throw new IllegalArgumentException("Unsupported type: " + type);
         }
+    }
+
+    protected static Expression<?>[] concat(Expression<?>[] expr1, Expression<?>... expr2) {
+        Expression<?>[] expressions = new Expression<?>[expr1.length + expr2.length];
+        arraycopy(expr1, 0, expressions, 0, expr1.length);
+        arraycopy(expr2, 0, expressions, expr1.length, expr2.length);
+        return expressions;
     }
 }
