@@ -15,12 +15,14 @@ create table DOCUMENT_VERSION (
 
   primary key (REVISION),
 
-  constraint DOCUMENT_VERSION_TYPE_FK foreign key (TYPE) references VERSION_TYPE (name)
+  constraint DOCUMENT_VERSION_TYPE_FK
+    foreign key (TYPE)
+    references VERSION_TYPE (NAME)
 );
 
 create sequence DOCUMENT_VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
 
--- Find un published versions
+-- Find unpublished versions
 create index DOCUMENT_VERSION_LOCAL_ORDINAL_IDX on DOCUMENT_VERSION (LOCAL_ORDINAL, REVISION, DOC_ID);
 -- Load document and fetch updates since
 create index DOCUMENT_VERSION_DOC_ID_IDX on DOCUMENT_VERSION (DOC_ID, ORDINAL, REVISION);
