@@ -27,15 +27,15 @@ import com.google.common.collect.ImmutableMap;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.types.Path;
 
-public class StoreOptions<Id> {
+public class StoreOptions<Id, V extends JVersion<Id>> {
 
     public final String repositoryId;
 
     public final JRepository repository;
 
-    public final JVersion<Id> version;
+    public final V version;
 
-    public final JVersion<Id> sinceVersion;
+    public final V sinceVersion;
 
     public final JVersionParent parent;
 
@@ -47,7 +47,7 @@ public class StoreOptions<Id> {
 
     final CacheBuilder<Object, Object> cacheBuilder;
 
-    protected StoreOptions(AbstractBuilder<Id, ?> builder) {
+    protected StoreOptions(AbstractBuilder<Id, V, ?> builder) {
         this.repositoryId = Check.notNull(builder.repositoryId, "repositoryId");
         this.repository = Check.notNull(builder.repository, "repository");
         this.version = Check.notNull(builder.version, "version");
@@ -61,15 +61,15 @@ public class StoreOptions<Id> {
         this.cacheBuilder = builder.cacheBuilder;
     }
 
-    public abstract static class AbstractBuilder<Id, This extends AbstractBuilder<Id, This>> {
+    public abstract static class AbstractBuilder<Id, V extends JVersion<Id>, This extends AbstractBuilder<Id, V, This>> {
 
         protected String repositoryId = "repository";
 
         protected JRepository repository;
 
-        protected JVersion<Id> version;
+        protected V version;
 
-        protected JVersion<Id> sinceVersion;
+        protected V sinceVersion;
 
         protected Function<String, JVersion<Id>> versionFunction;
 
@@ -95,12 +95,12 @@ public class StoreOptions<Id> {
             return self();
         }
 
-        public This sinceVersion(JVersion<Id> sinceVersion) {
+        public This sinceVersion(V sinceVersion) {
             this.sinceVersion = sinceVersion;
             return self();
         }
 
-        public This version(JVersion<Id> version) {
+        public This version(V version) {
             this.version = version;
             return self();
         }
@@ -130,8 +130,11 @@ public class StoreOptions<Id> {
             return self();
         }
 
-        public abstract <T extends StoreOptions<Id>> T build();
+        public abstract <T extends StoreOptions<Id, V>> T build();
 
-        public abstract This self();
+        @SuppressWarnings("unchecked")
+        public This self() {
+            return (This) this;
+        }
     }
 }

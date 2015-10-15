@@ -1,7 +1,7 @@
 /*
  * Copyright 2015 Samppa Saarela
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License");x
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -19,7 +19,6 @@ import static com.mysema.query.support.Expressions.constant;
 import static com.mysema.query.support.Expressions.predicate;
 import static com.mysema.query.types.Ops.EQ;
 import static com.mysema.query.types.Ops.IN;
-import static java.util.Collections.singleton;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
@@ -27,76 +26,53 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.javersion.core.Revision;
-import org.javersion.core.VersionNode;
-import org.javersion.path.PropertyPath;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 import com.mysema.query.sql.Configuration;
 import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.types.OrderSpecifier;
+import com.mysema.query.types.Path;
 import com.mysema.query.types.expr.BooleanExpression;
+import com.mysema.query.types.expr.SimpleExpression;
 
-public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id, M, JDocumentVersion<Id>, DocumentStoreOptions<Id>> {
+public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVersionStoreJdbc<Id, M, JEntityVersion<Id>, EntityStoreOptions<Id>> {
 
     public static void registerTypes(String tablePrefix, Configuration configuration) {
         AbstractVersionStoreJdbc.registerTypes(tablePrefix, configuration);
     }
 
     @SuppressWarnings("unused")
-    protected DocumentVersionStoreJdbc() {
+    protected EntityVersionStoreJdbc() {
         super();
     }
 
-    public DocumentVersionStoreJdbc(DocumentStoreOptions<Id> options) {
+    public <P extends SimpleExpression<Id> & Path<Id>> EntityVersionStoreJdbc(EntityStoreOptions<Id> options) {
         super(options);
     }
-
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
-        append(docId, singleton(version));
+    public EntityUpdateBatch<Id, M> updateBatch(Collection<Id> docIds) {
+        return new EntityUpdateBatch<>(options, docIds);
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
-        ImmutableMultimap.Builder<Id, VersionNode<PropertyPath, Object, M>> builder = ImmutableMultimap.builder();
-        append(builder.putAll(docId, versions).build());
-    }
-
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
-        DocumentUpdateBatch<Id, M> batch = optimizationUpdateBatch();
-
-        for (Id docId : versionsByDocId.keySet()) {
-            for (VersionNode<PropertyPath, Object, M> version : versionsByDocId.get(docId)) {
-                batch.addVersion(docId, version);
-            }
-        }
-
-        batch.execute();
-    }
 
     @Override
-    protected DocumentUpdateBatch<Id, M> optimizationUpdateBatch() {
-        return new DocumentUpdateBatch<>(options);
+    protected EntityUpdateBatch<Id, M> optimizationUpdateBatch() {
+        return new EntityUpdateBatch<>(options);
     }
 
     @Override
     protected BooleanExpression versionsOf(Id docId) {
-        return predicate(EQ, options.version.docId, constant(docId))
-                .and(options.version.ordinal.isNotNull());
+        return predicate(EQ, options.version.docId, constant(docId));
     }
 
     @Override
     protected BooleanExpression versionsOf(Collection<Id> docIds) {
-        return predicate(IN, options.version.docId, constant(docIds))
-                .and(options.version.ordinal.isNotNull());
+        return predicate(IN, constant(docIds));
     }
 
     @Override
     protected OrderSpecifier<?>[] versionsOfOneOrderBy() {
-        return versionsOfManyOrderBy();
+        return new OrderSpecifier<?>[] { options.version.localOrdinal.asc() };
     }
 
     @Override
@@ -107,16 +83,15 @@ public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id
     @Override
     protected SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal) {
         return versionUpdateBatch
-                .set(options.version.ordinal, ordinal)
-                .setNull(options.version.txOrdinal);
+                .set(options.version.ordinal, ordinal);
     }
 
     @Override
     protected Map<Revision, Id> findUnpublishedRevisions() {
         return options.queryFactory
                 .from(options.version)
-                .where(options.version.txOrdinal.isNotNull())
-                .orderBy(options.version.txOrdinal.asc())
+                .where(options.version.ordinal.isNull())
+                .orderBy(options.version.localOrdinal.asc())
                 .map(options.version.revision, options.version.docId);
     }
 

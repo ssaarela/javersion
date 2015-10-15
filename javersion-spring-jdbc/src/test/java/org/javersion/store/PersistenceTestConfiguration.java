@@ -48,13 +48,13 @@ public class PersistenceTestConfiguration {
     @Bean
     public DocumentVersionStoreJdbc<String, Void> versionStore(SQLQueryFactory queryFactory) {
 
-        return new DocumentVersionStoreJdbc<String, Void>(optionsBuilder(queryFactory).build());
+        return new DocumentVersionStoreJdbc<String, Void>(documentOptionsBuilder(queryFactory).build());
     }
 
     @Bean
     public DocumentVersionStoreJdbc<String, Void> mappedVersionStore(SQLQueryFactory queryFactory) {
         return new DocumentVersionStoreJdbc<String, Void>(
-                optionsBuilder(queryFactory)
+                documentOptionsBuilder(queryFactory)
                         .versionTableProperties(ImmutableMap.of(
                                 ROOT.property("name"), documentVersion.name,
                                 ROOT.property("id"), documentVersion.id))
@@ -67,13 +67,13 @@ public class PersistenceTestConfiguration {
     }
 
 
-    private Builder<String> optionsBuilder(SQLQueryFactory queryFactory) {
+    private Builder<String> documentOptionsBuilder(SQLQueryFactory queryFactory) {
         QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
         return new Builder<String>()
                 .repository(new JRepository(repository))
                 .repositoryId("DOCUMENT_VERSION")
-                .version(new JVersion<>(documentVersion, documentVersion.docId))
-                .sinceVersion(new JVersion<>(sinceVersion, sinceVersion.docId))
+                .version(new JDocumentVersion<>(documentVersion, documentVersion.docId))
+                .sinceVersion(new JDocumentVersion<>(sinceVersion, sinceVersion.docId))
                 .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))
                 .parent(new JVersionParent(documentVersionParent))
                 .property(new JVersionProperty(documentVersionProperty))

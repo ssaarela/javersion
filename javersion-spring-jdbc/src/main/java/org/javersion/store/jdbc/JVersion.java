@@ -25,7 +25,7 @@ import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.SimplePath;
 import com.mysema.query.types.path.StringPath;
 
-public class JVersion<Id> extends RelationalPathBase<JVersion>  {
+public abstract class JVersion<Id> extends RelationalPathBase<JVersion>  {
 
     public final Path<Id> docId;
 
@@ -37,11 +37,12 @@ public class JVersion<Id> extends RelationalPathBase<JVersion>  {
 
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
-    public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
-
     public JVersion(RelationalPathBase<?> table, Path<Id> docId) {
         super(JVersion.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
         this.docId = docId;
+    }
+
+    protected void copyMetadata(RelationalPathBase<?> table) {
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
     }
 

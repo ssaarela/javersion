@@ -25,7 +25,7 @@ import org.javersion.path.PropertyPath;
 import com.mysema.query.sql.dml.SQLInsertClause;
 import com.mysema.query.types.Path;
 
-public abstract class AbstractUpdateBatch<Id, M, Options extends StoreOptions<Id>> {
+public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, V>> {
 
     protected final Options options;
 

@@ -15,31 +15,27 @@
  */
 package org.javersion.store.jdbc;
 
-import org.javersion.util.Check;
+public class EntityStoreOptions<Id extends Comparable> extends StoreOptions<Id, JEntityVersion<Id>> {
 
-import com.mysema.query.types.Expression;
+    public final JEntity<Id> entity;
 
-public class DocumentStoreOptions<Id> extends StoreOptions<Id, JDocumentVersion<Id>> {
-
-    public final Expression<Long> nextOrdinal;
-
-    protected DocumentStoreOptions(Builder<Id> builder) {
+    protected EntityStoreOptions(Builder<Id> builder) {
         super(builder);
-        this.nextOrdinal = Check.notNull(builder.nextOrdinal, "nextOrdinal");
+        this.entity = builder.entity;
     }
 
-    public static class Builder<Id> extends AbstractBuilder<Id, JDocumentVersion<Id>, Builder<Id>> {
+    public static class Builder<Id extends Comparable> extends AbstractBuilder<Id, JEntityVersion<Id>, Builder<Id>> {
 
-        protected Expression<Long> nextOrdinal;
+        private JEntity<Id> entity;
 
-        public Builder<Id> nextOrdinal(Expression<Long> nextOrdinal) {
-            this.nextOrdinal = nextOrdinal;
+        public Builder<Id> entity(JEntity<Id> entity) {
+            this.entity = entity;
             return this;
         }
 
         @Override
-        public DocumentStoreOptions<Id> build() {
-            return new DocumentStoreOptions<>(this);
+        public EntityStoreOptions<Id> build() {
+            return new EntityStoreOptions<>(this);
         }
 
     }

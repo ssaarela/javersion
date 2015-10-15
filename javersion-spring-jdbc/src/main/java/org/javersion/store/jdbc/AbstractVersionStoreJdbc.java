@@ -53,11 +53,12 @@ import com.mysema.query.sql.types.EnumByNameType;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.OrderSpecifier;
 import com.mysema.query.types.Path;
-import com.mysema.query.types.Predicate;
 import com.mysema.query.types.QTuple;
 import com.mysema.query.types.expr.BooleanExpression;
+import com.mysema.query.types.query.NumberSubQuery;
 
-public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptions<Id>> {
+
+public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, V>> {
 
     public static void registerTypes(String tablePrefix, Configuration configuration) {
         configuration.register(tablePrefix + "VERSION", "TYPE", new EnumByNameType<>(VersionType.class));
@@ -100,26 +101,26 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> load(Id docId) {
-        FetchResults<Id, M> results = fetch(publicVersionsOf(docId));
+        FetchResults<Id, M> results = fetch(docId);
         return results.containsKey(docId) ? results.getVersionGraph(docId).get() : ObjectVersionGraph.init();
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public FetchResults<Id, M> load(Collection<Id> docIds) {
-        return fetch(publicVersionsOf(docIds));
+        return fetch(versionsOf(docIds));
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
-        BooleanExpression predicate = predicate(EQ, options.version.docId, constant(docId));
-
-        List<Group> versionsAndParents = versionsAndParentsSince(predicate, since);
+        List<Group> versionsAndParents = versionsAndParentsSince(docId, since);
         if (versionsAndParents.isEmpty()) {
             return ImmutableList.of();
         }
 
         Long sinceOrdinal = versionsAndParents.get(0).getOne(options.sinceVersion.ordinal);
-        predicate = predicate.and(predicate(GT, options.version.ordinal, constant(sinceOrdinal)));
+
+        BooleanExpression predicate = versionsOf(docId)
+                .and(predicate(GT, options.version.ordinal, constant(sinceOrdinal)));
 
         FetchResults<Id, M> results = fetch(versionsAndParents, predicate);
         return results.containsKey(docId) ? results.getVersions(docId).get() : ImmutableList.of();
@@ -137,7 +138,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public Multimap<Id, Revision> publish() {
         // Lock repository with select for update
-        long lastOrdinal = getLastOrdinalForUpdate();
+        long lastOrdinal = lockRepositoryAndGetMaxOrdinal();
 
         Map<Revision, Id> uncommittedRevisions = findUnpublishedRevisions();
         if (uncommittedRevisions.isEmpty()) {
@@ -158,8 +159,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         }
 
         versionUpdateBatch.execute();
-
-        updateLastOrdinal(lastOrdinal);
 
         afterPublish(publishedDocs);
         return publishedDocs;
@@ -184,51 +183,64 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         insertOptimizedParentsAndProperties(docId, ObjectVersionGraph.init(optimizedGraphBuilder.getOptimizedVersions()), keptRevisions);
     }
 
-    protected abstract DocumentUpdateBatch<Id, M> updateBatch();
+    protected abstract AbstractUpdateBatch<Id, M, V, ?> optimizationUpdateBatch();
 
     protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
 
-    protected abstract Predicate publicVersionsOf(Id docId);
+    protected abstract BooleanExpression versionsOf(Id docId);
 
-    protected abstract Predicate publicVersionsOf(Collection<Id> docIds);
+    protected abstract BooleanExpression versionsOf(Collection<Id> docIds);
 
-    protected abstract OrderSpecifier<?>[] publicVersionsOrderBy();
+    protected abstract OrderSpecifier<?>[] versionsOfOneOrderBy();
+
+    protected abstract OrderSpecifier<?>[] versionsOfManyOrderBy();
 
     protected abstract Map<Revision, Id> findUnpublishedRevisions();
 
-
-    protected void updateLastOrdinal(long lastOrdinal) {
-        options.queryFactory
-                .update(options.repository)
-                .set(options.repository.ordinal, lastOrdinal)
-                .where(options.repository.id.eq(options.repositoryId))
-                .execute();
-    }
 
     protected void afterPublish(Multimap<Id, Revision> publishedDocs) {
         // After publish hook for sub classes to override
     }
 
-    protected Long getLastOrdinalForUpdate() {
-        return options.queryFactory
+    protected long lockRepositoryAndGetMaxOrdinal() {
+        NumberSubQuery<Long> maxOrdinalQry = options.queryFactory.subQuery()
+                .from(options.version)
+                .unique(options.version.ordinal.max());
+
+        // Use List-result as a safe-guard against missing repository row
+        List<Long> results = options.queryFactory
                 .from(options.repository)
                 .where(options.repository.id.eq(options.repositoryId))
                 .forUpdate()
-                .singleResult(options.repository.ordinal);
+                .list(maxOrdinalQry);
+
+        if (results.isEmpty()) {
+            throw new IllegalStateException("Repository with id " + options.repositoryId + " not found from " + options.repository.getTableName());
+        }
+        Long maxOrdinal = results.get(0);
+        return maxOrdinal != null ? maxOrdinal : 0;
     }
 
-    protected FetchResults<Id, M> fetch(Predicate predicate) {
+    protected FetchResults<Id, M> fetch(Id docId) {
+        Check.notNull(docId, "docId");
+
+        List<Group> versionsAndParents = fetchVersionsAndParents(docId);
+        return fetch(versionsAndParents, versionsOf(docId));
+    }
+
+    protected FetchResults<Id, M> fetch(BooleanExpression predicate) {
         Check.notNull(predicate, "predicate");
 
-        List<Group> versionsAndParents = getVersionsAndParents(predicate);
-        if (versionsAndParents.isEmpty()) {
-            return noResults;
-        }
+        List<Group> versionsAndParents = fetchVersionsAndParents(predicate);
         return fetch(versionsAndParents, predicate);
     }
 
-    protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, Predicate predicate) {
-        Map<Revision, List<Tuple>> properties = getProperties(predicate);
+    protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, BooleanExpression predicate) {
+        if (versionsAndParents.isEmpty()) {
+            return noResults;
+        }
+
+        Map<Revision, List<Tuple>> properties = fetchProperties(predicate);
         ListMultimap<Id, ObjectVersion<M>> results = ArrayListMultimap.create();
         Revision latestRevision = null;
 
@@ -242,7 +254,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         return new FetchResults<>(results, latestRevision);
     }
 
-    protected Map<Revision, List<Tuple>> getProperties(Predicate predicate) {
+    protected Map<Revision, List<Tuple>> fetchProperties(BooleanExpression predicate) {
         SQLQuery qry = options.queryFactory
                 .from(options.property)
                 .innerJoin(options.version).on(options.version.revision.eq(options.property.revision))
@@ -251,25 +263,40 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
         return qry.transform(properties);
     }
 
-    protected List<Group> getVersionsAndParents(Predicate predicate) {
-        SQLQuery qry = options.queryFactory
-                .from(options.version)
-                .leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision))
-                .where(predicate)
-                .orderBy(publicVersionsOrderBy());
-
-        return qry.transform(groupBy(options.version.revision).list(versionAndParents));
+    protected List<Group> fetchVersionsAndParents(Id docId) {
+        return fetchVersionsAndParentsQuery(versionsOf(docId))
+                .orderBy(versionsOfOneOrderBy())
+                .transform(groupBy(options.version.revision).list(versionAndParents));
     }
 
-    protected List<Group> versionsAndParentsSince(BooleanExpression predicate, Revision since) {
-        SQLQuery qry = options.queryFactory
-                .from(options.sinceVersion)
-                .leftJoin(options.version).on(
-                        options.version.ordinal.gt(options.sinceVersion.ordinal),
-                        predicate(EQ, options.version.docId, options.sinceVersion.docId))
+    protected List<Group> fetchVersionsAndParents(BooleanExpression predicate) {
+        return fetchVersionsAndParentsQuery(predicate)
+                .orderBy(versionsOfManyOrderBy())
+                .transform(groupBy(options.version.revision).list(versionAndParents));
+    }
+
+    protected SQLQuery fetchVersionsAndParentsQuery(BooleanExpression predicate) {
+        return options.queryFactory
+                .from(options.version)
                 .leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision))
-                .where(options.sinceVersion.revision.eq(since), predicate.or(predicate(IS_NULL, options.version.docId)))
-                .orderBy(publicVersionsOrderBy());
+                .where(predicate);
+    }
+
+    protected List<Group> versionsAndParentsSince(Id docId, Revision since) {
+        SQLQuery qry = options.queryFactory.from(options.sinceVersion);
+
+        // Left join version version on version.ordinal > since.ordinal and version.doc_id = since.doc_id
+        qry.leftJoin(options.version).on(
+                options.version.ordinal.gt(options.sinceVersion.ordinal),
+                predicate(EQ, options.version.docId, options.sinceVersion.docId));
+
+        // Left join parents
+        qry.leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision));
+
+        qry.where(options.sinceVersion.revision.eq(since),
+                versionsOf(docId).or(predicate(IS_NULL, options.version.docId)));
+
+        qry.orderBy(versionsOfOneOrderBy());
 
         return verifyVersionsAndParentsSince(qry.transform(groupBy(options.version.revision).list(versionAndParentsSince)), since);
     }
@@ -285,7 +312,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, Options extends StoreOptio
     }
 
     private void insertOptimizedParentsAndProperties(Id docId, ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {
-        DocumentUpdateBatch<Id, M> batch = updateBatch();
+        AbstractUpdateBatch<Id, M, V, ?> batch = optimizationUpdateBatch();
         for (Revision revision : keptRevisions) {
             VersionNode<PropertyPath, Object, M> version = optimizedGraph.getVersionNode(revision);
             batch.insertParents(docId, version);

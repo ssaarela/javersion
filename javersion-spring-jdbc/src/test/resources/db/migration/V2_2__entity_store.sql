@@ -13,8 +13,8 @@ create table ENTITY (
 create table ENTITY_VERSION (
   DOC_ID varchar(255) not null,
   REVISION varchar(32) not null,
+  LOCAL_ORDINAL bigint not null,
   ORDINAL bigint,
-  LOCAL_ORDINAL bigint,
 
   BRANCH varchar(128) not null,
   TYPE varchar(8) not null,
@@ -27,7 +27,10 @@ create table ENTITY_VERSION (
 
   constraint ENTITY_VERSION_TYPE_FK
     foreign key (TYPE)
-    references VERSION_TYPE (NAME)
+    references VERSION_TYPE (NAME),
+
+  constraint ENTITY_VERSION_ORDINAL_U
+    unique (ORDINAL)
 );
 
 -- Load document and fetch updates since

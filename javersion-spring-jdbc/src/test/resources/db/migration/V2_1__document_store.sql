@@ -7,8 +7,8 @@ insert into REPOSITORY (ID, ORDINAL) values ('DOCUMENT_VERSION', 0);
 create table DOCUMENT_VERSION (
   DOC_ID varchar(255) not null,
   REVISION varchar(32) not null,
+  TX_ORDINAL bigint,
   ORDINAL bigint,
-  LOCAL_ORDINAL bigint,
 
   BRANCH varchar(128) not null,
   TYPE varchar(8) not null,
@@ -17,13 +17,16 @@ create table DOCUMENT_VERSION (
 
   constraint DOCUMENT_VERSION_TYPE_FK
     foreign key (TYPE)
-    references VERSION_TYPE (NAME)
+    references VERSION_TYPE (NAME),
+
+  constraint DOCUMENT_VERSION_ORDINAL_U
+    unique (ORDINAL)
 );
 
 create sequence DOCUMENT_VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;
 
 -- Find unpublished versions
-create index DOCUMENT_VERSION_LOCAL_ORDINAL_IDX on DOCUMENT_VERSION (LOCAL_ORDINAL, REVISION, DOC_ID);
+create index DOCUMENT_VERSION_TX_ORDINAL_IDX on DOCUMENT_VERSION (TX_ORDINAL, REVISION, DOC_ID);
 -- Load document and fetch updates since
 create index DOCUMENT_VERSION_DOC_ID_IDX on DOCUMENT_VERSION (DOC_ID, ORDINAL, REVISION);
 -- Fetch updates since
