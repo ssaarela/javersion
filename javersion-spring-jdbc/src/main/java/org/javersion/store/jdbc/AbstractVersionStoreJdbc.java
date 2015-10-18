@@ -79,6 +79,8 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected final QPair<Revision, Id> revisionAndDocId;
 
+    protected final NumberSubQuery<Long> maxOrdinalSubQuery;
+
     protected final ResultTransformer<Map<Revision, List<Tuple>>> properties;
 
     protected final FetchResults<Id, M> noResults = new FetchResults<>();
@@ -88,6 +90,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         versionAndParents = null;
         versionAndParentsSince = null;
         revisionAndDocId = null;
+        maxOrdinalSubQuery = null;
         properties = null;
     }
 
@@ -96,6 +99,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         versionAndParents = concat(options.version.all(), GroupBy.set(options.parent.parentRevision));
         versionAndParentsSince = concat(versionAndParents, options.sinceVersion.ordinal);
         revisionAndDocId = new QPair<>(options.version.revision, options.version.docId);
+        maxOrdinalSubQuery = maxOrdinalSubQuery(options);
         properties = groupBy(options.property.revision).as(GroupBy.list(new QTuple(options.property.all())));
     }
 
@@ -203,22 +207,22 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     }
 
     protected long lockRepositoryAndGetMaxOrdinal() {
-        NumberSubQuery<Long> maxOrdinalQry = options.queryFactory.subQuery()
-                .from(options.version)
-                .unique(options.version.ordinal.max());
-
         // Use List-result as a safe-guard against missing repository row
         List<Long> results = options.queryFactory
                 .from(options.repository)
                 .where(options.repository.id.eq(options.repositoryId))
                 .forUpdate()
-                .list(maxOrdinalQry);
+                .list(maxOrdinalSubQuery);
 
         if (results.isEmpty()) {
             throw new IllegalStateException("Repository with id " + options.repositoryId + " not found from " + options.repository.getTableName());
         }
         Long maxOrdinal = results.get(0);
         return maxOrdinal != null ? maxOrdinal : 0;
+    }
+
+    private NumberSubQuery<Long> maxOrdinalSubQuery(Options options) {
+        return options.queryFactory.subQuery().from(options.version).unique(options.version.ordinal.max());
     }
 
     protected FetchResults<Id, M> fetch(Id docId) {
