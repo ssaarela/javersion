@@ -49,6 +49,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVe
     public <P extends SimpleExpression<Id> & Path<Id>> EntityVersionStoreJdbc(EntityStoreOptions<Id> options) {
         super(options);
     }
+
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public EntityUpdateBatch<Id, M> updateBatch(Collection<Id> docIds) {
         return new EntityUpdateBatch<>(options, docIds);

@@ -16,15 +16,12 @@
 package org.javersion.store.jdbc;
 
 import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.StringPath;
 
 
 public class JRepository extends com.mysema.query.sql.RelationalPathBase<JRepository> {
 
     public final StringPath id = createString("id");
-
-    public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
     public JRepository(RelationalPathBase<?> table) {
         super(JRepository.class, table.getMetadata(), table.getSchemaName(), table.getTableName());

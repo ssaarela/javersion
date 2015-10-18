@@ -7,5 +7,5 @@ insert into VERSION_TYPE values ('RESET');
 
 create table REPOSITORY (
   ID varchar(32) not null,
-  ORDINAL bigint not null
+  primary key (ID)
 );
