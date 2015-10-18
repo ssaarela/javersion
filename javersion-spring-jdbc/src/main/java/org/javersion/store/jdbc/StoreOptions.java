@@ -45,8 +45,6 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
 
     final SQLQueryFactory queryFactory;
 
-    final CacheBuilder<Object, Object> cacheBuilder;
-
     protected StoreOptions(AbstractBuilder<Id, V, ?> builder) {
         this.repositoryId = Check.notNull(builder.repositoryId, "repositoryId");
         this.repository = Check.notNull(builder.repository, "repository");
@@ -58,7 +56,6 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
                 ? ImmutableMap.copyOf(builder.versionTableProperties)
                 : ImmutableMap.of();
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
-        this.cacheBuilder = builder.cacheBuilder;
     }
 
     public abstract static class AbstractBuilder<Id, V extends JVersion<Id>, This extends AbstractBuilder<Id, V, This>> {
