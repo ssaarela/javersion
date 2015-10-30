@@ -1,10 +1,14 @@
 package org.javersion.store;
 
 import static org.javersion.path.PropertyPath.ROOT;
-import static org.javersion.store.sql.QRepository.repository;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 import static org.javersion.store.sql.QDocumentVersionParent.documentVersionParent;
 import static org.javersion.store.sql.QDocumentVersionProperty.documentVersionProperty;
+import static org.javersion.store.sql.QEntity.entity;
+import static org.javersion.store.sql.QEntityVersion.entityVersion;
+import static org.javersion.store.sql.QEntityVersionParent.entityVersionParent;
+import static org.javersion.store.sql.QEntityVersionProperty.entityVersionProperty;
+import static org.javersion.store.sql.QRepository.repository;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -12,6 +16,7 @@ import javax.sql.DataSource;
 import org.javersion.store.jdbc.*;
 import org.javersion.store.jdbc.DocumentStoreOptions.Builder;
 import org.javersion.store.sql.QDocumentVersion;
+import org.javersion.store.sql.QEntityVersion;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +42,7 @@ public class PersistenceTestConfiguration {
     public com.mysema.query.sql.Configuration configuration() {
         com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new H2Templates());
         AbstractVersionStoreJdbc.registerTypes("DOCUMENT_", configuration);
+        AbstractVersionStoreJdbc.registerTypes("ENTITY_", configuration);
         return configuration;
     }
 
@@ -62,6 +68,22 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
+    public EntityVersionStoreJdbc<String, Void> entityVersionStore(SQLQueryFactory queryFactory) {
+        QEntityVersion since = new QEntityVersion("SINCE");
+        return new EntityVersionStoreJdbc<String, Void>(
+                new EntityStoreOptions.Builder<String>()
+                        .repositoryTable(new JRepository(repository))
+                        .repositoryId("ENTITY_VERSION")
+                        .entityTable(new JEntity<>(entity, entity.id))
+                        .versionTable(new JEntityVersion<>(entityVersion, entityVersion.docId))
+                        .versionTableSince(new JEntityVersion<>(since, since.docId))
+                        .propertyTable(new JVersionProperty(entityVersionProperty))
+                        .parentTable(new JVersionParent(entityVersionParent))
+                        .queryFactory(queryFactory)
+                        .build());
+    }
+
+    @Bean
     public TransactionTemplate transactionTemplate() {
         return new TransactionTemplate(transactionManager);
     }
@@ -70,13 +92,13 @@ public class PersistenceTestConfiguration {
     private Builder<String> documentOptionsBuilder(SQLQueryFactory queryFactory) {
         QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
         return new Builder<String>()
-                .repository(new JRepository(repository))
+                .repositoryTable(new JRepository(repository))
                 .repositoryId("DOCUMENT_VERSION")
-                .version(new JDocumentVersion<>(documentVersion, documentVersion.docId))
-                .sinceVersion(new JDocumentVersion<>(sinceVersion, sinceVersion.docId))
+                .versionTable(new JDocumentVersion<>(documentVersion, documentVersion.docId))
+                .versionTableSince(new JDocumentVersion<>(sinceVersion, sinceVersion.docId))
                 .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))
-                .parent(new JVersionParent(documentVersionParent))
-                .property(new JVersionProperty(documentVersionProperty))
+                .parentTable(new JVersionParent(documentVersionParent))
+                .propertyTable(new JVersionProperty(documentVersionProperty))
                 .queryFactory(queryFactory);
     }
 }

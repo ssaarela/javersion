@@ -15,14 +15,11 @@
  */
 package org.javersion.store.jdbc;
 
-import java.util.function.Function;
-
 import javax.annotation.Nullable;
 
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 
-import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.types.Path;
@@ -47,11 +44,11 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
 
     protected StoreOptions(AbstractBuilder<Id, V, ?> builder) {
         this.repositoryId = Check.notNull(builder.repositoryId, "repositoryId");
-        this.repository = Check.notNull(builder.repository, "repository");
-        this.version = Check.notNull(builder.version, "version");
-        this.sinceVersion = Check.notNull(builder.sinceVersion, "sinceVersion");
-        this.parent = Check.notNull(builder.parent, "parent");
-        this.property = Check.notNull(builder.property, "property");
+        this.repository = Check.notNull(builder.repositoryTable, "repositoryTable");
+        this.version = Check.notNull(builder.version, "versionTable");
+        this.sinceVersion = Check.notNull(builder.versionTableSince, "versionTableSince");
+        this.parent = Check.notNull(builder.parentTable, "parentTable");
+        this.property = Check.notNull(builder.propertyTable, "propertyTable");
         this.versionTableProperties = builder.versionTableProperties != null
                 ? ImmutableMap.copyOf(builder.versionTableProperties)
                 : ImmutableMap.of();
@@ -60,55 +57,50 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
 
     public abstract static class AbstractBuilder<Id, V extends JVersion<Id>, This extends AbstractBuilder<Id, V, This>> {
 
-        protected String repositoryId = "repository";
+        protected String repositoryId = "repositoryTable";
 
-        protected JRepository repository;
+        protected JRepository repositoryTable;
 
         protected V version;
 
-        protected V sinceVersion;
+        protected V versionTableSince;
 
-        protected Function<String, JVersion<Id>> versionFunction;
+        protected JVersionParent parentTable;
 
-        protected JVersionParent parent;
-
-        protected JVersionProperty property;
+        protected JVersionProperty propertyTable;
 
         @Nullable
         protected ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
 
         protected SQLQueryFactory queryFactory;
 
-        @Nullable
-        protected CacheBuilder<Object, Object> cacheBuilder;
-
         public This repositoryId(String repositoryId) {
             this.repositoryId = repositoryId;
             return self();
         }
 
-        public This repository(JRepository jRepository) {
-            this.repository = jRepository;
+        public This repositoryTable(JRepository jRepository) {
+            this.repositoryTable = jRepository;
             return self();
         }
 
-        public This sinceVersion(V sinceVersion) {
-            this.sinceVersion = sinceVersion;
+        public This versionTableSince(V sinceVersion) {
+            this.versionTableSince = sinceVersion;
             return self();
         }
 
-        public This version(V version) {
+        public This versionTable(V version) {
             this.version = version;
             return self();
         }
 
-        public This parent(JVersionParent jParent) {
-            this.parent = jParent;
+        public This parentTable(JVersionParent jParent) {
+            this.parentTable = jParent;
             return self();
         }
 
-        public This property(JVersionProperty jProperty) {
-            this.property = jProperty;
+        public This propertyTable(JVersionProperty jProperty) {
+            this.propertyTable = jProperty;
             return self();
         }
 
@@ -119,11 +111,6 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
 
         public This queryFactory(SQLQueryFactory queryFactory) {
             this.queryFactory = queryFactory;
-            return self();
-        }
-
-        public This cacheBuilder(CacheBuilder<Object, Object> cacheBuilder) {
-            this.cacheBuilder = cacheBuilder;
             return self();
         }
 

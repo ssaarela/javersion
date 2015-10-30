@@ -30,13 +30,16 @@ import org.javersion.path.PropertyPath;
 import com.google.common.collect.ImmutableSet;
 import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.dml.SQLInsertClause;
+import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.types.Order;
 import com.mysema.query.types.OrderSpecifier;
 import com.mysema.query.types.query.NumberSubQuery;
 
 public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateBatch<Id, M, JEntityVersion<Id>, EntityStoreOptions<Id>> {
 
-    protected final SQLInsertClause entityBatch;
+    protected final SQLInsertClause entityCreateBatch;
+
+    protected final SQLUpdateClause entityUpdateBatch;
 
     protected final Set<Id> lockedDocIds;
 
@@ -44,14 +47,20 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
 
     public EntityUpdateBatch(EntityStoreOptions<Id> options) {
         super(options);
-        entityBatch = null;
+        entityCreateBatch = null;
+        entityUpdateBatch = null;
         lockedDocIds = null;
         entityOrdinals = null;
     }
 
+    public EntityUpdateBatch(EntityStoreOptions<Id> options, Id docId) {
+        this(options, ImmutableSet.of(docId));
+    }
+
     public EntityUpdateBatch(EntityStoreOptions<Id> options, Collection<Id> docIds) {
         super(options);
-        entityBatch = options.queryFactory.insert(options.entity);
+        entityCreateBatch = options.queryFactory.insert(options.entity);
+        entityUpdateBatch = options.queryFactory.update(options.entity);
 
         lockedDocIds = ImmutableSet.copyOf(docIds);
         entityOrdinals = lockEntitiesForUpdate(options, docIds);
@@ -69,28 +78,41 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
         return contains(docId) && entityOrdinals.containsKey(docId);
     }
 
-    protected void insertVersion(Id docId, VersionNode<PropertyPath, Object, M> version, SQLInsertClause versionBatch) {
+    public void addVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
         verifyDocId(docId);
+
         if (isCreate(docId)) {
-            insertEntity(docId);
+            insertEntity(docId, version);
+        } else {
+            updateEntity(docId, version);
         }
 
-        versionBatch.set(options.version.localOrdinal, nextLocalOrdinal(docId));
-        super.insertVersion(docId, version);
+        super.addVersion(docId, version);
     }
 
     @Override
     public void execute() {
-        if (!entityBatch.isEmpty()) {
-            entityBatch.execute();
+        if (!entityCreateBatch.isEmpty()) {
+            entityCreateBatch.execute();
+        }
+        if (!entityUpdateBatch.isEmpty()) {
+            entityUpdateBatch.execute();
         }
         super.execute();
     }
 
-    protected void insertEntity(Id docId) {
-        entityBatch
+    protected void insertEntity(Id docId, VersionNode<PropertyPath, Object, M> version) {
+        entityCreateBatch
                 .set(options.entity.id, docId)
                 .addBatch();
+    }
+
+    protected void updateEntity(Id docId, VersionNode<PropertyPath, Object, M> version) {}
+
+    @Override
+    protected void insertVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
+        versionBatch.set(options.version.localOrdinal, nextLocalOrdinal(docId));
+        super.insertVersion(docId, version);
     }
 
     protected Map<Id, Long> lockEntitiesForUpdate(EntityStoreOptions<Id> options, Collection<Id> docIds) {

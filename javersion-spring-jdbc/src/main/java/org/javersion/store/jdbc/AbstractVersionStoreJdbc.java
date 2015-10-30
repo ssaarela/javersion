@@ -136,8 +136,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
      *
      * Calling publish() in the same transaction with append() severely limits concurrency
      * and might end up in deadlock.
-     *
-     * @return
      */
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public Multimap<Id, Revision> publish() {

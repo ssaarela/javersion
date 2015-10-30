@@ -28,7 +28,7 @@ public class EntityStoreOptions<Id extends Comparable> extends StoreOptions<Id, 
 
         private JEntity<Id> entity;
 
-        public Builder<Id> entity(JEntity<Id> entity) {
+        public Builder<Id> entityTable(JEntity<Id> entity) {
             this.entity = entity;
             return this;
         }

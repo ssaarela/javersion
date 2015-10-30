@@ -1,6 +1,7 @@
 package org.javersion.store.jdbc;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -377,19 +378,41 @@ public class DocumentVersionStoreJdbcTest {
         String docId = randomUUID().toString();
 
         Map<PropertyPath, Object> changeset = mapOf(
-            "Object", Persistent.object("Object"),
-            "Array", Persistent.array(),
-            "String", "String",
-            "Boolean", true,
-            "Long", 123l,
-            "Double", 123.456,
-            "BigDecimal", BigDecimal.TEN,
-            "Void", null);
+                "Object", Persistent.object("Object"),
+                "Array", Persistent.array(),
+                "String", "String",
+                "Boolean", true,
+                "Long", 123l,
+                "Double", 123.456,
+                "BigDecimal", BigDecimal.TEN,
+                "Void", null);
 
         ObjectVersion<Void> version = ObjectVersion.<Void>builder().changeset(changeset).build();
         versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
         versionStore.publish();
         assertThat(versionStore.load(docId).getTip().getVersion()).isEqualTo(version);
+    }
+
+    @Test
+    public void load_multiple_documents() {
+        String docId1 = randomUUID().toString();
+        String docId2 = randomUUID().toString();
+
+        Map<PropertyPath, Object> props1 = mapOf("id", docId1);
+        Map<PropertyPath, Object> props2 = mapOf("id", docId2);
+
+        ObjectVersion<Void> v1 = ObjectVersion.<Void>builder().changeset(props1).build();
+        ObjectVersion<Void> v2 = ObjectVersion.<Void>builder().changeset(props2).build();
+
+        versionStore.append(docId1, ObjectVersionGraph.init(v1).getTip());
+        versionStore.append(docId2, ObjectVersionGraph.init(v2).getTip());
+        versionStore.publish();
+
+        FetchResults<String, Void> results = versionStore.load(asList(docId1, docId2));
+        assertThat(results.getDocIds()).isEqualTo(ImmutableSet.of(docId1, docId2));
+        assertThat(results.latestRevision).isEqualTo(v2.revision);
+        assertThat(results.getVersions(docId1).get().get(0)).isEqualTo(v1);
+        assertThat(results.getVersions(docId2).get().get(0)).isEqualTo(v2);
     }
 
     @Test

@@ -20,7 +20,7 @@ import static com.mysema.query.support.Expressions.predicate;
 import static com.mysema.query.types.Ops.EQ;
 import static com.mysema.query.types.Ops.IN;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
-import static org.springframework.transaction.annotation.Propagation.REQUIRED;
+import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 
 import java.util.Collection;
 import java.util.Map;
@@ -50,11 +50,15 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVe
         super(options);
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
+    public EntityUpdateBatch<Id, M> updateBatch(Id docId) {
+        return new EntityUpdateBatch<>(options, docId);
+    }
+
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
     public EntityUpdateBatch<Id, M> updateBatch(Collection<Id> docIds) {
         return new EntityUpdateBatch<>(options, docIds);
     }
-
 
     @Override
     protected EntityUpdateBatch<Id, M> optimizationUpdateBatch() {
@@ -68,7 +72,8 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVe
 
     @Override
     protected BooleanExpression versionsOf(Collection<Id> docIds) {
-        return predicate(IN, constant(docIds));
+        return predicate(IN, options.version.docId, constant(docIds))
+                .and(options.version.ordinal.isNotNull());
     }
 
     @Override
