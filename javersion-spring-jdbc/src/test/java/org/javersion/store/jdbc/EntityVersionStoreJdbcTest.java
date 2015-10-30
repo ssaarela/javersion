@@ -80,12 +80,12 @@ public class EntityVersionStoreJdbcTest {
         assertThat(graphs.containsKey(docId1)).isTrue();
         assertThat(graphs.containsKey(docId2)).isTrue();
 
-        assertThat(graphs.getVersionGraph(docId1).get().getTip().getProperties()).isEqualTo(mapOf(
+        assertThat(graphs.getVersionGraph(docId1).getTip().getProperties()).isEqualTo(mapOf(
                 "id", docId1,
                 "name", "doc1"
         ));
 
-        assertThat(graphs.getVersionGraph(docId2).get().getTip().getProperties()).isEqualTo(mapOf(
+        assertThat(graphs.getVersionGraph(docId2).getTip().getProperties()).isEqualTo(mapOf(
                 "name", "doc2"
         ));
 

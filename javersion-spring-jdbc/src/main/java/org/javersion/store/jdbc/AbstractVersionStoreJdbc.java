@@ -106,7 +106,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> load(Id docId) {
         FetchResults<Id, M> results = fetch(docId);
-        return results.containsKey(docId) ? results.getVersionGraph(docId).get() : ObjectVersionGraph.init();
+        return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
@@ -127,7 +127,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
                 .and(predicate(GT, options.version.ordinal, constant(sinceOrdinal)));
 
         FetchResults<Id, M> results = fetch(versionsAndParents, predicate);
-        return results.containsKey(docId) ? results.getVersions(docId).get() : ImmutableList.of();
+        return results.containsKey(docId) ? results.getVersions(docId) : ImmutableList.of();
     }
 
     /**

@@ -16,7 +16,6 @@
 package org.javersion.object.mapping;
 
 import java.util.Map;
-import java.util.Optional;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
@@ -39,16 +38,16 @@ public class MapTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor descriptor) {
-        return path.isPresent() && descriptor.typeDescriptor.getRawType().equals(mapType);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor descriptor) {
+        return path != null && descriptor.typeDescriptor.getRawType().equals(mapType);
     }
 
     @Override
-    public ValueType describe(Optional<PropertyPath> path, TypeDescriptor mapType, DescribeContext context) {
+    public ValueType describe(PropertyPath path, TypeDescriptor mapType, DescribeContext context) {
         TypeDescriptor keyType = mapType.resolveGenericParameter(Map.class, 0);
         TypeDescriptor valueType = mapType.resolveGenericParameter(Map.class, 1);
 
-        context.describeComponent(path.get().any(), mapType, valueType);
+        context.describeComponent(path.any(), mapType, valueType);
 
         ValueType keyValueType = context.describeComponent(null, mapType, keyType);
         return newMapType((ScalarType) keyValueType);

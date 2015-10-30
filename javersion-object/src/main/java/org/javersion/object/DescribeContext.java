@@ -20,7 +20,6 @@ import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
-import java.util.Optional;
 
 import org.javersion.object.mapping.TypeMapping;
 import org.javersion.object.types.ValueType;
@@ -117,9 +116,8 @@ public class DescribeContext {
     }
 
     private synchronized ValueType createValueType(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        Optional<PropertyPath> optionalPath = Optional.ofNullable(path);
-        TypeMapping typeMapping = typeMappings.getTypeMapping(optionalPath, localTypeDescriptor);
-        return typeMapping.describe(optionalPath, localTypeDescriptor.typeDescriptor, this);
+        TypeMapping typeMapping = typeMappings.getTypeMapping(path, localTypeDescriptor);
+        return typeMapping.describe(path, localTypeDescriptor.typeDescriptor, this);
     }
 
 }

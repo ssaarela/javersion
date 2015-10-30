@@ -15,7 +15,6 @@
  */
 package org.javersion.object.mapping;
 
-import java.util.Optional;
 import java.util.Set;
 
 import org.javersion.object.DescribeContext;
@@ -59,8 +58,8 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
 
     @Override
-    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
-        if (!path.isPresent()) {
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        if (path == null) {
             return false;
         }
         for (TypeDescriptor typeDescriptor : typesByAlias.values()) {
@@ -72,8 +71,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
 
     @Override
-    public  synchronized ValueType describe(Optional<PropertyPath> optionalPath, TypeDescriptor typeDescriptor, DescribeContext context) {
-        PropertyPath path = optionalPath.get();
+    public  synchronized ValueType describe(PropertyPath path, TypeDescriptor typeDescriptor, DescribeContext context) {
         Set<FieldDescriptor> uniqueFields = Sets.newHashSet();
         FieldDescriptor idField = null;
         IdentifiableType idType = null;

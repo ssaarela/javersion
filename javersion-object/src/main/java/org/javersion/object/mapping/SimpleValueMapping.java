@@ -1,7 +1,5 @@
 package org.javersion.object.mapping;
 
-import java.util.Optional;
-
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -20,7 +18,7 @@ public class SimpleValueMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
         return typeDescriptor.getRawType().equals(type);
     }

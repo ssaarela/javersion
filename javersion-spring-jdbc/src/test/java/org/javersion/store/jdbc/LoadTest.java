@@ -120,7 +120,7 @@ public class LoadTest {
                 ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
                         .changeset(generateProperties(propCount));
 
-                ObjectVersionGraph<Void> versionGraph = results.getVersionGraph(docId).get();
+                ObjectVersionGraph<Void> versionGraph = results.getVersionGraph(docId);
                 builder.parents(versionGraph.getTip().getRevision());
 
                 versionGraph = versionGraph.commit(builder.build());
