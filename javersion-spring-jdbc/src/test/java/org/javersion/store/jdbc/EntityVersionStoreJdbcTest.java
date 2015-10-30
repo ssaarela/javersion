@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.store.jdbc.DocumentVersionStoreJdbcTest.mapOf;
 import static org.javersion.store.sql.QEntity.entity;
 
+import java.util.List;
+
 import javax.annotation.Resource;
 
 import org.javersion.core.Revision;
@@ -23,6 +25,15 @@ import com.mysema.query.sql.SQLQueryFactory;
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
 public class EntityVersionStoreJdbcTest {
+
+    private final String
+            docId1 = randomId(),
+            docId2 = randomId();
+    private final Revision
+            rev1 = new Revision(),
+            rev2 = new Revision(),
+            rev3 = new Revision(),
+            rev4 = new Revision();
 
     @Resource
     CustomEntityVersionStore entityVersionStore;
@@ -50,57 +61,19 @@ public class EntityVersionStoreJdbcTest {
 
     @Test
     public void save_read_and_update_flow() {
-        final String
-                docId1 = randomId(),
-                docId2 = randomId();
-        final Revision
-                rev1 = new Revision(),
-                rev2 = new Revision(),
-                rev3 = new Revision(),
-                rev4 = new Revision();
 
-        create_first_two_versions_of_doc1(docId1, rev1, rev2);
+        create_first_two_versions_of_doc1();
 
-        ObjectVersionGraph<Void> graph = entityVersionStore.load(docId1);
-        assertThat(graph.getTip().getProperties()).isEqualTo(mapOf(
-                "id", docId1,
-                "name", "Fixed name"
-        ));
+        cannot_bulk_load_before_publish();
 
-        String persistedName = queryFactory.from(entity).where(entity.id.eq(docId1)).singleResult(entity.name);
-        assertThat(persistedName).isEqualTo("Fixed name");
+        create_doc2_and_update_doc1();
 
-        cannot_bulk_load_before_publish(docId1, docId2);
+        fetch_updates_of_doc1();
 
-        create_doc2_and_update_doc1(docId1, docId2, rev2, rev3, rev4);
-
-        entityVersionStore.publish();
-
-        FetchResults<String, Void> graphs = entityVersionStore.load(asList(docId1, docId2));
-        assertThat(graphs.containsKey(docId1)).isTrue();
-        assertThat(graphs.containsKey(docId2)).isTrue();
-
-        assertThat(graphs.getVersionGraph(docId1).getTip().getProperties()).isEqualTo(mapOf(
-                "id", docId1,
-                "name", "doc1"
-        ));
-
-        assertThat(graphs.getVersionGraph(docId2).getTip().getProperties()).isEqualTo(mapOf(
-                "name", "doc2"
-        ));
-
-        persistedName = queryFactory.from(entity).where(entity.id.eq(docId1)).singleResult(entity.name);
-        assertThat(persistedName).isEqualTo("doc1");
-
-        persistedName = queryFactory.from(entity).where(entity.id.eq(docId2)).singleResult(entity.name);
-        assertThat(persistedName).isEqualTo("doc2");
+        bulk_load_after_publish();
     }
 
-    private String randomId() {
-        return randomUUID().toString();
-    }
-
-    private void create_first_two_versions_of_doc1(String docId1, Revision rev1, Revision rev2) {
+    private void create_first_two_versions_of_doc1() {
         transactionTemplate.execute(status -> {
             EntityUpdateBatch<String, Void> update = entityVersionStore.updateBatch(docId1);
             assertThat(update.contains(docId1)).isTrue();
@@ -129,15 +102,24 @@ public class EntityVersionStoreJdbcTest {
 
             return null;
         });
+
+        ObjectVersionGraph<Void> graph = entityVersionStore.load(docId1);
+        assertThat(graph.getTip().getProperties()).isEqualTo(mapOf(
+                "id", docId1,
+                "name", "Fixed name"
+        ));
+
+        String persistedName = queryFactory.from(entity).where(entity.id.eq(docId1)).singleResult(entity.name);
+        assertThat(persistedName).isEqualTo("Fixed name");
     }
 
-    private void cannot_bulk_load_before_publish(String docId1, String docId2) {
+    private void cannot_bulk_load_before_publish() {
         FetchResults<String, Void> graphs = entityVersionStore.load(asList(docId1, docId2));
         assertThat(graphs.isEmpty()).isTrue();
         assertThat(graphs.size()).isEqualTo(0);
     }
 
-    private void create_doc2_and_update_doc1(String docId1, String docId2, Revision rev2, Revision rev3, Revision rev4) {
+    private void create_doc2_and_update_doc1() {
         transactionTemplate.execute(status -> {
             EntityUpdateBatch<String, Void> update = entityVersionStore.updateBatch(asList(docId1, docId2));
             ObjectVersionGraph<Void> graph = entityVersionStore.load(docId1);
@@ -155,5 +137,39 @@ public class EntityVersionStoreJdbcTest {
             update.execute();
             return null;
         });
+    }
+
+    private void fetch_updates_of_doc1() {
+        List<ObjectVersion<Void>> updates = entityVersionStore.fetchUpdates(docId1, rev1);
+        assertThat(updates).hasSize(2);
+        assertThat(updates.get(0).revision).isEqualTo(rev2);
+        assertThat(updates.get(1).revision).isEqualTo(rev4);
+    }
+
+    private void bulk_load_after_publish() {
+        entityVersionStore.publish();
+
+        FetchResults<String, Void> graphs = entityVersionStore.load(asList(docId1, docId2));
+        assertThat(graphs.containsKey(docId1)).isTrue();
+        assertThat(graphs.containsKey(docId2)).isTrue();
+
+        assertThat(graphs.getVersionGraph(docId1).getTip().getProperties()).isEqualTo(mapOf(
+                "id", docId1,
+                "name", "doc1"
+        ));
+
+        assertThat(graphs.getVersionGraph(docId2).getTip().getProperties()).isEqualTo(mapOf(
+                "name", "doc2"
+        ));
+
+        String persistedName = queryFactory.from(entity).where(entity.id.eq(docId1)).singleResult(entity.name);
+        assertThat(persistedName).isEqualTo("doc1");
+
+        persistedName = queryFactory.from(entity).where(entity.id.eq(docId2)).singleResult(entity.name);
+        assertThat(persistedName).isEqualTo("doc2");
+    }
+
+    private String randomId() {
+        return randomUUID().toString();
     }
 }

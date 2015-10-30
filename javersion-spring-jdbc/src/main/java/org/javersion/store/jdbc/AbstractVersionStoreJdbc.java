@@ -16,11 +16,6 @@
 package org.javersion.store.jdbc;
 
 import static com.mysema.query.group.GroupBy.groupBy;
-import static com.mysema.query.support.Expressions.constant;
-import static com.mysema.query.support.Expressions.predicate;
-import static com.mysema.query.types.Ops.EQ;
-import static com.mysema.query.types.Ops.GT;
-import static com.mysema.query.types.Ops.IS_NULL;
 import static java.lang.System.arraycopy;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
@@ -37,7 +32,6 @@ import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
-import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.*;
@@ -75,8 +69,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected final Expression<?>[] versionAndParents;
 
-    protected final Expression<?>[] versionAndParentsSince;
-
     protected final QPair<Revision, Id> revisionAndDocId;
 
     protected final NumberSubQuery<Long> maxOrdinalSubQuery;
@@ -88,7 +80,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     protected  AbstractVersionStoreJdbc() {
         options = null;
         versionAndParents = null;
-        versionAndParentsSince = null;
         revisionAndDocId = null;
         maxOrdinalSubQuery = null;
         properties = null;
@@ -97,38 +88,18 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     public AbstractVersionStoreJdbc(Options options) {
         this.options = options;
         versionAndParents = concat(options.version.all(), GroupBy.set(options.parent.parentRevision));
-        versionAndParentsSince = concat(versionAndParents, options.sinceVersion.ordinal);
         revisionAndDocId = new QPair<>(options.version.revision, options.version.docId);
         maxOrdinalSubQuery = maxOrdinalSubQuery(options);
         properties = groupBy(options.property.revision).as(GroupBy.list(new QTuple(options.property.all())));
     }
 
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public ObjectVersionGraph<M> load(Id docId) {
-        FetchResults<Id, M> results = fetch(docId);
-        return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
-    }
+    public abstract ObjectVersionGraph<M> load(Id docId);
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public FetchResults<Id, M> load(Collection<Id> docIds) {
-        return fetch(versionsOf(docIds));
-    }
+    public abstract FetchResults<Id, M> load(Collection<Id> docIds);
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
-        List<Group> versionsAndParents = versionsAndParentsSince(docId, since);
-        if (versionsAndParents.isEmpty()) {
-            return ImmutableList.of();
-        }
-
-        Long sinceOrdinal = versionsAndParents.get(0).getOne(options.sinceVersion.ordinal);
-
-        BooleanExpression predicate = versionsOf(docId)
-                .and(predicate(GT, options.version.ordinal, constant(sinceOrdinal)));
-
-        FetchResults<Id, M> results = fetch(versionsAndParents, predicate);
-        return results.containsKey(docId) ? results.getVersions(docId) : ImmutableList.of();
-    }
+    public abstract List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since);
 
     /**
      * NOTE: publish() needs to be called in a separate transaction from append()!
@@ -189,16 +160,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
 
-    protected abstract BooleanExpression versionsOf(Id docId);
-
-    protected abstract BooleanExpression versionsOf(Collection<Id> docIds);
-
-    protected abstract OrderSpecifier<?>[] versionsOfOneOrderBy();
-
-    protected abstract OrderSpecifier<?>[] versionsOfManyOrderBy();
-
     protected abstract Map<Revision, Id> findUnpublishedRevisions();
-
 
     protected void afterPublish(Multimap<Id, Revision> publishedDocs) {
         // After publish hook for sub classes to override
@@ -221,20 +183,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     private NumberSubQuery<Long> maxOrdinalSubQuery(Options options) {
         return options.queryFactory.subQuery().from(options.version).unique(options.version.ordinal.max());
-    }
-
-    protected FetchResults<Id, M> fetch(Id docId) {
-        Check.notNull(docId, "docId");
-
-        List<Group> versionsAndParents = fetchVersionsAndParents(docId);
-        return fetch(versionsAndParents, versionsOf(docId));
-    }
-
-    protected FetchResults<Id, M> fetch(BooleanExpression predicate) {
-        Check.notNull(predicate, "predicate");
-
-        List<Group> versionsAndParents = fetchVersionsAndParents(predicate);
-        return fetch(versionsAndParents, predicate);
     }
 
     protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, BooleanExpression predicate) {
@@ -265,42 +213,13 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return qry.transform(properties);
     }
 
-    protected List<Group> fetchVersionsAndParents(Id docId) {
-        return fetchVersionsAndParentsQuery(versionsOf(docId))
-                .orderBy(versionsOfOneOrderBy())
-                .transform(groupBy(options.version.revision).list(versionAndParents));
-    }
-
-    protected List<Group> fetchVersionsAndParents(BooleanExpression predicate) {
-        return fetchVersionsAndParentsQuery(predicate)
-                .orderBy(versionsOfManyOrderBy())
-                .transform(groupBy(options.version.revision).list(versionAndParents));
-    }
-
-    protected SQLQuery fetchVersionsAndParentsQuery(BooleanExpression predicate) {
+    protected List<Group> fetchVersionsAndParents(BooleanExpression predicate, OrderSpecifier<?> orderBy) {
         return options.queryFactory
                 .from(options.version)
                 .leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision))
-                .where(predicate);
-    }
-
-    protected List<Group> versionsAndParentsSince(Id docId, Revision since) {
-        SQLQuery qry = options.queryFactory.from(options.sinceVersion);
-
-        // Left join version version on version.ordinal > since.ordinal and version.doc_id = since.doc_id
-        qry.leftJoin(options.version).on(
-                options.version.ordinal.gt(options.sinceVersion.ordinal),
-                predicate(EQ, options.version.docId, options.sinceVersion.docId));
-
-        // Left join parents
-        qry.leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision));
-
-        qry.where(options.sinceVersion.revision.eq(since),
-                versionsOf(docId).or(predicate(IS_NULL, options.version.docId)));
-
-        qry.orderBy(versionsOfOneOrderBy());
-
-        return verifyVersionsAndParentsSince(qry.transform(groupBy(options.version.revision).list(versionAndParentsSince)), since);
+                .where(predicate)
+                .orderBy(orderBy)
+                .transform(groupBy(options.version.revision).list(versionAndParents));
     }
 
     protected List<Group> verifyVersionsAndParentsSince(List<Group> versionsAndParents, Revision since) {
