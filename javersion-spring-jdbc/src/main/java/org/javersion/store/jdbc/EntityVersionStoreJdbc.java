@@ -28,7 +28,6 @@ import java.util.Map;
 import org.javersion.core.Revision;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.mysema.query.sql.Configuration;
 import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.types.OrderSpecifier;
 import com.mysema.query.types.Path;
@@ -36,10 +35,6 @@ import com.mysema.query.types.expr.BooleanExpression;
 import com.mysema.query.types.expr.SimpleExpression;
 
 public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVersionStoreJdbc<Id, M, JEntityVersion<Id>, EntityStoreOptions<Id>> {
-
-    public static void registerTypes(String tablePrefix, Configuration configuration) {
-        AbstractVersionStoreJdbc.registerTypes(tablePrefix, configuration);
-    }
 
     @SuppressWarnings("unused")
     protected EntityVersionStoreJdbc() {
@@ -61,6 +56,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVe
     }
 
     @Override
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
     protected EntityUpdateBatch<Id, M> optimizationUpdateBatch() {
         return new EntityUpdateBatch<>(options);
     }

@@ -1,15 +1,15 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.forVariable;
+import static com.mysema.query.types.PathMetadataFactory.*;
 
-import java.sql.Types;
+import com.mysema.query.types.path.*;
 
+import com.mysema.query.types.PathMetadata;
 import javax.annotation.Generated;
+import com.mysema.query.types.Path;
 
 import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.PathMetadata;
-import com.mysema.query.types.path.StringPath;
+import java.sql.Types;
 
 
 
@@ -25,6 +25,8 @@ public class QRepository extends com.mysema.query.sql.RelationalPathBase<QReposi
     public static final QRepository repository = new QRepository("REPOSITORY");
 
     public final StringPath id = createString("id");
+
+    public final com.mysema.query.sql.PrimaryKey<QRepository> constraint9 = createPrimaryKey(id);
 
     public QRepository(String variable) {
         super(QRepository.class, forVariable(variable), "PUBLIC", "REPOSITORY");

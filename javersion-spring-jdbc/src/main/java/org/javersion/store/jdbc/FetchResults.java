@@ -41,6 +41,10 @@ public class FetchResults<Id, M> {
         this.latestRevision = latestRevision;
     }
 
+    public boolean isEmpty() {
+        return versionsByDocId.isEmpty();
+    }
+
     public int size() {
         return versionsByDocId.size();
     }

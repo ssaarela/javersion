@@ -32,9 +32,9 @@ public class QEntityVersion extends com.mysema.query.sql.RelationalPathBase<QEnt
 
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
-    public final StringPath revision = createString("revision");
+    public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
-    public final StringPath type = createString("type");
+    public final EnumPath<org.javersion.core.VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 
     public final com.mysema.query.sql.PrimaryKey<QEntityVersion> constraint86 = createPrimaryKey(revision);
 
@@ -71,8 +71,8 @@ public class QEntityVersion extends com.mysema.query.sql.RelationalPathBase<QEnt
     public void addMetadata() {
         addMetadata(branch, ColumnMetadata.named("BRANCH").withIndex(5).ofType(Types.VARCHAR).withSize(128).notNull());
         addMetadata(docId, ColumnMetadata.named("DOC_ID").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
-        addMetadata(localOrdinal, ColumnMetadata.named("LOCAL_ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
-        addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(3).ofType(Types.BIGINT).withSize(19));
+        addMetadata(localOrdinal, ColumnMetadata.named("LOCAL_ORDINAL").withIndex(3).ofType(Types.BIGINT).withSize(19).notNull());
+        addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
         addMetadata(type, ColumnMetadata.named("TYPE").withIndex(6).ofType(Types.VARCHAR).withSize(8).notNull());
     }

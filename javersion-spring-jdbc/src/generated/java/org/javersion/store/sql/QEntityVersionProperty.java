@@ -28,7 +28,7 @@ public class QEntityVersionProperty extends com.mysema.query.sql.RelationalPathB
 
     public final StringPath path = createString("path");
 
-    public final StringPath revision = createString("revision");
+    public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
     public final StringPath str = createString("str");
 

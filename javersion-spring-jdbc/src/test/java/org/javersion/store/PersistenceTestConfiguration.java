@@ -68,9 +68,9 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public EntityVersionStoreJdbc<String, Void> entityVersionStore(SQLQueryFactory queryFactory) {
+    public CustomEntityVersionStore entityVersionStore(SQLQueryFactory queryFactory) {
         QEntityVersion since = new QEntityVersion("SINCE");
-        return new EntityVersionStoreJdbc<String, Void>(
+        return new CustomEntityVersionStore(
                 new EntityStoreOptions.Builder<String>()
                         .repositoryTable(new JRepository(repository))
                         .repositoryId("ENTITY_VERSION")

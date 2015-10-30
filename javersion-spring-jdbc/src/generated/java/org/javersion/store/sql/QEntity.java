@@ -26,6 +26,8 @@ public class QEntity extends com.mysema.query.sql.RelationalPathBase<QEntity> {
 
     public final StringPath id = createString("id");
 
+    public final StringPath name = createString("name");
+
     public final com.mysema.query.sql.PrimaryKey<QEntity> constraint7 = createPrimaryKey(id);
 
     public final com.mysema.query.sql.ForeignKey<QEntityVersion> _entityVersionDocIdFk = createInvForeignKey(id, "DOC_ID");
@@ -52,6 +54,7 @@ public class QEntity extends com.mysema.query.sql.RelationalPathBase<QEntity> {
 
     public void addMetadata() {
         addMetadata(id, ColumnMetadata.named("ID").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
+        addMetadata(name, ColumnMetadata.named("NAME").withIndex(2).ofType(Types.VARCHAR).withSize(255));
     }
 
 }

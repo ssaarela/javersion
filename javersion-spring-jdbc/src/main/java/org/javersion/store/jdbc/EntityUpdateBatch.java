@@ -135,7 +135,7 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
 
     protected void verifyDocId(Id docId) {
         if (!contains(docId)) {
-            throw new IllegalArgumentException("docId not marked for inclusion in this batch: " + docId);
+            throw new IllegalStateException("docId not marked for inclusion in this batch: " + docId);
         }
     }
 

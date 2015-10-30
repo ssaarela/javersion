@@ -24,9 +24,9 @@ public class QEntityVersionParent extends com.mysema.query.sql.RelationalPathBas
 
     public static final QEntityVersionParent entityVersionParent = new QEntityVersionParent("ENTITY_VERSION_PARENT");
 
-    public final StringPath parentRevision = createString("parentRevision");
+    public final SimplePath<org.javersion.core.Revision> parentRevision = createSimple("parentRevision", org.javersion.core.Revision.class);
 
-    public final StringPath revision = createString("revision");
+    public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
     public final com.mysema.query.sql.PrimaryKey<QEntityVersionParent> constraintE = createPrimaryKey(parentRevision, revision);
 

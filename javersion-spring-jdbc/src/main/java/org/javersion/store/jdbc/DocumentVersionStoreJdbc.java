@@ -33,16 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.mysema.query.sql.Configuration;
 import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.types.OrderSpecifier;
 import com.mysema.query.types.expr.BooleanExpression;
 
 public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id, M, JDocumentVersion<Id>, DocumentStoreOptions<Id>> {
-
-    public static void registerTypes(String tablePrefix, Configuration configuration) {
-        AbstractVersionStoreJdbc.registerTypes(tablePrefix, configuration);
-    }
 
     @SuppressWarnings("unused")
     protected DocumentVersionStoreJdbc() {
