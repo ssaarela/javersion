@@ -15,10 +15,10 @@
  */
 package org.javersion.core;
 
-import static com.google.common.base.Objects.equal;
 import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
 import static org.javersion.util.Check.notNull;
 
+import java.util.Objects;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -45,7 +45,7 @@ public final class Diff {
             K key = entry.getKey();
             V newValue = entry.getValue();
             V oldValue = fromClone.remove(key);
-            if (!equal(newValue, oldValue)) {
+            if (!Objects.equals(newValue, oldValue)) {
                 diff.put(key, newValue);
             }
         }
@@ -62,7 +62,7 @@ public final class Diff {
             K key = entry.getKey();
             V oldValue = entry.getValue();
             V newValue = toClone.remove(key);
-            if (!equal(oldValue, newValue)) {
+            if (!Objects.equals(oldValue, newValue)) {
                 diff.put(key, newValue);
             }
         }

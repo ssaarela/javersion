@@ -18,17 +18,17 @@ package org.javersion.util;
 
 public interface Merger<T> {
 
-    public void insert(T newEntry);
-    
+    void insert(T newEntry);
+
     /**
      * Return true if newEntry should replace oldEntry, otherwise false.
-     * 
+     *
      * @param oldEntry
      * @param newEntry
      * @return true if newEntry replaces oldEntry.
      */
-    public boolean merge(T oldEntry, T newEntry);
+    boolean merge(T oldEntry, T newEntry);
 
-    public void delete(T oldEntry);
-    
+    void delete(T oldEntry);
+
 }

@@ -15,8 +15,8 @@
  */
 package org.javersion.util;
 
-import static com.google.common.base.Objects.equal;
 import static java.lang.System.arraycopy;
+import java.util.Objects;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -26,7 +26,6 @@ import java.util.function.Consumer;
 
 import org.javersion.util.AbstractHashTrie.EntryNode;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.UnmodifiableIterator;
 
@@ -219,7 +218,7 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
 
         @Override
         Node<K, E> dissocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, Object key) {
-            if (Objects.equal(key, this.key)) {
+            if (Objects.equals(key, this.key)) {
                 currentContext.delete(self());
                 return null;
             }
@@ -228,7 +227,7 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
 
         @Override
         E findInternal(int shift, int hash, Object key) {
-            if (equal(this.key, key)) {
+            if (Objects.equals(this.key, key)) {
                 return self();
             }
             return null;
@@ -558,7 +557,7 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
         @Override
         public E findInternal(int shift, int hash, Object key) {
             for (E entry : entries) {
-                if (equal(entry.key, key)) {
+                if (Objects.equals(entry.key, key)) {
                     return entry;
                 }
             }
@@ -570,10 +569,10 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
         public Node<K, E> assocInternal(final UpdateContext<? super E>  currentContext, final int shift, int hash, final E newEntry) {
             if (hash == this.hash) {
                 for (int i=0; i < entries.length; i++) {
-                    if (equal(entries[i], newEntry)) {
+                    if (Objects.equals(entries[i], newEntry)) {
                         return this;
                     }
-                    else if (equal(entries[i].key, newEntry.key)) {
+                    else if (Objects.equals(entries[i].key, newEntry.key)) {
                         if (currentContext.merge(entries[i], newEntry)) {
                             E[] newEntries = entries.clone();
                             newEntries[i] = newEntry;
@@ -604,7 +603,7 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
         Node<K, E> dissocInternal(UpdateContext<? super E>  currentContext, int shift, int hash, Object key) {
             if (hash == this.hash) {
                 for (int i=0; i < entries.length; i++) {
-                    if (equal(entries[i].key, key)) {
+                    if (Objects.equals(entries[i].key, key)) {
                         currentContext.delete(entries[i]);
 
                         if (entries.length == 2) {

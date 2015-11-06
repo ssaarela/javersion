@@ -58,7 +58,7 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
 
     protected abstract This doReturn(Comparator<? super K> comparator, N newRoot, int newSize);
 
-    private final This commitAndReturn(UpdateContext<? super N> context, Comparator<? super K> comparator, N newRoot, int newSize) {
+    private This commitAndReturn(UpdateContext<? super N> context, Comparator<? super K> comparator, N newRoot, int newSize) {
         commit(context);
         return doReturn(comparator, newRoot, newSize);
     }

@@ -15,14 +15,14 @@
  */
 package org.javersion.object;
 
+import java.util.Objects;
+
 import javax.annotation.Nullable;
 
 import org.javersion.reflect.ElementDescriptor;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
-
-import com.google.common.base.Objects;
 
 public final class LocalTypeDescriptor {
 
@@ -54,7 +54,7 @@ public final class LocalTypeDescriptor {
         } else if (obj instanceof LocalTypeDescriptor) {
             LocalTypeDescriptor key = (LocalTypeDescriptor) obj;
             return this.typeDescriptor.equals(key.typeDescriptor)
-                    && Objects.equal(this.parent, key.parent);
+                    && Objects.equals(this.parent, key.parent);
         } else {
             return false;
         }

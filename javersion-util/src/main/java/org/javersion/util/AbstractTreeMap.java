@@ -203,11 +203,15 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
                 this.value = node.value;
                 return this;
             }
-            else {
+            else if (node.context.isSameAs(currentContext)) {
                 node.color = this.color;
                 node.left = this.left;
                 node.right = this.right;
                 return node;
+            }
+            else {
+                // This should never happen
+                throw new IllegalStateException("node from another UpdateContext");
             }
         }
 

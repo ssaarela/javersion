@@ -14,6 +14,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.4</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.javersion</groupId>
       <artifactId>javersion-core</artifactId>
       <version>${project.version}</version>

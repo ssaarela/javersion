@@ -15,10 +15,9 @@
  */
 package org.javersion.core;
 
-import static com.google.common.base.Objects.equal;
-
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import org.javersion.util.*;
@@ -83,7 +82,7 @@ public class MergeBuilder<K, V, M> {
             @Override
             public boolean merge(Entry<K, VersionProperty<V>> prevEntry, Entry<K, VersionProperty<V>> nextEntry) {
                 // Keep prevValue if there's no change
-                return !equal(prevEntry.getValue().value, nextEntry.getValue().value);
+                return !Objects.equals(prevEntry.getValue().value, nextEntry.getValue().value);
             }
         };
 
@@ -145,7 +144,7 @@ public class MergeBuilder<K, V, M> {
                 VersionProperty<V> nextValue = newEntry.getValue();
 
                 // Keep older value if there's no change
-                if (equal(prevValue.value, nextValue.value)) {
+                if (Objects.equals(prevValue.value, nextValue.value)) {
                     return nextValue.isBefore(prevValue);
                 }
                 // Keep prevValue if nextValue is from common ancestor
