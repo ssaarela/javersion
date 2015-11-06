@@ -18,14 +18,69 @@ package org.javersion.core;
 import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
 import static org.javersion.util.Check.notNull;
 
-import java.util.Objects;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
+
+import com.google.common.base.MoreObjects;
 
 public final class Diff {
 
     private Diff() {}
+
+    /**
+     * SortedMap-optimized version of diff. With TreeMaps this is faster for small maps (e.g. &lt; 100)
+     * but gets slower after that pretty fast.
+     */
+    @SuppressWarnings("unchecked")
+    public static <K, V> SortedMap<K, V> diff(SortedMap<K, V> from, SortedMap<K, V> to) {
+        Comparator comparator = MoreObjects.firstNonNull(from.comparator(), Comparator.naturalOrder());
+
+        TreeMap<K, V> diff = new TreeMap<>(comparator);
+        Iterator<Entry<K, V>> fromIter = from.entrySet().iterator();
+        Iterator<Entry<K, V>> toIter = to.entrySet().iterator();
+
+        Entry<K, V> oldEntry = null, newEntry = null;
+
+        while (fromIter.hasNext() && toIter.hasNext()) {
+            if (oldEntry == null) {
+                oldEntry = fromIter.next();
+            }
+            if (newEntry == null) {
+                newEntry = toIter.next();
+            }
+            int cmp = comparator.compare(oldEntry.getKey(), newEntry.getKey());
+            if (cmp == 0) {
+                V newValue = newEntry.getValue();
+                if (!Objects.equals(oldEntry.getValue(), newValue)) {
+                    diff.put(oldEntry.getKey(), newValue);
+                }
+                oldEntry = newEntry = null;
+            }
+            else if (cmp < 0) {
+                diff.put(oldEntry.getKey(), null);
+                oldEntry = null;
+            } else {
+                diff.put(newEntry.getKey(), newEntry.getValue());
+                newEntry = null;
+            }
+        }
+
+        if (oldEntry != null) {
+            diff.put(oldEntry.getKey(), null);
+        } else if (newEntry != null) {
+            diff.put(newEntry.getKey(), newEntry.getValue());
+        }
+
+        while (fromIter.hasNext()) {
+            diff.put(fromIter.next().getKey(), null);
+        }
+        while (toIter.hasNext()) {
+            newEntry = toIter.next();
+            diff.put(newEntry.getKey(), newEntry.getValue());
+        }
+
+        return diff;
+    }
 
     public static <K, V> Map<K, V> diff(Map<K, V> from, Map<K, V> to) {
         notNull(from, "from");
@@ -40,7 +95,7 @@ public final class Diff {
 
     private static <K, V> Map<K, V> diffBySmallerFrom(Map<K, V> from, Map<K, V> to) {
         Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
-        Map<K, V> fromClone = new LinkedHashMap<>(from);
+        Map<K, V> fromClone = new HashMap<>(from);
         for (Entry<K, V> entry : to.entrySet()) {
             K key = entry.getKey();
             V newValue = entry.getValue();
@@ -57,7 +112,7 @@ public final class Diff {
 
     private static <K, V> Map<K, V> diffBySmallerTo(Map<K, V> from, Map<K, V> to) {
         Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
-        Map<K, V> toClone = new LinkedHashMap<>(to);
+        Map<K, V> toClone = new HashMap<>(to);
         for (Entry<K, V> entry : from.entrySet()) {
             K key = entry.getKey();
             V oldValue = entry.getValue();
@@ -66,9 +121,8 @@ public final class Diff {
                 diff.put(key, newValue);
             }
         }
-        for (Entry<K, V> entry : toClone.entrySet()) {
-            diff.put(entry.getKey(), entry.getValue());
-        }
+        diff.putAll(toClone);
         return diff;
     }
+
 }

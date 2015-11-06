@@ -6,6 +6,8 @@ import static org.javersion.core.Diff.diff;
 import static org.junit.Assert.assertThat;
 
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.junit.Test;
 
@@ -34,7 +36,7 @@ public class DiffTest {
     @Test
     public void Null_Is_Meaningful_Against_Value2() {
         Map<Object, Object> diff = diff(map(1, 1, 2, 2), map(1, null));
-        assertThat(diff, equalTo(map(1, null, 2,null)));
+        assertThat(diff, equalTo(map(1, null, 2, null)));
     }
 
     @Test
@@ -61,6 +63,42 @@ public class DiffTest {
         assertThat(diff, equalTo(map(1,null, 2,null, 3,3, 4,4, 5,5)));
     }
 
+    @Test
+    public void Sorted_Equal() {
+        SortedMap<Object, Object> diff = diff(sorted(1, 1, 2, 2), sorted(1, 1, 2, 2));
+        assertThat(diff, equalTo(sorted()));
+    }
+
+    @Test
+    public void Sorted_All_Higher() {
+        SortedMap<Object, Object> diff = diff(sorted(1,1, 2,2), sorted(3,3, 4,4));
+        assertThat(diff, equalTo(sorted(1,null, 2,null, 3,3, 4,4)));
+    }
+
+    @Test
+    public void Sorted_All_Lower() {
+        SortedMap<Object, Object> diff = diff(sorted(3,3, 4,4), sorted(1,1, 2,2));
+        assertThat(diff, equalTo(sorted(1,1, 2,2, 3,null, 4,null)));
+    }
+
+    @Test
+    public void Sorted_Overlapping() {
+        SortedMap<Object, Object> diff = diff(sorted(1,1, 2,2), sorted(2,2, 3,3));
+        assertThat(diff, equalTo(sorted(1,null, 3,3)));
+    }
+
+    @Test
+    public void Sorted_Empty_From() {
+        SortedMap<Object, Object> diff = diff(sorted(), sorted(2,2, 3,3));
+        assertThat(diff, equalTo(sorted(2,2, 3,3)));
+    }
+
+    @Test
+    public void Sorted_Empty_To() {
+        SortedMap<Object, Object> diff = diff(sorted(2,2, 3,3), sorted());
+        assertThat(diff, equalTo(sorted(2,null, 3,null)));
+    }
+
     public static <K> Map<K, K> map(K... keysAndValues) {
         if (keysAndValues.length % 2 != 0) {
             throw new IllegalArgumentException("Expected even keysAndValues.size()");
@@ -71,4 +109,16 @@ public class DiffTest {
         }
         return map;
     }
+
+    public static <K> SortedMap<K, K> sorted(K... keysAndValues) {
+        if (keysAndValues.length % 2 != 0) {
+            throw new IllegalArgumentException("Expected even keysAndValues.size()");
+        }
+        SortedMap<K, K> map = new TreeMap<>();
+        for (int i=0; i < keysAndValues.length; i+=2) {
+            map.put(keysAndValues[i], keysAndValues[i+1]);
+        }
+        return map;
+    }
+
 }
