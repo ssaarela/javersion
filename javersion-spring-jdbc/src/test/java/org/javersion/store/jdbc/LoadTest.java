@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -41,18 +42,24 @@ public class LoadTest {
     private int nextValue = 0;
 
     private final int docCount = 100;
-    private final int docVersionCount = 50;
+    private final int docVersionCount = 30;
     private final int propCount = 100;
 
     @Resource
-    ObjectVersionStoreJdbc<String, Void> versionStore;
+    DocumentVersionStoreJdbc<String, Void> documentStore;
+
+    @Resource
+    CustomEntityVersionStore entityStore;
+
+    @Resource
+    TransactionTemplate transactionTemplate;
 
     @Test
     @Ignore
-    public void performance() {
+    public void document_store_performance() {
         long ts;
 
-//        VersionGraphCache<String, Void> cache = new VersionGraphCache<>(versionStore,
+//        VersionGraphCache<String, Void> cache = new VersionGraphCache<>(documentStore,
 //                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
 //                        .maximumSize(docCount)
 //                        .refreshAfterWrite(1, TimeUnit.NANOSECONDS));
@@ -62,7 +69,7 @@ public class LoadTest {
             for (String docId : docIds) {
                 ts = currentTimeMillis();
 
-                ObjectVersionGraph<Void> versionGraph = versionStore.load(docId);
+                ObjectVersionGraph<Void> versionGraph = documentStore.load(docId);
 //                ObjectVersionGraph<Void> versionGraph = cache.load(docId);
 
                 print(round, "load", ts);
@@ -77,18 +84,18 @@ public class LoadTest {
                 ObjectVersion<Void> version = builder.build();
 
                 ts = currentTimeMillis();
-                versionStore.append(docId, versionGraph.commit(version).getTip());
+                documentStore.append(docId, versionGraph.commit(version).getTip());
                 print(round, "append", ts);
             }
             ts = currentTimeMillis();
-            versionStore.publish();
+            documentStore.publish();
             print(round, "publish", ts);
         }
     }
 
     @Test
     @Ignore
-    public void batch_performance() {
+    public void document_store_batch_performance() {
         String appendLabel = "append" + docCount;
         String loadLabel = "load" + docCount;
         long ts;
@@ -104,15 +111,15 @@ public class LoadTest {
             versions.put(docId, versionGraph.getTip());
         }
         ts = currentTimeMillis();
-        versionStore.append(versions);
+        documentStore.append(versions);
         print(1, appendLabel, ts);
 
-        versionStore.publish();
+        documentStore.publish();
 
         for (int round=2; round <= docVersionCount; round++) {
 
             ts = currentTimeMillis();
-            FetchResults<String, Void> results = versionStore.load(docIds);
+            FetchResults<String, Void> results = documentStore.load(docIds);
             print(round, loadLabel, ts);
 
             versions = ArrayListMultimap.create(docCount, propCount);
@@ -120,7 +127,7 @@ public class LoadTest {
                 ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
                         .changeset(generateProperties(propCount));
 
-                ObjectVersionGraph<Void> versionGraph = results.getVersionGraph(docId).get();
+                ObjectVersionGraph<Void> versionGraph = results.getVersionGraph(docId);
                 builder.parents(versionGraph.getTip().getRevision());
 
                 versionGraph = versionGraph.commit(builder.build());
@@ -128,10 +135,50 @@ public class LoadTest {
             }
 
             ts = currentTimeMillis();
-            versionStore.append(versions);
+            documentStore.append(versions);
             print(round, appendLabel, ts);
 
-            versionStore.publish();
+            documentStore.publish();
+        }
+    }
+
+    @Test
+    @Ignore
+    public void entity_store_performance() {
+        long ts;
+
+        List<String> docIds = generateDocIds(docCount);
+        for (int round=1; round <= docVersionCount; round++) {
+            for (String docId : docIds) {
+                ts = currentTimeMillis();
+
+                final ObjectVersionGraph<Void> versionGraph =
+                        transactionTemplate.execute(status -> entityStore.load(docId));
+
+                print(round, "load", ts);
+
+                ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
+                        .changeset(generateProperties(propCount));
+
+                if (!versionGraph.isEmpty()) {
+                    builder.parents(versionGraph.getTip().getRevision());
+                }
+
+                final ObjectVersion<Void> version = builder.build();
+
+                ts = currentTimeMillis();
+
+                transactionTemplate.execute(status -> {
+                    EntityUpdateBatch<String, Void> update = entityStore.updateBatch(docId);
+                    update.addVersion(docId, versionGraph.commit(version).getTip());
+                    update.execute();
+                    return null;
+                });
+                print(round, "append", ts);
+            }
+//            ts = currentTimeMillis();
+//            entityStore.publish();
+//            print(round, "publish", ts);
         }
     }
 

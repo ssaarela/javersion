@@ -15,7 +15,7 @@
  */
 package org.javersion.object.mapping;
 
-import java.util.Optional;
+import javax.annotation.Nullable;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
@@ -25,13 +25,13 @@ import org.javersion.reflect.TypeDescriptor;
 
 public interface TypeMapping {
 
-    boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor);
+    boolean applies(@Nullable PropertyPath path, LocalTypeDescriptor localTypeDescriptor);
 
     default ValueType getValueType() {
         throw new UnsupportedOperationException();
     }
 
-    default ValueType describe(Optional<PropertyPath> path, TypeDescriptor type, DescribeContext context) {
+    default ValueType describe(@Nullable PropertyPath path, TypeDescriptor type, DescribeContext context) {
         return getValueType();
     }
 

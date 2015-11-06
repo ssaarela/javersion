@@ -15,8 +15,6 @@
  */
 package org.javersion.object.mapping;
 
-import java.util.Optional;
-
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.IdentifiableType;
@@ -40,13 +38,13 @@ public class ReferenceTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
-        return objectTypeMapping.applies(Optional.of(targetPath), localTypeDescriptor) &&
-                (!path.isPresent() || isReferencePath(targetPath, path.get()));
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        return objectTypeMapping.applies(targetPath, localTypeDescriptor) &&
+                (path == null || isReferencePath(targetPath, path));
     }
 
     @Override
-    public ValueType describe(Optional<PropertyPath> path, TypeDescriptor type, DescribeContext context) {
+    public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
         return describeReference(type, targetPath, context);
     }
 

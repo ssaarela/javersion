@@ -15,8 +15,6 @@
  */
 package org.javersion.object.mapping;
 
-import java.util.Optional;
-
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.types.PrimitiveValueType;
 import org.javersion.object.types.ValueType;
@@ -34,7 +32,7 @@ public abstract class PrimitiveTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         Class<?> clazz = localTypeDescriptor.typeDescriptor.getRawType();
         return wrapperType.equals(clazz) || primitiveType.equals(clazz);
     }

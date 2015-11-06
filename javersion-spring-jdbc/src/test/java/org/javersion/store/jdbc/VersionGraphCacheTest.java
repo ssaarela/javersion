@@ -3,7 +3,7 @@ package org.javersion.store.jdbc;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
-import static org.javersion.store.sql.QTestVersion.testVersion;
+import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +32,7 @@ import com.mysema.query.sql.SQLQueryFactory;
 public class VersionGraphCacheTest {
 
     @Resource
-    ObjectVersionStoreJdbc<String, Void> versionStore;
+    DocumentVersionStoreJdbc<String, Void> documentStore;
 
     @Resource
     SQLQueryFactory queryFactory;
@@ -49,8 +49,8 @@ public class VersionGraphCacheTest {
         ObjectVersion<Void> version = ObjectVersion.<Void>builder()
                 .changeset(ImmutableMap.of(ROOT.property("property"), "value"))
                 .build();
-        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
-        versionStore.publish();
+        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        documentStore.publish();
 
         versionGraph = cache.load(docId);
         assertThat(versionGraph.isEmpty()).isFalse();
@@ -59,8 +59,8 @@ public class VersionGraphCacheTest {
         version = ObjectVersion.<Void>builder()
                 .changeset(ImmutableMap.of(ROOT.property("property"), "value2"))
                 .build();
-        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
-        versionStore.publish();
+        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        documentStore.publish();
 
         versionGraph = cache.load(docId);
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(version);
@@ -84,8 +84,8 @@ public class VersionGraphCacheTest {
         ObjectVersion<Void> version = ObjectVersion.<Void>builder()
                 .changeset(ImmutableMap.of(ROOT.property("property"), "value"))
                 .build();
-        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
-        versionStore.publish();
+        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        documentStore.publish();
 
         versionGraph = cache.load(docId);
         assertThat(versionGraph.isEmpty()).isTrue();
@@ -106,7 +106,7 @@ public class VersionGraphCacheTest {
         ObjectVersion<Void> version = ObjectVersion.<Void>builder()
                 .changeset(ImmutableMap.of(ROOT.property("property"), "value"))
                 .build();
-        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
         assertThat(cache.publish()).isEqualTo(ImmutableSet.of(docId));
 
         versionGraph = cache.load(docId);
@@ -120,12 +120,12 @@ public class VersionGraphCacheTest {
         VersionGraphCache<String, Void> cache = newNonRefreshingCache();
 
         ObjectVersion<Void> version = ObjectVersion.<Void>builder().build(); // empty version
-        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
         cache.publish();
 
         assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
 
-        queryFactory.delete(testVersion).where(testVersion.revision.eq(version.revision)).execute();
+        queryFactory.delete(documentVersion).where(documentVersion.revision.eq(version.revision)).execute();
 
         // Does not hit database
         assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
@@ -141,14 +141,14 @@ public class VersionGraphCacheTest {
         VersionGraphCache<String, Void> cache = newRefreshingCache(1); // 100 ms
 
         ObjectVersion<Void> version = ObjectVersion.<Void>builder().build(); // empty version
-        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
         cache.publish();
 
         assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
 
-        queryFactory.delete(testVersion).where(testVersion.revision.eq(version.revision)).execute();
+        queryFactory.delete(documentVersion).where(documentVersion.revision.eq(version.revision)).execute();
 
-        Thread.sleep(1);
+        Thread.sleep(10);
 
         assertThat(cache.load(docId).isEmpty()).isEqualTo(true);
     }
@@ -156,13 +156,13 @@ public class VersionGraphCacheTest {
     @Test
     public void auto_refresh_only_cached_graphs() {
         final MutableBoolean cacheRefreshed = new MutableBoolean(false);
-        ObjectVersionStoreJdbc<String, Void> proxyStore = new ObjectVersionStoreJdbc<String, Void>() {
+        DocumentVersionStoreJdbc<String, Void> proxyStore = new DocumentVersionStoreJdbc<String, Void>() {
             @Override
             public void append(String docId, VersionNode<PropertyPath, Object, Void> version) {
-                versionStore.append(docId, version);
+                documentStore.append(docId, version);
             }
             @Override
-            public Multimap<String, Revision> publish() { return versionStore.publish(); }
+            public Multimap<String, Revision> publish() { return documentStore.publish(); }
             @Override
             public ObjectVersionGraph<Void> load(String docId) {
                 cacheRefreshed.setTrue();
@@ -191,7 +191,7 @@ public class VersionGraphCacheTest {
     }
 
     private VersionGraphCache<String, Void> newRefreshingCache(long refreshAfterNanos) {
-        return new VersionGraphCache<>(versionStore,
+        return new VersionGraphCache<>(documentStore,
                 CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
                         .maximumSize(8)
                         .refreshAfterWrite(refreshAfterNanos, TimeUnit.NANOSECONDS)
@@ -199,7 +199,7 @@ public class VersionGraphCacheTest {
     }
 
     private VersionGraphCache<String, Void> newNonRefreshingCache() {
-        return new VersionGraphCache<>(versionStore,
+        return new VersionGraphCache<>(documentStore,
                 // Non-refreshing cache
                 CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
                         .maximumSize(8));

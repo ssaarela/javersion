@@ -25,23 +25,24 @@ import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.SimplePath;
 import com.mysema.query.types.path.StringPath;
 
-public class JVersion<Id> extends com.mysema.query.sql.RelationalPathBase<JVersion>  {
+public abstract class JVersion<Id> extends RelationalPathBase<JVersion>  {
 
     public final Path<Id> docId;
 
     public final StringPath branch = createString("branch");
 
-    public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
-
     public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
-    public final NumberPath<Long> txOrdinal = createNumber("txOrdinal", Long.class);
-
     public final EnumPath<VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
+
+    public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
     public JVersion(RelationalPathBase<?> table, Path<Id> docId) {
         super(JVersion.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
         this.docId = docId;
+    }
+
+    protected void copyMetadata(RelationalPathBase<?> table) {
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
     }
 

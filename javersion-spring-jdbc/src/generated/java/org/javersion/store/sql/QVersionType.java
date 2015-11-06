@@ -28,7 +28,9 @@ public class QVersionType extends com.mysema.query.sql.RelationalPathBase<QVersi
 
     public final com.mysema.query.sql.PrimaryKey<QVersionType> constraint8 = createPrimaryKey(name);
 
-    public final com.mysema.query.sql.ForeignKey<QTestVersion> _testVersionTypeFk = createInvForeignKey(name, "TYPE");
+    public final com.mysema.query.sql.ForeignKey<QDocumentVersion> _documentVersionTypeFk = createInvForeignKey(name, "TYPE");
+
+    public final com.mysema.query.sql.ForeignKey<QEntityVersion> _entityVersionTypeFk = createInvForeignKey(name, "TYPE");
 
     public QVersionType(String variable) {
         super(QVersionType.class, forVariable(variable), "PUBLIC", "VERSION_TYPE");

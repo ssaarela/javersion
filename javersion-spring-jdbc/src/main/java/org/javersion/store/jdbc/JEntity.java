@@ -16,15 +16,15 @@
 package org.javersion.store.jdbc;
 
 import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.path.StringPath;
+import com.mysema.query.types.Path;
 
+public class JEntity<Id extends Comparable> extends RelationalPathBase<JEntity>  {
 
-public class JRepository extends com.mysema.query.sql.RelationalPathBase<JRepository> {
+    public final Path<Id> id;
 
-    public final StringPath id = createString("id");
-
-    public JRepository(RelationalPathBase<?> table) {
-        super(JRepository.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
+    public JEntity(RelationalPathBase<?> table, Path<Id> id) {
+        super(JEntity.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
+        this.id = id;
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
     }
 

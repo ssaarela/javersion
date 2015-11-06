@@ -15,17 +15,19 @@
  */
 package org.javersion.store.jdbc;
 
-import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.path.StringPath;
+import org.javersion.core.VersionNode;
+import org.javersion.path.PropertyPath;
 
+public class DocumentUpdateBatch<Id, M> extends AbstractUpdateBatch<Id, M, JDocumentVersion<Id>, DocumentStoreOptions<Id>> {
 
-public class JRepository extends com.mysema.query.sql.RelationalPathBase<JRepository> {
+    public DocumentUpdateBatch(DocumentStoreOptions<Id> options) {
+        super(options);
+    }
 
-    public final StringPath id = createString("id");
-
-    public JRepository(RelationalPathBase<?> table) {
-        super(JRepository.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
-        table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
+    @Override
+    protected void insertVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
+        versionBatch.set(options.version.txOrdinal, options.nextOrdinal);
+        super.insertVersion(docId, version);
     }
 
 }

@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.javersion.core.Revision;
 import org.javersion.core.VersionGraph;
+import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.slf4j.Logger;
@@ -40,13 +41,13 @@ public class VersionGraphCache<Id, M> {
 
     protected final LoadingCache<Id, ObjectVersionGraph<M>> cache;
 
-    protected final ObjectVersionStoreJdbc<Id, M> versionStore;
+    private final DocumentVersionStoreJdbc<Id, M> versionStore;
 
     protected final Set<Id> cachedDocIds;
 
 
     // About CacheBuilder generics: https://code.google.com/p/guava-libraries/issues/detail?id=738
-    public VersionGraphCache(ObjectVersionStoreJdbc<Id, M> versionStore, CacheBuilder<Object, Object> cacheBuilder) {
+    public VersionGraphCache(DocumentVersionStoreJdbc<Id, M> versionStore, CacheBuilder<Object, Object> cacheBuilder) {
         this.versionStore = versionStore;
 
         this.cache = cacheBuilder.build(newCacheLoader(versionStore));
@@ -89,7 +90,7 @@ public class VersionGraphCache<Id, M> {
         cache.invalidateAll();
     }
 
-    protected CacheLoader<Id, ObjectVersionGraph<M>> newCacheLoader(final ObjectVersionStoreJdbc<Id, M> versionStore) {
+    protected CacheLoader<Id, ObjectVersionGraph<M>> newCacheLoader(final DocumentVersionStoreJdbc<Id, M> versionStore) {
         return new CacheLoader<Id, ObjectVersionGraph<M>>() {
 
             @Override
@@ -99,23 +100,20 @@ public class VersionGraphCache<Id, M> {
 
             @Override
             public ListenableFuture<ObjectVersionGraph<M>> reload(Id docId, ObjectVersionGraph<M> oldValue) throws Exception {
-                if (oldValue.isEmpty()) {
-                    return immediateFuture(versionStore.load(docId));
-                }
-                ObjectVersionGraph<M> newValue = oldValue;
-                Revision since = oldValue.getTip().getRevision();
-                try {
-                    List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
-                    if (!updates.isEmpty()) {
-                        newValue = oldValue.commit(updates);
+                if (!oldValue.isEmpty()) {
+                    ObjectVersionGraph<M> newValue = oldValue;
+                    Revision since = oldValue.getTip().getRevision();
+                    try {
+                        List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
+                        if (!updates.isEmpty()) {
+                            newValue = oldValue.commit(updates);
+                        }
+                        return immediateFuture(newValue);
+                    } catch (VersionNotFoundException e) {
+                        // since revision is deleted - reload graph
                     }
-                    return immediateFuture(newValue);
-                } catch (RuntimeException e) {
-                    if (log.isInfoEnabled()) {
-                        log.info("Failed to refresh " + docId, e);
-                    }
-                    return immediateFuture(versionStore.load(docId));
                 }
+                return immediateFuture(versionStore.load(docId));
             }
 
         };

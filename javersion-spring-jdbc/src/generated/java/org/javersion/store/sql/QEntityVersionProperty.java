@@ -15,14 +15,14 @@ import java.sql.Types;
 
 
 /**
- * QTestVersionProperty is a Querydsl query type for QTestVersionProperty
+ * QEntityVersionProperty is a Querydsl query type for QEntityVersionProperty
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QTestVersionProperty extends com.mysema.query.sql.RelationalPathBase<QTestVersionProperty> {
+public class QEntityVersionProperty extends com.mysema.query.sql.RelationalPathBase<QEntityVersionProperty> {
 
-    private static final long serialVersionUID = 929596398;
+    private static final long serialVersionUID = 1792442301;
 
-    public static final QTestVersionProperty testVersionProperty = new QTestVersionProperty("TEST_VERSION_PROPERTY");
+    public static final QEntityVersionProperty entityVersionProperty = new QEntityVersionProperty("ENTITY_VERSION_PROPERTY");
 
     public final NumberPath<Long> nbr = createNumber("nbr", Long.class);
 
@@ -34,27 +34,27 @@ public class QTestVersionProperty extends com.mysema.query.sql.RelationalPathBas
 
     public final StringPath type = createString("type");
 
-    public final com.mysema.query.sql.PrimaryKey<QTestVersionProperty> constraintE = createPrimaryKey(path, revision);
+    public final com.mysema.query.sql.PrimaryKey<QEntityVersionProperty> constraint2 = createPrimaryKey(path, revision);
 
-    public final com.mysema.query.sql.ForeignKey<QTestVersion> testVersionPropertyRevisionFk = createForeignKey(revision, "REVISION");
+    public final com.mysema.query.sql.ForeignKey<QEntityVersion> entityVersionPropertyRevisionFk = createForeignKey(revision, "REVISION");
 
-    public QTestVersionProperty(String variable) {
-        super(QTestVersionProperty.class, forVariable(variable), "PUBLIC", "TEST_VERSION_PROPERTY");
+    public QEntityVersionProperty(String variable) {
+        super(QEntityVersionProperty.class, forVariable(variable), "PUBLIC", "ENTITY_VERSION_PROPERTY");
         addMetadata();
     }
 
-    public QTestVersionProperty(String variable, String schema, String table) {
-        super(QTestVersionProperty.class, forVariable(variable), schema, table);
+    public QEntityVersionProperty(String variable, String schema, String table) {
+        super(QEntityVersionProperty.class, forVariable(variable), schema, table);
         addMetadata();
     }
 
-    public QTestVersionProperty(Path<? extends QTestVersionProperty> path) {
-        super(path.getType(), path.getMetadata(), "PUBLIC", "TEST_VERSION_PROPERTY");
+    public QEntityVersionProperty(Path<? extends QEntityVersionProperty> path) {
+        super(path.getType(), path.getMetadata(), "PUBLIC", "ENTITY_VERSION_PROPERTY");
         addMetadata();
     }
 
-    public QTestVersionProperty(PathMetadata<?> metadata) {
-        super(QTestVersionProperty.class, metadata, "PUBLIC", "TEST_VERSION_PROPERTY");
+    public QEntityVersionProperty(PathMetadata<?> metadata) {
+        super(QEntityVersionProperty.class, metadata, "PUBLIC", "ENTITY_VERSION_PROPERTY");
         addMetadata();
     }
 

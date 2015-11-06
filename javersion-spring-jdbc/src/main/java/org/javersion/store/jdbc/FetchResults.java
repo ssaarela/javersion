@@ -16,7 +16,6 @@
 package org.javersion.store.jdbc;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.javersion.core.Revision;
@@ -41,6 +40,10 @@ public class FetchResults<Id, M> {
         this.latestRevision = latestRevision;
     }
 
+    public boolean isEmpty() {
+        return versionsByDocId.isEmpty();
+    }
+
     public int size() {
         return versionsByDocId.size();
     }
@@ -53,12 +56,12 @@ public class FetchResults<Id, M> {
         return versionsByDocId.containsKey(key);
     }
 
-    public Optional<List<ObjectVersion<M>>> getVersions(Id docId) {
-        return Optional.ofNullable(versionsByDocId.get(docId));
+    public List<ObjectVersion<M>> getVersions(Id docId) {
+        return versionsByDocId.get(docId);
     }
 
-    public Optional<ObjectVersionGraph<M>> getVersionGraph(Id docId) {
+    public ObjectVersionGraph<M> getVersionGraph(Id docId) {
         List<ObjectVersion<M>> versions = versionsByDocId.get(docId);
-        return versions != null ? Optional.of(ObjectVersionGraph.init(versions)) : Optional.empty();
+        return versions != null ? ObjectVersionGraph.init(versions) : null;
     }
 }

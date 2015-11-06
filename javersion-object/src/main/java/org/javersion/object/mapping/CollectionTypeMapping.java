@@ -16,7 +16,6 @@
 package org.javersion.object.mapping;
 
 import java.util.Collection;
-import java.util.Optional;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
@@ -28,14 +27,14 @@ import org.javersion.reflect.TypeDescriptor;
 public class CollectionTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(Optional<PropertyPath> path, LocalTypeDescriptor localTypeDescriptor) {
-        return path.isPresent() && localTypeDescriptor.typeDescriptor.getRawType().equals(Collection.class);
+    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        return path != null && localTypeDescriptor.typeDescriptor.getRawType().equals(Collection.class);
     }
 
     @Override
-    public ValueType describe(Optional<PropertyPath> path, TypeDescriptor collectionType, DescribeContext context) {
+    public ValueType describe(PropertyPath path, TypeDescriptor collectionType, DescribeContext context) {
         TypeDescriptor elementType = collectionType.resolveGenericParameter(Collection.class, 0);
-        context.describeComponent(path.get().anyIndex(), collectionType, elementType);
+        context.describeComponent(path.anyIndex(), collectionType, elementType);
         return new CollectionType();
     }
 
