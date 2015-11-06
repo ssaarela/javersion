@@ -11,6 +11,7 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import org.javersion.core.Revision;
+import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.store.PersistenceTestConfiguration;
@@ -59,6 +60,11 @@ public class EntityVersionStoreJdbcTest {
         });
     }
 
+    @Test(expected = VersionNotFoundException.class)
+    public void throws_exception_if_since_revision_is_not_found() {
+        entityVersionStore.fetchUpdates(docId2, rev1);
+    }
+
     @Test
     public void save_read_and_update_flow() {
 
@@ -70,7 +76,11 @@ public class EntityVersionStoreJdbcTest {
 
         fetch_updates_of_doc1();
 
+        fetch_updates_of_doc2();
+
         bulk_load_after_publish();
+
+        optimize_doc1();
     }
 
     private void create_first_two_versions_of_doc1() {
@@ -146,6 +156,11 @@ public class EntityVersionStoreJdbcTest {
         assertThat(updates.get(1).revision).isEqualTo(rev4);
     }
 
+    private void fetch_updates_of_doc2() {
+        List<ObjectVersion<Void>> updates = entityVersionStore.fetchUpdates(docId2, rev3);
+        assertThat(updates).isEmpty();
+    }
+
     private void bulk_load_after_publish() {
         entityVersionStore.publish();
 
@@ -167,6 +182,12 @@ public class EntityVersionStoreJdbcTest {
 
         persistedName = queryFactory.from(entity).where(entity.id.eq(docId2)).singleResult(entity.name);
         assertThat(persistedName).isEqualTo("doc2");
+    }
+
+    private void optimize_doc1() {
+        entityVersionStore.optimize(docId1, v -> v.revision.equals(rev4));
+        ObjectVersionGraph<Void> graph = entityVersionStore.load(docId1);
+        assertThat(graph.versionNodes.size()).isEqualTo(1);
     }
 
     private String randomId() {

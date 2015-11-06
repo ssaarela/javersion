@@ -92,10 +92,10 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
 
     @Override
     public void execute() {
-        if (!entityCreateBatch.isEmpty()) {
+        if (entityCreateBatch != null && !entityCreateBatch.isEmpty()) {
             entityCreateBatch.execute();
         }
-        if (!entityUpdateBatch.isEmpty()) {
+        if (entityUpdateBatch != null && !entityUpdateBatch.isEmpty()) {
             entityUpdateBatch.execute();
         }
         super.execute();
