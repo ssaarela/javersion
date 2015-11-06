@@ -53,8 +53,8 @@ public class EntityVersionStoreJdbcTest {
     @Test(expected = IllegalStateException.class)
     public void must_lock_entity_before_update() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, Void> update = entityVersionStore.updateBatch(randomId());
-            update.addVersion(randomId(), ObjectVersionGraph.init(ObjectVersion.<Void>builder().build()).getTip());
+            EntityUpdateBatch<String, String> update = entityVersionStore.updateBatch(randomId());
+            update.addVersion(randomId(), ObjectVersionGraph.init(ObjectVersion.<String>builder().build()).getTip());
             update.execute();
             return null;
         });
@@ -83,25 +83,43 @@ public class EntityVersionStoreJdbcTest {
         optimize_doc1();
     }
 
+    @Test
+    public void save_and_load_version_comment() {
+        final String comment = "Comment metadata";
+        final String docId = randomId();
+        transactionTemplate.execute(status -> {
+            EntityUpdateBatch<String, String> update = entityVersionStore.updateBatch(docId);
+            ObjectVersion<String> version = ObjectVersion.<String>builder()
+                    .meta(comment)
+                    .build();
+            update.addVersion(docId, ObjectVersionGraph.init(version).getTip());
+            update.execute();
+
+            return null;
+        });
+        ObjectVersionGraph<String> graph = entityVersionStore.load(docId);
+        assertThat(graph.getTip().getMeta()).isEqualTo(comment);
+    }
+
     private void create_first_two_versions_of_doc1() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, Void> update = entityVersionStore.updateBatch(docId1);
+            EntityUpdateBatch<String, String> update = entityVersionStore.updateBatch(docId1);
             assertThat(update.contains(docId1)).isTrue();
             assertThat(update.contains(randomId())).isFalse();
             assertThat(update.isCreate(docId1)).isTrue();
             assertThat(update.isUpdate(docId1)).isFalse();
 
-            ObjectVersion<Void> v1 = ObjectVersion.<Void>builder(rev1)
+            ObjectVersion<String> v1 = ObjectVersion.<String>builder(rev1)
                     .changeset(mapOf(
                             "id", docId1,
                             "name", "name of " + docId1))
                     .build();
-            ObjectVersionGraph<Void> graph = ObjectVersionGraph.init(v1);
+            ObjectVersionGraph<String> graph = ObjectVersionGraph.init(v1);
             update.addVersion(docId1, graph.getTip());
             assertThat(update.isCreate(docId1)).isFalse();
             assertThat(update.isUpdate(docId1)).isTrue();
 
-            ObjectVersion<Void> v2 = ObjectVersion.<Void>builder(rev2)
+            ObjectVersion<String> v2 = ObjectVersion.<String>builder(rev2)
                     .parents(rev1)
                     .changeset(mapOf(
                             "name", "Fixed name"))
@@ -113,7 +131,7 @@ public class EntityVersionStoreJdbcTest {
             return null;
         });
 
-        ObjectVersionGraph<Void> graph = entityVersionStore.load(docId1);
+        ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
         assertThat(graph.getTip().getProperties()).isEqualTo(mapOf(
                 "id", docId1,
                 "name", "Fixed name"
@@ -124,23 +142,23 @@ public class EntityVersionStoreJdbcTest {
     }
 
     private void cannot_bulk_load_before_publish() {
-        FetchResults<String, Void> graphs = entityVersionStore.load(asList(docId1, docId2));
+        FetchResults<String, String> graphs = entityVersionStore.load(asList(docId1, docId2));
         assertThat(graphs.isEmpty()).isTrue();
         assertThat(graphs.size()).isEqualTo(0);
     }
 
     private void create_doc2_and_update_doc1() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, Void> update = entityVersionStore.updateBatch(asList(docId1, docId2));
-            ObjectVersionGraph<Void> graph = entityVersionStore.load(docId1);
+            EntityUpdateBatch<String, String> update = entityVersionStore.updateBatch(asList(docId1, docId2));
+            ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
             assertThat(graph.isEmpty()).isFalse();
 
             // Create doc2
-            ObjectVersion<Void> v3 = ObjectVersion.<Void>builder(rev3).changeset(mapOf("name", "doc2")).build();
+            ObjectVersion<String> v3 = ObjectVersion.<String>builder(rev3).changeset(mapOf("name", "doc2")).build();
             update.addVersion(docId2, ObjectVersionGraph.init(v3).getTip());
 
             // Update doc1
-            ObjectVersion<Void> v4 = ObjectVersion.<Void>builder(rev4).parents(rev2).changeset(mapOf("name", "doc1")).build();
+            ObjectVersion<String> v4 = ObjectVersion.<String>builder(rev4).parents(rev2).changeset(mapOf("name", "doc1")).build();
 
             update.addVersion(docId1, graph.commit(v4).getTip());
 
@@ -150,21 +168,21 @@ public class EntityVersionStoreJdbcTest {
     }
 
     private void fetch_updates_of_doc1() {
-        List<ObjectVersion<Void>> updates = entityVersionStore.fetchUpdates(docId1, rev1);
+        List<ObjectVersion<String>> updates = entityVersionStore.fetchUpdates(docId1, rev1);
         assertThat(updates).hasSize(2);
         assertThat(updates.get(0).revision).isEqualTo(rev2);
         assertThat(updates.get(1).revision).isEqualTo(rev4);
     }
 
     private void fetch_updates_of_doc2() {
-        List<ObjectVersion<Void>> updates = entityVersionStore.fetchUpdates(docId2, rev3);
+        List<ObjectVersion<String>> updates = entityVersionStore.fetchUpdates(docId2, rev3);
         assertThat(updates).isEmpty();
     }
 
     private void bulk_load_after_publish() {
         entityVersionStore.publish();
 
-        FetchResults<String, Void> graphs = entityVersionStore.load(asList(docId1, docId2));
+        FetchResults<String, String> graphs = entityVersionStore.load(asList(docId1, docId2));
         assertThat(graphs.containsKey(docId1)).isTrue();
         assertThat(graphs.containsKey(docId2)).isTrue();
 
@@ -186,7 +204,7 @@ public class EntityVersionStoreJdbcTest {
 
     private void optimize_doc1() {
         entityVersionStore.optimize(docId1, v -> v.revision.equals(rev4));
-        ObjectVersionGraph<Void> graph = entityVersionStore.load(docId1);
+        ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
         assertThat(graph.versionNodes.size()).isEqualTo(1);
     }
 

@@ -173,6 +173,10 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected abstract Map<Revision, Id> findUnpublishedRevisions();
 
+    protected M getMeta(Group versionAndParents) {
+        return null;
+    }
+
     protected void afterPublish(Multimap<Id, Revision> publishedDocs) {
         // After publish hook for sub classes to override
     }
@@ -286,6 +290,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
                 .type(versionAndParents.getOne(options.version.type))
                 .parents(versionAndParents.getSet(options.parent.parentRevision))
                 .changeset(changeset)
+                .meta(getMeta(versionAndParents))
                 .build();
     }
 

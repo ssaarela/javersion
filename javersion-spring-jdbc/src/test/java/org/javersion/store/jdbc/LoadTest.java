@@ -152,24 +152,24 @@ public class LoadTest {
             for (String docId : docIds) {
                 ts = currentTimeMillis();
 
-                final ObjectVersionGraph<Void> versionGraph =
+                final ObjectVersionGraph<String> versionGraph =
                         transactionTemplate.execute(status -> entityStore.load(docId));
 
                 print(round, "load", ts);
 
-                ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
+                ObjectVersion.Builder<String> builder = ObjectVersion.<String>builder()
                         .changeset(generateProperties(propCount));
 
                 if (!versionGraph.isEmpty()) {
                     builder.parents(versionGraph.getTip().getRevision());
                 }
 
-                final ObjectVersion<Void> version = builder.build();
+                final ObjectVersion<String> version = builder.build();
 
                 ts = currentTimeMillis();
 
                 transactionTemplate.execute(status -> {
-                    EntityUpdateBatch<String, Void> update = entityStore.updateBatch(docId);
+                    EntityUpdateBatch<String, String> update = entityStore.updateBatch(docId);
                     update.addVersion(docId, versionGraph.commit(version).getTip());
                     update.execute();
                     return null;

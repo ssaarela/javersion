@@ -26,6 +26,8 @@ public class QEntityVersion extends com.mysema.query.sql.RelationalPathBase<QEnt
 
     public final StringPath branch = createString("branch");
 
+    public final StringPath comment = createString("comment");
+
     public final StringPath docId = createString("docId");
 
     public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
@@ -70,6 +72,7 @@ public class QEntityVersion extends com.mysema.query.sql.RelationalPathBase<QEnt
 
     public void addMetadata() {
         addMetadata(branch, ColumnMetadata.named("BRANCH").withIndex(5).ofType(Types.VARCHAR).withSize(128).notNull());
+        addMetadata(comment, ColumnMetadata.named("COMMENT").withIndex(7).ofType(Types.VARCHAR).withSize(255));
         addMetadata(docId, ColumnMetadata.named("DOC_ID").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
         addMetadata(localOrdinal, ColumnMetadata.named("LOCAL_ORDINAL").withIndex(3).ofType(Types.BIGINT).withSize(19).notNull());
         addMetadata(ordinal, ColumnMetadata.named("ORDINAL").withIndex(4).ofType(Types.BIGINT).withSize(19));
