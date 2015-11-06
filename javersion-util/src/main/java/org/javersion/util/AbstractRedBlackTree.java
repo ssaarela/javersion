@@ -72,11 +72,11 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         K key = (K) keyObj;
         N node = root;
         while (node != null) {
-            int cmpr;
-            cmpr = comparator.compare(key, node.key);
-            if (cmpr < 0) {
+            int cmp;
+            cmp = comparator.compare(key, node.key);
+            if (cmp < 0) {
                 node = node.left;
-            } else if (cmpr > 0) {
+            } else if (cmp > 0) {
                 node = node.right;
             } else {
                 return node;
@@ -105,6 +105,70 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
             }
         }
         return null;
+    }
+
+    protected final N floorNode(N node, K key) {
+        N current = node;
+        N floor = null;
+        while (current != null) {
+            int cmp = comparator.compare(current.key, key);
+            if (cmp < 0) {
+                floor = current;
+                current = current.right;
+            } else if (cmp > 0) {
+                current = current.left;
+            } else {
+                return current;
+            }
+        }
+        return floor;
+    }
+
+    protected final N lowerNode(N node, K key) {
+        N current = node;
+        N lower = null;
+        while (current != null) {
+            int cmp = comparator.compare(current.key, key);
+            if (cmp < 0) {
+                lower = current;
+                current = current.right;
+            } else {
+                current = current.left;
+            }
+        }
+        return lower;
+    }
+
+    protected final N ceilingNode(N node, K key) {
+        N current = node;
+        N ceiling = null;
+        while (current != null) {
+            int cmp = comparator.compare(current.key, key);
+            if (cmp > 0) {
+                ceiling = current;
+                current = current.left;
+            } else if (cmp < 0) {
+                current = current.right;
+            } else {
+                return current;
+            }
+        }
+        return ceiling;
+    }
+
+    protected final N higherNode(N node, K key) {
+        N current = node;
+        N ceiling = null;
+        while (current != null) {
+            int cmp = comparator.compare(current.key, key);
+            if (cmp > 0) {
+                ceiling = current;
+                current = current.left;
+            } else {
+                current = current.right;
+            }
+        }
+        return ceiling;
     }
 
     protected final This doAdd(UpdateContext<? super N> context, N root, N node) {

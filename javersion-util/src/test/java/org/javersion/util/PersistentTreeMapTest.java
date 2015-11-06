@@ -60,7 +60,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
         for (int kv = 1; kv < 10; kv++) {
             pmap = pmap.assoc(kv, kv);
         }
-        assertThat(keys(pmap), contains(1,2,3,4,5,6,7,8,9));
+        assertThat(keys(pmap), contains(1, 2, 3, 4, 5, 6, 7, 8, 9));
     }
 
     @Test
@@ -75,7 +75,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
             public Iterator<Entry<Integer, Integer>> iterator() {
                 return map.iterator(false);
             }
-        }), contains(1,2,3,4,5,6,7,8,9));
+        }), contains(1, 2, 3, 4, 5, 6, 7, 8, 9));
     }
 
     @Test
@@ -150,7 +150,7 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
                 5,
                 8,
                 4
-                );
+        );
         // Same nodes in ascending order
         assertInsert(
                 1,
@@ -162,7 +162,73 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
                 11,
                 14,
                 15
-                );
+        );
+    }
+
+    @Test
+    public void floor() {
+        PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
+        assertThat(map.floorEntry(0), nullValue());
+        assertThat(map.floorEntry(1).getKey(), equalTo(1));
+        assertThat(map.floorEntry(2).getKey(), equalTo(1));
+        assertThat(map.floorEntry(3).getKey(), equalTo(3));
+        assertThat(map.floorEntry(4).getKey(), equalTo(3));
+        assertThat(map.floorEntry(5).getKey(), equalTo(5));
+        assertThat(map.floorEntry(6).getKey(), equalTo(5));
+        assertThat(map.floorEntry(7).getKey(), equalTo(7));
+        assertThat(map.floorEntry(8).getKey(), equalTo(7));
+        assertThat(map.floorEntry(9).getKey(), equalTo(9));
+        assertThat(map.floorEntry(10).getKey(), equalTo(9));
+        assertThat(map.floorEntry(11).getKey(), equalTo(9));
+    }
+
+    @Test
+    public void lower() {
+        PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
+        assertThat(map.lowerEntry(0), nullValue());
+        assertThat(map.lowerEntry(1), nullValue());
+        assertThat(map.lowerEntry(2).getKey(), equalTo(1));
+        assertThat(map.lowerEntry(3).getKey(), equalTo(1));
+        assertThat(map.lowerEntry(4).getKey(), equalTo(3));
+        assertThat(map.lowerEntry(5).getKey(), equalTo(3));
+        assertThat(map.lowerEntry(6).getKey(), equalTo(5));
+        assertThat(map.lowerEntry(7).getKey(), equalTo(5));
+        assertThat(map.lowerEntry(8).getKey(), equalTo(7));
+        assertThat(map.lowerEntry(9).getKey(), equalTo(7));
+        assertThat(map.lowerEntry(10).getKey(), equalTo(9));
+        assertThat(map.lowerEntry(11).getKey(), equalTo(9));
+    }
+
+    @Test
+    public void ceiling() {
+        PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
+        assertThat(map.ceilingEntry(0).getKey(), equalTo(1));
+        assertThat(map.ceilingEntry(1).getKey(), equalTo(1));
+        assertThat(map.ceilingEntry(2).getKey(), equalTo(3));
+        assertThat(map.ceilingEntry(3).getKey(), equalTo(3));
+        assertThat(map.ceilingEntry(4).getKey(), equalTo(5));
+        assertThat(map.ceilingEntry(5).getKey(), equalTo(5));
+        assertThat(map.ceilingEntry(6).getKey(), equalTo(7));
+        assertThat(map.ceilingEntry(7).getKey(), equalTo(7));
+        assertThat(map.ceilingEntry(8).getKey(), equalTo(9));
+        assertThat(map.ceilingEntry(9).getKey(), equalTo(9));
+        assertThat(map.ceilingEntry(10), nullValue());
+    }
+
+    @Test
+    public void higher() {
+        PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
+        assertThat(map.higherEntry(0).getKey(), equalTo(1));
+        assertThat(map.higherEntry(1).getKey(), equalTo(3));
+        assertThat(map.higherEntry(2).getKey(), equalTo(3));
+        assertThat(map.higherEntry(3).getKey(), equalTo(5));
+        assertThat(map.higherEntry(4).getKey(), equalTo(5));
+        assertThat(map.higherEntry(5).getKey(), equalTo(7));
+        assertThat(map.higherEntry(6).getKey(), equalTo(7));
+        assertThat(map.higherEntry(7).getKey(), equalTo(9));
+        assertThat(map.higherEntry(8).getKey(), equalTo(9));
+        assertThat(map.higherEntry(9), nullValue());
+        assertThat(map.higherEntry(10), nullValue());
     }
 
     @Test
