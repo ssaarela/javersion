@@ -16,6 +16,7 @@
 package org.javersion.object;
 
 import static org.javersion.object.mapping.PrimitiveTypeMapping.*;
+import static org.javersion.object.mapping.PrimitiveTypeMapping.CHAR;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -47,8 +48,6 @@ public class TypeMappings {
 
     public static TypeMapping ENUM = new EnumTypeMapping();
 
-    public static TypeMapping DATE_TIME = new DateTimeMapping();
-
     public static Builder builder() {
         return new Builder();
     }
@@ -57,35 +56,56 @@ public class TypeMappings {
         return new Builder(mappings);
     }
 
-    public static final List<TypeMapping> DEFAULT_MAPPINGS =
-            ImmutableList.of(
-                    new VersionableReferenceTypeMapping(),
-                    new VersionableTypeMapping(),
-                    new ListTypeMapping(),
-                    new NavigableSetMapping(),
-                    new SortedSetMapping(),
-                    new SetTypeMapping(),
-                    new NavigableMapMapping(),
-                    new SortedMapMapping(),
-                    new MapTypeMapping(),
-                    new CollectionTypeMapping(),
-                    new ToStringTypeMapping(Revision.class),
-                    new SimpleValueMapping(PropertyPath.class, new PropertyPathType()),
-                    new SimpleValueMapping(UUID.class, new UUIDType()),
-                    DATE_TIME,
-                    ENUM,
-                    BIG_INTEGER,
-                    BIG_DECIMAL,
-                    STRING,
-                    INT,
-                    LONG,
-                    DOUBLE,
-                    BOOLEAN,
-                    BYTE,
-                    SHORT,
-                    FLOAT,
-                    CHAR
-                    );
+    public static final List<TypeMapping> DEFAULT_MAPPINGS;
+
+    static {
+        ImmutableList.Builder<TypeMapping> mappings = ImmutableList.builder();
+
+        mappings.add(new VersionableReferenceTypeMapping());
+        mappings.add(new VersionableTypeMapping());
+        mappings.add(new ListTypeMapping());
+        mappings.add(new NavigableSetMapping());
+        mappings.add(new SortedSetMapping());
+        mappings.add(new SetTypeMapping());
+        mappings.add(new NavigableMapMapping());
+        mappings.add(new SortedMapMapping());
+        mappings.add(new MapTypeMapping());
+        mappings.add(new CollectionTypeMapping());
+        mappings.add(new ToStringTypeMapping(Revision.class));
+        mappings.add(new SimpleValueMapping(PropertyPath.class, new PropertyPathType()));
+        mappings.add(new SimpleValueMapping(UUID.class, new UUIDType()));
+        mappings.add(new InstantMapping());
+        mappings.add(new LocalDateMapping());
+        mappings.add(new LocalDateTimeMapping());
+        mappings.add(ENUM);
+        mappings.add(BIG_INTEGER);
+        mappings.add(BIG_DECIMAL);
+        mappings.add(STRING);
+        mappings.add(INT);
+        mappings.add(LONG);
+        mappings.add(DOUBLE);
+        mappings.add(BOOLEAN);
+        mappings.add(BYTE);
+        mappings.add(SHORT);
+        mappings.add(FLOAT);
+        mappings.add(CHAR);
+
+        if (classFound("org.joda.time.DateTime")) {
+            mappings.add(new JodaDateTimeMapping());
+            mappings.add(new JodaLocalDateMapping());
+        }
+
+        DEFAULT_MAPPINGS = mappings.build();
+    }
+
+    private static boolean classFound(String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
 
     public static final TypeMappings DEFAULT = new TypeMappings(DEFAULT_MAPPINGS);
 

@@ -17,22 +17,22 @@ package org.javersion.object.mapping;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
-import org.javersion.object.types.DateTimeType;
+import org.javersion.object.types.JodaLocalDateType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
-import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 
-public class DateTimeMapping implements TypeMapping {
+public class JodaLocalDateMapping implements TypeMapping {
 
     @Override
     public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.isSubTypeOf(DateTime.class);
+        return localTypeDescriptor.typeDescriptor.isSubTypeOf(LocalDate.class);
     }
 
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return new DateTimeType();
+        return new JodaLocalDateType();
     }
 
 }
