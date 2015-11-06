@@ -52,13 +52,13 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, Void> versionStore(SQLQueryFactory queryFactory) {
+    public DocumentVersionStoreJdbc<String, Void> documentStore(SQLQueryFactory queryFactory) {
 
         return new DocumentVersionStoreJdbc<String, Void>(documentOptionsBuilder(queryFactory).build());
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, Void> mappedVersionStore(SQLQueryFactory queryFactory) {
+    public DocumentVersionStoreJdbc<String, Void> mappedDocumentStore(SQLQueryFactory queryFactory) {
         return new DocumentVersionStoreJdbc<String, Void>(
                 documentOptionsBuilder(queryFactory)
                         .versionTableProperties(ImmutableMap.of(

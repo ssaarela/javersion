@@ -69,10 +69,10 @@ public class DocumentVersionStoreJdbcTest {
     private final ObjectVersionManager<Product, Void> versionManager = new ObjectVersionManager<Product, Void>(Product.class).init();
 
     @Resource
-    DocumentVersionStoreJdbc<String, Void> versionStore;
+    DocumentVersionStoreJdbc<String, Void> documentStore;
 
     @Resource
-    DocumentVersionStoreJdbc<String, Void> mappedVersionStore;
+    DocumentVersionStoreJdbc<String, Void> mappedDocumentStore;
 
     @Resource
     TransactionTemplate transactionTemplate;
@@ -84,18 +84,18 @@ public class DocumentVersionStoreJdbcTest {
     public void insert_and_load() {
         String docId = randomUUID().toString();
 
-        assertThat(versionStore.load(docId).isEmpty()).isTrue();
+        assertThat(documentStore.load(docId).isEmpty()).isTrue();
 
         Product product = new Product();
         product.id = 123l;
         product.name = "product";
 
         ObjectVersion<Void> versionOne = versionManager.versionBuilder(product).build();
-        versionStore.append(docId, versionManager.getVersionNode(versionOne.revision));
-        assertThat(versionStore.load(docId).isEmpty()).isTrue();
+        documentStore.append(docId, versionManager.getVersionNode(versionOne.revision));
+        assertThat(documentStore.load(docId).isEmpty()).isTrue();
 
-        versionStore.publish();
-        VersionGraph versionGraph = versionStore.load(docId);
+        documentStore.publish();
+        VersionGraph versionGraph = documentStore.load(docId);
         assertThat(versionGraph.isEmpty()).isFalse();
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(versionOne);
 
@@ -103,16 +103,16 @@ public class DocumentVersionStoreJdbcTest {
         product.tags = ImmutableList.of("tag", "and", "another");
         product.vat = 22.5;
 
-        versionStore.append(docId, versionManager.versionBuilder(product).buildVersionNode());
+        documentStore.append(docId, versionManager.versionBuilder(product).buildVersionNode());
 
         product.outOfStock = true;
 
         ObjectVersion<Void> lastVersion = versionManager.versionBuilder(product).build();
-        versionStore.append(docId, versionManager.getVersionNode(lastVersion.revision));
-        assertThat(versionStore.load(docId).getTip().getVersion()).isEqualTo(versionOne);
+        documentStore.append(docId, versionManager.getVersionNode(lastVersion.revision));
+        assertThat(documentStore.load(docId).getTip().getVersion()).isEqualTo(versionOne);
 
-        versionStore.publish();
-        versionGraph = versionStore.load(docId);
+        documentStore.publish();
+        versionGraph = documentStore.load(docId);
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(lastVersion);
 
         versionManager.init(versionGraph);
@@ -130,9 +130,9 @@ public class DocumentVersionStoreJdbcTest {
         String docId = randomUUID().toString();
         ObjectVersion<Void> emptyVersion = new ObjectVersionBuilder<Void>().build();
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(emptyVersion);
-        versionStore.append(docId, versionGraph.getTip());
-        versionStore.publish();
-        versionGraph = versionStore.load(docId);
+        documentStore.append(docId, versionGraph.getTip());
+        documentStore.publish();
+        versionGraph = documentStore.load(docId);
         List<Version<PropertyPath, Object, Void>> versions = newArrayList(versionGraph.getVersions());
         assertThat(versions).hasSize(1);
         assertThat(versions.get(0)).isEqualTo(emptyVersion);
@@ -153,7 +153,7 @@ public class DocumentVersionStoreJdbcTest {
                 ObjectVersion<Void> version1 = ObjectVersion.<Void>builder(r1)
                         .changeset(mapOf(ROOT.property("concurrency"), " slow"))
                         .build();
-                versionStore.append(docId, ObjectVersionGraph.init(version1).getTip());
+                documentStore.append(docId, ObjectVersionGraph.init(version1).getTip());
 
                 // First insert is done, but transaction is not committed yet
                 firstInsertDone.countDown();
@@ -175,8 +175,8 @@ public class DocumentVersionStoreJdbcTest {
         ObjectVersion<Void> version2 = ObjectVersion.<Void>builder(r2)
                 .changeset(mapOf("concurrency", "fast"))
                 .build();
-        versionStore.append(docId, ObjectVersionGraph.init(version2).getTip());
-        versionStore.publish();
+        documentStore.append(docId, ObjectVersionGraph.init(version2).getTip());
+        documentStore.publish();
 
         // Verify that first insert is not yet visible
         long count = queryFactory.from(documentVersion)
@@ -195,13 +195,13 @@ public class DocumentVersionStoreJdbcTest {
                 .count();
         assertThat(count).isEqualTo(2);
 
-        // Before versionStore.publish(), unpublished version should not have ordinal
+        // Before documentStore.publish(), unpublished version should not have ordinal
         Map<Revision, Long> ordinals = findOrdinals(docId);
         assertThat(ordinals.get(r1)).isNull();
         assertThat(ordinals.get(r2)).isNotNull();
 
-        // versionStore.publish() should assign ordinal
-        versionStore.publish();
+        // documentStore.publish() should assign ordinal
+        documentStore.publish();
         ordinals = findOrdinals(docId);
         assertThat(ordinals.get(r1)).isGreaterThan(ordinals.get(r2));
     }
@@ -215,8 +215,8 @@ public class DocumentVersionStoreJdbcTest {
     @Test
     public void publish_nothing() {
         // Flush first if there's pending versions
-        versionStore.publish();
-        assertThat(versionStore.publish()).isEqualTo(ImmutableMultimap.of());
+        documentStore.publish();
+        assertThat(documentStore.publish()).isEqualTo(ImmutableMultimap.of());
 
     }
 
@@ -233,15 +233,15 @@ public class DocumentVersionStoreJdbcTest {
                 .build();
 
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2);
-        versionStore.append(docId, versionGraph.getVersionNode(v1.revision));
-        assertThat(versionStore.publish()).isEqualTo(ImmutableMultimap.of(docId, v1.revision)); // v1
-        versionStore.append(docId, versionGraph.getVersionNode(v2.revision));
+        documentStore.append(docId, versionGraph.getVersionNode(v1.revision));
+        assertThat(documentStore.publish()).isEqualTo(ImmutableMultimap.of(docId, v1.revision)); // v1
+        documentStore.append(docId, versionGraph.getVersionNode(v2.revision));
 
-        List<ObjectVersion<Void>> updates = versionStore.fetchUpdates(docId, v1.revision);
+        List<ObjectVersion<Void>> updates = documentStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).isEmpty();
 
-        assertThat(versionStore.publish()).isEqualTo(ImmutableMultimap.of(docId, v2.revision)); // v2
-        updates = versionStore.fetchUpdates(docId, v1.revision);
+        assertThat(documentStore.publish()).isEqualTo(ImmutableMultimap.of(docId, v2.revision)); // v2
+        updates = documentStore.fetchUpdates(docId, v1.revision);
         assertThat(updates).hasSize(1);
         assertThat(updates.get(0)).isEqualTo(v2);
     }
@@ -299,17 +299,17 @@ public class DocumentVersionStoreJdbcTest {
                 .build();
 
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2, v3, v4, v5, v6);
-        versionStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
-        versionStore.publish();
+        documentStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
+        documentStore.publish();
 
         assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).count()).isEqualTo(6);
 
-        versionStore.optimize(docId,
+        documentStore.optimize(docId,
                 versionNode -> versionNode.revision.equals(v5.revision) || versionNode.revision.equals(v6.revision));
 
         assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).count()).isEqualTo(3);
 
-        versionGraph = versionStore.load(docId);
+        versionGraph = documentStore.load(docId);
 
         VersionNode<PropertyPath, Object, Void> versionNode = versionGraph.getVersionNode(v3.revision);
         assertThat(versionNode.getParentRevisions()).isEmpty();
@@ -337,10 +337,10 @@ public class DocumentVersionStoreJdbcTest {
                 .build();
 
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1);
-        versionStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
-        versionStore.publish();
+        documentStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
+        documentStore.publish();
 
-        versionStore.optimize(docId, v -> false);
+        documentStore.optimize(docId, v -> false);
     }
 
     @Test(expected = RuntimeException.class)
@@ -363,14 +363,14 @@ public class DocumentVersionStoreJdbcTest {
                 .build();
 
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(v1, v2);
-        versionStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
-        versionStore.publish();
+        documentStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
+        documentStore.publish();
 
         versionGraph = versionGraph.commit(v3);
-        versionStore.append(docId, versionGraph.getVersionNode(v3.revision));
+        documentStore.append(docId, versionGraph.getVersionNode(v3.revision));
 
         // v3 is not published yet!
-        versionStore.optimize(docId, v -> v.revision.equals(v2.revision));
+        documentStore.optimize(docId, v -> v.revision.equals(v2.revision));
     }
 
     @Test
@@ -388,9 +388,9 @@ public class DocumentVersionStoreJdbcTest {
                 "Void", null);
 
         ObjectVersion<Void> version = ObjectVersion.<Void>builder().changeset(changeset).build();
-        versionStore.append(docId, ObjectVersionGraph.init(version).getTip());
-        versionStore.publish();
-        assertThat(versionStore.load(docId).getTip().getVersion()).isEqualTo(version);
+        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        documentStore.publish();
+        assertThat(documentStore.load(docId).getTip().getVersion()).isEqualTo(version);
     }
 
     @Test
@@ -404,11 +404,11 @@ public class DocumentVersionStoreJdbcTest {
         ObjectVersion<Void> v1 = ObjectVersion.<Void>builder().changeset(props1).build();
         ObjectVersion<Void> v2 = ObjectVersion.<Void>builder().changeset(props2).build();
 
-        versionStore.append(docId1, ObjectVersionGraph.init(v1).getTip());
-        versionStore.append(docId2, ObjectVersionGraph.init(v2).getTip());
-        versionStore.publish();
+        documentStore.append(docId1, ObjectVersionGraph.init(v1).getTip());
+        documentStore.append(docId2, ObjectVersionGraph.init(v2).getTip());
+        documentStore.publish();
 
-        FetchResults<String, Void> results = versionStore.load(asList(docId1, docId2));
+        FetchResults<String, Void> results = documentStore.load(asList(docId1, docId2));
         assertThat(results.getDocIds()).isEqualTo(ImmutableSet.of(docId1, docId2));
         assertThat(results.latestRevision).isEqualTo(v2.revision);
         assertThat(results.getVersions(docId1).get(0)).isEqualTo(v1);
@@ -425,9 +425,9 @@ public class DocumentVersionStoreJdbcTest {
                         "id", 5l))
                 .build();
 
-        mappedVersionStore.append(docId, ObjectVersionGraph.init(v1).getTip());
-        mappedVersionStore.publish();
-        assertThat(mappedVersionStore.load(docId).getTip().getVersion()).isEqualTo(v1);
+        mappedDocumentStore.append(docId, ObjectVersionGraph.init(v1).getTip());
+        mappedDocumentStore.publish();
+        assertThat(mappedDocumentStore.load(docId).getTip().getVersion()).isEqualTo(v1);
 
         long count = queryFactory.from(documentVersionProperty)
                 .innerJoin(documentVersionProperty.documentVersionPropertyRevisionFk, documentVersion)
@@ -439,8 +439,8 @@ public class DocumentVersionStoreJdbcTest {
                 .parents(v1.revision)
                 .build();
 
-        mappedVersionStore.append(docId, ObjectVersionGraph.init(v1, v2).getTip());
-        mappedVersionStore.publish();
+        mappedDocumentStore.append(docId, ObjectVersionGraph.init(v1, v2).getTip());
+        mappedDocumentStore.publish();
 
         // Inherited values
         count = queryFactory.from(documentVersion)
@@ -450,7 +450,7 @@ public class DocumentVersionStoreJdbcTest {
                         documentVersion.id.eq(5l))
                 .count();
         assertThat(count).isEqualTo(1);
-        assertThat(mappedVersionStore.load(docId).getTip().getVersion()).isEqualTo(v2);
+        assertThat(mappedDocumentStore.load(docId).getTip().getVersion()).isEqualTo(v2);
     }
 
 

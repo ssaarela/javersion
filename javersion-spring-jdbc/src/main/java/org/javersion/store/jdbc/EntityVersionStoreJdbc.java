@@ -37,6 +37,7 @@ import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.ImmutableList;
+import com.mysema.query.ResultTransformer;
 import com.mysema.query.group.Group;
 import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.dml.SQLUpdateClause;
@@ -45,7 +46,7 @@ import com.mysema.query.types.expr.BooleanExpression;
 
 public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVersionStoreJdbc<Id, M, JEntityVersion<Id>, EntityStoreOptions<Id>> {
 
-    protected final Expression<?>[] versionAndParentsSince;
+    protected final ResultTransformer<List<Group>> versionAndParentsSince;
 
     @SuppressWarnings("unused")
     protected EntityVersionStoreJdbc() {
@@ -55,7 +56,8 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVe
 
     public EntityVersionStoreJdbc(EntityStoreOptions<Id> options) {
         super(options);
-        versionAndParentsSince = concat(versionAndParents, options.sinceVersion.localOrdinal);
+        Expression<?>[] values = concat(versionAndParentColumns, options.sinceVersion.localOrdinal);
+        versionAndParentsSince = groupBy(options.version.revision).list(values);
     }
 
     @Override
@@ -146,7 +148,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVe
 
         qry.orderBy(options.version.localOrdinal.asc());
 
-        return verifyVersionsAndParentsSince(qry.transform(groupBy(options.version.revision).list(versionAndParentsSince)), since);
+        return verifyVersionsAndParentsSince(qry.transform(versionAndParentsSince), since);
     }
 
     @Override

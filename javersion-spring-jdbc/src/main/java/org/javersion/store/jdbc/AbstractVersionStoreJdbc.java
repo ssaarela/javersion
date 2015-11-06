@@ -17,11 +17,13 @@ package org.javersion.store.jdbc;
 
 import static com.mysema.query.group.GroupBy.groupBy;
 import static java.lang.System.arraycopy;
+import static java.util.Arrays.asList;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +69,9 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected final Options options;
 
-    protected final Expression<?>[] versionAndParents;
+    protected final Expression<?>[] versionAndParentColumns;
+
+    protected final ResultTransformer<List<Group>>  versionAndParents;
 
     protected final QPair<Revision, Id> revisionAndDocId;
 
@@ -79,6 +83,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected  AbstractVersionStoreJdbc() {
         options = null;
+        versionAndParentColumns = null;
         versionAndParents = null;
         revisionAndDocId = null;
         maxOrdinalSubQuery = null;
@@ -87,10 +92,16 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     public AbstractVersionStoreJdbc(Options options) {
         this.options = options;
-        versionAndParents = concat(options.version.all(), GroupBy.set(options.parent.parentRevision));
+
+        // Querydsl 3.5 doesn't remove duplicates from select
+        versionAndParentColumns = without(concat(options.version.all(), GroupBy.set(options.parent.parentRevision)), options.version.revision);
+        versionAndParents = groupBy(options.version.revision).list(versionAndParentColumns);
+
         revisionAndDocId = new QPair<>(options.version.revision, options.version.docId);
         maxOrdinalSubQuery = maxOrdinalSubQuery(options);
-        properties = groupBy(options.property.revision).as(GroupBy.list(new QTuple(options.property.all())));
+
+        Expression<?>[] propertyColumns = without(options.property.all(), options.property.revision);
+        properties = groupBy(options.property.revision).as(GroupBy.list(new QTuple(propertyColumns)));
     }
 
     public abstract ObjectVersionGraph<M> load(Id docId);
@@ -219,7 +230,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
                 .leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision))
                 .where(predicate)
                 .orderBy(orderBy)
-                .transform(groupBy(options.version.revision).list(versionAndParents));
+                .transform(versionAndParents);
     }
 
     protected List<Group> verifyVersionsAndParentsSince(List<Group> versionsAndParents, Revision since) {
@@ -316,4 +327,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         arraycopy(expr2, 0, expressions, expr1.length, expr2.length);
         return expressions;
     }
+
+    protected static Expression<?>[] without(Expression<?>[] expressions, Expression<?> expr) {
+        List<Expression<?>> list = new ArrayList<>(asList(expressions));
+        list.remove(expr);
+        return list.toArray(new Expression<?>[list.size()]);
+    }
+
 }

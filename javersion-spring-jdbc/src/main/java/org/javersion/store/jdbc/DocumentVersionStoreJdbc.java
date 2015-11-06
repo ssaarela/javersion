@@ -59,7 +59,7 @@ public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id
 
     public DocumentVersionStoreJdbc(DocumentStoreOptions<Id> options) {
         super(options);
-        versionAndParentsSince = concat(versionAndParents, options.sinceVersion.ordinal);
+        versionAndParentsSince = concat(versionAndParentColumns, options.sinceVersion.ordinal);
     }
 
     @Override
