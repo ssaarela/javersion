@@ -17,7 +17,7 @@ package org.javersion.object.types;
 
 
 import org.javersion.object.WriteContext;
-import org.javersion.path.PropertyPath.NodeId;
+import org.javersion.path.NodeId;
 
 public interface IdentifiableType extends ValueType {
 

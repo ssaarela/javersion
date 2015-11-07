@@ -3,7 +3,7 @@ package org.javersion.object.types;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.NodeId;
+import org.javersion.path.NodeId;
 import org.javersion.path.PropertyTree;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormatter;

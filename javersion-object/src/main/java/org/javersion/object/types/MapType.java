@@ -8,7 +8,7 @@ import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.NodeId;
+import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.PropertyTree;
 

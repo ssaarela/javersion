@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.javersion.path.PropertyPath.Key;
-import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyPath.Property;
 import org.javersion.path.PropertyPath.SubPath;
 import org.junit.Assert;

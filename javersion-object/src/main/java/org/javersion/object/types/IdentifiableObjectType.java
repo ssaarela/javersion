@@ -16,7 +16,7 @@
 package org.javersion.object.types;
 
 import org.javersion.object.WriteContext;
-import org.javersion.path.PropertyPath;
+import org.javersion.path.NodeId;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 
@@ -35,7 +35,7 @@ public class IdentifiableObjectType<O> extends ObjectType<O> implements Identifi
     }
 
     @Override
-    public PropertyPath.NodeId toNodeId(Object object, WriteContext writeContext) {
+    public NodeId toNodeId(Object object, WriteContext writeContext) {
         return idType.toNodeId(idField.get(object), writeContext);
     }
 
