@@ -112,9 +112,7 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
     @SuppressWarnings("unchecked")
     @Override
     protected PersistentTreeMap<K, V> doReturn(Comparator<? super K> comparator, Node<K, V> newRoot, int newSize) {
-        if (newRoot == root) {
-            return this;
-        } else if (newRoot == null) {
+        if (newRoot == null) {
             return EMPTY;
         }
         return new PersistentTreeMap<K, V>(comparator, newRoot, newSize);

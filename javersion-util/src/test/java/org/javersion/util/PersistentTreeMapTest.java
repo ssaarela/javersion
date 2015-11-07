@@ -232,6 +232,13 @@ public class PersistentTreeMapTest extends AbstractPersistentMapTest<PersistentT
     }
 
     @Test
+    public void first_last() {
+        PersistentTreeMap<Integer, Integer> map = mapForRangeTest();
+        assertThat(map.getFirstEntry().getKey(), equalTo(1));
+        assertThat(map.getLastEntry().getKey(), equalTo(9));
+    }
+
+    @Test
     public void Find_Min_Max() {
         List<Integer> ints = ascending(37);
         PersistentTreeMap<Integer, Integer> pmap = emptyMap();

@@ -15,11 +15,11 @@
  */
 package org.javersion.util;
 
-import static com.google.common.base.Objects.equal;
 import static com.google.common.collect.Iterators.transform;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 
 import org.javersion.util.AbstractHashMap.EntryNode;
 
@@ -61,7 +61,7 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     @SuppressWarnings("unchecked")
     protected This doMerge(EntryNode<K, V> entry, Merger<Map.Entry<K, V>> merger) {
         final UpdateContext<Map.Entry<K, V>> updateContext = updateContext(1, merger);
-        return (This) doAdd(updateContext, toEntry(entry));
+        return (This) doAdd(updateContext, entry);
     }
 
 
@@ -152,11 +152,13 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
 
         @Override
         public Node<K, EntryNode<K, V>> assocInternal(final UpdateContext<? super EntryNode<K, V>>  currentContext, final int shift, final int hash, final EntryNode<K, V> newEntry) {
-            if (equal(key, newEntry.key)) {
+            if (Objects.equals(key, newEntry.key)) {
+                if (Objects.equals(value, newEntry.value)) {
+                    return this;
+                }
                 return currentContext.merge(this, newEntry) ? newEntry : this;
-            } else {
-                return split(currentContext, shift, hash, newEntry);
             }
+            return split(currentContext, shift, hash, newEntry);
         }
     }
 
