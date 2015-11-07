@@ -36,17 +36,14 @@ public class PropertyTree {
             PropertyTree parentTree = getOrCreate(PropertyPath.ROOT, nodes);
             for (PropertyPath subPath : path) {
                 PropertyTree childTree = getOrCreate(subPath, nodes);
-                if (parentTree != null) {
-                    parentTree.children.put(subPath.getNodeId(), childTree);
-                }
+                parentTree.children.put(subPath.getNodeId(), childTree);
                 parentTree = childTree;
             }
         }
         return nodes.get(PropertyPath.ROOT);
     }
 
-    private static PropertyTree getOrCreate(PropertyPath path,
-            Map<PropertyPath, PropertyTree> nodes) {
+    private static PropertyTree getOrCreate(PropertyPath path, Map<PropertyPath, PropertyTree> nodes) {
         PropertyTree childTree = nodes.get(path);
         if (childTree == null) {
             childTree = new PropertyTree(path);

@@ -27,6 +27,7 @@ import java.util.List;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.RuleNode;
+import org.javersion.path.NodeId.IndexId;
 import org.javersion.path.NodeId.SpecialNodeId;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.parser.PropertyPathBaseVisitor;
@@ -70,7 +71,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     private static final String EMPTY_STRING = "";
 
-    public static final Root ROOT = Root.ROOT;
+    public static final Root ROOT = new Root();
 
     public static PropertyPath parse(String path) {
         checkNotNull(path);
@@ -124,6 +125,9 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         });
     }
+
+
+    private transient List<SubPath> fullPath;
 
     PropertyPath() {}
 
@@ -260,13 +264,9 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     abstract PropertyPath withParent(PropertyPath newParent);
 
 
-    private volatile transient List<SubPath> fullPath;
-
     public static final class Root extends PropertyPath {
 
         public static final NodeId ID = new SpecialNodeId(EMPTY_STRING, null);
-
-        private static final Root ROOT = new Root();
 
         private static final List<SubPath> FULL_PATH = ImmutableList.of();
 
@@ -394,7 +394,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
     public static final class Index extends SubPath {
 
         private Index(PropertyPath parent, long index) {
-            super(parent, new NodeId.IndexId(index));
+            super(parent, new IndexId(index));
         }
 
         private Index(PropertyPath parent, NodeId id) {
