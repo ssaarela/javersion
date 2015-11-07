@@ -15,7 +15,7 @@
  */
 package org.javersion.core;
 
-import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
+import static java.lang.Math.max;
 import static org.javersion.util.Check.notNull;
 
 import java.util.*;
@@ -27,15 +27,11 @@ public final class Diff {
 
     private Diff() {}
 
-    /**
-     * SortedMap-optimized version of diff. With TreeMaps this is faster for small maps (e.g. &lt; 100)
-     * but gets slower after that pretty fast.
-     */
     @SuppressWarnings("unchecked")
-    public static <K, V> SortedMap<K, V> diff(SortedMap<K, V> from, SortedMap<K, V> to) {
-        Comparator comparator = MoreObjects.firstNonNull(from.comparator(), Comparator.naturalOrder());
+    public static <K, V> Map<K, V> diff(SortedMap<K, V> from, SortedMap<K, V> to) {
+        Map<K, V> diff = new HashMap<>(diffSizeEstimate(from.size(), to.size()));
 
-        TreeMap<K, V> diff = new TreeMap<>(comparator);
+        Comparator comparator = MoreObjects.firstNonNull(from.comparator(), Comparator.naturalOrder());
         Iterator<Entry<K, V>> fromIter = from.entrySet().iterator();
         Iterator<Entry<K, V>> toIter = to.entrySet().iterator();
 
@@ -94,7 +90,7 @@ public final class Diff {
     }
 
     private static <K, V> Map<K, V> diffBySmallerFrom(Map<K, V> from, Map<K, V> to) {
-        Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
+        Map<K, V> diff = new HashMap<>(diffSizeEstimate(from.size(), to.size()));
         Map<K, V> fromClone = new HashMap<>(from);
         for (Entry<K, V> entry : to.entrySet()) {
             K key = entry.getKey();
@@ -111,7 +107,7 @@ public final class Diff {
     }
 
     private static <K, V> Map<K, V> diffBySmallerTo(Map<K, V> from, Map<K, V> to) {
-        Map<K, V> diff = newHashMapWithExpectedSize(from.size() + to.size());
+        Map<K, V> diff = new HashMap<>(diffSizeEstimate(from.size(), to.size()));
         Map<K, V> toClone = new HashMap<>(to);
         for (Entry<K, V> entry : from.entrySet()) {
             K key = entry.getKey();
@@ -123,6 +119,16 @@ public final class Diff {
         }
         diff.putAll(toClone);
         return diff;
+    }
+
+    private static <K, V> int diffSizeEstimate(int from, int to) {
+        int estimate;
+        if (from < to) {
+            estimate = max(to-from, to>>1);
+        } else {
+            estimate = max(from-to, from>>1);
+        }
+        return estimate + (estimate + 2) / 3;
     }
 
 }

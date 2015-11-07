@@ -28,7 +28,6 @@ import com.google.common.collect.Maps;
 @State(Scope.Benchmark)
 public class DiffBenchmark {
 
-
     @Param({"10", "50", "100", "500", "1000", "5000"})
     public int size;
 
