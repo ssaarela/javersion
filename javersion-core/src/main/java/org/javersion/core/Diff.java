@@ -122,12 +122,7 @@ public final class Diff {
     }
 
     private static <K, V> int diffSizeEstimate(int from, int to) {
-        int estimate;
-        if (from < to) {
-            estimate = max(to-from, to>>1);
-        } else {
-            estimate = max(from-to, from>>1);
-        }
+        int estimate = max(to, from);
         return estimate + (estimate + 2) / 3;
     }
 
