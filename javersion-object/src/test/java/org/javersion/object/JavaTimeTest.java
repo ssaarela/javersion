@@ -12,9 +12,9 @@ public class JavaTimeTest {
 
     @Versionable
     public static class DT {
-        final Instant instant = Instant.now();
-        final LocalDate localDate = LocalDate.now();
-        final LocalDateTime localDateTime = LocalDateTime.now();
+        private final Instant instant = Instant.now();
+        private final LocalDate localDate = LocalDate.now();
+        private final LocalDateTime localDateTime = LocalDateTime.now();
     }
 
     private ObjectSerializer<DT> serializer = new ObjectSerializer<>(DT.class);
@@ -27,5 +27,4 @@ public class JavaTimeTest {
         assertThat(dtCopy.localDate).isEqualTo(dt.localDate);
         assertThat(dtCopy.localDateTime).isEqualTo(dt.localDateTime);
     }
-
 }
