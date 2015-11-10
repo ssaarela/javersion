@@ -1,8 +1,10 @@
 package org.javersion.path;
 
-import com.google.common.base.Preconditions;
+import org.javersion.util.Check;
 
-public abstract class NodeId {
+public abstract class NodeId implements Comparable<NodeId> {
+
+    public static final NodeId ROOT_ID = new SpecialNodeId("", null);
 
     public static final NodeId ANY = new SpecialNodeId("*", null);
 
@@ -23,8 +25,7 @@ public abstract class NodeId {
     }
 
     public static IndexId valueOf(long index) {
-        Preconditions.checkArgument(index >= 0, "index should be >= 0");
-        if (index < INDEXES.length) {
+        if (index >= 0 && index < INDEXES.length) {
             return INDEXES[(int) index];
         }
         return new IndexId(index);
@@ -72,13 +73,13 @@ public abstract class NodeId {
 
     public abstract NodeId fallbackId();
 
+    protected abstract int getTypeOrdinal();
 
     public static final class IndexId extends NodeId {
 
         public final long index;
 
         IndexId(long index) {
-            Preconditions.checkArgument(index >= 0, "index should be >= 0");
             this.index = index;
         }
 
@@ -117,6 +118,18 @@ public abstract class NodeId {
         public NodeId fallbackId() {
             return ANY_INDEX;
         }
+
+        @Override
+        protected int getTypeOrdinal() {
+            return 2;
+        }
+
+        @Override
+        public int compareTo(NodeId nodeId) {
+            return nodeId instanceof IndexId
+                    ? Long.compare(this.index, ((IndexId) nodeId).index)
+                    : Integer.compare(this.getTypeOrdinal(), nodeId.getTypeOrdinal());
+        }
     }
 
     public static class KeyId extends NodeId {
@@ -125,7 +138,7 @@ public abstract class NodeId {
 
         KeyId(String key) {
             super();
-            Preconditions.checkNotNull(key);
+            Check.notNull(key, "key");
             this.key = key;
         }
 
@@ -133,10 +146,8 @@ public abstract class NodeId {
         public boolean equals(Object obj) {
             if (obj == this) {
                 return true;
-            } else if (obj instanceof KeyId) {
-                return ((KeyId) obj).key.equals(this.key);
             } else {
-                return false;
+                return obj instanceof KeyId && ((KeyId) obj).key.equals(this.key);
             }
         }
 
@@ -164,6 +175,18 @@ public abstract class NodeId {
         public NodeId fallbackId() {
             return ANY_KEY;
         }
+
+        @Override
+        protected int getTypeOrdinal() {
+            return 3;
+        }
+
+        @Override
+        public int compareTo(NodeId nodeId) {
+            return nodeId instanceof KeyId
+                    ? this.key.compareTo(((KeyId) nodeId).key)
+                    : Integer.compare(this.getTypeOrdinal(), nodeId.getTypeOrdinal());
+        }
     }
 
     public static final class PropertyId extends KeyId {
@@ -184,7 +207,7 @@ public abstract class NodeId {
 
         private final NodeId fallback;
 
-        SpecialNodeId(String str, NodeId fallback) {
+        private SpecialNodeId(String str, NodeId fallback) {
             this.str = str;
             this.fallback = fallback;
         }
@@ -193,10 +216,8 @@ public abstract class NodeId {
         public boolean equals(Object obj) {
             if (obj == this) {
                 return true;
-            } else if (obj instanceof SpecialNodeId) {
-                return ((SpecialNodeId) obj).str.equals(this.str);
             } else {
-                return false;
+                return obj instanceof SpecialNodeId && ((SpecialNodeId) obj).str.equals(this.str);
             }
         }
 
@@ -213,6 +234,18 @@ public abstract class NodeId {
         @Override
         public NodeId fallbackId() {
             return fallback;
+        }
+
+        @Override
+        protected int getTypeOrdinal() {
+            return 1;
+        }
+
+        @Override
+        public int compareTo(NodeId nodeId) {
+            return nodeId instanceof SpecialNodeId
+                    ? this.str.compareTo(((SpecialNodeId) nodeId).str)
+                    : Integer.compare(this.getTypeOrdinal(), nodeId.getTypeOrdinal());
         }
     }
 }

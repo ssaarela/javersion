@@ -52,7 +52,7 @@ public class JsonSerializerTest {
     }
 
     private Map<String, Object> map() {
-        return map("string", "str", "number", 123, "boolean", true, "nil", null);
+        return map("boolean", true, "nil", null, "number", 123, "string", "str");
     }
 
     @Test

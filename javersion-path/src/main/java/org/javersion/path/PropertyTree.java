@@ -16,11 +16,13 @@
 package org.javersion.path;
 
 import static java.util.Collections.unmodifiableCollection;
-import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableSortedMap;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import com.google.common.collect.Maps;
 
@@ -54,7 +56,7 @@ public class PropertyTree {
 
     public final PropertyPath path;
 
-    private Map<NodeId, PropertyTree> children = Maps.newLinkedHashMap();
+    private SortedMap<NodeId, PropertyTree> children = new TreeMap<>();
 
     private PropertyTree(PropertyPath path) {
         this.path = path;
@@ -68,8 +70,8 @@ public class PropertyTree {
         return unmodifiableCollection(children.values());
     }
 
-    public Map<NodeId, PropertyTree> getChildrenMap() {
-        return unmodifiableMap(children);
+    public SortedMap<NodeId, PropertyTree> getChildrenMap() {
+        return unmodifiableSortedMap(children);
     }
 
     public PropertyTree get(NodeId childNode) {
@@ -83,10 +85,11 @@ public class PropertyTree {
     public PropertyTree get(PropertyPath path) {
         PropertyTree match = this;
         for (PropertyPath node : path) {
-            if (match == null) break;
-            else match = match.get(node.getNodeId());
+            match = match.get(node.getNodeId());
+            if (match == null) {
+                throw new IllegalArgumentException("path not found: " + path);
+            }
         }
-        if (match == null) throw new IllegalArgumentException("path not found: " + path);
         return match;
     }
 

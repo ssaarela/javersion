@@ -6,16 +6,13 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.javersion.object.ReferencesTest.Node;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 public class SetTest {
@@ -30,6 +27,12 @@ public class SetTest {
         SortedSet<String> sorted = new TreeSet<>();
     }
 
+    @Versionable
+    public static class DoubleSet {
+        Set<Double> doubles = new HashSet<>();
+        Set<Float> floats = new HashSet<>();
+    }
+
     public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
             .havingSubClasses(NodeExt.class)
@@ -39,6 +42,8 @@ public class SetTest {
     private final ObjectSerializer<NodeSet> nodeSetSerializer = new ObjectSerializer<>(NodeSet.class, typeMappings);
 
     private final ObjectSerializer<NodeExt> nodeExtSerializer = new ObjectSerializer<>(NodeExt.class, typeMappings);
+
+    private final ObjectSerializer<DoubleSet> doubleSetSerializer = new ObjectSerializer<>(DoubleSet.class, typeMappings);
 
     @Test
     public void Write_And_Read_NodeSet() {
@@ -94,4 +99,27 @@ public class SetTest {
         assertThat(iter.next(), equalTo("omega"));
     }
 
+    @Test
+    public void double_set() {
+        Set<Double> doubles = ImmutableSet.of(
+                Double.NaN,
+                Double.POSITIVE_INFINITY,
+                Double.NEGATIVE_INFINITY,
+                1.1
+        );
+        Set<Float> floats = ImmutableSet.of(
+                Float.NaN,
+                Float.POSITIVE_INFINITY,
+                Float.NEGATIVE_INFINITY,
+                (float) 1.1
+        );
+        DoubleSet dset = new DoubleSet();
+        dset.doubles = doubles;
+        dset.floats = floats;
+
+        dset = doubleSetSerializer.fromPropertyMap(doubleSetSerializer.toPropertyMap(dset));
+
+        assertThat(dset.doubles, equalTo(doubles));
+        assertThat(dset.floats, equalTo(floats));
+    }
 }

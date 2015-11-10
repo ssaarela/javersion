@@ -28,7 +28,6 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.javersion.path.NodeId.IndexId;
-import org.javersion.path.NodeId.SpecialNodeId;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.parser.PropertyPathBaseVisitor;
 import org.javersion.path.parser.PropertyPathLexer;
@@ -37,7 +36,7 @@ import org.javersion.path.parser.PropertyPathParser;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
-public abstract class PropertyPath implements Iterable<SubPath> {
+public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable<SubPath>{
 
     private static final class SilentParseException extends RuntimeException {
         public SilentParseException() {
@@ -68,8 +67,6 @@ public abstract class PropertyPath implements Iterable<SubPath> {
             throw new SilentParseException();
         }
     };
-
-    private static final String EMPTY_STRING = "";
 
     public static final Root ROOT = new Root();
 
@@ -250,6 +247,18 @@ public abstract class PropertyPath implements Iterable<SubPath> {
         return schemaPath;
     }
 
+    @Override
+    public int compareTo(PropertyPath other) {
+        List<SubPath> myPath = getFullPath();
+        List<SubPath> otherPath = other.getFullPath();
+        int len = Math.min(myPath.size(), otherPath.size());
+        int cmp = 0;
+        for (int i = 0; i < len && cmp == 0; i++) {
+            cmp = myPath.get(i).getNodeId().compareTo(otherPath.get(i).getNodeId());
+        }
+        return cmp == 0 ? Integer.compare(myPath.size(), otherPath.size()) : cmp;
+    }
+
     public abstract String toString();
 
     public abstract boolean equals(Object obj);
@@ -266,7 +275,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
     public static final class Root extends PropertyPath {
 
-        public static final NodeId ID = new SpecialNodeId(EMPTY_STRING, null);
+        public static final NodeId ID = NodeId.ROOT_ID;
 
         private static final List<SubPath> FULL_PATH = ImmutableList.of();
 
@@ -283,7 +292,7 @@ public abstract class PropertyPath implements Iterable<SubPath> {
 
         @Override
         public String toString() {
-            return EMPTY_STRING;
+            return "";
         }
 
         @Override
