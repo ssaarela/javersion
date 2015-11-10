@@ -71,7 +71,7 @@ public abstract class VersionGraphBuilder<K, V, M,
             normalVersion(version, mutableHeads, mergeBuilder);
         }
         mergeBuilder.overwrite(version);
-        tip = new VersionNode<>(version, (tip != null ? tip.revision : null), mergeBuilder, mutableHeads);
+        tip = new VersionNode<>(version, (tip != null ? tip : null), mergeBuilder, mutableHeads);
         heads = tip.heads;
         versionNodes.put(tip.revision, tip);
     }
