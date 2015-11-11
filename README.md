@@ -23,7 +23,7 @@ Instead of getting conflicting lines of text, in Javersion, you get conflicting 
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents 
+### Table of Contents 
 
 - [Introduction](#introduction)
   - [Why Should You Use It?](#why-should-you-use-it)
@@ -31,7 +31,6 @@ Instead of getting conflicting lines of text, in Javersion, you get conflicting 
   - [How It Works?](#how-it-works)
   - [Deleting Data?](#deleting-data)
   - [Null Handling](#null-handling)
-  - [Release Versioning](#release-versioning)
 - [Getting Started With Java Objects](#getting-started-with-java-objects)
 - [Version Persistence](#version-persistence)
   - [Searching](#searching)
@@ -64,6 +63,7 @@ Instead of getting conflicting lines of text, in Javersion, you get conflicting 
   - [Reflect](#reflect)
   - [Path](#path)
   - [JSON](#json)
+- [Release Versioning](#release-versioning)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -71,7 +71,7 @@ Instead of getting conflicting lines of text, in Javersion, you get conflicting 
 
 ## Why Should You Use It?
 
-Because users want it.
+Because your users/customer/PO wants it.
 
 * They want undo and they don't get it, why it's so hard
   to implement it for a multi-user web application. 
@@ -109,7 +109,7 @@ handled with grace.
   controlled manner. For example financial transactions or action log events.
 
 * Your data is not structured or semi-structured by nature. E.g. Your data is binary,
-  mostly free-text or it's most natural representation is textual, like program files.
+  mostly free-text or it's most natural representation is actually textual, like program files.
   
 * You have a large set of strongly interconnected data and you cannot split it into 
   smaller mostly independent parts that can be viewed as e.g. JSON or XML documents.
@@ -157,11 +157,6 @@ Thou shall not delete data! - You overwrite it with null's.
 
 Null have a special meaning, which is that given key has been removed. Keys with null values
 should be treated as if they didn't exists in the first place.
-
-## Release Versioning
-
-Javersion follows [Semantic Versioning][http://semver.org/] guidelines. 
-As current version is still 0.x the API is guaranteed to change.
 
 # Getting Started With Java Objects
 
@@ -442,15 +437,13 @@ important for versioning, time-based comparison for conflict resolution is.
 * Simple recursive, possibly cyclic object model with a value and children by NodeId
 * E.g. 
 ```java
-Schema integer = new Schema(Integer.class);
-Schema range = new Schema(Range.class);
-range.children["min"] = integer;
-range.children["max"] = integer;
-var rule = new Schema(Rule.class);
-rule.children["require"] = range;
-rule.children["rule"] = rule;
-var root = new Schema(Module.class);
-root.children["rule"] = rule;
+// Pseudocode example of a Schema of TreeNode with name and list of children
+Schema string = new Schema(String.class);
+Schema treeNode = new Schema(TreeNode.class);
+Schema listOfTreeNodes = new Schema(List.class);
+treeNode.children["name"] = string;
+treeNode.children["children"] = listOfTreeNodes;
+listOfTreeNodes.children["<any-index>"] = treeNode;
 ```
 
 # Object Mapping
@@ -602,3 +595,9 @@ also convert NodeIds back to object.
 
 ## JSON
 * JSON to Map<PropertyPath, Object> to JSON mapping (PoC-level)
+
+
+# Release Versioning
+
+Javersion follows [Semantic Versioning][http://semver.org/] guidelines. 
+As current version is still 0.x the API is guaranteed to change.
