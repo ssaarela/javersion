@@ -18,12 +18,13 @@ package org.javersion.object.types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
+import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyTree;
 
 public class ListType implements ValueType {
@@ -32,31 +33,26 @@ public class ListType implements ValueType {
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        Map<NodeId, PropertyTree> children = propertyTree.getChildrenMap();
+        SortedMap<NodeId, PropertyTree> children = propertyTree.getChildrenMap();
         List<Object> list = new ArrayList<>(children.size());
         for (Map.Entry<NodeId, PropertyTree> entry : children.entrySet()) {
             NodeId nodeId = entry.getKey();
             if (nodeId.isIndex()) {
                 int index = (int) nodeId.getIndex();
-                if (index > list.size()) {
-                    fill(list, index, children, context);
-                }
-                if (index == list.size()) {
-                    list.add(index, context.getObject(entry.getValue()));
+                assert index >= list.size();
+                Object element = context.getObject(entry.getValue());
+                if (element != null) {
+                    ensureSize(list, index);
+                    list.add(index, element);
                 }
             }
         }
         return list;
     }
 
-    private void fill(List<Object> list, int targetSize, Map<NodeId, PropertyTree> children, ReadContext context) {
-        for (int i=list.size(); i < targetSize; i++) {
-            PropertyTree child = children.get(NodeId.valueOf(i));
-            if (child == null) {
-                list.add(i, null);
-            } else {
-                list.add(i, context.getObject(child));
-            }
+    private void ensureSize(List<?> list, int targetSize) {
+        while (list.size() < targetSize) {
+            list.add(null);
         }
     }
 

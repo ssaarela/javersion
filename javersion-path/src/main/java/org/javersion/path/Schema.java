@@ -18,7 +18,6 @@ package org.javersion.path;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
-import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.util.Check;
 

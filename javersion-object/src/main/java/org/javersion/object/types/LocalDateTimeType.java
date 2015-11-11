@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.NodeId;
+import org.javersion.path.NodeId;
 import org.javersion.path.PropertyTree;
 
 public class LocalDateTimeType extends AbstractScalarType {

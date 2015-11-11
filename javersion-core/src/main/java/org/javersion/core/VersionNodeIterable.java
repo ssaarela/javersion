@@ -17,17 +17,12 @@ package org.javersion.core;
 
 import java.util.Iterator;
 
-import org.javersion.util.PersistentMap;
-
 public class VersionNodeIterable<K, V, M> implements Iterable<VersionNode<K, V, M>> {
 
     private final VersionNode<K, V, M> tip;
 
-    private final PersistentMap<Revision, VersionNode<K, V, M>> versionNodes;
-
-    public VersionNodeIterable(VersionNode<K, V, M> tip, PersistentMap<Revision, VersionNode<K, V, M>> versionNodes) {
+    public VersionNodeIterable(VersionNode<K, V, M> tip) {
         this.tip = tip;
-        this.versionNodes = versionNodes;
     }
 
     @Override
@@ -44,7 +39,7 @@ public class VersionNodeIterable<K, V, M> implements Iterable<VersionNode<K, V, 
             @Override
             public VersionNode<K, V, M> next() {
                 VersionNode<K, V, M> next = current;
-                current = (current.previousRevision != null ? versionNodes.get(current.previousRevision) : null);
+                current = (current.previousVersionNode != null ? current.previousVersionNode : null);
                 return next;
             }
         };

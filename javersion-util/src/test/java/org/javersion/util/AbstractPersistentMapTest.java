@@ -9,7 +9,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
 import java.util.*;
@@ -17,15 +16,16 @@ import java.util.Map.Entry;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer, Integer>> 
+public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer, Integer>>
     extends AbstractCollectionTest {
-    
+
     @Test
     public void Empty_Map() {
         PersistentMap<Integer, Integer> pmap = emptyMap();
@@ -37,17 +37,17 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         assertThat(pmap.dissoc(1), sameInstance(pmap));
         assertThat(pmap.asMap(), equalTo((Map<Integer, Integer>) Maps.<Integer, Integer>newHashMap()));
     }
-    
+
     @Test
     public void Ascending() {
         assertInsertAndDelete(ascending(10));
     }
-    
+
     @Test
     public void Ascending_Bulk_Insert() {
         assertBulkInsert(ascending(345));
     }
-    
+
     private void assertBulkInsert(List<Integer> ints) {
         Map<Integer, Integer> map = Maps.newHashMapWithExpectedSize(ints.size());
         for (Integer kv : ints) {
@@ -55,11 +55,11 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         }
         PersistentMap<Integer, Integer> empty = emptyMap();
         PersistentMap<Integer, Integer> pmap = empty.assocAll(map);
-        
+
         assertEmptyMap(empty);
-        
+
         assertThat(pmap.asMap(), equalTo(map));
-        
+
         for (Integer kv : ints) {
             assertThat(pmap.get(kv), equalTo(kv));
         }
@@ -75,7 +75,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
     public void Descending() {
         assertInsertAndDelete(descending(300));
     }
-    
+
     @Test
     public void Random() {
         try {
@@ -84,9 +84,9 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
             throw new AssertionError(DESC, e);
         }
     }
-    
+
     protected abstract M emptyMap();
-    
+
     @Test
     public void Re_Insertions() {
         List<Integer> ints = randoms(10);
@@ -102,7 +102,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         }
         assertMapProperties(map);
     }
-    
+
     @Test
     public void Random_Bulk_Insert() {
         try {
@@ -111,14 +111,14 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
             throw new AssertionError(DESC, e);
         }
     }
-    
+
     @Test
     public void Find_From_Empty_Map() {
         PersistentMap<Integer, Integer> map = emptyMap();
         assertThat(map.get(null), nullValue());
         assertThat(map.get(1), nullValue());
     }
-    
+
     @Test
     public void Missing_Keys() {
         PersistentMap<Integer, Integer> pmap = emptyMap();
@@ -126,47 +126,40 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
             Integer kv = i*5;
             pmap = pmap.assoc(kv, kv);
         }
-        
+
         for (int i=1; i < 102; i+=2) {
             Integer kv = i*5;
             assertThat(pmap.get(kv), nullValue());
             assertThat(pmap.dissoc(kv), sameInstance(pmap));
         }
     }
-    
+
     @Test(expected=NoSuchElementException.class)
     public void Iterate_Empty() {
         Iterator<Map.Entry<Integer, Integer>> iter = emptyMap().iterator();
         assertThat(iter.hasNext(), equalTo(false));
         iter.next();
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void Merger_Gets_Called() {
-        Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
+        Merger<Entry<Integer, Integer>> merger = mock(Merger.class);
         doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
         ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
         ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
 
         PersistentMap<Integer, Integer> map = emptyMap();
-        
+
         map = map.merge(1, 1, merger);
         assertThat(map.get(1), equalTo(1));
         verify(merger).insert(entry1.capture());
         assertEntry(entry1, 1, 1);
-        
+
         map = map.merge(1, 2, merger);
         assertThat(map.get(1), equalTo(2));
         verify(merger).merge(entry1.capture(), entry2.capture());
         assertEntry(entry1, 1, 1);
-        assertEntry(entry2, 1, 2);
-        
-        reset(merger);
-        doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
-        map = map.merge(1, 2, merger);
-        verify(merger).merge(entry1.capture(), entry2.capture());
-        assertEntry(entry1, 1, 2);
         assertEntry(entry2, 1, 2);
 
         map = map.dissoc(1, merger);
@@ -174,7 +167,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         verify(merger).delete(entry2.capture());
         assertEntry(entry2, 1, 2);
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void Merge_All_Map() {
@@ -182,24 +175,24 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         Map<Integer, Integer> ints = ImmutableMap.of(1, 2, 3, 3);
         Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
 
-        Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
+        Merger<Entry<Integer, Integer>> merger = mock(Merger.class);
         doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
-        
+
         map = map.mergeAll(ints, merger);
-        
+
         assertThat(map.asMap(), equalTo(expected));
-        
+
         ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
         ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
-        
+
         verify(merger).merge(entry1.capture(), entry2.capture());
         assertEntry(entry1, 1, 1);
         assertEntry(entry2, 1, 2);
-        
+
         verify(merger).insert(entry1.capture());
         assertEntry(entry1,3, 3);
     }
-    
+
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Test
     public void Merge_And_Keep_Old_Entry() {
@@ -209,36 +202,36 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
 
         ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
         ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
-        Merger<Entry<Integer, Integer>> merger = mock(Merger.class); 
+        Merger<Entry<Integer, Integer>> merger = mock(Merger.class);
         doReturn(false).when(merger).merge(any(Entry.class), any(Entry.class));
-        
+
         map = map.mergeAll(ints, merger);
-        
+
         assertThat(map.asMap(), equalTo(expected));
 
         assertThat(map.get(1), equalTo(1));
-        
+
         verify(merger).merge(entry1.capture(), entry2.capture());
         assertEntry(entry1, 1, 1);
         assertEntry(entry2, 1, 2);
-        
+
         verify(merger).insert(entry1.capture());
-        assertEntry(entry1,3, 3);
+        assertEntry(entry1, 3, 3);
     }
-    
+
     @Test
     public void Editing_MutableMap_After_Committed_Doesnt_Affect_PersistedMap() {
         PersistentMap<Integer, Integer> map = emptyMap().assoc(1, 1);
-        
+
         MutableMap<Integer, Integer> mutableMap = map.toMutableMap();
         assertThat(map.get(1), equalTo(1));
-        
-        // Editing 
+
+        // Editing
         mutableMap.put(2, 2);
         assertThat(map.containsKey(2), equalTo(false));
         assertThat(mutableMap.containsKey(2), equalTo(true));
     }
-    
+
     @Test(expected=IllegalStateException.class)
     public void Edit_MutableMap_From_Another_Thread() throws Throwable {
         final MutableMap<Integer, Integer> map = emptyMap().toMutableMap();
@@ -266,17 +259,91 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         assertThat(exception.get(), notNullValue());
         throw exception.get();
     }
-    
+
+    @Test
+    public void assocAll() {
+        PersistentMap<Integer, Integer> base = emptyMap().assoc(1, 1);
+        PersistentMap<Integer, Integer> additional = emptyMap().assoc(2, 2).assoc(3, 3);
+        PersistentMap<Integer, Integer> sum = base.assocAll(additional);
+        assertThat(sum.size(), equalTo(3));
+        assertThat(sum.get(1), equalTo(1));
+        assertThat(sum.get(2), equalTo(2));
+        assertThat(sum.get(3), equalTo(3));
+    }
+
+    @Test
+    public void adding_duplicate_entry_returns_same_instance() {
+        PersistentMap<Integer, Integer> map = emptyMap().assoc(1, 1);
+        assertThat(map.assoc(1, 1), sameInstance(map));
+    }
+
+    @Test
+    public void entry_spliterator() {
+        PersistentMap<Integer, Integer> map = emptyMap();
+        map.spliterator().tryAdvance(i-> {
+            throw new RuntimeException();
+        });
+
+        map = map.assoc(1, 1).assoc(2, 2).assoc(3, 3).assoc(4, 4);
+        Spliterator<Entry<Integer, Integer>> spliterator = map.spliterator();
+        Spliterator<Entry<Integer, Integer>> split = spliterator.trySplit();
+
+        MutableInt sum = new MutableInt(0);
+        spliterator.forEachRemaining(entry -> sum.add(entry.getValue()));
+        split.forEachRemaining(entry -> sum.add(entry.getValue()));
+        assertThat(sum.intValue(), equalTo(10));
+    }
+
+    @Test
+    public void value_spliterator() {
+        PersistentMap<Integer, Integer> map = emptyMap();
+        map.valueSpliterator().tryAdvance(i-> {
+            throw new RuntimeException();
+        });
+
+        map = map.assoc(1, 1).assoc(2, 2).assoc(3, 3).assoc(4, 4);
+        Spliterator<Integer> spliterator = map.valueSpliterator();
+        Spliterator<Integer> split = spliterator.trySplit();
+
+        MutableInt sum = new MutableInt(0);
+        spliterator.forEachRemaining(value -> sum.add(value));
+        split.forEachRemaining(value -> sum.add(value));
+        assertThat(sum.intValue(), equalTo(10));
+    }
+
+    @Test
+    public void key_spliterator() {
+        PersistentMap<Integer, Integer> map = emptyMap();
+        map.keySpliterator().tryAdvance(i-> {
+            throw new RuntimeException();
+        });
+
+        map = map.assoc(1, 1).assoc(2, 2).assoc(3, 3).assoc(4, 4);
+        Spliterator<Integer> spliterator = map.keySpliterator();
+        Spliterator<Integer> split = spliterator.trySplit();
+
+        MutableInt sum = new MutableInt(0);
+        spliterator.forEachRemaining(value -> sum.add(value));
+        split.forEachRemaining(value -> sum.add(value));
+        assertThat(sum.intValue(), equalTo(10));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void unmodifiable_entries() {
+        PersistentMap<Integer, Integer> map = emptyMap().assoc(1, 1);
+        map.iterator().next().setValue(2);
+    }
+
     @SuppressWarnings({ "rawtypes" })
     private void assertEntry(ArgumentCaptor<Entry> argument, Object key, Object value) {
         assertThat(argument.getValue().getKey(), equalTo(key));
         assertThat(argument.getValue().getValue(), equalTo(value));
     }
-    
+
     protected void assertInsert(Integer... ints) {
         assertInsertAndDelete(Arrays.asList(ints));
     }
-    
+
     protected void assertInsertAndDelete(List<Integer> ints) {
         PersistentMap<Integer, Integer> map = emptyMap();
         List<PersistentMap<Integer, Integer>> maps = new ArrayList<>(ints.size());
@@ -286,7 +353,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         }
 
         assertPersistentMaps(maps, ints);
-        
+
         PersistentMap<Integer, Integer> map2 = map;
         for (Integer i : ints) {
             map2 = map2.dissoc(i);
@@ -300,7 +367,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         }
         assertPersistentMaps(maps, ints);
     }
-    
+
     protected void assertPersistentMaps(
             List<PersistentMap<Integer, Integer>> maps,
             List<Integer> ints) {
@@ -315,7 +382,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
                 if (j <= i) {
                     assertThat(pmap.get(key), equalTo(key));
                     map.put(key, key);
-                } 
+                }
                 // But none of the later values
                 else {
                     assertThat(pmap.get(key), nullValue());
@@ -324,9 +391,9 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
             assertThat(pmap.asMap(), equalTo(map));
         }
     }
-    
+
     protected abstract void assertMapProperties(PersistentMap<Integer, Integer> map);
-    
+
     protected abstract void assertEmptyMap(PersistentMap<Integer, Integer> map);
 
 }

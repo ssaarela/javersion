@@ -24,7 +24,7 @@ import java.util.Map;
 
 import org.javersion.core.Persistent;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.NodeId;
+import org.javersion.path.NodeId;
 import org.javersion.path.PropertyTree;
 import org.javersion.path.Schema;
 

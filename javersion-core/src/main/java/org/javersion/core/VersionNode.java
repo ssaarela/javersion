@@ -27,7 +27,7 @@ import com.google.common.collect.ImmutableSet;
 
 public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
-    public final Revision previousRevision;
+    public final VersionNode<K, V, M> previousVersionNode;
 
     public final Revision revision;
 
@@ -42,13 +42,13 @@ public final class VersionNode<K, V, M> extends Merge<K, V, M> {
     public final PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;
 
     public VersionNode(Version<K, V, M> version,
-                       Revision previousRevision,
+                       VersionNode<K, V, M> previousVersionNode,
                        MergeBuilder<K, V, M> mergeBuilder,
                        MutableSortedMap<BranchAndRevision, VersionNode<K, V, M>> mutableHeads) {
         super(mergeBuilder);
         Check.notNull(version, "version");
         this.revision = version.revision;
-        this.previousRevision = previousRevision;
+        this.previousVersionNode = previousVersionNode;
         this.branch = version.branch;
         this.parentRevisions = version.parentRevisions;
         this.type = version.type;

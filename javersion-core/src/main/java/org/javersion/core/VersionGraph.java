@@ -160,7 +160,7 @@ public abstract class VersionGraph<K, V, M,
      * @return versions in newest first (or reverse topological) order.
      */
     public final Iterable<VersionNode<K, V, M>> getVersionNodes() {
-        return new VersionNodeIterable<>(getTip(), versionNodes);
+        return new VersionNodeIterable<>(getTip());
     }
 
     public This optimize(Revision... revisions) {

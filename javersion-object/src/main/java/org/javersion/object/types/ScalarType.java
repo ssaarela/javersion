@@ -1,7 +1,7 @@
 package org.javersion.object.types;
 
 import org.javersion.object.ReadContext;
-import org.javersion.path.PropertyPath.NodeId;
+import org.javersion.path.NodeId;
 
 public interface ScalarType extends IdentifiableType {
 

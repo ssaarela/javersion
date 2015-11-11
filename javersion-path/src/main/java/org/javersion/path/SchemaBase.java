@@ -15,7 +15,6 @@
  */
 package org.javersion.path;
 
-import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.util.Check;
 
 public abstract class SchemaBase<This extends SchemaBase<This>> {

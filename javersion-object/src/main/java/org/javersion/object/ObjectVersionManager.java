@@ -2,7 +2,9 @@ package org.javersion.object;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static java.util.Arrays.asList;
+import static org.javersion.core.Version.DEFAULT_BRANCH;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.javersion.core.Merge;
@@ -44,12 +46,12 @@ public class ObjectVersionManager<O, M> {
 
     public ObjectVersionManager<O, M> init(VersionGraph<PropertyPath, Object, M, ?, ?> versionGraph) {
         this.versionGraph = versionGraph;
+        heads = null;
         return this;
     }
 
     public ManagedObjectVersionBuilder<M> versionBuilder(O object) {
         ManagedObjectVersionBuilder<M> builder = new ManagedObjectVersionBuilder<M>(this, serializer.toPropertyMap(object));
-        // TODO: Set Revision for known node
         builder.parents(heads);
         return builder;
     }
@@ -66,7 +68,10 @@ public class ObjectVersionManager<O, M> {
         return mergeBranches(asList(branches));
     }
 
-    public MergeObject<O, M> mergeBranches(Iterable<String> branches) {
+    public MergeObject<O, M> mergeBranches(Collection<String> branches) {
+        if (branches.isEmpty()) {
+            return mergeObject(versionGraph.mergeBranches(DEFAULT_BRANCH));
+        }
         return mergeObject(versionGraph.mergeBranches(branches));
     }
 

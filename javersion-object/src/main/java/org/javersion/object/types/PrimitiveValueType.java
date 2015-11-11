@@ -3,7 +3,7 @@ package org.javersion.object.types;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
 import org.javersion.path.PropertyPath;
-import org.javersion.path.PropertyPath.NodeId;
+import org.javersion.path.NodeId;
 import org.javersion.path.PropertyTree;
 
 public abstract class PrimitiveValueType extends AbstractScalarType {
@@ -139,12 +139,12 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public Object fromNodeId(NodeId nodeId, ReadContext context) {
-            return Double.valueOf(nodeId.getKey());
+            return Double.longBitsToDouble(nodeId.getIndex());
         }
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return NodeId.valueOf(object.toString());
+            return NodeId.valueOf(Double.doubleToRawLongBits((Double) object));
         }
     };
 
@@ -162,12 +162,13 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public Object fromNodeId(NodeId nodeId, ReadContext context) {
-            return Float.valueOf(nodeId.getKey());
+            return (float) Double.longBitsToDouble(nodeId.getIndex());
         }
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return NodeId.valueOf(object.toString());
+            double d = ((Float) object).doubleValue();
+            return NodeId.valueOf(Double.doubleToRawLongBits(d));
         }
     };
 

@@ -26,7 +26,6 @@ import static org.javersion.path.PropertyPathTest.children_0;
 import static org.javersion.path.PropertyPathTest.children_0_name;
 import static org.junit.Assert.assertThat;
 
-import org.javersion.path.PropertyPath.NodeId;
 import org.junit.Test;
 
 public class PropertyTreeTest {

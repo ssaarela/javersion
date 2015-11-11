@@ -16,17 +16,19 @@
 package org.javersion.path;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static org.assertj.core.api.Assertions.assertThat;
+import static java.util.Arrays.asList;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.path.PropertyPath.parse;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
+import org.assertj.core.api.*;
 import org.javersion.path.PropertyPath.Key;
-import org.javersion.path.PropertyPath.NodeId;
 import org.javersion.path.PropertyPath.Property;
 import org.javersion.path.PropertyPath.SubPath;
 import org.junit.Assert;
@@ -36,7 +38,7 @@ public class PropertyPathTest {
 
     @Test
     public void Path_Equals() {
-        assertThat(children_0_name()).isEqualTo(children_0_name());
+        assertThat( children_0_name()).isEqualTo(children_0_name());
         assertThat(children_0()).isEqualTo(children_0());
         assertThat(children).isEqualTo(children);
         assertThat(ROOT).isEqualTo(ROOT);
@@ -63,8 +65,8 @@ public class PropertyPathTest {
                 children_0_name()
         ));
 
-        assertThat(paths.contains(parents_0_name)).isFalse();
-        assertThat(paths.contains(children)).isFalse();
+        Assertions.assertThat(paths.contains(parents_0_name)).isFalse();
+        Assertions.assertThat(paths.contains(children)).isFalse();
     }
 
     @Test
@@ -329,6 +331,58 @@ public class PropertyPathTest {
         assertThat(fullPath.get(1)).isEqualTo((PropertyPath) children_0());
     }
 
+    @Test
+    public void compare() {
+        PropertyPath[] sorted = {
+                parse("b.a"),
+                parse("a[]"),
+                parse("a{}"),
+                parse("a.*"),
+                parse("a*"),
+                parse("a[2]"),
+                parse("a[1]"),
+                parse("a.b"),
+                parse("a[\"b\"]"),
+                parse("a[\"a\"]"),
+                parse("a.a"),
+                parse("[]"),
+                parse("{}"),
+                parse(".*"),
+                parse("*"),
+                parse("[2]"),
+                parse("[1]"),
+                parse("b"),
+                parse("[\"b\"]"),
+                parse("[\"a\"]"),
+                parse("a")
+        };
+        Arrays.sort(sorted);
+
+        assertThat(asList(sorted)).isEqualTo(asList(
+                parse("*"),
+                parse(".*"),
+                parse("[]"),
+                parse("{}"),
+                parse("[1]"),
+                parse("[2]"),
+                parse("[\"a\"]"),
+                parse("a"),
+                parse("a*"),
+                parse("a.*"),
+                parse("a[]"),
+                parse("a{}"),
+                parse("a[1]"),
+                parse("a[2]"),
+                parse("a[\"a\"]"),
+                parse("a.a"),
+                parse("a.b"),
+                parse("a[\"b\"]"),
+                parse("b"),
+                parse("[\"b\"]"),
+                parse("b.a")
+        ));
+    }
+
     public static PropertyPath _0 = ROOT.index(0);
 
     public static PropertyPath _1 = ROOT.index(1);
@@ -352,4 +406,25 @@ public class PropertyPathTest {
     public static SubPath children_0_name() {
         return children_0().property("name");
     }
+
+    public static <K, V> MapAssert<K, V> assertThat(Map<K, V> actual) {
+        return Assertions.assertThat(actual);
+    }
+
+    public static AbstractCharSequenceAssert<?, String> assertThat(String actual) {
+        return Assertions.assertThat(actual);
+    }
+
+    public static AbstractObjectAssert<?, Object> assertThat(Object path) {
+        return Assertions.<Object>assertThat((Object) path);
+    }
+
+    public static <T> AbstractListAssert<?, ? extends List<? extends T>, T> assertThat(List<? extends T> actual) {
+        return Assertions.<T>assertThat(actual);
+    }
+
+    public static AbstractBooleanAssert<?> assertThat(boolean actual) {
+        return Assertions.assertThat(actual);
+    }
+
 }

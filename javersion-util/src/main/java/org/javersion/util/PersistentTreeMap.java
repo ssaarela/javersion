@@ -112,9 +112,7 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
     @SuppressWarnings("unchecked")
     @Override
     protected PersistentTreeMap<K, V> doReturn(Comparator<? super K> comparator, Node<K, V> newRoot, int newSize) {
-        if (newRoot == root) {
-            return this;
-        } else if (newRoot == null) {
+        if (newRoot == null) {
             return EMPTY;
         }
         return new PersistentTreeMap<K, V>(comparator, newRoot, newSize);
@@ -130,6 +128,27 @@ public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTre
         return findMax(root);
     }
 
+    @Override
+    public Entry<K, V> higherEntry(K key) {
+        return higherNode(root, key);
+    }
+
+    @Override
+    public Entry<K, V> ceilingEntry(K key) {
+        return ceilingNode(root, key);
+    }
+
+    @Override
+    public Entry<K, V> lowerEntry(K key) {
+        return lowerNode(root, key);
+    }
+
+    @Override
+    public Entry<K, V> floorEntry(K key) {
+        return floorNode(root, key);
+    }
+
+    @Override
     public Spliterator<Entry<K, V>> spliterator() {
         if (root != null) {
             return new EntrySpliterator<K, V>(root, size, comparator, true);
