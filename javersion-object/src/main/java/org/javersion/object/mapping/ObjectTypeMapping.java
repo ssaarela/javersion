@@ -89,6 +89,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             }
         }
         if (idField != null) {
+            // TODO: ScalarObjectType for use as Map key?
             return new IdentifiableObjectType<>(typesByAlias, idField, idType);
         } else {
             return new ObjectType<>(typesByAlias);
