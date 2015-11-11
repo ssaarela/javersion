@@ -16,6 +16,7 @@
 package org.javersion.path;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static java.lang.Long.MIN_VALUE;
 import static java.util.Arrays.asList;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.path.PropertyPath.parse;
@@ -321,6 +322,14 @@ public class PropertyPathTest {
     public void key_or_index_of_NodeId() {
         assertThat(NodeId.valueOf(123).getKeyOrIndex()).isEqualTo(123l);
         assertThat(NodeId.valueOf("key").getKeyOrIndex()).isEqualTo("key");
+    }
+
+    @Test
+    public void negative_long_index() {
+        String str = PropertyPath.ROOT.property("numbers").index(MIN_VALUE).toString();
+        assertThat(str).isEqualTo("numbers[-9223372036854775808]");
+        PropertyPath path = PropertyPath.parse(str);
+        assertThat(path.getNodeId()).isEqualTo(NodeId.valueOf(-9223372036854775808l));
     }
 
     @Test

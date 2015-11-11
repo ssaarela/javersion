@@ -79,7 +79,7 @@ fragment JavaIdentifierPart
 
 Integer
 	: '0'
-	| NonZeroDigit Digit*
+	| '-'? NonZeroDigit Digit*
 	;
 
 fragment Digit

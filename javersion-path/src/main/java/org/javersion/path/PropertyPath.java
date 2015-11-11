@@ -15,9 +15,8 @@
  */
 package org.javersion.path;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Integer.parseInt;
+import static java.lang.Long.parseLong;
 import static org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript;
 import static org.apache.commons.lang3.StringEscapeUtils.unescapeEcmaScript;
 
@@ -81,7 +80,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
             @Override
             public PropertyPath visitIndex(PropertyPathParser.IndexContext ctx) {
-                return parent = new Index(parent, parseInt(ctx.getText()));
+                return parent = new Index(parent, parseLong(ctx.getText()));
             }
 
             @Override
@@ -145,7 +144,6 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
     }
 
     public final Index index(long index) {
-        checkArgument(index >= 0, "index should be >= 0");
         return new Index(this, index);
     }
 
