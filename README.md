@@ -18,7 +18,7 @@ Where as source control systems are meant for versioning files and directory str
 that represent some data, Javersion versions data itself.
 Difference should be clear if you think of for example 
 reformatting JSON or reordering columns of a CSV file. 
-Even if it's serialized representation might is very different, it doesn't change actual data.
+Even if it's serialized representation might be very different, it doesn't change actual data.
 Instead of getting conflicting lines of text, in Javersion, you get conflicting property values.
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -76,9 +76,9 @@ Because your users/customer/PO wants it.
 * They want undo and they don't get it, why it's so hard
   to implement it for a multi-user web application. 
 
-* They want to se who has edited, what exactly and when.
-  Instead we offer them creationDate, createdBy lastModified, modifiedBy 
-  and an action log file accessible by administrator only. 
+* They want to see who has edited, what exactly and when.
+  Instead we offer them creationDate, createdBy, lastModified, modifiedBy 
+  and an action log file accessible only by administrator. 
 
 * They want to have a playground for changes before they go live - and they want
   to be able to make small changes to the live data while preparing something larger
@@ -124,13 +124,13 @@ how you want to persist the versions.
 
 Unlike most version control systems, Javersion doesn't prevent you from committing 
 conflicting changes. Conflicting versions may be stored and resolved later. 
-You may, however, decide yourself not to actually persist a version there's a conflicting 
+You may, however, decide yourself not to actually persist a version if there's a conflicting 
 change. 
 
 When reading versioned data, it's by default always a merge - from one or more branches.
 You get possible conflicts as merge metadata with automatic conflict resolution 
 applied to the merged data. 
-You also get one or more revisions that identify those versions from which the data was merged.
+You also get one or more revisions that identify versions from which the data was merged.
 If there's only one revision, then no actual merge has occurred. 
 
 **The biggest change to basic interaction logic is that when updating data, you need to know 
@@ -156,7 +156,7 @@ Thou shall not delete data! - You overwrite it with null's.
 ## Null Handling
 
 Null have a special meaning, which is that given key has been removed. Keys with null values
-should be treated as if they didn't exists in the first place.
+should be treated as if they didn't exists in the first place. Null keys are not allowed.
 
 # Getting Started With Java Objects
 
@@ -254,7 +254,7 @@ Good (tried-out) options include:
 
 ## Documented-Oriented JDBC Persistence
 
-Both Javersion's persistence strategies are document-oriented.
+Both Javersion's persistence strategies, `DocumentVersionStore` and `EntityVersionStore` are document-oriented.
 All versions belong to a "document" and all documents have their own version history.
 
 Versions are stored in three tables:
@@ -330,7 +330,7 @@ before committing it:
 
 * Does current latest (persisted) version allow updates? 
 * Is the result of merge still valid?
-* Is there conflicts that should block adding new version?
+* Are there conflicts that should block adding a new version?
 
 _This strategy is suitable when you need strong control over integrity of your data._ 
 
@@ -424,7 +424,7 @@ important for versioning, time-based comparison for conflict resolution is.
 * Root: (empty string) 
 * Properties: `property`
 * Indexed lists: `list[0]`
-* Maps: `map["key"}`
+* Maps: `map["key"]`
 * Nested paths: `list[0].map["key"].property`
 * Schema path
     * Any index: `list[]`
