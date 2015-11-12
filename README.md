@@ -468,17 +468,20 @@ will result in
 
 ## Maps 
 
-Javersion supports Map (HashMap), SortedMap and NavigableMap (both TreeMap). You should use these interface
-types in your domain model. 
+Javersion supports Map (HashMap), SortedMap and NavigableMap (both TreeMap). 
+You should use these interfaces instead of concrete classes in your domain model. 
 
 Setting a value to null is the same as removing a key. Null keys are not supported.
 
 ## Sets
 
-Javersion supports Set (HashSet), SortedSet and NavigableSet (both TreeSet). You should use these interface
-types in your domain model.
+Javersion supports Set (HashSet), SortedSet and NavigableSet (both TreeSet). 
+You should use these interfaces instead of concrete classes in your domain model.
 
-Sets are a special case of maps and require an identifying key. 
+Sets are a kind of a special case of maps and require an identifying key. 
+Unlike lists, changeset of removing an element from a Set only affects 
+that particular element. 
+
 A set of primitives, Strings and other scalar can be used as such, but
 complex objects require an identifier field that is annotated with `@Id`.
 Object's equals and hashCode should be based on that same key.
