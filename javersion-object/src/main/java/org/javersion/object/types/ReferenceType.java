@@ -43,7 +43,11 @@ public final class ReferenceType implements ScalarType {
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        return context.prepareObject(targetRoot.keyOrIndex(value));
+        PropertyPath targetPath = targetRoot.keyOrIndex(value);
+        if (context.getProperty(targetPath) != null) {
+            return context.prepareObject(targetPath);
+        }
+        return null;
     }
 
     @Override

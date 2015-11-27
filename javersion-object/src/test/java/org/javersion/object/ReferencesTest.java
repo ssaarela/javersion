@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.javersion.core.Persistent;
+import org.javersion.core.Revision;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
@@ -118,5 +119,31 @@ public class ReferencesTest {
         n3 = container.nodes.get(1).right;
         assertThat(container.nodes.get(3)).isSameAs(n3);
         assertThat(n3).isSameAs(container.nodes.get(2).left);
+    }
+
+    @Test
+    public void concurrently_moved_and_nulled_reference() {
+        Node n1 = new Node(1);
+        n1.left = new Node(2);
+
+        ObjectVersionManager<Node, Void> manager = new ObjectVersionManager<Node, Void>(nodeSerializer, false).init();
+        Revision rev1 = manager.versionBuilder(n1).build().revision;
+
+        // Move child from left to right
+        n1.right = n1.left;
+        n1.left = null;
+        manager.versionBuilder(n1).parents(rev1).build();
+
+        // Concurrent version that removes child altogether
+        n1.right = null;
+        n1.left = null;
+        manager.versionBuilder(n1).parents(rev1).build();
+
+        MergeObject<Node, Void> merge = manager.mergeBranches();
+        n1 = merge.object;
+
+        assertThat(n1.left).isNull();
+        assertThat(n1.right).isNull();
+        assertThat(merge.getConflicts().isEmpty()).isTrue();
     }
 }
