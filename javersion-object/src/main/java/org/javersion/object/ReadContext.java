@@ -36,7 +36,7 @@ public class ReadContext {
 
     private final Deque<PropertyTree> lowPriorityQueue = new ArrayDeque<>();
 
-    private final Deque<PropertyTree> hightPriorityQueue = new ArrayDeque<>();
+    private final Deque<PropertyTree> highPriorityQueue = new ArrayDeque<>();
 
     private final Map<PropertyPath, Object> objects = Maps.newHashMap();
 
@@ -76,11 +76,11 @@ public class ReadContext {
     }
 
     private boolean queueIsNotEmpty() {
-        return !(hightPriorityQueue.isEmpty() && lowPriorityQueue.isEmpty());
+        return !(highPriorityQueue.isEmpty() && lowPriorityQueue.isEmpty());
     }
 
     private PropertyTree nextQueueItem() {
-        return !hightPriorityQueue.isEmpty() ? hightPriorityQueue.removeFirst() : lowPriorityQueue.removeFirst();
+        return !highPriorityQueue.isEmpty() ? highPriorityQueue.removeFirst() : lowPriorityQueue.removeFirst();
     }
 
     public Object prepareObject(PropertyPath path) {
@@ -116,7 +116,7 @@ public class ReadContext {
                     objects.put(propertyTree.path, result);
                     if (result != null && schema.hasChildren()) {
                         if (highPriority) {
-                            hightPriorityQueue.addLast(propertyTree);
+                            highPriorityQueue.addLast(propertyTree);
                         } else {
                             lowPriorityQueue.addFirst(propertyTree);
                         }
