@@ -417,7 +417,7 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
 
         @Override
         public Iterator<E> iterator() {
-            return new ArrayIterator<>(children, childCount());
+            return new ArrayIterator<>(children);
         }
 
         @Override
@@ -640,44 +640,26 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
 
     static class ArrayIterator<K, E extends EntryNode<K, E>> extends UnmodifiableIterator<E> {
 
-        private final Node<K, E>[] array;
-
-        private final int limit;
-
-        private Iterator<E> subIterator;
-
-        private int pos = 0;
+        @SuppressWarnings("unchecked")
+        private final Node<K, E>[][] nodeStack = new Node[7][];
+        private final int[] nodeIndices = new int[7];
+        private int stackIndex = 0;
 
         public ArrayIterator(Node<K, E>[] array) {
-            this(array, array.length);
-        }
-
-        public ArrayIterator(Node<K, E>[] array, int limit) {
-            this.array = array;
-            this.limit = limit;
+            nodeStack[0] = array;
         }
 
         @Override
         public boolean hasNext() {
-            if (subIterator != null) {
-                if (subIterator.hasNext()) {
-                    return true;
-                } else {
-                    pos++;
+            while (stackIndex >= 0) {
+                while (nodeIndices[stackIndex] < nodeStack[stackIndex].length) {
+                    if (nodeStack[stackIndex][nodeIndices[stackIndex]] != null) {
+                        return true;
+                    }
+                    nodeIndices[stackIndex]++;
                 }
+                stackIndex--;
             }
-            while (pos < limit && array[pos] == null) {
-                pos++;
-            }
-            if (pos < limit) {
-                if (array[pos] instanceof EntryNode) {
-                    subIterator = null;
-                } else {
-                    subIterator = array[pos].iterator();
-                }
-                return true;
-            }
-            subIterator = null;
             return false;
         }
 
@@ -687,10 +669,15 @@ public abstract class AbstractHashTrie<K, E extends EntryNode<K, E>, This extend
             if (!hasNext()) {
                 throw new NoSuchElementException();
             }
-            if (subIterator != null) {
-                return subIterator.next();
+            Node<K, E> node = nodeStack[stackIndex][nodeIndices[stackIndex]];
+            nodeIndices[stackIndex]++;
+            if (node instanceof EntryNode) {
+                return (E) node;
             } else {
-                return (E) array[pos++];
+                stackIndex++;
+                nodeStack[stackIndex] = node.getChildren();
+                nodeIndices[stackIndex] = 0;
+                return next();
             }
         }
     }

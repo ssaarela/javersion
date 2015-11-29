@@ -22,16 +22,20 @@ import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.javersion.util.AbstractHashTrie.ArrayNode;
 import org.javersion.util.AbstractHashTrie.HashNode;
 import org.javersion.util.AbstractHashTrie.Node;
 import org.junit.Test;
 
+import com.google.common.collect.*;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
+import com.google.common.collect.ImmutableSet;
 
 public class PersistentHashMapTest extends AbstractPersistentMapTest<PersistentHashMap<Integer,Integer>>{
 
@@ -253,6 +257,26 @@ public class PersistentHashMapTest extends AbstractPersistentMapTest<PersistentH
     @Override
     protected PersistentHashMap<Integer, Integer> emptyMap() {
         return PersistentHashMap.empty();
+    }
+
+    @Test
+    public void iterate_deepest_possible_tree() {
+        int k1 = 0b00_11111_11111_11111_11111_11111_11111,
+            k2 = 0b01_11111_11111_11111_11111_11111_11111,
+            k3 = 0b10_11111_11111_11111_11111_11111_11111,
+            k4 = 0b11_11111_11111_11111_11111_11111_11111;
+        PersistentHashMap<Integer, Integer> map = PersistentHashMap.<Integer, Integer>empty()
+                .assoc(k1, 1)
+                .assoc(k2, 2)
+                .assoc(k3, 3)
+                .assoc(k4, 4);
+        Set<Integer> results = new HashSet<>();
+        for (Iterator<Map.Entry<Integer, Integer>> iter = map.iterator(); iter.hasNext(); ) {
+            Map.Entry<Integer, Integer> entry = iter.next();
+            results.add(entry.getKey());
+            results.add(entry.getValue());
+        }
+        assertThat(results, equalTo(ImmutableSet.of(k1, k2, k3, k4, 1, 2, 3, 4)));
     }
 
     @SuppressWarnings("rawtypes")
