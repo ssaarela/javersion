@@ -26,6 +26,7 @@ import java.util.UUID;
 import org.javersion.core.Revision;
 import org.javersion.object.mapping.*;
 import org.javersion.object.types.PropertyPathType;
+import org.javersion.object.types.UUIDType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
