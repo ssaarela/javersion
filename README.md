@@ -580,6 +580,17 @@ essentially a wrapper for either long "index" or String key that can be part of 
 For an object to be usable as a key in a Map, it needs to implement `ScalarType` that can 
 also convert NodeIds back to object. 
 
+### Basic Components with String-constructor
+
+Simple components that have a String-constructor and matching toString, may be registered
+using 
+
+```TypeMappings.Builder.withMapping(new ToStringMapping(MyStringComponent.class))```
+
+`ToStringMapping` also allows matching sub classes of the given class with `boolean matchSubClasses`-parameter, 
+but beware that it does not support polymorphism! If your field is of type `MySuperStringComponent` then 
+that's what you're going to get out event if you assign `MySubStringComponent` to it. 
+
 # Modules
 
 ## Core 
