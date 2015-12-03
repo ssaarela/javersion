@@ -168,7 +168,7 @@ As you can parse most any data into Java Objects, it's a good starting point.
     * Private and final fields are OK.
     * Default no-args constructor is required (currently).
     * Transient fields are skipped, as are `@VersionIgnore`-annotated fields.
-    * Null values are skipped.
+    * Null values are (mostly) skipped.
     
 1. Annotate your classes with `@Versionable` or use `TypeMappings.builder()` to configure
    how your domain model is to be serialized.
@@ -454,6 +454,9 @@ If a property has null value in changeset, it is skipped in binding. Thus settin
 reverts it back to what ever is set to it in object initializer. This applies also to primitive fields:
 nulls are skipped and the field is left to it's default value.
 
+In some rare cases where `ValueType` needs to support null, it may use `Persistent.NULL` as a null-marker
+that isn't equal to non-existing keys. `MapType` is one such special case as it supports null values.
+
 ## Lists
 
 List elements are mapped by index. Beware that if you remove from the beginning of the list, all subsequent 
@@ -468,17 +471,22 @@ will result in
 
 ## Maps 
 
-Javersion supports Map (HashMap), SortedMap and NavigableMap (both TreeMap). 
+Javersion supports `Map` (HashMap), `SortedMap` and `NavigableMap` (both TreeMap). 
 You should use these interfaces instead of concrete classes in your domain model. 
 
-Setting a value to null is the same as removing a key. Null keys are not supported.
+Map supports all scalar keys, i.e. key `ValueType` needs to implement `ScalarType`.
+As [ReferenceType](#references) is actually a `ScalarType`, any identifiable object
+may be used as a key.
+
+Null keys are not supported, but values may be null (as of version 0.10.0).
 
 ## Sets
 
-Javersion supports Set (HashSet), SortedSet and NavigableSet (both TreeSet). 
+Javersion supports `Set` (HashSet), `SortedSet` and `NavigableSet` (both TreeSet). 
 You should use these interfaces instead of concrete classes in your domain model.
 
-Sets are a kind of a special case of maps and require an identifying key. 
+Sets are a kind of a special case of maps and require an identifying key,
+i.e. element `ValueType`´ must implement `IdentifiableType`.
 Unlike lists, changeset of removing an element from a Set only affects 
 that particular element. 
 
@@ -545,18 +553,18 @@ allPets["puppy"].mother = mother
 ```
 And if there were `Map<String, Pet> allPets` in Owner, it would contain all those pets by id.
 
-## Custom ValueTypes
+## Custom Type Mapping and Value Types
 
 If you have a class that Javersion's basic type mappings can't handle properly, 
 you need to register a custom `TypeMapping` for it using `TypeMappings.builder()`.
 
-TypeMapping is a simple interface that
+`TypeMapping` is a simple interface that
 
 1. Checks if it applies to a given property (map), type (K or V of a Map) or path (PropertyPath).
 2. Provides a ValueType for it.
 3. Using reflection describes recursively all sub paths (properties, indexes or keys) it can have. 
 
-ValueType again is a simple interface that
+`ValueType` again is a simple interface that
 
 1. Serializes given object to keys of type PropertyPath and _values returned by nested ValueTypes_.
 2. Can instantiate and 

@@ -8,6 +8,8 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableMap;
 
 /**
+ * tombstore - removed key
+ * Null - null as value
  * Object (type alias)
  * Array
  * String (Character, Enum…)
@@ -18,10 +20,31 @@ import com.google.common.collect.ImmutableMap;
  */
 public final class Persistent {
 
+    public static final String GENERIC_TYPE = "Map";
+
+    public static Object object() {
+        return GENERIC_OBJECT;
+    }
+
+    public static Object object(String alias) {
+        return new Object(alias);
+    }
+
+    public static Array array() {
+        return ARRAY;
+    }
+
+    public static Null NULL = new Null();
+
+    private static final Object GENERIC_OBJECT = new Object(GENERIC_TYPE);
+
+    private static final Array ARRAY = new Array();
+
     private Persistent() {}
 
     public enum Type {
-        NULL(Void.class),
+        TOMBSTONE(Void.class),
+        NULL(Null.class),
         OBJECT(Object.class),
         ARRAY(Array.class),
         STRING(String.class),
@@ -53,18 +76,20 @@ public final class Persistent {
 
     }
 
-    public static final String GENERIC_TYPE = "Map";
-
-    public static Object object() {
-        return GENERIC_OBJECT;
-    }
-
-    public static Object object(String alias) {
-        return new Object(alias);
-    }
-
-    public static Array array() {
-        return ARRAY;
+    public static final class Null {
+        private Null() {}
+        @Override
+        public boolean equals(java.lang.Object obj) {
+            return (obj == this || obj instanceof Null);
+        }
+        @Override
+        public int hashCode() {
+            return Null.class.hashCode();
+        }
+        @Override
+        public String toString() {
+            return "Null";
+        }
     }
 
     public static final class Array {
@@ -112,8 +137,6 @@ public final class Persistent {
         }
     }
 
-    private static final Object GENERIC_OBJECT = new Object(GENERIC_TYPE);
 
-    private static final Array ARRAY = new Array();
 
 }
