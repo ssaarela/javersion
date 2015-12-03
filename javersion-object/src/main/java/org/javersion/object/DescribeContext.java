@@ -33,8 +33,6 @@ import com.google.common.collect.Maps;
 
 public class DescribeContext {
 
-    public static final DescribeContext DEFAULT = new DescribeContext(TypeMappings.DEFAULT);
-
     private final Map<LocalTypeDescriptor, Schema.Builder<ValueType>> schemaMappings = Maps.newHashMap();
 
     private final TypeMappings typeMappings;

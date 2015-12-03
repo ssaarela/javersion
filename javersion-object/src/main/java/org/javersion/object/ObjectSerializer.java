@@ -15,6 +15,8 @@
  */
 package org.javersion.object;
 
+import static org.javersion.object.TypeMappings.DEFAULT;
+
 import java.util.Map;
 
 import org.javersion.object.types.ValueType;
@@ -26,7 +28,7 @@ public class ObjectSerializer<O> {
     public final Schema<ValueType> schemaRoot;
 
     public ObjectSerializer(Class<O> clazz) {
-        this.schemaRoot = DescribeContext.DEFAULT.describeSchema(clazz);
+        this.schemaRoot = new DescribeContext(DEFAULT).describeSchema(clazz);
     }
 
     public ObjectSerializer(Class<O> clazz, TypeMappings typeMappings) {
