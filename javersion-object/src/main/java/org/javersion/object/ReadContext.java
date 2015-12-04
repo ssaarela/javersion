@@ -19,6 +19,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
@@ -26,6 +28,7 @@ import org.javersion.path.Schema;
 
 import com.google.common.collect.Maps;
 
+@NotThreadSafe
 public class ReadContext {
 
     private final Map<PropertyPath, Object> properties;
@@ -85,7 +88,7 @@ public class ReadContext {
 
     public Object prepareObject(PropertyPath path) {
         PropertyTree propertyTree = rootNode.get(path);
-        return propertyTree != null ? prepareObject(propertyTree) : null;
+        return prepareObject(propertyTree);
     }
 
     public boolean isMappedPath(PropertyPath path) {

@@ -19,10 +19,13 @@ import static org.javersion.object.TypeMappings.DEFAULT;
 
 import java.util.Map;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.Schema;
 
+@Immutable
 public class ObjectSerializer<O> {
 
     public final Schema<ValueType> schemaRoot;

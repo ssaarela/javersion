@@ -21,9 +21,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.util.AbstractHashTrie.Node;
 
-
+@NotThreadSafe
 public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMap<K, V> {
 
     private MMap<K, V> map;

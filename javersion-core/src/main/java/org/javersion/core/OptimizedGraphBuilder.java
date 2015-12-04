@@ -23,11 +23,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-
+@NotThreadSafe
 public class OptimizedGraphBuilder<K, V, M> {
 
     private Set<OptimizedVersionBuilder<K, V, M>> heads = new LinkedHashSet<>();

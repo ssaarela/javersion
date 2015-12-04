@@ -18,8 +18,11 @@ package org.javersion.util;
 import java.util.AbstractSet;
 import java.util.Iterator;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.util.AbstractHashTrie.Node;
 
+@NotThreadSafe
 public class MutableHashSet<E> extends AbstractSet<E> implements MutableSet<E> {
 
     private MSet<E> set;

@@ -21,7 +21,10 @@ import java.util.Spliterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.annotation.concurrent.Immutable;
+
 // TODO: More methods...
+@Immutable
 public interface PersistentSet<E> extends Iterable<E> {
 
     Set<E> asSet();

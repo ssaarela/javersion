@@ -4,6 +4,8 @@ import static java.lang.System.currentTimeMillis;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.util.BinaryEncoder;
 
 import com.eaio.uuid.UUIDGen;
@@ -19,6 +21,7 @@ import com.eaio.uuid.UUIDGen;
  * node (64-bit): "The current clock and node value" from com.eaio.uuid.UUIDGen.clockSeqAndNode
  * </pre>
  */
+@Immutable
 public final class Revision implements Comparable<Revision> {
 
     private static final BinaryEncoder ENCODER = BinaryEncoder.BASE32_CROCKFORD_NUMBER;

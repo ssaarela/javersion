@@ -21,8 +21,11 @@ import java.util.Spliterator;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import javax.annotation.concurrent.Immutable;
+
 import com.google.common.collect.Iterables;
 
+@Immutable
 public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
 
     PersistentMap<K, V> assoc(K key, V value);

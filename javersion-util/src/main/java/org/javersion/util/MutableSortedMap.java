@@ -15,7 +15,10 @@
  */
 package org.javersion.util;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 // TODO: More methods...
+@NotThreadSafe
 public interface MutableSortedMap<K, V> extends MutableMap<K, V> {
 
     @Override

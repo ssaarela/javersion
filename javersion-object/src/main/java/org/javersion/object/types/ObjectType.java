@@ -20,8 +20,8 @@ import java.util.Map;
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
-import org.javersion.path.PropertyPath;
 import org.javersion.path.NodeId;
+import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
@@ -105,18 +105,4 @@ public class ObjectType<O> implements ValueType {
         return "ObjectType of " + typesByAlias.values();
     }
 
-    public int hashCode() {
-        return typesByAlias.hashCode();
-    }
-
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        } else if (obj != null && obj.getClass().equals(ObjectType.class)) {
-            ObjectType<?> other = (ObjectType<?>) obj;
-            return this.typesByAlias.equals(other.typesByAlias);
-        } else {
-            return false;
-        }
-    }
 }

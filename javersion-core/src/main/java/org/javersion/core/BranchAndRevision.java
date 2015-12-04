@@ -15,8 +15,11 @@
  */
 package org.javersion.core;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.util.Check;
 
+@Immutable
 public class BranchAndRevision implements Comparable<BranchAndRevision>{
 
     public static BranchAndRevision min(String branch) {

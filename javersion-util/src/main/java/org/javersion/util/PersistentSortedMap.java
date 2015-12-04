@@ -19,6 +19,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public interface PersistentSortedMap<K, V> extends PersistentMap<K, V> {
 
     @Override

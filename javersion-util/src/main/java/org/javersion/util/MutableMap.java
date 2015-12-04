@@ -18,6 +18,9 @@ package org.javersion.util;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
+@NotThreadSafe
 public interface MutableMap<K, V> extends Map<K, V>, Iterable<Entry<K, V>> {
 
     void merge(K key, V value, Merger<Map.Entry<K, V>> merger);

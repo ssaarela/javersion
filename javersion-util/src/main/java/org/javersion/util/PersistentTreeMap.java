@@ -24,6 +24,9 @@ import java.util.Objects;
 import java.util.Spliterator;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public class PersistentTreeMap<K, V> extends AbstractTreeMap<K, V, PersistentTreeMap<K, V>> implements PersistentSortedMap<K, V> {
 
     @SuppressWarnings("rawtypes")

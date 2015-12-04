@@ -16,12 +16,13 @@
 package org.javersion.object;
 
 import static org.javersion.object.mapping.PrimitiveTypeMapping.*;
-import static org.javersion.object.mapping.PrimitiveTypeMapping.CHAR;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.UUID;
+
+import javax.annotation.concurrent.Immutable;
 
 import org.javersion.core.Revision;
 import org.javersion.object.mapping.*;
@@ -40,14 +41,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
+@Immutable
 public class TypeMappings {
 
-    public static TypeMapping STRING = new StringTypeMapping();
+    public static final TypeMapping STRING = new StringTypeMapping();
 
-    public static TypeMapping BIG_INTEGER = new ToStringTypeMapping(BigInteger.class);
-    public static TypeMapping BIG_DECIMAL = new ToStringTypeMapping(BigDecimal.class);
+    public static final TypeMapping BIG_INTEGER = new ToStringTypeMapping(BigInteger.class);
+    public static final TypeMapping BIG_DECIMAL = new ToStringTypeMapping(BigDecimal.class);
 
-    public static TypeMapping ENUM = new EnumTypeMapping();
+    public static final TypeMapping ENUM = new EnumTypeMapping();
 
     public static Builder builder() {
         return new Builder();

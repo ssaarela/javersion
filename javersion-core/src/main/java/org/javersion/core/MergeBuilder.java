@@ -20,6 +20,8 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.util.*;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -28,6 +30,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
+@NotThreadSafe
 public class MergeBuilder<K, V, M> {
 
     private boolean first = true;

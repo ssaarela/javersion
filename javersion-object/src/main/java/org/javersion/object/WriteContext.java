@@ -25,6 +25,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.NotThreadSafe;
 
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -33,6 +34,7 @@ import org.javersion.util.Check;
 
 import com.google.common.collect.Maps;
 
+@NotThreadSafe
 public class WriteContext {
 
     private final Object root;

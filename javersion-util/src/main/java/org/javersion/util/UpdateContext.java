@@ -15,7 +15,9 @@
  */
 package org.javersion.util;
 
+import javax.annotation.concurrent.NotThreadSafe;
 
+@NotThreadSafe
 public final class UpdateContext<T> implements Merger<T> {
 
     private static final class UncommittedContext<T> {

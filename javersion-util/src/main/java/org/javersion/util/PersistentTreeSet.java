@@ -23,23 +23,21 @@ import static org.javersion.util.AbstractRedBlackTree.Color.RED;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.util.PersistentTreeSet.Node;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 
+@Immutable
 public class PersistentTreeSet<E> extends AbstractRedBlackTree<E, Node<E>, PersistentTreeSet<E>> implements PersistentSet<E> {
 
     @SuppressWarnings("rawtypes")
     private static final PersistentTreeSet EMPTY = new PersistentTreeSet();
 
     @SuppressWarnings("rawtypes")
-    private static final Function GET_ELEMENT = new Function() {
-        @Override
-        public Object apply(Object input) {
-            return ((Node)input).getKey();
-        }
-    };
+    private static final Function GET_ELEMENT = input -> input != null ? ((Node)input).getKey() : null;
 
     @SuppressWarnings("unchecked")
     public static <E> PersistentTreeSet<E> empty() {

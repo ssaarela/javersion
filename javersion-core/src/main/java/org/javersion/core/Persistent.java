@@ -3,6 +3,8 @@ package org.javersion.core;
 import java.math.BigDecimal;
 import java.util.Map;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableMap;
@@ -34,7 +36,7 @@ public final class Persistent {
         return ARRAY;
     }
 
-    public static Null NULL = new Null();
+    public static final Null NULL = new Null();
 
     private static final Object GENERIC_OBJECT = new Object(GENERIC_TYPE);
 
@@ -76,6 +78,7 @@ public final class Persistent {
 
     }
 
+    @Immutable
     public static final class Null {
         private Null() {}
         @Override
@@ -92,6 +95,7 @@ public final class Persistent {
         }
     }
 
+    @Immutable
     public static final class Array {
         private Array() {}
         @Override
@@ -108,6 +112,7 @@ public final class Persistent {
         }
     }
 
+    @Immutable
     public static final class Object {
         public final String type;
         private Object(String type) {

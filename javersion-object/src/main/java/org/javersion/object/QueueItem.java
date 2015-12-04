@@ -15,8 +15,11 @@
  */
 package org.javersion.object;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.util.Check;
 
+@Immutable
 public class QueueItem<K, V> {
     public final K key;
     public final V value;

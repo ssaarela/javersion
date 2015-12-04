@@ -82,6 +82,17 @@ public class MapTest {
         assertThat(mab.primitives, equalTo(map("eka", integer, "toka", integer)));
     }
 
+    @Test
+    public void Null_Values_in_Changesets() {
+        Mab mab = new Mab();
+        mab.primitives.put("null", null);
+        mab.objects.put(new KeyValue(1), null);
+
+        mab = serializer.fromPropertyMap(serializer.toPropertyMap(mab));
+        assertThat(mab.primitives, equalTo(map("null", null)));
+        assertThat(mab.objects, equalTo(map(new KeyValue(1), null)));
+    }
+
     @SuppressWarnings("unused")
     private static <K, V> Map<K, V> map(K k, V v) {
         Map<K, V> map = Maps.newLinkedHashMap();

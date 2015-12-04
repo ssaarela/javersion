@@ -15,6 +15,9 @@
  */
 package org.javersion.util;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
+@NotThreadSafe
 public class MergerAdapter<T> implements Merger<T> {
 
     @Override

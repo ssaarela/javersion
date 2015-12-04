@@ -2,11 +2,14 @@ package org.javersion.object;
 
 import java.util.Map;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.core.Version;
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.SchemaPathFilter;
 
+@NotThreadSafe
 public class ManagedObjectVersionBuilder<M> extends Version.BuilderBase<PropertyPath, Object, M, ManagedObjectVersionBuilder<M>> {
 
     private final ObjectVersionManager<?, M> manager;

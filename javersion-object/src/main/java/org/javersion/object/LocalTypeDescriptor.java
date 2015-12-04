@@ -18,12 +18,14 @@ package org.javersion.object;
 import java.util.Objects;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
 import org.javersion.reflect.ElementDescriptor;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
+@Immutable
 public final class LocalTypeDescriptor {
 
     @Nullable
