@@ -7,6 +7,8 @@ import static org.javersion.core.Version.DEFAULT_BRANCH;
 import java.util.Collection;
 import java.util.Set;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
@@ -16,6 +18,7 @@ import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.Schema;
 
+@NotThreadSafe
 public class ObjectVersionManager<O, M> {
 
     private VersionGraph<PropertyPath, Object, M, ?, ?> versionGraph;

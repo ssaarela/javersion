@@ -1,4 +1,4 @@
-package org.javersion.object.mapping;
+package org.javersion.object.types;
 
 import java.util.UUID;
 

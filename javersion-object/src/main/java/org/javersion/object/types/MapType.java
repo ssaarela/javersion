@@ -1,6 +1,7 @@
 package org.javersion.object.types;
 
 import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
+import static org.javersion.core.Persistent.NULL;
 
 import java.util.Map;
 
@@ -44,8 +45,13 @@ public class MapType implements ValueType {
         Map<Object, Object> map = (Map<Object, Object>) object;
         for (PropertyTree entryPath : propertyTree.getChildren()) {
             Object key = keyType.fromNodeId(entryPath.path.getNodeId(), context);
-            Object value = context.getObject(entryPath);
-            map.put(key, value);
+            // Skip binding of null values
+            if (NULL.equals(context.getProperty(entryPath))) {
+                map.put(key, null);
+            } else {
+                Object value = context.getObject(entryPath);
+                map.put(key, value);
+            }
         }
     }
 
@@ -58,7 +64,12 @@ public class MapType implements ValueType {
             Object value = entry.getValue();
             NodeId nodeId = keyType.toNodeId(key, context);
             SubPath entryPath = path.keyOrIndex(nodeId);
-            context.serialize(entryPath, value);
+            if (value == null) {
+                // Skip nested serialization of null values
+                context.put(entryPath, NULL);
+            } else {
+                context.serialize(entryPath, value);
+            }
         }
     }
 

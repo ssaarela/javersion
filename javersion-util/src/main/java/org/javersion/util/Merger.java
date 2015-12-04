@@ -15,7 +15,9 @@
  */
 package org.javersion.util;
 
+import javax.annotation.concurrent.NotThreadSafe;
 
+@NotThreadSafe
 public interface Merger<T> {
 
     void insert(T newEntry);

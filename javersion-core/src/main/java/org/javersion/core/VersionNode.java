@@ -19,12 +19,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.util.Check;
 import org.javersion.util.MutableSortedMap;
 import org.javersion.util.PersistentSortedMap;
 
 import com.google.common.collect.ImmutableSet;
 
+@Immutable
 public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
     public final VersionNode<K, V, M> previousVersionNode;

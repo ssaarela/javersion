@@ -16,6 +16,7 @@
 package org.javersion.core;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class VersionNodeIterable<K, V, M> implements Iterable<VersionNode<K, V, M>> {
 
@@ -38,6 +39,9 @@ public class VersionNodeIterable<K, V, M> implements Iterable<VersionNode<K, V, 
 
             @Override
             public VersionNode<K, V, M> next() {
+                if (current == null) {
+                    throw new NoSuchElementException();
+                }
                 VersionNode<K, V, M> next = current;
                 current = (current.previousVersionNode != null ? current.previousVersionNode : null);
                 return next;

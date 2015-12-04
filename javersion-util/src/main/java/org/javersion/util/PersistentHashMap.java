@@ -20,7 +20,10 @@ import java.util.Objects;
 import java.util.Spliterator;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.Immutable;
 
+
+@Immutable
 public class PersistentHashMap<K, V> extends AbstractHashMap<K, V, PersistentHashMap<K, V>> implements PersistentMap<K, V> {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })

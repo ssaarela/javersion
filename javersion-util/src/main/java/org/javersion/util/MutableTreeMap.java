@@ -17,8 +17,11 @@ package org.javersion.util;
 
 import java.util.*;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.util.AbstractTreeMap.Node;
 
+@NotThreadSafe
 public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableSortedMap<K, V> {
 
     private MMap<K, V> map;

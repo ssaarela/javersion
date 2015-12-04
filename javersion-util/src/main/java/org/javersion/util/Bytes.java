@@ -1,5 +1,8 @@
 package org.javersion.util;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
+@NotThreadSafe
 abstract class Bytes {
 
     static final int BYTE_MASK = 255;

@@ -19,9 +19,12 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 class ImmutableSet<E> extends AbstractSet<E> {
 
-    private PersistentSet<E> set;
+    private final PersistentSet<E> set;
 
     ImmutableSet(PersistentSet<E> set) {
         this.set = Check.notNull(set, "set");

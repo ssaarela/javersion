@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.util.PersistentMap;
 import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
@@ -37,6 +39,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
+@Immutable
 public abstract class VersionGraph<K, V, M,
                           This extends VersionGraph<K, V, M, This, B>,
                           B extends VersionGraphBuilder<K, V, M, This, B>>

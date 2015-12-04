@@ -102,7 +102,7 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     }
 
     public Iterator<Map.Entry<K, V>> iterator() {
-        return transform(doIterator(), MapUtils.<K, V>mapEntryFunction());
+        return transform(doIterator(), Map.Entry.class::cast);
     }
 
     public Iterable<K> keys() {

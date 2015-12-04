@@ -125,7 +125,7 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
     }
 
     public Iterator<Map.Entry<K, V>> iterator(boolean asc) {
-        return Iterators.transform(doIterator(root(), true), MapUtils.<K, V>mapEntryFunction());
+        return Iterators.transform(doIterator(root(), true), Map.Entry.class::cast);
     }
 
     public Iterable<Map.Entry<K, V>> range(K from, K to) {
@@ -144,7 +144,7 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
         return new Iterable<Map.Entry<K,V>>() {
             @Override
             public Iterator<Entry<K, V>> iterator() {
-                return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive),  MapUtils.<K, V>mapEntryFunction());
+                return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive),  Map.Entry.class::cast);
             }
         };
     }

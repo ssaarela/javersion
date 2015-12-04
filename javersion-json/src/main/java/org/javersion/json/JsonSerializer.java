@@ -208,6 +208,7 @@ public class JsonSerializer {
                 reader.nextNull();
                 properties.put(path, null);
                 break;
+            default: // others ignored
         }
     }
 
@@ -215,7 +216,7 @@ public class JsonSerializer {
     private boolean isMap(PropertyPath path) {
         if (schemaRoot != null) {
             Schema schema = this.schemaRoot.find(path);
-            return schema != null && schema.hasChild(NodeId.ANY_KEY) || schema.hasChild(NodeId.ANY);
+            return schema != null && (schema.hasChild(NodeId.ANY_KEY) || schema.hasChild(NodeId.ANY));
         }
         return false;
     }

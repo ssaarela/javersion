@@ -2,6 +2,8 @@ package org.javersion.object;
 
 import java.util.Set;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.core.Merge;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionProperty;
@@ -10,6 +12,7 @@ import org.javersion.util.Check;
 
 import com.google.common.collect.Multimap;
 
+@NotThreadSafe
 public class MergeObject<T, M> {
 
     public final T object;

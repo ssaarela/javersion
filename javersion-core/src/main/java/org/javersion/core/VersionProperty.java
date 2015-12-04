@@ -15,6 +15,9 @@
  */
 package org.javersion.core;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public final class VersionProperty<V> {
 
     public final Revision revision;

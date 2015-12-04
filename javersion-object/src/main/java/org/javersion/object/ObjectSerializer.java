@@ -15,18 +15,23 @@
  */
 package org.javersion.object;
 
+import static org.javersion.object.TypeMappings.DEFAULT;
+
 import java.util.Map;
+
+import javax.annotation.concurrent.Immutable;
 
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.Schema;
 
+@Immutable
 public class ObjectSerializer<O> {
 
     public final Schema<ValueType> schemaRoot;
 
     public ObjectSerializer(Class<O> clazz) {
-        this.schemaRoot = DescribeContext.DEFAULT.describeSchema(clazz);
+        this.schemaRoot = new DescribeContext(DEFAULT).describeSchema(clazz);
     }
 
     public ObjectSerializer(Class<O> clazz, TypeMappings typeMappings) {

@@ -40,6 +40,12 @@ public class DiffTest {
     }
 
     @Test
+    public void Null_Is_Not_Meaningful_Against_Nonexisting() {
+        Map<Object, Object> diff = diff(map(1, 1, 2, 2), map(3, null));
+        assertThat(diff, equalTo(map(1, null, 2, null)));
+    }
+
+    @Test
     public void Missing_Value_Is_Null() {
         Map<Object, Object> diff = diff(map(1, 1, 2, 2), map());
         assertThat(diff, equalTo(map(1,null, 2,null)));

@@ -39,12 +39,7 @@ public abstract class AbstractTrieSet<E, This extends AbstractTrieSet<E, This>> 
     };
 
     @SuppressWarnings("rawtypes")
-    private static final Function ENTRY_TO_ELEMENT = new Function() {
-        @Override
-        public Object apply(Object input) {
-            return ((EntryNode) input).element();
-        }
-    };
+    private static final Function ENTRY_TO_ELEMENT = input -> input != null ? ((EntryNode) input).element() : null;
 
     public This conj(E element) {
         final UpdateContext<EntryNode<E>> updateContext = updateContext(1, null);

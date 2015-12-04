@@ -21,6 +21,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.object.mapping.TypeMapping;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -31,9 +33,8 @@ import org.javersion.reflect.TypeDescriptor;
 
 import com.google.common.collect.Maps;
 
+@NotThreadSafe
 public class DescribeContext {
-
-    public static final DescribeContext DEFAULT = new DescribeContext(TypeMappings.DEFAULT);
 
     private final Map<LocalTypeDescriptor, Schema.Builder<ValueType>> schemaMappings = Maps.newHashMap();
 
@@ -96,7 +97,7 @@ public class DescribeContext {
 
     private ValueType registerMapping(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
         if (path == null) {
-            return createValueType(path, localTypeDescriptor);
+            return createValueType(null, localTypeDescriptor);
         }
         Schema.Builder<ValueType> schema = schemaMappings.get(localTypeDescriptor);
         if (schema == null) {

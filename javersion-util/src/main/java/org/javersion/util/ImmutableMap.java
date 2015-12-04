@@ -21,14 +21,17 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 class ImmutableMap<K, V> extends AbstractMap<K, V> {
-    
+
     private final PersistentMap<K, V> map;
-    
+
     ImmutableMap(PersistentMap<K, V> map) {
         this.map = Check.notNull(map, "map");
     }
-    
+
     public PersistentMap<K, V> getPersistentMap() {
         return map;
     }

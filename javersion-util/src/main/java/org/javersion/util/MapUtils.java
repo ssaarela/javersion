@@ -8,33 +8,10 @@ import com.google.common.base.Function;
 public class MapUtils {
 
     @SuppressWarnings("rawtypes")
-    private static final Function TO_MAP_ENTRY = new Function() {
-        @Override
-        public Object apply(Object input) {
-            return (Map.Entry) input;
-        }
-    };
-    
+    private static final Function GET_KEY = input -> input != null ? ((Entry) input).getKey() : null;
+
     @SuppressWarnings("rawtypes")
-    private static final Function GET_KEY = new Function() {
-        @Override
-        public Object apply(Object input) {
-            return ((Entry) input).getKey();
-        }
-    };
-    
-    @SuppressWarnings("rawtypes")
-    private static final Function GET_VALUE = new Function() {
-        @Override
-        public Object apply(Object input) {
-            return ((Entry) input).getValue();
-        }
-    };
-    
-    @SuppressWarnings("unchecked")
-    public static <K, V> Function<? super Map.Entry<K, V>, Map.Entry<K, V>> mapEntryFunction() {
-        return TO_MAP_ENTRY;
-    }
+    private static final Function GET_VALUE = input -> input != null ? ((Entry) input).getValue() : null;
 
     @SuppressWarnings("unchecked")
     public static <K> Function<Map.Entry<K, ?>, K> mapKeyFunction() {

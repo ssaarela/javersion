@@ -321,6 +321,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
             case 'd': return Double.longBitsToDouble(nbr);
             case 'D': return new BigDecimal(str);
             case 'n': return null;
+            case 'N': return Persistent.NULL;
             default:
                 throw new IllegalArgumentException("Unsupported type: " + type);
         }

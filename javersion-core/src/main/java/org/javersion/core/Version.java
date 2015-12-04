@@ -29,11 +29,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.NotThreadSafe;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+@Immutable
 public class Version<K, V, M> {
 
     private static final Set<Revision> EMPTY_PARENTS = ImmutableSet.of();
@@ -124,6 +128,7 @@ public class Version<K, V, M> {
         }
     }
 
+    @NotThreadSafe
     public abstract static class BuilderBase<K, V, M, This extends BuilderBase<K, V, M, This>> {
 
         protected Revision revision;

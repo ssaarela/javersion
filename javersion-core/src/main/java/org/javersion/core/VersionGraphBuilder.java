@@ -22,10 +22,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.util.*;
 
-import com.google.common.base.Function;
-
+@NotThreadSafe
 public abstract class VersionGraphBuilder<K, V, M,
                                G extends VersionGraph<K, V, M, G, B>,
                                B extends VersionGraphBuilder<K, V, M, G, B>> {
@@ -37,9 +38,6 @@ public abstract class VersionGraphBuilder<K, V, M,
     VersionNode<K, V, M> tip;
 
     VersionNode<K, V, M> at;
-
-    private Function<Revision, VersionNode<K, V, M>> revisionToVersionNode = input -> getVersionNode(Check.notNull(input, "input"));
-
 
     protected VersionGraphBuilder() {
         this.versionNodes = new MutableTreeMap<>();

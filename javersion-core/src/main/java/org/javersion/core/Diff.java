@@ -82,42 +82,25 @@ public final class Diff {
         notNull(from, "from");
         notNull(to, "to");
 
-        if (from.size() < to.size()) {
-            return diffBySmallerFrom(from, to);
-        } else {
-            return diffBySmallerTo(from, to);
-        }
-    }
-
-    private static <K, V> Map<K, V> diffBySmallerFrom(Map<K, V> from, Map<K, V> to) {
         Map<K, V> diff = new HashMap<>(diffSizeEstimate(from.size(), to.size()));
-        Map<K, V> fromClone = new HashMap<>(from);
-        for (Entry<K, V> entry : to.entrySet()) {
+
+        // New and changed keys
+        to.entrySet().stream().forEach( entry -> {
             K key = entry.getKey();
             V newValue = entry.getValue();
-            V oldValue = fromClone.remove(key);
+            V oldValue = from.get(key);
             if (!Objects.equals(newValue, oldValue)) {
                 diff.put(key, newValue);
             }
-        }
-        for (K key : fromClone.keySet()) {
-            diff.put(key, null);
-        }
-        return diff;
-    }
+        });
 
-    private static <K, V> Map<K, V> diffBySmallerTo(Map<K, V> from, Map<K, V> to) {
-        Map<K, V> diff = new HashMap<>(diffSizeEstimate(from.size(), to.size()));
-        Map<K, V> toClone = new HashMap<>(to);
-        for (Entry<K, V> entry : from.entrySet()) {
-            K key = entry.getKey();
-            V oldValue = entry.getValue();
-            V newValue = toClone.remove(key);
-            if (!Objects.equals(oldValue, newValue)) {
-                diff.put(key, newValue);
+        // Removed keys
+        from.keySet().stream().forEach( key -> {
+            if (!to.containsKey(key)) {
+                diff.put(key, null);
             }
-        }
-        diff.putAll(toClone);
+        });
+
         return diff;
     }
 

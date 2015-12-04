@@ -112,8 +112,11 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         String str = null;
         Long nbr = null;
         switch (Persistent.Type.of(value)) {
-            case NULL:
+            case TOMBSTONE:
                 type = 'n';
+                break;
+            case NULL:
+                type = 'N';
                 break;
             case OBJECT:
                 type = 'O';

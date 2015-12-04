@@ -16,6 +16,7 @@
 package org.javersion.object.mapping;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
@@ -23,6 +24,7 @@ import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
 
+@ThreadSafe
 public interface TypeMapping {
 
     boolean applies(@Nullable PropertyPath path, LocalTypeDescriptor localTypeDescriptor);

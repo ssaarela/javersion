@@ -16,7 +16,8 @@ public class PersistentTest {
 
     @Test
     public void types() {
-        assertThat(Type.of(null)).isEqualTo(NULL);
+        assertThat(Type.of(null)).isEqualTo(TOMBSTONE);
+        assertThat(Type.of(Persistent.NULL)).isEqualTo(NULL);
         assertThat(Type.of(Persistent.object())).isEqualTo(OBJECT);
         assertThat(Type.of(Persistent.array())).isEqualTo(ARRAY);
         assertThat(Type.of("")).isEqualTo(STRING);

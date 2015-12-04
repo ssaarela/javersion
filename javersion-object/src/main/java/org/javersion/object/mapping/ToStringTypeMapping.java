@@ -15,12 +15,43 @@
  */
 package org.javersion.object.mapping;
 
-import org.javersion.object.types.ToStringValueType;
+import javax.annotation.Nullable;
 
-public class ToStringTypeMapping extends SimpleValueMapping {
+import org.javersion.object.DescribeContext;
+import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.types.ToStringValueType;
+import org.javersion.object.types.ValueType;
+import org.javersion.path.PropertyPath;
+import org.javersion.reflect.TypeDescriptor;
+
+public class ToStringTypeMapping implements TypeMapping {
+
+    public final Class<?> type;
+
+    public final boolean matchSubClasses;
 
     public ToStringTypeMapping(Class<?> type) {
-        super(type, new ToStringValueType(type));
+        this(type, false);
+    }
+
+    public ToStringTypeMapping(Class<?> type, boolean matchSubClasses) {
+        this.type = type;
+        this.matchSubClasses = matchSubClasses;
+    }
+
+    @Override
+    public boolean applies(@Nullable PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+        TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
+        if (matchSubClasses) {
+            return typeDescriptor.isSubTypeOf(type);
+        } else {
+            return typeDescriptor.getRawType().equals(type);
+        }
+    }
+
+    @Override
+    public ValueType describe(@Nullable PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return new ToStringValueType(type.getRawType());
     }
 
 }

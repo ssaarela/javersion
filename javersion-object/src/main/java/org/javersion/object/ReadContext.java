@@ -19,6 +19,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
@@ -26,6 +28,7 @@ import org.javersion.path.Schema;
 
 import com.google.common.collect.Maps;
 
+@NotThreadSafe
 public class ReadContext {
 
     private final Map<PropertyPath, Object> properties;
@@ -36,7 +39,7 @@ public class ReadContext {
 
     private final Deque<PropertyTree> lowPriorityQueue = new ArrayDeque<>();
 
-    private final Deque<PropertyTree> hightPriorityQueue = new ArrayDeque<>();
+    private final Deque<PropertyTree> highPriorityQueue = new ArrayDeque<>();
 
     private final Map<PropertyPath, Object> objects = Maps.newHashMap();
 
@@ -76,16 +79,16 @@ public class ReadContext {
     }
 
     private boolean queueIsNotEmpty() {
-        return !(hightPriorityQueue.isEmpty() && lowPriorityQueue.isEmpty());
+        return !(highPriorityQueue.isEmpty() && lowPriorityQueue.isEmpty());
     }
 
     private PropertyTree nextQueueItem() {
-        return !hightPriorityQueue.isEmpty() ? hightPriorityQueue.removeFirst() : lowPriorityQueue.removeFirst();
+        return !highPriorityQueue.isEmpty() ? highPriorityQueue.removeFirst() : lowPriorityQueue.removeFirst();
     }
 
     public Object prepareObject(PropertyPath path) {
         PropertyTree propertyTree = rootNode.get(path);
-        return propertyTree != null ? prepareObject(propertyTree) : null;
+        return prepareObject(propertyTree);
     }
 
     public boolean isMappedPath(PropertyPath path) {
@@ -116,7 +119,7 @@ public class ReadContext {
                     objects.put(propertyTree.path, result);
                     if (result != null && schema.hasChildren()) {
                         if (highPriority) {
-                            hightPriorityQueue.addLast(propertyTree);
+                            highPriorityQueue.addLast(propertyTree);
                         } else {
                             lowPriorityQueue.addFirst(propertyTree);
                         }

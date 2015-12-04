@@ -4,6 +4,8 @@ import static java.lang.String.format;
 import static java.util.Arrays.copyOf;
 import static java.util.Arrays.fill;
 
+import javax.annotation.concurrent.Immutable;
+
 /**
  * Configurable binary encoder:
  * <ul>
@@ -25,6 +27,7 @@ import static java.util.Arrays.fill;
  *     <li>Padding is not supported.</li>
  * </ul>
  */
+@Immutable
 public abstract class BinaryEncoder {
 
     public static final BinaryEncoder HEX;
@@ -119,7 +122,6 @@ public abstract class BinaryEncoder {
         }
 
         public Builder withAliasesFor(char ch, char... aliases) {
-            int number = charToNumber[ch];
             setMaxChar(aliases);
             ensureCharToNumberSize();
             for (char alias : aliases) {

@@ -23,6 +23,8 @@ import static com.google.common.collect.Maps.transformValues;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.concurrent.Immutable;
+
 import org.javersion.util.PersistentHashMap;
 import org.javersion.util.PersistentHashSet;
 
@@ -30,6 +32,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Multimap;
 
+@Immutable
 public abstract class Merge<K, V, M> {
 
     public final Function<VersionProperty<V>, V> getVersionPropertyValue =

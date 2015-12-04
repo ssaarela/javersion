@@ -20,6 +20,9 @@ import java.util.Objects;
 import java.util.Spliterator;
 import java.util.stream.Collectors;
 
+import javax.annotation.concurrent.Immutable;
+
+@Immutable
 public class PersistentHashSet<E> extends AbstractTrieSet<E, PersistentHashSet<E>> implements PersistentSet<E> {
 
     private final Node<E, EntryNode<E>> root;

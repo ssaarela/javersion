@@ -334,6 +334,32 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         map.iterator().next().setValue(2);
     }
 
+    @Test
+    public void iterate_empty() {
+        assertThat(emptyMap().iterator().hasNext(), equalTo(false));
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void iterate_empty_no_such_element() {
+        emptyMap().iterator().next();
+    }
+
+    @Test
+    public void iterate_one() {
+        Iterator<Entry<Integer, Integer>> iter = emptyMap().assoc(1, 2).iterator();
+        assertThat(iter.hasNext(), equalTo(true));
+        Entry<Integer, Integer> entry = iter.next();
+        assertThat(entry.getKey(), equalTo(1));
+        assertThat(entry.getValue(), equalTo(2));
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void iterate_one_no_such_element() {
+        Iterator<Entry<Integer, Integer>> iter = emptyMap().assoc(1, 1).iterator();
+        iter.next();
+        iter.next();
+    }
+
     @SuppressWarnings({ "rawtypes" })
     private void assertEntry(ArgumentCaptor<Entry> argument, Object key, Object value) {
         assertThat(argument.getValue().getKey(), equalTo(key));
