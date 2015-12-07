@@ -112,4 +112,8 @@ public class ObjectVersionManager<O, M> {
     public Schema<ValueType> getSchema() {
         return serializer.schemaRoot;
     }
+
+    public boolean isEmpty() {
+        return versionGraph.isEmpty();
+    }
 }
