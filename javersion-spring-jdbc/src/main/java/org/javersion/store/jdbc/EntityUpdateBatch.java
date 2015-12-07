@@ -30,7 +30,6 @@ import org.javersion.path.PropertyPath;
 import com.google.common.collect.ImmutableSet;
 import com.mysema.query.sql.SQLQuery;
 import com.mysema.query.sql.dml.SQLInsertClause;
-import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.types.Order;
 import com.mysema.query.types.OrderSpecifier;
 import com.mysema.query.types.query.NumberSubQuery;
@@ -39,8 +38,6 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
 
     protected final SQLInsertClause entityCreateBatch;
 
-    protected final SQLUpdateClause entityUpdateBatch;
-
     protected final Set<Id> lockedDocIds;
 
     private final Map<Id, Long> entityOrdinals;
@@ -48,7 +45,6 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
     public EntityUpdateBatch(EntityStoreOptions<Id> options) {
         super(options);
         entityCreateBatch = null;
-        entityUpdateBatch = null;
         lockedDocIds = null;
         entityOrdinals = null;
     }
@@ -60,7 +56,6 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
     public EntityUpdateBatch(EntityStoreOptions<Id> options, Collection<Id> docIds) {
         super(options);
         entityCreateBatch = options.queryFactory.insert(options.entity);
-        entityUpdateBatch = options.queryFactory.update(options.entity);
 
         lockedDocIds = ImmutableSet.copyOf(docIds);
         entityOrdinals = lockEntitiesForUpdate(options, docIds);
@@ -94,9 +89,6 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
     public void execute() {
         if (entityCreateBatch != null && !entityCreateBatch.isEmpty()) {
             entityCreateBatch.execute();
-        }
-        if (entityUpdateBatch != null && !entityUpdateBatch.isEmpty()) {
-            entityUpdateBatch.execute();
         }
         super.execute();
     }
