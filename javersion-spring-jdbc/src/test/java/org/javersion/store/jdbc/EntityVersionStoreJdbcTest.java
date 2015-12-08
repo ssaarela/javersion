@@ -53,7 +53,7 @@ public class EntityVersionStoreJdbcTest {
     @Test(expected = IllegalStateException.class)
     public void must_lock_entity_before_update() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String> update = entityVersionStore.updateBatch(randomId());
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityVersionStore.updateBatch(randomId());
             update.addVersion(randomId(), ObjectVersionGraph.init(ObjectVersion.<String>builder().build()).getTip());
             update.execute();
             return null;
@@ -88,7 +88,7 @@ public class EntityVersionStoreJdbcTest {
         final String comment = "Comment metadata";
         final String docId = randomId();
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String> update = entityVersionStore.updateBatch(docId);
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityVersionStore.updateBatch(docId);
             ObjectVersion<String> version = ObjectVersion.<String>builder()
                     .meta(comment)
                     .build();
@@ -103,7 +103,7 @@ public class EntityVersionStoreJdbcTest {
 
     private void create_first_two_versions_of_doc1() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String> update = entityVersionStore.updateBatch(docId1);
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityVersionStore.updateBatch(docId1);
             assertThat(update.contains(docId1)).isTrue();
             assertThat(update.contains(randomId())).isFalse();
             assertThat(update.isCreate(docId1)).isTrue();
@@ -149,7 +149,7 @@ public class EntityVersionStoreJdbcTest {
 
     private void create_doc2_and_update_doc1() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String> update = entityVersionStore.updateBatch(asList(docId1, docId2));
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityVersionStore.updateBatch(asList(docId1, docId2));
             ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
             assertThat(graph.isEmpty()).isFalse();
 

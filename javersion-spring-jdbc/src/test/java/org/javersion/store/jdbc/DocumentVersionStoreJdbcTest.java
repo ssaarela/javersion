@@ -69,10 +69,10 @@ public class DocumentVersionStoreJdbcTest {
     private final ObjectVersionManager<Product, Void> versionManager = new ObjectVersionManager<Product, Void>(Product.class).init();
 
     @Resource
-    DocumentVersionStoreJdbc<String, Void> documentStore;
+    DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> documentStore;
 
     @Resource
-    DocumentVersionStoreJdbc<String, Void> mappedDocumentStore;
+    DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> mappedDocumentStore;
 
     @Resource
     TransactionTemplate transactionTemplate;

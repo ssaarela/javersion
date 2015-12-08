@@ -34,7 +34,7 @@ import com.mysema.query.types.Order;
 import com.mysema.query.types.OrderSpecifier;
 import com.mysema.query.types.query.NumberSubQuery;
 
-public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateBatch<Id, M, JEntityVersion<Id>, EntityStoreOptions<Id>> {
+public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersion<Id>> extends AbstractUpdateBatch<Id, M, V, EntityStoreOptions<Id, V>> {
 
     protected final SQLInsertClause entityCreateBatch;
 
@@ -42,18 +42,18 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
 
     private final Map<Id, Long> entityOrdinals;
 
-    public EntityUpdateBatch(EntityStoreOptions<Id> options) {
+    public EntityUpdateBatch(EntityStoreOptions<Id, V> options) {
         super(options);
         entityCreateBatch = null;
         lockedDocIds = null;
         entityOrdinals = null;
     }
 
-    public EntityUpdateBatch(EntityStoreOptions<Id> options, Id docId) {
+    public EntityUpdateBatch(EntityStoreOptions<Id, V> options, Id docId) {
         this(options, ImmutableSet.of(docId));
     }
 
-    public EntityUpdateBatch(EntityStoreOptions<Id> options, Collection<Id> docIds) {
+    public EntityUpdateBatch(EntityStoreOptions<Id, V> options, Collection<Id> docIds) {
         super(options);
         entityCreateBatch = options.queryFactory.insert(options.entity);
 
@@ -107,7 +107,7 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
         super.insertVersion(docId, version);
     }
 
-    protected Map<Id, Long> lockEntitiesForUpdate(EntityStoreOptions<Id> options, Collection<Id> docIds) {
+    protected Map<Id, Long> lockEntitiesForUpdate(EntityStoreOptions<Id, V> options, Collection<Id> docIds) {
         SQLQuery entityQuery = options.queryFactory
                 .from(options.entity)
                 .where(predicate(IN, options.entity.id, constant(docIds)))
@@ -117,7 +117,7 @@ public class EntityUpdateBatch<Id extends Comparable, M> extends AbstractUpdateB
         return entityQuery.map(options.entity.id, maxLocalOrdinalByEntity(options));
     }
 
-    protected NumberSubQuery<Long> maxLocalOrdinalByEntity(EntityStoreOptions<Id> options) {
+    protected NumberSubQuery<Long> maxLocalOrdinalByEntity(EntityStoreOptions<Id, V> options) {
         return options.queryFactory.subQuery()
                 .from(options.version)
                 .where(predicate(EQ, options.version.docId, options.entity.id))

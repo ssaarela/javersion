@@ -17,29 +17,34 @@ package org.javersion.store.jdbc;
 
 import org.javersion.util.Check;
 
+import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.types.Expression;
 
-public class DocumentStoreOptions<Id> extends StoreOptions<Id, JDocumentVersion<Id>> {
+public class DocumentStoreOptions<Id, V extends JDocumentVersion<Id>> extends StoreOptions<Id, V> {
 
     public final Expression<Long> nextOrdinal;
 
-    protected DocumentStoreOptions(Builder<Id> builder) {
+    protected DocumentStoreOptions(Builder<Id, V> builder) {
         super(builder);
         this.nextOrdinal = Check.notNull(builder.nextOrdinal, "nextOrdinal");
     }
 
-    public static class Builder<Id> extends AbstractBuilder<Id, JDocumentVersion<Id>, Builder<Id>> {
+    public static class Builder<Id, V extends JDocumentVersion<Id>> extends AbstractBuilder<Id, V, DocumentStoreOptions<Id, V>, Builder<Id, V>> {
 
         protected Expression<Long> nextOrdinal;
 
-        public Builder<Id> nextOrdinal(Expression<Long> nextOrdinal) {
+        public Builder<Id, V> nextOrdinal(Expression<Long> nextOrdinal) {
             this.nextOrdinal = nextOrdinal;
             return this;
         }
 
         @Override
-        public DocumentStoreOptions<Id> build() {
+        public DocumentStoreOptions<Id, V> build() {
             return new DocumentStoreOptions<>(this);
+        }
+
+        public DocumentStoreOptions<Id, V> build(SQLQueryFactory queryFactory) {
+            return queryFactory(queryFactory).build();
         }
 
     }

@@ -52,14 +52,14 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, Void> documentStore(SQLQueryFactory queryFactory) {
+    public DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> documentStore(SQLQueryFactory queryFactory) {
 
-        return new DocumentVersionStoreJdbc<String, Void>(documentOptionsBuilder(queryFactory).build());
+        return new DocumentVersionStoreJdbc<>(documentOptionsBuilder(queryFactory).build());
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, Void> mappedDocumentStore(SQLQueryFactory queryFactory) {
-        return new DocumentVersionStoreJdbc<String, Void>(
+    public DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> mappedDocumentStore(SQLQueryFactory queryFactory) {
+        return new DocumentVersionStoreJdbc<>(
                 documentOptionsBuilder(queryFactory)
                         .versionTableProperties(ImmutableMap.of(
                                 ROOT.property("name"), documentVersion.name,
@@ -71,7 +71,7 @@ public class PersistenceTestConfiguration {
     public CustomEntityVersionStore entityVersionStore(SQLQueryFactory queryFactory) {
         QEntityVersion since = new QEntityVersion("SINCE");
         return new CustomEntityVersionStore(
-                new EntityStoreOptions.Builder<String>()
+                new EntityStoreOptions.Builder<String, JEntityVersion<String>>()
                         .repositoryTable(new JRepository(repository))
                         .repositoryId("ENTITY_VERSION")
                         .entityTable(new JEntity<>(entity, entity.id))
@@ -89,9 +89,9 @@ public class PersistenceTestConfiguration {
     }
 
 
-    private Builder<String> documentOptionsBuilder(SQLQueryFactory queryFactory) {
+    private Builder<String, JDocumentVersion<String>> documentOptionsBuilder(SQLQueryFactory queryFactory) {
         QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
-        return new Builder<String>()
+        return new Builder<String, JDocumentVersion<String>>()
                 .repositoryTable(new JRepository(repository))
                 .repositoryId("DOCUMENT_VERSION")
                 .versionTable(new JDocumentVersion<>(documentVersion, documentVersion.docId))

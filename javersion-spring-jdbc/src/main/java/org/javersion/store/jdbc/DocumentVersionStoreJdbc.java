@@ -47,7 +47,7 @@ import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.expr.BooleanExpression;
 
-public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id, M, JDocumentVersion<Id>, DocumentStoreOptions<Id>> {
+public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> extends AbstractVersionStoreJdbc<Id, M, V, DocumentStoreOptions<Id, V>> {
 
     protected final Expression<?>[] versionAndParentsSince;
 
@@ -57,7 +57,7 @@ public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id
         versionAndParentsSince = null;
     }
 
-    public DocumentVersionStoreJdbc(DocumentStoreOptions<Id> options) {
+    public DocumentVersionStoreJdbc(DocumentStoreOptions<Id, V> options) {
         super(options);
         versionAndParentsSince = concat(versionAndParentColumns, options.sinceVersion.ordinal);
     }
@@ -121,7 +121,7 @@ public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
-        DocumentUpdateBatch<Id, M> batch = optimizationUpdateBatch();
+        DocumentUpdateBatch<Id, M, V> batch = optimizationUpdateBatch();
 
         for (Id docId : versionsByDocId.keySet()) {
             for (VersionNode<PropertyPath, Object, M> version : versionsByDocId.get(docId)) {
@@ -157,7 +157,7 @@ public class DocumentVersionStoreJdbc<Id, M> extends AbstractVersionStoreJdbc<Id
     }
 
     @Override
-    protected DocumentUpdateBatch<Id, M> optimizationUpdateBatch() {
+    protected DocumentUpdateBatch<Id, M, V> optimizationUpdateBatch() {
         return new DocumentUpdateBatch<>(options);
     }
 

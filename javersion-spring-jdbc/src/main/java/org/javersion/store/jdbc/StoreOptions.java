@@ -40,9 +40,9 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
 
     public final ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
 
-    final SQLQueryFactory queryFactory;
+    public final SQLQueryFactory queryFactory;
 
-    protected StoreOptions(AbstractBuilder<Id, V, ?> builder) {
+    protected StoreOptions(AbstractBuilder<Id, V, ?, ?> builder) {
         this.repositoryId = Check.notNull(builder.repositoryId, "repositoryId");
         this.repository = Check.notNull(builder.repositoryTable, "repositoryTable");
         this.version = Check.notNull(builder.version, "versionTable");
@@ -55,9 +55,11 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
     }
 
-    public abstract static class AbstractBuilder<Id, V extends JVersion<Id>, This extends AbstractBuilder<Id, V, This>> {
+    public abstract static class AbstractBuilder<Id, V extends JVersion<Id>,
+            Options extends StoreOptions<Id, V>,
+            This extends AbstractBuilder<Id, V, Options,This>> {
 
-        protected String repositoryId = "repositoryTable";
+        protected String repositoryId = "repository";
 
         protected JRepository repositoryTable;
 
@@ -114,7 +116,7 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
             return self();
         }
 
-        public abstract <T extends StoreOptions<Id, V>> T build();
+        public abstract Options build();
 
         @SuppressWarnings("unchecked")
         public This self() {
