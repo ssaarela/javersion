@@ -87,7 +87,7 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
 
     @Override
     public void execute() {
-        if (entityCreateBatch != null && !entityCreateBatch.isEmpty()) {
+        if (isNotEmpty(entityCreateBatch)) {
             entityCreateBatch.execute();
         }
         super.execute();

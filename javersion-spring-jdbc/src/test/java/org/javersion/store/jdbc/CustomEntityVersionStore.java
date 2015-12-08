@@ -64,7 +64,7 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
         @Override
         public void execute() {
             super.execute();
-            if (entityUpdateBatch != null && !entityUpdateBatch.isEmpty()) {
+            if (isNotEmpty(entityUpdateBatch)) {
                 entityUpdateBatch.execute();
             }
         }
