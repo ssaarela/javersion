@@ -15,6 +15,8 @@
  */
 package org.javersion.store.jdbc;
 
+import org.javersion.util.Check;
+
 import com.mysema.query.sql.SQLQueryFactory;
 
 public class EntityStoreOptions<Id extends Comparable, V extends JEntityVersion<Id>> extends StoreOptions<Id, V> {
@@ -27,7 +29,7 @@ public class EntityStoreOptions<Id extends Comparable, V extends JEntityVersion<
 
     protected EntityStoreOptions(Builder<Id, V> builder) {
         super(builder);
-        this.entity = builder.entity;
+        this.entity = Check.notNull(builder.entity, "entity");
     }
 
     public static class Builder<Id extends Comparable, V extends JEntityVersion<Id>> extends AbstractBuilder<Id, V, EntityStoreOptions<Id, V>, Builder<Id, V>> {
