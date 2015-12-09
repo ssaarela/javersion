@@ -46,10 +46,6 @@ public class EntityStoreOptions<Id extends Comparable, V extends JEntityVersion<
             return new EntityStoreOptions<>(this);
         }
 
-        public EntityStoreOptions<Id, V> build(SQLQueryFactory queryFactory) {
-            return queryFactory(queryFactory).build();
-        }
-
     }
 
 }

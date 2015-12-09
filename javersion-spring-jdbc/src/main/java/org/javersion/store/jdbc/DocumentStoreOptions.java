@@ -17,7 +17,6 @@ package org.javersion.store.jdbc;
 
 import org.javersion.util.Check;
 
-import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.types.Expression;
 
 public class DocumentStoreOptions<Id, V extends JDocumentVersion<Id>> extends StoreOptions<Id, V> {
@@ -41,10 +40,6 @@ public class DocumentStoreOptions<Id, V extends JDocumentVersion<Id>> extends St
         @Override
         public DocumentStoreOptions<Id, V> build() {
             return new DocumentStoreOptions<>(this);
-        }
-
-        public DocumentStoreOptions<Id, V> build(SQLQueryFactory queryFactory) {
-            return queryFactory(queryFactory).build();
         }
 
     }

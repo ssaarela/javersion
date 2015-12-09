@@ -125,6 +125,10 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
 
         public abstract Options build();
 
+        public Options build(SQLQueryFactory queryFactory) {
+            return queryFactory(queryFactory).build();
+        }
+
         @SuppressWarnings("unchecked")
         public This self() {
             return (This) this;

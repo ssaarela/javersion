@@ -3,6 +3,7 @@ package org.javersion.store;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 import static org.javersion.store.sql.QEntity.entity;
+import static org.javersion.store.sql.QRepository.repository;
 
 import java.sql.Types;
 
@@ -12,6 +13,7 @@ import javax.sql.DataSource;
 import org.javersion.store.jdbc.*;
 import org.javersion.store.jdbc.DocumentStoreOptions.Builder;
 import org.javersion.store.sql.QDocumentVersion;
+import org.javersion.store.sql.QRepository;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -51,16 +53,17 @@ public class PersistenceTestConfiguration {
     @Bean
     public DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> documentStore(SQLQueryFactory queryFactory) {
 
-        return new DocumentVersionStoreJdbc<>(documentOptionsBuilder(queryFactory).build());
+        return new DocumentVersionStoreJdbc<>(documentOptionsBuilder().build(queryFactory));
     }
 
     @Bean
     public DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> mappedDocumentStore(SQLQueryFactory queryFactory) {
         return new DocumentVersionStoreJdbc<>(
-                documentOptionsBuilder(queryFactory)
+                documentOptionsBuilder()
                         .versionTableProperties(ImmutableMap.of(
                                 ROOT.property("name"), documentVersion.name,
                                 ROOT.property("id"), documentVersion.id))
+                        .queryFactory(queryFactory)
                         .build());
     }
 
@@ -85,14 +88,14 @@ public class PersistenceTestConfiguration {
     }
 
 
-    private Builder<String, JDocumentVersion<String>> documentOptionsBuilder(SQLQueryFactory queryFactory) {
+    private Builder<String, JDocumentVersion<String>> documentOptionsBuilder() {
         QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
         return new Builder<String, JDocumentVersion<String>>()
                 .defaultsFor("DOCUMENT")
+                .repositoryTable(new JRepository(repository))
                 .versionTable(new JDocumentVersion<>(documentVersion, documentVersion.docId))
                 .versionTableSince(new JDocumentVersion<>(sinceVersion, sinceVersion.docId))
-                .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))
-                .queryFactory(queryFactory);
+                .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"));
     }
 
     private class MyQDocumentVersion extends QEntityVersionBase<MyQDocumentVersion> {
