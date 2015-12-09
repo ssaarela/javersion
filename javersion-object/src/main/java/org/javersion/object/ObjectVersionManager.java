@@ -59,14 +59,6 @@ public class ObjectVersionManager<O, M> {
         return builder;
     }
 
-    public MergeObject<O, M> mergeRevisions(Revision... revisions) {
-        return mergeRevisions(asList(revisions));
-    }
-
-    public MergeObject<O, M> mergeRevisions(Iterable<Revision> revisions) {
-        return mergeObject(versionGraph.mergeRevisions(revisions));
-    }
-
     public MergeObject<O, M> mergeBranches(String... branches) {
         return mergeBranches(asList(branches));
     }
