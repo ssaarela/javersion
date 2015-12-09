@@ -15,7 +15,11 @@
  */
 package org.javersion.store.jdbc;
 
+import java.sql.Types;
+
+import com.mysema.query.sql.ColumnMetadata;
 import com.mysema.query.sql.RelationalPathBase;
+import com.mysema.query.types.PathMetadataFactory;
 import com.mysema.query.types.path.NumberPath;
 import com.mysema.query.types.path.SimplePath;
 import com.mysema.query.types.path.StringPath;
@@ -35,6 +39,23 @@ public class JVersionProperty extends com.mysema.query.sql.RelationalPathBase<JV
     public JVersionProperty(RelationalPathBase<?> table) {
         super(JVersionProperty.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
+    }
+
+    public JVersionProperty(String repositoryName) {
+        this("PUBLIC", repositoryName + "_VERSION_PROPERTY");
+    }
+
+    public JVersionProperty(String schema, String table) {
+        super(JVersionProperty.class, PathMetadataFactory.forVariable(table), schema, table);
+        addMetadata();
+    }
+
+    protected void addMetadata() {
+        addMetadata(nbr, ColumnMetadata.named("NBR").withIndex(5).ofType(Types.BIGINT).withSize(19));
+        addMetadata(path, ColumnMetadata.named("PATH").withIndex(2).ofType(Types.VARCHAR).withSize(512).notNull());
+        addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(str, ColumnMetadata.named("STR").withIndex(4).ofType(Types.VARCHAR).withSize(1024));
+        addMetadata(type, ColumnMetadata.named("TYPE").withIndex(3).ofType(Types.CHAR).withSize(1));
     }
 
 }

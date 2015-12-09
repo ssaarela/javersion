@@ -4,6 +4,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
 import static org.javersion.object.ObjectVersionManagerTest.ProductStatus.IN_STOCK;
@@ -16,6 +17,8 @@ import java.util.Set;
 
 import org.javersion.core.Revision;
 import org.javersion.core.Version;
+import org.javersion.core.VersionNode;
+import org.javersion.path.PropertyPath;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
@@ -42,6 +45,37 @@ public class ObjectVersionManagerTest {
         assertThat(version.changeset.entrySet(), empty());
 
         defaultMergeNoConflicts(null);
+    }
+
+    @Test
+    public void is_empty() {
+        assertThat(versionManager.isEmpty(), equalTo(true));
+    }
+
+    @Test
+    public void get_branches() {
+        versionManager.versionBuilder(null).build();
+        assertThat(versionManager.getBranches(), equalTo(set(DEFAULT_BRANCH)));
+    }
+
+    @Test
+    public void commit_returns_new_VersionNode() {
+        ObjectVersion<Void> version = versionManager.versionBuilder(null).build(false);
+        VersionNode<PropertyPath, Object, Void> versionNode = versionManager.commit(version);
+        assertThat(versionNode, sameInstance(versionManager.getVersionNode(version.revision)));
+    }
+
+    @Test
+    public void get_heads() {
+        assertThat(versionManager.getHeads(), nullValue());
+        ObjectVersion<Void> version = versionManager.versionBuilder(null).build();
+        assertThat(versionManager.getHeads(), equalTo(set(version.revision)));
+    }
+
+    @Test
+    public void is_not_empty() {
+        versionManager.versionBuilder(null).build();
+        assertThat(versionManager.isEmpty(), equalTo(false));
     }
 
     @Test

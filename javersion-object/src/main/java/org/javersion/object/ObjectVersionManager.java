@@ -21,11 +21,11 @@ import org.javersion.path.Schema;
 @NotThreadSafe
 public class ObjectVersionManager<O, M> {
 
-    private VersionGraph<PropertyPath, Object, M, ?, ?> versionGraph;
+    protected VersionGraph<PropertyPath, Object, M, ?, ?> versionGraph;
 
-    private Set<Revision> heads;
+    protected Set<Revision> heads;
 
-    private final ObjectSerializer<O> serializer;
+    protected final ObjectSerializer<O> serializer;
 
     final boolean useSchemaFilter;
 
@@ -59,14 +59,6 @@ public class ObjectVersionManager<O, M> {
         return builder;
     }
 
-    public MergeObject<O, M> mergeRevisions(Revision... revisions) {
-        return mergeRevisions(asList(revisions));
-    }
-
-    public MergeObject<O, M> mergeRevisions(Iterable<Revision> revisions) {
-        return mergeObject(versionGraph.mergeRevisions(revisions));
-    }
-
     public MergeObject<O, M> mergeBranches(String... branches) {
         return mergeBranches(asList(branches));
     }
@@ -88,9 +80,10 @@ public class ObjectVersionManager<O, M> {
         return serializer.fromPropertyMap(merge.getProperties());
     }
 
-    public void commit(Version<PropertyPath, Object, M> version) {
+    public VersionNode<PropertyPath, Object, M> commit(Version<PropertyPath, Object, M> version) {
         versionGraph = versionGraph.commit(version);
         heads = of(version.revision);
+        return versionGraph.getTip();
     }
 
     public VersionGraph<PropertyPath, Object, M, ?, ?> getVersionGraph() {
@@ -111,5 +104,9 @@ public class ObjectVersionManager<O, M> {
 
     public Schema<ValueType> getSchema() {
         return serializer.schemaRoot;
+    }
+
+    public boolean isEmpty() {
+        return versionGraph.isEmpty();
     }
 }

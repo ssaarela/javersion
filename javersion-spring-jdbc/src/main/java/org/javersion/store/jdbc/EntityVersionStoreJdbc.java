@@ -37,6 +37,7 @@ import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.mysema.query.ResultTransformer;
 import com.mysema.query.group.Group;
 import com.mysema.query.sql.SQLQuery;
@@ -44,7 +45,8 @@ import com.mysema.query.sql.dml.SQLUpdateClause;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.expr.BooleanExpression;
 
-public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVersionStoreJdbc<Id, M, JEntityVersion<Id>, EntityStoreOptions<Id>> {
+public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityVersion<Id>> extends AbstractVersionStoreJdbc<Id, M, V,
+        EntityStoreOptions<Id, V>> {
 
     protected final ResultTransformer<List<Group>> versionAndParentsSince;
 
@@ -54,7 +56,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVe
         versionAndParentsSince = null;
     }
 
-    public EntityVersionStoreJdbc(EntityStoreOptions<Id> options) {
+    public EntityVersionStoreJdbc(EntityStoreOptions<Id, V> options) {
         super(options);
         Expression<?>[] values = concat(versionAndParentColumns, options.sinceVersion.localOrdinal);
         versionAndParentsSince = groupBy(options.version.revision).list(values);
@@ -108,18 +110,18 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M> extends AbstractVe
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    public EntityUpdateBatch<Id, M> updateBatch(Id docId) {
-        return new EntityUpdateBatch<>(options, docId);
+    public EntityUpdateBatch<Id, M, V> updateBatch(Id docId) {
+        return updateBatch(ImmutableSet.of(docId));
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    public EntityUpdateBatch<Id, M> updateBatch(Collection<Id> docIds) {
+    public EntityUpdateBatch<Id, M, V> updateBatch(Collection<Id> docIds) {
         return new EntityUpdateBatch<>(options, docIds);
     }
 
     @Override
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    protected EntityUpdateBatch<Id, M> optimizationUpdateBatch() {
+    protected EntityUpdateBatch<Id, M, V> optimizationUpdateBatch() {
         return new EntityUpdateBatch<>(options);
     }
 

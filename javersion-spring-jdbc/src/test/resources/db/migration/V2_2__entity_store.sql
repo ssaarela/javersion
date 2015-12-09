@@ -2,7 +2,7 @@
 -- For custom repositories, replace ENTITY_ --
 ----------------------------------------------
 
-insert into REPOSITORY (ID) values ('ENTITY_VERSION');
+insert into REPOSITORY (ID) values ('ENTITY');
 
 create table ENTITY (
   ID varchar(255) not null,

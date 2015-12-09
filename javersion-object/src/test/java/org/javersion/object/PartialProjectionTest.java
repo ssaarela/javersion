@@ -11,6 +11,7 @@ import java.lang.annotation.Target;
 
 import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
+import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
@@ -67,9 +68,10 @@ public class PartialProjectionTest {
     private ObjectVersionManager<Projection, Void> manager(ObjectSerializer<Projection> serializer) {
         return new ObjectVersionManager<Projection, Void>(serializer, true) {
             @Override
-            public void commit(Version<PropertyPath, Object, Void> version) {
-                super.commit(version);
+            public VersionNode<PropertyPath, Object, Void> commit(Version<PropertyPath, Object, Void> version) {
+                VersionNode<PropertyPath, Object, Void> versionNode = super.commit(version);
                 PartialProjectionTest.this.versionGraph = getVersionGraph();
+                return versionNode;
             }
         }.init(versionGraph);
     }

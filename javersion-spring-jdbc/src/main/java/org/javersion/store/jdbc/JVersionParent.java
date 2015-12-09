@@ -15,7 +15,11 @@
  */
 package org.javersion.store.jdbc;
 
+import java.sql.Types;
+
+import com.mysema.query.sql.ColumnMetadata;
 import com.mysema.query.sql.RelationalPathBase;
+import com.mysema.query.types.PathMetadataFactory;
 import com.mysema.query.types.path.SimplePath;
 
 public class JVersionParent extends com.mysema.query.sql.RelationalPathBase<JVersionParent> {
@@ -27,6 +31,20 @@ public class JVersionParent extends com.mysema.query.sql.RelationalPathBase<JVer
     public JVersionParent(RelationalPathBase<?> table) {
         super(JVersionParent.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
+    }
+
+    public JVersionParent(String repositoryName) {
+        this("PUBLIC", repositoryName + "_VERSION_PARENT");
+    }
+
+    public JVersionParent(String schema, String table) {
+        super(JVersionParent.class, PathMetadataFactory.forVariable(table), schema, table);
+        addMetadata();
+    }
+
+    protected void addMetadata() {
+        addMetadata(parentRevision, ColumnMetadata.named("PARENT_REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
     }
 
 }

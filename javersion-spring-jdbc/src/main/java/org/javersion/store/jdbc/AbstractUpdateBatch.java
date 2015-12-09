@@ -22,10 +22,15 @@ import org.javersion.core.Revision;
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 
+import com.mysema.query.dml.StoreClause;
 import com.mysema.query.sql.dml.SQLInsertClause;
 import com.mysema.query.types.Path;
 
 public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, V>> {
+
+    protected static boolean isNotEmpty(StoreClause<?> store) {
+        return store != null && !store.isEmpty();
+    }
 
     protected final Options options;
 
@@ -49,13 +54,13 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
     }
 
     public void execute() {
-        if (!versionBatch.isEmpty()) {
+        if (isNotEmpty(versionBatch)) {
             versionBatch.execute();
         }
-        if (!parentBatch.isEmpty()) {
+        if (isNotEmpty(parentBatch)) {
             parentBatch.execute();
         }
-        if (!propertyBatch.isEmpty()) {
+        if (isNotEmpty(propertyBatch)) {
             propertyBatch.execute();
         }
     }

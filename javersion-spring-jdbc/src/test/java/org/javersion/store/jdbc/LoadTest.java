@@ -46,7 +46,7 @@ public class LoadTest {
     private final int propCount = 100;
 
     @Resource
-    DocumentVersionStoreJdbc<String, Void> documentStore;
+    DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> documentStore;
 
     @Resource
     CustomEntityVersionStore entityStore;
@@ -169,7 +169,7 @@ public class LoadTest {
                 ts = currentTimeMillis();
 
                 transactionTemplate.execute(status -> {
-                    EntityUpdateBatch<String, String> update = entityStore.updateBatch(docId);
+                    EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(docId);
                     update.addVersion(docId, versionGraph.commit(version).getTip());
                     update.execute();
                     return null;

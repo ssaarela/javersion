@@ -2,7 +2,7 @@
 -- For custom repositories, replace DOCUMENT_ --
 ------------------------------------------------
 
-insert into REPOSITORY (ID) values ('DOCUMENT_VERSION');
+insert into REPOSITORY (ID) values ('DOCUMENT');
 
 create table DOCUMENT_VERSION (
   DOC_ID varchar(255) not null,

@@ -15,7 +15,11 @@
  */
 package org.javersion.store.jdbc;
 
+import java.sql.Types;
+
+import com.mysema.query.sql.ColumnMetadata;
 import com.mysema.query.sql.RelationalPathBase;
+import com.mysema.query.types.PathMetadataFactory;
 import com.mysema.query.types.path.StringPath;
 
 
@@ -26,6 +30,19 @@ public class JRepository extends com.mysema.query.sql.RelationalPathBase<JReposi
     public JRepository(RelationalPathBase<?> table) {
         super(JRepository.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
+    }
+
+    public JRepository() {
+        this("PUBLIC", "REPOSITORY");
+    }
+
+    public JRepository(String schema, String table) {
+        super(JRepository.class, PathMetadataFactory.forVariable(table), schema, table);
+        addMetadata();
+    }
+
+    protected void addMetadata() {
+        addMetadata(id, ColumnMetadata.named("ID").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
     }
 
 }

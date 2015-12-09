@@ -15,26 +15,34 @@
  */
 package org.javersion.store.jdbc;
 
-public class EntityStoreOptions<Id extends Comparable> extends StoreOptions<Id, JEntityVersion<Id>> {
+import org.javersion.util.Check;
+
+import com.mysema.query.sql.SQLQueryFactory;
+
+public class EntityStoreOptions<Id extends Comparable, V extends JEntityVersion<Id>> extends StoreOptions<Id, V> {
+
+    public static <Id extends Comparable, V extends JEntityVersion<Id>> Builder<Id, V> builder() {
+        return new Builder<>();
+    }
 
     public final JEntity<Id> entity;
 
-    protected EntityStoreOptions(Builder<Id> builder) {
+    protected EntityStoreOptions(Builder<Id, V> builder) {
         super(builder);
-        this.entity = builder.entity;
+        this.entity = Check.notNull(builder.entity, "entity");
     }
 
-    public static class Builder<Id extends Comparable> extends AbstractBuilder<Id, JEntityVersion<Id>, Builder<Id>> {
+    public static class Builder<Id extends Comparable, V extends JEntityVersion<Id>> extends AbstractBuilder<Id, V, EntityStoreOptions<Id, V>, Builder<Id, V>> {
 
         private JEntity<Id> entity;
 
-        public Builder<Id> entityTable(JEntity<Id> entity) {
+        public Builder<Id, V> entityTable(JEntity<Id> entity) {
             this.entity = entity;
             return this;
         }
 
         @Override
-        public EntityStoreOptions<Id> build() {
+        public EntityStoreOptions<Id, V> build() {
             return new EntityStoreOptions<>(this);
         }
 
