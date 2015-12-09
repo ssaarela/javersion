@@ -4,6 +4,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
 import static org.javersion.object.ObjectVersionManagerTest.ProductStatus.IN_STOCK;
@@ -66,7 +67,7 @@ public class ObjectVersionManagerTest {
 
     @Test
     public void get_heads() {
-        assertThat(versionManager.getHeads(), equalTo(set()));
+        assertThat(versionManager.getHeads(), nullValue());
         ObjectVersion<Void> version = versionManager.versionBuilder(null).build();
         assertThat(versionManager.getHeads(), equalTo(set(version.revision)));
     }
