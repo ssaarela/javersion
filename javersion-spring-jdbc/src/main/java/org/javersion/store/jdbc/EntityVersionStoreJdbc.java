@@ -37,6 +37,7 @@ import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.mysema.query.ResultTransformer;
 import com.mysema.query.group.Group;
 import com.mysema.query.sql.SQLQuery;
@@ -110,7 +111,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
     public EntityUpdateBatch<Id, M, V> updateBatch(Id docId) {
-        return new EntityUpdateBatch<Id, M, V>(options, docId);
+        return updateBatch(ImmutableSet.of(docId));
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)

@@ -49,10 +49,6 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
         entityOrdinals = null;
     }
 
-    public EntityUpdateBatch(EntityStoreOptions<Id, V> options, Id docId) {
-        this(options, ImmutableSet.of(docId));
-    }
-
     public EntityUpdateBatch(EntityStoreOptions<Id, V> options, Collection<Id> docIds) {
         super(options);
         entityCreateBatch = options.queryFactory.insert(options.entity);

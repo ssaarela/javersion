@@ -10,6 +10,5 @@ public class JDocumentVersion<Id> extends JVersion<Id> {
 
     public JDocumentVersion(RelationalPathBase<?> table, Path<Id> docId) {
         super(table, docId);
-        copyMetadata(table);
     }
 }

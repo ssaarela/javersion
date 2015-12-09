@@ -10,6 +10,6 @@ public class JEntityVersion<Id> extends JVersion<Id> {
 
     public JEntityVersion(RelationalPathBase<?> table, Path<Id> docId) {
         super(table, docId);
-        copyMetadata(table);
     }
+
 }

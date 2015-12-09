@@ -37,9 +37,10 @@ public abstract class JVersion<Id> extends RelationalPathBase<JVersion>  {
 
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
-    public JVersion(RelationalPathBase<?> table, Path<Id> docId) {
+    protected JVersion(RelationalPathBase<?> table, Path<Id> docId) {
         super(JVersion.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
         this.docId = docId;
+        copyMetadata(table);
     }
 
     protected void copyMetadata(RelationalPathBase<?> table) {

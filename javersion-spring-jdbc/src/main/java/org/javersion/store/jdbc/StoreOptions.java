@@ -111,6 +111,13 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
             return self();
         }
 
+        public This defaultsFor(String repositoryName) {
+            return repositoryId(repositoryName)
+                    .repositoryTable(new JRepository())
+                    .parentTable(new JVersionParent(repositoryName))
+                    .propertyTable(new JVersionProperty(repositoryName));
+        }
+
         public This queryFactory(SQLQueryFactory queryFactory) {
             this.queryFactory = queryFactory;
             return self();
