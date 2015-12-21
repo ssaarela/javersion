@@ -20,14 +20,11 @@ import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
+import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.javersion.core.*;
 import org.javersion.object.ObjectVersion;
@@ -150,24 +147,13 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void optimize(Id docId, java.util.function.Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        ObjectVersionGraph<M> graph = load(docId);
-        OptimizedGraphBuilder<PropertyPath, Object, M> optimizedGraphBuilder = new OptimizedGraphBuilder<>(graph, keep);
-
-        List<Revision> keptRevisions = optimizedGraphBuilder.getKeptRevisions();
-        List<Revision> squashedRevisions = optimizedGraphBuilder.getSquashedRevisions();
-
-        if (squashedRevisions.isEmpty()) {
-            return;
-        }
-        if (keptRevisions.isEmpty()) {
-            throw new IllegalArgumentException("keep-predicate didn't match any version");
-        }
-        deleteOldParentsAndProperties(squashedRevisions, keptRevisions);
-        deleteSquashedVersions(squashedRevisions);
-        insertOptimizedParentsAndProperties(docId, ObjectVersionGraph.init(optimizedGraphBuilder.getOptimizedVersions()), keptRevisions);
+        AbstractUpdateBatch<Id, M, V, Options> batch = updateBatch(Arrays.asList(docId));
+        batch.optimize(docId, load(docId), keep);
+        batch.execute();
     }
 
-    protected abstract AbstractUpdateBatch<Id, M, V, ?> optimizationUpdateBatch();
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
+    public abstract AbstractUpdateBatch<Id, M, V, Options> updateBatch(Collection<Id> ids);
 
     protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
 
@@ -245,32 +231,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
             return ImmutableList.of();
         }
         return versionsAndParents;
-    }
-
-    private void insertOptimizedParentsAndProperties(Id docId, ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {
-        AbstractUpdateBatch<Id, M, V, ?> batch = optimizationUpdateBatch();
-        for (Revision revision : keptRevisions) {
-            VersionNode<PropertyPath, Object, M> version = optimizedGraph.getVersionNode(revision);
-            batch.insertParents(docId, version);
-            batch.insertProperties(docId, version);
-        }
-        batch.execute();
-    }
-
-    private void deleteOldParentsAndProperties(List<Revision> squashedRevisions, List<Revision> keptRevisions) {
-        options.queryFactory.delete(options.parent)
-                .where(options.parent.revision.in(keptRevisions).or(options.parent.revision.in(squashedRevisions)))
-                .execute();
-        options.queryFactory.delete(options.property)
-                .where(options.property.revision.in(keptRevisions).or(options.property.revision.in(squashedRevisions)))
-                .execute();
-    }
-
-    private void deleteSquashedVersions(List<Revision> squashedRevisions) {
-        // Delete squashed versions
-        options.queryFactory.delete(options.version)
-                .where(options.version.revision.in(squashedRevisions))
-                .execute();
     }
 
     protected ObjectVersion<M> buildVersion(Revision rev, Group versionAndParents, Map<PropertyPath, Object> changeset) {

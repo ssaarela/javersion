@@ -120,12 +120,6 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
     }
 
     @Override
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    protected EntityUpdateBatch<Id, M, V> optimizationUpdateBatch() {
-        return new EntityUpdateBatch<>(options);
-    }
-
-    @Override
     protected SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal) {
         return versionUpdateBatch.set(options.version.ordinal, ordinal);
     }

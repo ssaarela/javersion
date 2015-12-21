@@ -15,11 +15,15 @@
  */
 package org.javersion.store.jdbc;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
+import org.javersion.core.OptimizedGraphBuilder;
 import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionNode;
+import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 
 import com.mysema.query.dml.StoreClause;
@@ -63,6 +67,23 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         if (isNotEmpty(propertyBatch)) {
             propertyBatch.execute();
         }
+    }
+
+    public void optimize(Id docId, ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+        OptimizedGraphBuilder<PropertyPath, Object, M> optimizedGraphBuilder = new OptimizedGraphBuilder<>(graph, keep);
+
+        List<Revision> keptRevisions = optimizedGraphBuilder.getKeptRevisions();
+        List<Revision> squashedRevisions = optimizedGraphBuilder.getSquashedRevisions();
+
+        if (squashedRevisions.isEmpty()) {
+            return;
+        }
+        if (keptRevisions.isEmpty()) {
+            throw new IllegalArgumentException("keep-predicate didn't match any version");
+        }
+        deleteOldParentsAndProperties(squashedRevisions, keptRevisions);
+        deleteSquashedVersions(squashedRevisions);
+        insertOptimizedParentsAndProperties(docId, ObjectVersionGraph.init(optimizedGraphBuilder.getOptimizedVersions()), keptRevisions);
     }
 
     protected void insertVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
@@ -157,5 +178,29 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
                 .set(options.property.type, Character.toString(type))
                 .set(options.property.str, str)
                 .set(options.property.nbr, nbr);
+    }
+
+    private void insertOptimizedParentsAndProperties(Id docId, ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {
+        for (Revision revision : keptRevisions) {
+            VersionNode<PropertyPath, Object, M> version = optimizedGraph.getVersionNode(revision);
+            insertParents(docId, version);
+            insertProperties(docId, version);
+        }
+    }
+
+    private void deleteOldParentsAndProperties(List<Revision> squashedRevisions, List<Revision> keptRevisions) {
+        options.queryFactory.delete(options.parent)
+                .where(options.parent.revision.in(keptRevisions).or(options.parent.revision.in(squashedRevisions)))
+                .execute();
+        options.queryFactory.delete(options.property)
+                .where(options.property.revision.in(keptRevisions).or(options.property.revision.in(squashedRevisions)))
+                .execute();
+    }
+
+    private void deleteSquashedVersions(List<Revision> squashedRevisions) {
+        // Delete squashed versions
+        options.queryFactory.delete(options.version)
+                .where(options.version.revision.in(squashedRevisions))
+                .execute();
     }
 }

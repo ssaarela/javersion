@@ -108,6 +108,11 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
         return results.containsKey(docId) ? results.getVersions(docId) : ImmutableList.of();
     }
 
+    @Override
+    public DocumentUpdateBatch<Id, M, V> updateBatch(Collection<Id> ids) {
+        return new DocumentUpdateBatch<Id, M, V>(options);
+    }
+
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
         append(docId, singleton(version));
@@ -121,7 +126,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
-        DocumentUpdateBatch<Id, M, V> batch = optimizationUpdateBatch();
+        DocumentUpdateBatch<Id, M, V> batch = updateBatch(versionsByDocId.keys());
 
         for (Id docId : versionsByDocId.keySet()) {
             for (VersionNode<PropertyPath, Object, M> version : versionsByDocId.get(docId)) {
@@ -154,11 +159,6 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
         qry.orderBy(options.version.ordinal.asc());
 
         return verifyVersionsAndParentsSince(qry.transform(groupBy(options.version.revision).list(versionAndParentsSince)), since);
-    }
-
-    @Override
-    protected DocumentUpdateBatch<Id, M, V> optimizationUpdateBatch() {
-        return new DocumentUpdateBatch<>(options);
     }
 
     @Override
