@@ -22,6 +22,8 @@ import org.javersion.path.PropertyPath;
 import org.joda.time.DateTime;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableSet;
+
 public class ObjectVersionManagerTest {
 
     public enum ProductStatus {
@@ -76,6 +78,28 @@ public class ObjectVersionManagerTest {
     public void is_not_empty() {
         versionManager.versionBuilder(null).build();
         assertThat(versionManager.isEmpty(), equalTo(false));
+    }
+
+    @Test
+    public void merge_branches_vs_revisions() {
+        Revision rev1 = new Revision(),
+                rev2 = new Revision();
+
+        Product product = new Product();
+        product.name = "product 1";
+        versionManager.versionBuilder(product).revision(rev2).branch("b1").build();
+
+        // Concurrent version with earlier revision in another branch
+        product.name = "product 2";
+        versionManager.versionBuilder(product).revision(rev1).branch("b2").parents(ImmutableSet.of()).build();
+
+        MergeObject<Product, Void> mergeObject = versionManager.mergeBranches("b2", "b1");
+        product = mergeObject.object;
+        assertThat(product.name, equalTo("product 2"));
+
+        mergeObject = versionManager.mergeRevisions(mergeObject.getMergeHeads());
+        product = mergeObject.object;
+        assertThat(product.name, equalTo("product 1"));
     }
 
     @Test
