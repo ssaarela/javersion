@@ -42,13 +42,6 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
 
     private final Map<Id, Long> entityOrdinals;
 
-    public EntityUpdateBatch(EntityStoreOptions<Id, V> options) {
-        super(options);
-        entityCreateBatch = null;
-        lockedDocIds = null;
-        entityOrdinals = null;
-    }
-
     public EntityUpdateBatch(EntityStoreOptions<Id, V> options, Collection<Id> docIds) {
         super(options);
         entityCreateBatch = options.queryFactory.insert(options.entity);
