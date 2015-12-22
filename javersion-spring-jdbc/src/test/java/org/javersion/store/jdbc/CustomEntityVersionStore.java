@@ -41,11 +41,6 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
 
         protected final SQLUpdateClause entityUpdateBatch;
 
-        public UpdateBatch(EntityStoreOptions<String, JEntityVersion<String>> options) {
-            super(options);
-            entityUpdateBatch = null;
-        }
-
         public UpdateBatch(EntityStoreOptions<String, JEntityVersion<String>> options, String docId) {
             this(options, asList(docId));
         }
