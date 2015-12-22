@@ -38,7 +38,7 @@ public final class ReferenceType implements ScalarType {
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         NodeId id = identifiableType.toNodeId(object, context);
         context.put(path, id.getKeyOrIndex());
-        context.serialize(targetRoot.keyOrIndex(id), object);
+        context.serialize(targetRoot.node(id), object);
     }
 
     @Override
@@ -61,7 +61,7 @@ public final class ReferenceType implements ScalarType {
     @Override
     public NodeId toNodeId(Object object, WriteContext writeContext) {
         NodeId nodeId = identifiableType.toNodeId(object, writeContext);
-        writeContext.serialize(targetRoot.keyOrIndex(nodeId), object);
+        writeContext.serialize(targetRoot.node(nodeId), object);
         return nodeId;
     }
 

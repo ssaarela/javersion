@@ -2,7 +2,6 @@ package org.javersion.path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.javersion.path.NodeId.valueOf;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.path.PropertyPath.parse;
 
@@ -65,8 +64,10 @@ public class SchemaTest {
 
     @Test
     public void list_of_named_objects() {
+        // list[].name = name
+        // list[] = element
         Builder<String> root = new Builder<>("root");
-        Builder<String> list = root.addChild(valueOf("list"), new Builder<>());
+        Builder<String> list = root.addChild(NodeId.property("list"), new Builder<>());
         list.getOrCreate(parse("[].name"), "name");
         root.getOrCreate(parse("list[]")).setValue("element");
 
@@ -74,6 +75,7 @@ public class SchemaTest {
         assertThat(schema.getValue()).isEqualTo("root");
         Schema<String> child = schema.get(parse("list"));
         assertThat(child.getValue()).isNull();
+
         child = child.getChild(NodeId.ANY_INDEX);
         assertThat(child.getValue()).isEqualTo("element");
         assertThat(child.get(parse("name")).getValue()).isEqualTo("name");
@@ -86,12 +88,9 @@ public class SchemaTest {
         Schema<String> schema = root.build();
 
         assertThat(schema.hasChildren()).isTrue();
-        assertThat(schema.hasChild(valueOf("property"))).isTrue();
+        assertThat(schema.hasChild(NodeId.property("property"))).isTrue();
+        assertThat(schema.hasChild(NodeId.key("property"))).isFalse();
         assertThat(schema.hasChild(NodeId.ANY_KEY)).isFalse();
-
-        schema = schema.getChild(valueOf("property"));
-        assertThat(schema.hasChildren()).isFalse();
-        assertThat(schema.hasChild(NodeId.ANY)).isFalse();
     }
 
     @Test(expected = IllegalArgumentException.class)

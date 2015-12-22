@@ -8,9 +8,8 @@ import java.util.Map;
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
-import org.javersion.path.PropertyPath;
 import org.javersion.path.NodeId;
-import org.javersion.path.PropertyPath.SubPath;
+import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
 
 public class MapType implements ValueType {
@@ -63,7 +62,7 @@ public class MapType implements ValueType {
             Object key = entry.getKey();
             Object value = entry.getValue();
             NodeId nodeId = keyType.toNodeId(key, context);
-            SubPath entryPath = path.keyOrIndex(nodeId);
+            PropertyPath entryPath = path.node(nodeId);
             if (value == null) {
                 // Skip nested serialization of null values
                 context.put(entryPath, NULL);

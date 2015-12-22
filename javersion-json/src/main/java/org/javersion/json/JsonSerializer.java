@@ -136,7 +136,7 @@ public class JsonSerializer {
                 Map<NodeId, PropertyTree> childrenMap = tree.getChildrenMap();
                 int nonNullElements = 0;
                 for (int i=0; nonNullElements < childrenMap.size(); i++) {
-                    PropertyTree child = childrenMap.get(NodeId.valueOf(i));
+                    PropertyTree child = childrenMap.get(NodeId.index(i));
                     if (child != null) {
                         nonNullElements++;
                         toJson(child, map, writer);

@@ -19,6 +19,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.javersion.path.NodeId.index;
+import static org.javersion.path.NodeId.property;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.path.PropertyPath.parse;
 import static org.javersion.path.PropertyPathTest.children;
@@ -40,8 +42,16 @@ public class PropertyTreeTest {
         tree = assertPropertyTree(tree, "name", 0);
     }
 
-    private PropertyTree assertPropertyTree(PropertyTree tree, Object node, int expectedChildren) {
-        tree = tree.get(NodeId.valueOf(node));
+    private PropertyTree assertPropertyTree(PropertyTree tree, String property, int expectedChildren) {
+        return assertPropertyTree(tree, property(property), expectedChildren);
+    }
+
+    private PropertyTree assertPropertyTree(PropertyTree tree, int index, int expectedChildren) {
+        return assertPropertyTree(tree, index(index), expectedChildren);
+    }
+
+    private PropertyTree assertPropertyTree(PropertyTree tree, NodeId node, int expectedChildren) {
+        tree = tree.get(node);
         assertPropertyTree(tree, expectedChildren);
         return tree;
     }
@@ -80,7 +90,7 @@ public class PropertyTreeTest {
 
     @Test
     public void get_node() {
-        NodeId list = NodeId.valueOf("list");
+        NodeId list = property("list");
 
         PropertyPath path = parse("list[0][\"key\"]");
         PropertyTree tree = PropertyTree.build(path);
