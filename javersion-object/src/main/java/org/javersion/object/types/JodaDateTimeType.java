@@ -25,7 +25,7 @@ public class JodaDateTimeType extends AbstractScalarType {
 
     @Override
     public NodeId toNodeId(Object object, WriteContext writeContext) {
-        return NodeId.valueOf(fmt.print((DateTime) object));
+        return NodeId.key(fmt.print((DateTime) object));
     }
 
     @Override

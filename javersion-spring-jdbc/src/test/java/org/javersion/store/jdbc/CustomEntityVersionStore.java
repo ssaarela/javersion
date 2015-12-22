@@ -37,20 +37,9 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
         return new UpdateBatch(options, docIds);
     }
 
-    @Override
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    protected EntityUpdateBatch<String, String, JEntityVersion<String>> optimizationUpdateBatch() {
-        return new UpdateBatch(options);
-    }
-
     public static class UpdateBatch extends EntityUpdateBatch<String, String, JEntityVersion<String>> {
 
         protected final SQLUpdateClause entityUpdateBatch;
-
-        public UpdateBatch(EntityStoreOptions<String, JEntityVersion<String>> options) {
-            super(options);
-            entityUpdateBatch = null;
-        }
 
         public UpdateBatch(EntityStoreOptions<String, JEntityVersion<String>> options, String docId) {
             this(options, asList(docId));

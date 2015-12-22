@@ -29,7 +29,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return NodeId.valueOf((Long) object);
+            return NodeId.index((Long) object);
         }
     };
 
@@ -52,7 +52,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return NodeId.valueOf((Integer) object);
+            return NodeId.index((Integer) object);
         }
     };
 
@@ -75,7 +75,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return NodeId.valueOf((Short) object);
+            return NodeId.index((Short) object);
         }
     };
 
@@ -98,7 +98,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return NodeId.valueOf((Byte) object);
+            return NodeId.index((Byte) object);
         }
     };
 
@@ -121,7 +121,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return (Boolean) object ? NodeId.valueOf(1) : NodeId.valueOf(0);
+            return (Boolean) object ? NodeId.index(1) : NodeId.index(0);
         }
     };
 
@@ -144,7 +144,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return NodeId.valueOf(Double.doubleToRawLongBits((Double) object));
+            return NodeId.index(Double.doubleToRawLongBits((Double) object));
         }
     };
 
@@ -168,7 +168,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
             double d = ((Float) object).doubleValue();
-            return NodeId.valueOf(Double.doubleToRawLongBits(d));
+            return NodeId.index(Double.doubleToRawLongBits(d));
         }
     };
 
@@ -191,7 +191,7 @@ public abstract class PrimitiveValueType extends AbstractScalarType {
 
         @Override
         public NodeId toNodeId(Object object, WriteContext context) {
-            return NodeId.valueOf(object.toString());
+            return NodeId.key(object.toString());
         }
     };
 

@@ -29,6 +29,6 @@ public class StringValueType extends AbstractScalarType {
 
     @Override
     public NodeId toNodeId(Object object, WriteContext writeContext) {
-        return NodeId.valueOf((String) object);
+        return NodeId.key((String) object);
     }
 }

@@ -22,7 +22,7 @@ public class LocalDateType extends AbstractScalarType {
 
     @Override
     public NodeId toNodeId(Object object, WriteContext writeContext) {
-        return NodeId.valueOf(object.toString());
+        return NodeId.key(object.toString());
     }
 
     @Override

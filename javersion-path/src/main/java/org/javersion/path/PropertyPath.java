@@ -17,8 +17,8 @@ package org.javersion.path;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Long.parseLong;
-import static org.apache.commons.lang3.StringEscapeUtils.escapeEcmaScript;
 import static org.apache.commons.lang3.StringEscapeUtils.unescapeEcmaScript;
+import static org.javersion.path.NodeId.ROOT_ID;
 
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +27,8 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.javersion.path.NodeId.IndexId;
+import org.javersion.path.NodeId.KeyId;
+import org.javersion.path.NodeId.PropertyId;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.parser.PropertyPathBaseVisitor;
 import org.javersion.path.parser.PropertyPathLexer;
@@ -152,19 +154,13 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
         return new Key(this, index);
     }
 
-    public final SubPath keyOrIndex(Object object) {
-        return keyOrIndex(NodeId.valueOf(object));
+    public final PropertyPath keyOrIndex(Object object) {
+        return node(NodeId.keyOrIndex(object));
     }
 
-    public final SubPath keyOrIndex(NodeId nodeId) {
+    public final PropertyPath node(NodeId nodeId) {
         Preconditions.checkNotNull(nodeId);
-        if (nodeId.isKey()) {
-            return new Key(this, nodeId);
-        } else if (nodeId.isIndex()) {
-            return new Index(this, nodeId);
-        } else {
-            throw new IllegalArgumentException("Expected KeyId or IndexId, got " + nodeId.getClass());
-        }
+        return nodeId.toPath(this);
     }
 
     public final AnyProperty anyProperty() {
@@ -273,8 +269,6 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
     public static final class Root extends PropertyPath {
 
-        public static final NodeId ID = NodeId.ROOT_ID;
-
         private static final List<SubPath> FULL_PATH = ImmutableList.of();
 
         private Root() {}
@@ -304,7 +298,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
         @Override
         public NodeId getNodeId() {
-            return ID;
+            return ROOT_ID;
         }
 
         @Override
@@ -371,10 +365,10 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
     public static final class Property extends SubPath {
 
         Property(PropertyPath parent, String name) {
-            super(parent, new NodeId.PropertyId(name));
+            super(parent, new PropertyId(name));
         }
 
-        Property(PropertyPath parent, NodeId.PropertyId nodeId) {
+        Property(PropertyPath parent, PropertyId nodeId) {
             super(parent, nodeId);
         }
 
@@ -386,7 +380,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
         @Override
         Property withParent(PropertyPath newParent) {
-            return newParent.equals(parent) ? this : new Property(newParent, (NodeId.PropertyId) nodeId);
+            return newParent.equals(parent) ? this : new Property(newParent, (PropertyId) nodeId);
         }
 
         @Override
@@ -404,7 +398,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
             super(parent, new IndexId(index));
         }
 
-        private Index(PropertyPath parent, NodeId id) {
+        Index(PropertyPath parent, IndexId id) {
             super(parent, id);
         }
 
@@ -415,12 +409,12 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
         @Override
         Index withParent(PropertyPath newParent) {
-            return new Index(newParent, nodeId);
+            return new Index(newParent, (IndexId) nodeId);
         }
 
         @Override
         protected void appendNode(StringBuilder sb) {
-            sb.append('[').append(nodeId.getIndex()).append(']');
+            sb.append('[').append(nodeId).append(']');
         }
 
     }
@@ -428,10 +422,10 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
     public static final class Key extends SubPath {
 
         private Key(PropertyPath parent, String key) {
-            super(parent, new NodeId.KeyId(key));
+            super(parent, new KeyId(key));
         }
 
-        private Key(PropertyPath parent, NodeId id) {
+        Key(PropertyPath parent, KeyId id) {
             super(parent, id);
         }
 
@@ -442,19 +436,19 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
         @Override
         SubPath withParent(PropertyPath newParent) {
-            return new Key(newParent, nodeId);
+            return new Key(newParent, (KeyId) nodeId);
         }
 
         @Override
         protected void appendNode(StringBuilder sb) {
-            sb.append("[\"").append(escapeEcmaScript(nodeId.getKey())).append("\"]").toString();
+            sb.append('[').append(nodeId).append(']').toString();
         }
 
     }
 
     public static final class AnyProperty extends SubPath {
 
-        private AnyProperty(PropertyPath parent) {
+        AnyProperty(PropertyPath parent) {
             super(parent, NodeId.ANY_PROPERTY);
         }
 
@@ -471,7 +465,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
     public static final class AnyIndex extends SubPath {
 
-        private AnyIndex(PropertyPath parent) {
+        AnyIndex(PropertyPath parent) {
             super(parent, NodeId.ANY_INDEX);
         }
 
@@ -488,7 +482,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
     public static final class AnyKey extends SubPath {
 
-        private AnyKey(PropertyPath parent) {
+        AnyKey(PropertyPath parent) {
             super(parent, NodeId.ANY_KEY);
         }
 
@@ -506,7 +500,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
     public static final class Any extends SubPath {
 
-        private Any(PropertyPath parent) {
+        Any(PropertyPath parent) {
             super(parent, NodeId.ANY);
         }
 

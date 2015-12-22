@@ -25,7 +25,7 @@ public class JodaLocalDateType extends AbstractScalarType {
 
     @Override
     public NodeId toNodeId(Object object, WriteContext writeContext) {
-        return NodeId.valueOf(fmt.print((LocalDate) object));
+        return NodeId.key(fmt.print((LocalDate) object));
     }
 
     @Override

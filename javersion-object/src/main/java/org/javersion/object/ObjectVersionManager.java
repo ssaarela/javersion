@@ -70,6 +70,10 @@ public class ObjectVersionManager<O, M> {
         return mergeObject(versionGraph.mergeBranches(branches));
     }
 
+    public MergeObject<O, M> mergeRevisions(Collection<Revision> revisions) {
+        return mergeObject(versionGraph.mergeRevisions(revisions));
+    }
+
     private MergeObject<O, M> mergeObject(Merge<PropertyPath, Object, M> merge) {
         MergeObject<O, M> mergeObject = new MergeObject<>(toObject(merge), merge);
         heads = merge.getMergeHeads();

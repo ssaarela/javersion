@@ -216,12 +216,11 @@ public class PropertyPathTest {
     }
 
     @Test
-    public void property_equals_key() {
+    public void property_does_not_equal_key() {
         Property property = ROOT.property("property");
         Key key = ROOT.key("property");
-        assertThat(property).isEqualTo(key);
-        assertThat(key).isEqualTo(property);
-        assertThat(property.hashCode()).isEqualTo(key.hashCode());
+        assertThat(property).isNotEqualTo(key);
+        assertThat(key).isNotEqualTo(property);
     }
 
     @Test
@@ -247,7 +246,7 @@ public class PropertyPathTest {
 
     @Test
     public void index_id_toString() {
-        assertThat(NodeId.valueOf(567).toString()).isEqualTo("567");
+        assertThat(NodeId.index(567).toString()).isEqualTo("567");
     }
 
     @Test
@@ -270,8 +269,8 @@ public class PropertyPathTest {
 
     @Test
     public void any_property_with_parent() {
-        PropertyPath key = ROOT.anyProperty();
-        assertThat(ROOT.path(key)).isEqualTo(key);
+        PropertyPath anyProperty = ROOT.anyProperty();
+        assertThat(ROOT.path(anyProperty)).isEqualTo(anyProperty);
     }
 
     @Test
@@ -303,9 +302,9 @@ public class PropertyPathTest {
         ROOT.keyOrIndex(new Object());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void key_or_index_of_special_node() {
-        ROOT.keyOrIndex(NodeId.ANY);
+    @Test
+    public void append_any() {
+        assertThat(ROOT.node(NodeId.ANY)).isEqualTo(ROOT.any());
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -320,8 +319,8 @@ public class PropertyPathTest {
 
     @Test
     public void key_or_index_of_NodeId() {
-        assertThat(NodeId.valueOf(123).getKeyOrIndex()).isEqualTo(123l);
-        assertThat(NodeId.valueOf("key").getKeyOrIndex()).isEqualTo("key");
+        assertThat(NodeId.index(123).getKeyOrIndex()).isEqualTo(123l);
+        assertThat(NodeId.keyOrIndex("key").getKeyOrIndex()).isEqualTo("key");
     }
 
     @Test
@@ -329,7 +328,7 @@ public class PropertyPathTest {
         String str = PropertyPath.ROOT.property("numbers").index(MIN_VALUE).toString();
         assertThat(str).isEqualTo("numbers[-9223372036854775808]");
         PropertyPath path = PropertyPath.parse(str);
-        assertThat(path.getNodeId()).isEqualTo(NodeId.valueOf(-9223372036854775808l));
+        assertThat(path.getNodeId()).isEqualTo(NodeId.index(-9223372036854775808l));
     }
 
     @Test
@@ -338,6 +337,27 @@ public class PropertyPathTest {
         assertThat(fullPath).hasSize(3);
         assertThat(fullPath.get(0)).isEqualTo(children);
         assertThat(fullPath.get(1)).isEqualTo((PropertyPath) children_0());
+    }
+
+    @Test
+    public void construct_from_basic_nodes() {
+        PropertyPath path = ROOT.property("property").key("key").index(1);
+        testConstructionFromNodes(path);
+    }
+
+    @Test
+    public void construct_from_special_nodes() {
+        PropertyPath path = ROOT.anyProperty().anyKey().anyIndex().any();
+        testConstructionFromNodes(path);
+    }
+
+    private void testConstructionFromNodes(PropertyPath path) {
+        PropertyPath nodePath = ROOT;
+        for (SubPath element : path.asList()) {
+            nodePath = nodePath.node(element.nodeId);
+        }
+        assertThat(nodePath).isEqualTo(path);
+        assertThat(nodePath.toString()).isEqualTo(path.toString());
     }
 
     @Test
@@ -369,26 +389,26 @@ public class PropertyPathTest {
 
         assertThat(asList(sorted)).isEqualTo(asList(
                 parse("*"),
-                parse(".*"),
                 parse("[]"),
+                parse(".*"),
                 parse("{}"),
                 parse("[1]"),
                 parse("[2]"),
-                parse("[\"a\"]"),
                 parse("a"),
                 parse("a*"),
-                parse("a.*"),
                 parse("a[]"),
+                parse("a.*"),
                 parse("a{}"),
                 parse("a[1]"),
                 parse("a[2]"),
-                parse("a[\"a\"]"),
                 parse("a.a"),
                 parse("a.b"),
+                parse("a[\"a\"]"),
                 parse("a[\"b\"]"),
                 parse("b"),
-                parse("[\"b\"]"),
-                parse("b.a")
+                parse("b.a"),
+                parse("[\"a\"]"),
+                parse("[\"b\"]")
         ));
     }
 
