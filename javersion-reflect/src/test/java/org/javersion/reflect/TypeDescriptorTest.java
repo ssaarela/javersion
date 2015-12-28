@@ -18,7 +18,6 @@ package org.javersion.reflect;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.Serializable;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -45,33 +44,6 @@ public class TypeDescriptorTest {
     public static class Generic {
         Map<String, Long> map;
         Map<String, Map<String, Long>> mapOfMaps;
-    }
-
-    private final Class<?>[] expectedSuperClasses = {
-            LinkedHashMap.class,
-            HashMap.class,
-            AbstractMap.class,
-            Object.class
-    };
-
-    private final Class<?>[] expectedInterfaces = {
-            Map.class,
-            Cloneable.class,
-            Serializable.class
-    };
-
-    @Test
-    public void Get_Super_Classes() {
-        TypeDescriptor type = TYPES.get(LinkedHashMap.class);
-        Set<Class<?>> superClasses = type.getSuperClasses();
-        assertThat(superClasses).contains(expectedSuperClasses);
-    }
-
-    @Test
-    public void Get_Interfaces() {
-        TypeDescriptor type = TYPES.get(LinkedHashMap.class);
-        Set<Class<?>> superClasses = type.getInterfaces();
-        assertThat(superClasses).contains(expectedInterfaces);
     }
 
     @Test
@@ -220,21 +192,6 @@ public class TypeDescriptorTest {
 
         TypeDescriptor mapOfMapsValueType = mapOfMapsField.getType().resolveGenericParameter(Map.class, 1);
         assertThat(mapField.getType()).isEqualTo(mapOfMapsValueType);
-    }
-
-    @Test(expected=RuntimeException.class)
-    public void Unmodifiable_All_Classes() {
-        TYPES.get(LinkedHashMap.class).getAllClasses().add(TypeDescriptorTest.class);
-    }
-
-    @Test(expected=RuntimeException.class)
-    public void Unmodifiable_Interfaces() {
-        TYPES.get(LinkedHashMap.class).getInterfaces().add(TypeDescriptorTest.class);
-    }
-
-    @Test(expected=RuntimeException.class)
-    public void Unmodifiable_Super_Classes() {
-        TYPES.get(LinkedHashMap.class).getSuperClasses().add(TypeDescriptorTest.class);
     }
 
     @Test(expected=RuntimeException.class)

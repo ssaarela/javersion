@@ -15,9 +15,6 @@
  */
 package org.javersion.reflect;
 
-import static com.google.common.base.Predicates.not;
-import static java.util.Collections.unmodifiableSet;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.LinkedHashSet;
@@ -28,7 +25,6 @@ import java.util.SortedMap;
 
 import org.javersion.util.Check;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 import com.google.common.reflect.TypeToken;
 
@@ -54,13 +50,9 @@ public abstract class AbstractTypeDescriptor<
         WRAPPER_TO_PRIMITIVE = primitives.build();
     }
 
-    private static final Predicate<Class<?>> isInterface = (input) -> input.isInterface();
-
     protected final TypeToken<?> typeToken;
 
     private volatile SortedMap<String, F> fields;
-
-    private volatile Set<Class<?>> classes;
 
     public AbstractTypeDescriptor(Ts typeDescriptors, TypeToken<?> typeToken) {
         super(typeDescriptors);
@@ -84,21 +76,6 @@ public abstract class AbstractTypeDescriptor<
             }
         }
         return result;
-    }
-
-    public Set<Class<?>> getSuperClasses() {
-        return Sets.filter(getAllClasses(), not(isInterface));
-    }
-
-    public Set<Class<?>> getInterfaces() {
-        return Sets.filter(getAllClasses(), isInterface);
-    }
-
-    public Set<Class<?>> getAllClasses() {
-        if (classes == null) {
-            classes = unmodifiableSet(collectAllClasses(getRawType(), newLinkedHashSet()));
-        }
-        return classes;
     }
 
     public String getSimpleName() {
