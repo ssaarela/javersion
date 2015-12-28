@@ -32,7 +32,7 @@ public abstract class AbstractTypeDescriptors<
             T extends AbstractTypeDescriptor<F, T, D>,
             D extends AbstractTypeDescriptors<F, T, D>> {
 
-    public static final Predicate<Field> NON_STATIC_OR_SYNTETHIC_FIELD = field -> {
+    public static final Predicate<Field> NON_STATIC_OR_SYNTHETIC_FIELD = field -> {
             int mod = field.getModifiers();
             return !(Modifier.isStatic(mod) || field.isSynthetic());
         };
@@ -45,7 +45,7 @@ public abstract class AbstractTypeDescriptors<
 
 
     public AbstractTypeDescriptors() {
-        this(NON_STATIC_OR_SYNTETHIC_FIELD);
+        this(NON_STATIC_OR_SYNTHETIC_FIELD);
     }
 
     public AbstractTypeDescriptors(Predicate<? super Field> fieldFilter) {
