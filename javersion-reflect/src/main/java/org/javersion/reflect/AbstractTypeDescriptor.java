@@ -17,22 +17,22 @@ package org.javersion.reflect;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 
 import org.javersion.util.Check;
 
-import com.google.common.collect.*;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableSortedMap;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 public abstract class AbstractTypeDescriptor<
-            F extends AbstractFieldDescriptor<F, T, Ts>,
-            T extends AbstractTypeDescriptor<F, T, Ts>,
-            Ts extends AbstractTypeDescriptors<F, T, Ts>>
-        extends ElementDescriptor<F, T, Ts> {
+            F extends AbstractFieldDescriptor<F, T, D>,
+            T extends AbstractTypeDescriptor<F, T, D>,
+            D extends AbstractTypeDescriptors<F, T, D>>
+        extends ElementDescriptor<F, M, T, D> {
 
     public static final BiMap<Class<?>, Class<?>> WRAPPER_TO_PRIMITIVE;
 
@@ -54,7 +54,7 @@ public abstract class AbstractTypeDescriptor<
 
     private volatile SortedMap<String, F> fields;
 
-    public AbstractTypeDescriptor(Ts typeDescriptors, TypeToken<?> typeToken) {
+    public AbstractTypeDescriptor(D typeDescriptors, TypeToken<?> typeToken) {
         super(typeDescriptors);
         this.typeToken = Check.notNull(typeToken, "typeToken");
     }
@@ -125,30 +125,6 @@ public abstract class AbstractTypeDescriptor<
         }
     }
 
-    private static Set<Class<?>> collectAllClasses(Class<?> clazz, LinkedHashSet<Class<?>> classes) {
-        classes.add(clazz);
-
-        List<Class<?>> stack = Lists.newArrayList();
-
-        Class<?> superClass = clazz.getSuperclass();
-        if (superClass != null) {
-            classes.add(superClass);
-            stack.add(superClass);
-        }
-
-        for (Class<?> iface : clazz.getInterfaces()) {
-            if (classes.add(iface)) {
-                stack.add(iface);
-            }
-        }
-
-        for (Class<?> next : stack) {
-            collectAllClasses(next, classes);
-        }
-
-        return classes;
-    }
-
     public boolean isPrimitiveOrWrapper() {
         Class<?> clazz = getRawType();
         return WRAPPER_TO_PRIMITIVE.containsKey(clazz) || WRAPPER_TO_PRIMITIVE.containsValue(clazz);
@@ -175,10 +151,6 @@ public abstract class AbstractTypeDescriptor<
         } catch (Exception e) {
             throw new ReflectionException("Failed to instantiate " + toString(), e);
         }
-    }
-
-    private static LinkedHashSet<Class<?>> newLinkedHashSet() {
-        return Sets.<Class<?>>newLinkedHashSet();
     }
 
     @Override

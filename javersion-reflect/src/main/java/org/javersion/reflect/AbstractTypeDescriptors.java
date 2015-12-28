@@ -28,9 +28,9 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 public abstract class AbstractTypeDescriptors<
-            F extends AbstractFieldDescriptor<F, T, Ts>,
-            T extends AbstractTypeDescriptor<F, T, Ts>,
-            Ts extends AbstractTypeDescriptors<F, T, Ts>> {
+            F extends AbstractFieldDescriptor<F, T, D>,
+            T extends AbstractTypeDescriptor<F, T, D>,
+            D extends AbstractTypeDescriptors<F, T, D>> {
 
     public static final Predicate<Field> NON_STATIC_OR_SYNTETHIC_FIELD = field -> {
             int mod = field.getModifiers();

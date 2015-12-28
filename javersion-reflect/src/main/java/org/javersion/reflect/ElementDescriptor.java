@@ -24,20 +24,20 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableList;
 
 public abstract class ElementDescriptor<
-        F extends AbstractFieldDescriptor<F, T, Ts>, 
-        T extends AbstractTypeDescriptor<F, T, Ts>,
-        Ts extends AbstractTypeDescriptors<F, T, Ts>> {
+        F extends AbstractFieldDescriptor<F, T, D>,
+        T extends AbstractTypeDescriptor<F, T, D>,
+        D extends AbstractTypeDescriptors<F, T, D>> {
 
-    protected final Ts typeDescriptors;
+    protected final D typeDescriptors;
 
-    public ElementDescriptor(Ts typeDescriptors) {
+    public ElementDescriptor(D typeDescriptors) {
         this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
     }
 
     public List<Annotation> getAnnotations() {
         return ImmutableList.copyOf(getElement().getAnnotations());
     }
-    
+
     public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
         return getElement().getAnnotation(annotationClass);
     }
@@ -46,14 +46,14 @@ public abstract class ElementDescriptor<
         return getElement().isAnnotationPresent(annotationClass);
     }
 
-    public Ts getTypeDescriptors() {
+    public D getTypeDescriptors() {
         return typeDescriptors;
     }
-    
+
     public abstract AnnotatedElement getElement();
 
     public abstract boolean equals(Object obj);
-    
+
     public abstract int hashCode();
 
 }

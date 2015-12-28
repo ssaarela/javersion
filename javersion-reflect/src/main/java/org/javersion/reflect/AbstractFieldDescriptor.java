@@ -21,14 +21,14 @@ import java.lang.reflect.Modifier;
 import org.javersion.util.Check;
 
 public abstract class AbstractFieldDescriptor<
-            F extends AbstractFieldDescriptor<F, T, Ts>,
-            T extends AbstractTypeDescriptor<F, T, Ts>,
-            Ts extends AbstractTypeDescriptors<F, T, Ts>>
-        extends ElementDescriptor<F, T, Ts> {
+            F extends AbstractFieldDescriptor<F, T, D>,
+            T extends AbstractTypeDescriptor<F, T, D>,
+            D extends AbstractTypeDescriptors<F, T, D>>
+        extends ElementDescriptor<F, T, D> {
 
     protected final Field field;
 
-    public AbstractFieldDescriptor(Ts typeDescriptors, Field field) {
+    public AbstractFieldDescriptor(D typeDescriptors, Field field) {
         super(typeDescriptors);
         this.field = Check.notNull(field, "field");
         field.setAccessible(true);
