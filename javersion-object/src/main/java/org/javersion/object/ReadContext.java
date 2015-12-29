@@ -29,7 +29,7 @@ import org.javersion.path.Schema;
 import com.google.common.collect.Maps;
 
 @NotThreadSafe
-public class ReadContext {
+public final class ReadContext {
 
     private final Map<PropertyPath, Object> properties;
 

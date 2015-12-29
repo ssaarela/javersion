@@ -40,7 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 @Immutable
-public class TypeMappings {
+public final class TypeMappings {
 
     public static final TypeMapping STRING = new StringTypeMapping();
 
@@ -126,7 +126,7 @@ public class TypeMappings {
         throw new IllegalArgumentException("ValueType not found for " + typeContext);
     }
 
-    public static class Builder {
+    public final static class Builder {
 
         private final List<TypeMapping> defaultMappings;
 

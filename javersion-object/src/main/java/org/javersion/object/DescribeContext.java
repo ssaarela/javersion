@@ -33,7 +33,7 @@ import org.javersion.reflect.TypeDescriptor;
 import com.google.common.collect.Maps;
 
 @NotThreadSafe
-public class DescribeContext {
+public final class DescribeContext {
 
     private final Map<TypeContext, Schema.Builder<ValueType>> schemaMappings = Maps.newHashMap();
 
