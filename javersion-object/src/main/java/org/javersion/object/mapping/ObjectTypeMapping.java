@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.Id;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.VersionIgnore;
 import org.javersion.object.VersionProperty;
 import org.javersion.object.types.IdentifiableObjectType;
@@ -47,12 +47,12 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
         if (path == null) {
             return false;
         }
         for (TypeDescriptor typeDescriptor : typesByAlias.values()) {
-            if (typeDescriptor.getRawType().equals(localTypeDescriptor.typeDescriptor.getRawType())) {
+            if (typeDescriptor.equals(typeContext.type)) {
                 return true;
             }
         }
@@ -109,9 +109,9 @@ public class ObjectTypeMapping<O> implements TypeMapping {
                     SubPath subPath = path.property(name);
                     if (property.getReadMethod().hasAnnotation(Id.class)) {
                         idProperty = property;
-                        idType = (IdentifiableType) context.describeNow(subPath, property);
+                        idType = (IdentifiableType) context.describeNow(subPath, new TypeContext(property));
                     } else {
-                        context.describeAsync(subPath, property);
+                        context.describeAsync(subPath, new TypeContext(property));
                     }
                 }
             }
@@ -125,9 +125,9 @@ public class ObjectTypeMapping<O> implements TypeMapping {
                     SubPath subPath = path.property(name);
                     if (fieldDescriptor.hasAnnotation(Id.class)) {
                         idProperty = fieldDescriptor;
-                        idType = (IdentifiableType) context.describeNow(subPath, fieldDescriptor);
+                        idType = (IdentifiableType) context.describeNow(subPath, new TypeContext(fieldDescriptor));
                     } else {
-                        context.describeAsync(subPath, fieldDescriptor);
+                        context.describeAsync(subPath, new TypeContext(fieldDescriptor));
                     }
                 }
             }

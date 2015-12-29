@@ -117,13 +117,13 @@ public class TypeMappings {
         this.types = builder.addAll(types).build();
     }
 
-    public TypeMapping getTypeMapping(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
+    public TypeMapping getTypeMapping(PropertyPath path, TypeContext typeContext) {
         for (TypeMapping valueType : types) {
-            if (valueType.applies(path, localTypeDescriptor)) {
+            if (valueType.applies(path, typeContext)) {
                 return valueType;
             }
         }
-        throw new IllegalArgumentException("ValueType not found for " + localTypeDescriptor);
+        throw new IllegalArgumentException("ValueType not found for " + typeContext);
     }
 
     public static class Builder {

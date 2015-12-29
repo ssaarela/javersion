@@ -16,7 +16,7 @@
 package org.javersion.object.mapping;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.ReferenceType;
 import org.javersion.object.types.ValueType;
@@ -38,8 +38,8 @@ public class ReferenceTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return objectTypeMapping.applies(targetPath, localTypeDescriptor) &&
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return objectTypeMapping.applies(targetPath, typeContext) &&
                 (path == null || isReferencePath(targetPath, path));
     }
 
@@ -55,8 +55,9 @@ public class ReferenceTypeMapping implements TypeMapping {
     }
 
     public static ValueType describeReference(TypeDescriptor type, PropertyPath targetPath, DescribeContext context) {
-        context.describeAsync(targetPath.anyIndex(), type);
-        IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath.anyKey(), type);
+        TypeContext typeContext = new TypeContext(type);
+        context.describeAsync(targetPath.anyIndex(), typeContext);
+        IdentifiableType identifiableType = (IdentifiableType) context.describeNow(targetPath.anyKey(), typeContext);
         return new ReferenceType(identifiableType, targetPath);
     }
 }

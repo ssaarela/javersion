@@ -18,7 +18,7 @@ package org.javersion.object.mapping;
 import java.time.LocalDateTime;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.LocalDateTimeType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -28,8 +28,8 @@ public class LocalDateTimeMapping implements TypeMapping {
 
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.isSubTypeOf(LocalDateTime.class);
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return typeContext.type.isSubTypeOf(LocalDateTime.class);
     }
 
     @Override

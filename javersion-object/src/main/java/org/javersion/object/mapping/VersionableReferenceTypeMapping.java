@@ -19,7 +19,7 @@ import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.javersion.object.mapping.ReferenceTypeMapping.isReferencePath;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.Versionable;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -28,8 +28,8 @@ import org.javersion.reflect.TypeDescriptor;
 public class VersionableReferenceTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeDescriptor type = localTypeDescriptor.typeDescriptor;
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        TypeDescriptor type = typeContext.type;
         Versionable versionable = type.getAnnotation(Versionable.class);
         return versionable != null
                 && !isNullOrEmpty(versionable.targetPath())

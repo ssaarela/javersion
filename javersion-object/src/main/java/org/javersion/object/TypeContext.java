@@ -27,40 +27,40 @@ import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
 @Immutable
-public final class LocalTypeDescriptor {
+public final class TypeContext {
 
     @Nullable
     private final ElementDescriptor parent;
 
-    public final TypeDescriptor typeDescriptor;
+    public final TypeDescriptor type;
 
-    public LocalTypeDescriptor(TypeDescriptor typeDescriptor) {
+    public TypeContext(TypeDescriptor typeDescriptor) {
         this(null, typeDescriptor);
     }
 
-    public LocalTypeDescriptor(FieldDescriptor fieldDescriptor) {
+    public TypeContext(FieldDescriptor fieldDescriptor) {
         this(fieldDescriptor, fieldDescriptor.getType());
     }
 
-    public LocalTypeDescriptor(BeanProperty beanProperty) {
+    public TypeContext(BeanProperty beanProperty) {
         this(beanProperty.getReadMethod(), beanProperty.getType());
     }
 
-    public LocalTypeDescriptor(ElementDescriptor parent, TypeDescriptor typeDescriptor) {
+    public TypeContext(ElementDescriptor parent, TypeDescriptor typeDescriptor) {
         this.parent = parent;
-        this.typeDescriptor = Check.notNull(typeDescriptor, "typeDescriptor");
+        this.type = Check.notNull(typeDescriptor, "typeDescriptor");
     }
 
     public int hashCode() {
-        return 31*typeDescriptor.hashCode() + (parent != null ? parent.hashCode() : 0);
+        return 31* type.hashCode() + (parent != null ? parent.hashCode() : 0);
     }
 
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
-        } else if (obj instanceof LocalTypeDescriptor) {
-            LocalTypeDescriptor key = (LocalTypeDescriptor) obj;
-            return this.typeDescriptor.equals(key.typeDescriptor)
+        } else if (obj instanceof TypeContext) {
+            TypeContext key = (TypeContext) obj;
+            return this.type.equals(key.type)
                     && Objects.equals(this.parent, key.parent);
         } else {
             return false;
@@ -72,7 +72,7 @@ public final class LocalTypeDescriptor {
         if (parent != null) {
             sb.append(parent).append(": ");
         }
-        sb.append(typeDescriptor);
+        sb.append(type);
         return sb.toString();
     }
 }

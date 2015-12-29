@@ -18,7 +18,7 @@ package org.javersion.object.mapping;
 import java.util.Map;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.MapType;
 import org.javersion.object.types.ScalarType;
 import org.javersion.object.types.ValueType;
@@ -38,8 +38,8 @@ public class MapTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor descriptor) {
-        return path != null && descriptor.typeDescriptor.getRawType().equals(mapType);
+    public boolean applies(PropertyPath path, TypeContext descriptor) {
+        return path != null && descriptor.type.getRawType().equals(mapType);
     }
 
     @Override
@@ -47,9 +47,9 @@ public class MapTypeMapping implements TypeMapping {
         TypeDescriptor keyType = mapType.resolveGenericParameter(Map.class, 0);
         TypeDescriptor valueType = mapType.resolveGenericParameter(Map.class, 1);
 
-        context.describeComponent(path.any(), mapType, valueType);
+        context.describeAsync(path.any(), new TypeContext(mapType, valueType));
 
-        ValueType keyValueType = context.describeComponent(null, mapType, keyType);
+        ValueType keyValueType = context.describeNow(null, new TypeContext(mapType, keyType));
         if (!(keyValueType instanceof ScalarType)) {
             throw new IllegalArgumentException("Key of " + path + ": " + mapType + " is not a scalar (ScalarType)");
         }

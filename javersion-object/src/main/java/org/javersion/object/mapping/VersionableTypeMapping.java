@@ -16,7 +16,7 @@
 package org.javersion.object.mapping;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.Versionable;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -27,8 +27,8 @@ import com.google.common.collect.ImmutableBiMap;
 public class VersionableTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return path != null && localTypeDescriptor.typeDescriptor.hasAnnotation(Versionable.class);
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return path != null && typeContext.type.hasAnnotation(Versionable.class);
     }
 
 
