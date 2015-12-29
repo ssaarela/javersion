@@ -15,8 +15,6 @@
  */
 package org.javersion.object.mapping;
 
-import static org.javersion.object.mapping.ObjectTypeMapping.DEFAULT_FILTER;
-
 import org.javersion.object.DescribeContext;
 import org.javersion.object.LocalTypeDescriptor;
 import org.javersion.object.Versionable;
@@ -37,7 +35,7 @@ public class VersionableTypeMapping implements TypeMapping {
     @Override
     public  ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
         String alias = getAlias(type.getAnnotation(Versionable.class), type);
-        ObjectTypeMapping objectTypeMapping = new ObjectTypeMapping(ImmutableBiMap.of(alias, type), DEFAULT_FILTER);
+        ObjectTypeMapping objectTypeMapping = new ObjectTypeMapping(ImmutableBiMap.of(alias, type));
         return objectTypeMapping.describe(path, type, context);
     }
 

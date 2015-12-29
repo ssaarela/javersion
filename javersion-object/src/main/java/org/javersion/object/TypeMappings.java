@@ -29,12 +29,10 @@ import org.javersion.object.mapping.*;
 import org.javersion.object.types.PropertyPathType;
 import org.javersion.object.types.UUIDType;
 import org.javersion.path.PropertyPath;
-import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
 import org.javersion.util.Check;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
@@ -134,8 +132,6 @@ public class TypeMappings {
 
         private final List<TypeMapping> mappings = Lists.newArrayList();
 
-        private Predicate<FieldDescriptor> defaultFilter = ObjectTypeMapping.DEFAULT_FILTER;
-
         public Builder() {
             this(DEFAULT_MAPPINGS);
         }
@@ -146,11 +142,6 @@ public class TypeMappings {
 
         public Builder withMapping(TypeMapping mapping) {
             mappings.add(mapping);
-            return this;
-        }
-
-        public Builder withDefaultFilter(Predicate<FieldDescriptor> defaultFilter) {
-            this.defaultFilter = defaultFilter;
             return this;
         }
 
@@ -171,8 +162,6 @@ public class TypeMappings {
             protected PropertyPath targetPath;
 
             protected BiMap<String, TypeDescriptor> typesByAlias = HashBiMap.create();
-
-            private Predicate<FieldDescriptor> filter = defaultFilter;
 
             public HierarchyBuilder(Class<R> root) {
                 this(root, null);
@@ -226,11 +215,6 @@ public class TypeMappings {
                 return this;
             }
 
-            public HierarchyBuilder<R> withFilter(Predicate<FieldDescriptor> filter) {
-                this.filter = filter;
-                return this;
-            }
-
             private String register(Class<?> clazz, String alias) {
                 return register(getTypeDescriptor(clazz), alias);
             }
@@ -243,7 +227,7 @@ public class TypeMappings {
 
             Builder register() {
                 Builder builder = Builder.this;
-                ObjectTypeMapping<R> objectTypeMapping = new ObjectTypeMapping<>(typesByAlias, filter);
+                ObjectTypeMapping<R> objectTypeMapping = new ObjectTypeMapping<>(typesByAlias);
                 if (targetPath != null) {
                     // NOTE: ReferenceTypeMapping has higher priority and thus must be registered before ObjectTypeMapping
                     builder = builder.withMapping(new ReferenceTypeMapping(targetPath, objectTypeMapping));

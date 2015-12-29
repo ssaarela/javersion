@@ -30,7 +30,6 @@ import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 
-import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
@@ -38,23 +37,10 @@ import com.google.common.collect.Sets;
 
 public class ObjectTypeMapping<O> implements TypeMapping {
 
-    public static final Predicate<FieldDescriptor> DEFAULT_FILTER = field -> !field.isTransient() && !field.hasAnnotation(VersionIgnore.class);
-
     private final BiMap<String, TypeDescriptor> typesByAlias;
 
-    private final Predicate<FieldDescriptor> filter;
-
-    public ObjectTypeMapping(TypeDescriptor typeDescriptor, Predicate<FieldDescriptor> filter) {
-        this(getAlias(typeDescriptor), typeDescriptor, filter);
-    }
-
-    public ObjectTypeMapping(String alias, TypeDescriptor typeDescriptor, Predicate<FieldDescriptor> filter) {
-        this(ImmutableBiMap.of(alias, typeDescriptor), filter);
-    }
-
-    public ObjectTypeMapping(BiMap<String, TypeDescriptor> typesByAlias, Predicate<FieldDescriptor> filter) {
+    public ObjectTypeMapping(BiMap<String, TypeDescriptor> typesByAlias) {
         this.typesByAlias = typesByAlias;
-        this.filter = filter;
     }
 
     @Override
