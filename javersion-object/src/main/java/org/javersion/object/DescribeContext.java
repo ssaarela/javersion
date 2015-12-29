@@ -28,6 +28,7 @@ import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.Schema;
+import org.javersion.reflect.BeanProperty;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 
@@ -68,12 +69,20 @@ public class DescribeContext {
         queue.add(new QueueItem<>(path, new LocalTypeDescriptor(fieldDescriptor)));
     }
 
+    public void describeAsync(SubPath path, BeanProperty beanProperty) {
+        queue.add(new QueueItem<>(path, new LocalTypeDescriptor(beanProperty)));
+    }
+
     public void describeAsync(SubPath path, TypeDescriptor typeDescriptor) {
         queue.add(new QueueItem<>(path, new LocalTypeDescriptor(typeDescriptor)));
     }
 
     public ValueType describeNow(SubPath path, FieldDescriptor fieldDescriptor) {
         return describeNow(path, new LocalTypeDescriptor(fieldDescriptor));
+    }
+
+    public ValueType describeNow(SubPath path, BeanProperty beanProperty) {
+        return describeNow(path, new LocalTypeDescriptor(beanProperty));
     }
 
     public ValueType describeNow(SubPath path, TypeDescriptor typeDescriptor) {

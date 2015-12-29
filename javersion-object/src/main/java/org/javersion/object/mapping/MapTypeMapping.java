@@ -50,6 +50,9 @@ public class MapTypeMapping implements TypeMapping {
         context.describeComponent(path.any(), mapType, valueType);
 
         ValueType keyValueType = context.describeComponent(null, mapType, keyType);
+        if (!(keyValueType instanceof ScalarType)) {
+            throw new IllegalArgumentException("Key of " + path + ": " + mapType + " is not a scalar (ScalarType)");
+        }
         return newMapType((ScalarType) keyValueType);
     }
 

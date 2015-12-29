@@ -15,28 +15,32 @@
  */
 package org.javersion.object.types;
 
+import java.util.Map;
+
 import org.javersion.object.WriteContext;
 import org.javersion.path.NodeId;
-import org.javersion.reflect.FieldDescriptor;
+import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
+import org.javersion.util.Check;
 
 import com.google.common.collect.BiMap;
 
 public class IdentifiableObjectType<O> extends ObjectType<O> implements IdentifiableType {
 
-    private final FieldDescriptor idField;
+    private final Property idProperty;
 
     private final IdentifiableType idType;
 
-    public IdentifiableObjectType(BiMap<String, TypeDescriptor> typesByAlias, FieldDescriptor idField, IdentifiableType idType) {
-        super(typesByAlias);
-        this.idField = idField;
-        this.idType = idType;
+    public IdentifiableObjectType(BiMap<String, TypeDescriptor> typesByAlias, Map<String, Property> properties,
+                                  Property idProperty, IdentifiableType idType) {
+        super(typesByAlias, properties);
+        this.idProperty = Check.notNull(idProperty, "idProperty");
+        this.idType = Check.notNull(idType, "idType");
     }
 
     @Override
     public NodeId toNodeId(Object object, WriteContext writeContext) {
-        return idType.toNodeId(idField.get(object), writeContext);
+        return idType.toNodeId(idProperty.get(object), writeContext);
     }
 
 }

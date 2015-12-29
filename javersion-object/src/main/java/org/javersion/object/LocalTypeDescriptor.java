@@ -20,6 +20,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
+import org.javersion.reflect.BeanProperty;
 import org.javersion.reflect.ElementDescriptor;
 import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.TypeDescriptor;
@@ -29,7 +30,7 @@ import org.javersion.util.Check;
 public final class LocalTypeDescriptor {
 
     @Nullable
-    private final ElementDescriptor<?, ?, ?> parent;
+    private final ElementDescriptor parent;
 
     public final TypeDescriptor typeDescriptor;
 
@@ -41,7 +42,11 @@ public final class LocalTypeDescriptor {
         this(fieldDescriptor, fieldDescriptor.getType());
     }
 
-    public LocalTypeDescriptor(ElementDescriptor<?, ?, ?> parent, TypeDescriptor typeDescriptor) {
+    public LocalTypeDescriptor(BeanProperty beanProperty) {
+        this(beanProperty.getReadMethod(), beanProperty.getType());
+    }
+
+    public LocalTypeDescriptor(ElementDescriptor parent, TypeDescriptor typeDescriptor) {
         this.parent = parent;
         this.typeDescriptor = Check.notNull(typeDescriptor, "typeDescriptor");
     }
