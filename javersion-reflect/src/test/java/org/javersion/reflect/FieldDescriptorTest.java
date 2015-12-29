@@ -78,14 +78,14 @@ public class FieldDescriptorTest {
     @Test
     public void element_is_field() {
         FieldDescriptor fieldDescriptor = type.getField("privateField");
-        assertThat(fieldDescriptor.getElement()).isSameAs(fieldDescriptor.field);
+        assertThat(fieldDescriptor.getElement()).isSameAs(fieldDescriptor.getElement());
     }
 
     @Test
     public void wraps_java_reflect_Field() throws NoSuchFieldException {
         Field field = FieldDescriptorTest.class.getDeclaredField("privateField");
         FieldDescriptor fieldDescriptor = type.getField("privateField");
-        assertThat(fieldDescriptor.field).isEqualTo(field);
+        assertThat(fieldDescriptor.getElement()).isEqualTo(field);
         assertThat(fieldDescriptor.toString())
                 .isEqualTo("org.javersion.reflect.FieldDescriptorTest.privateField");
     }
@@ -94,10 +94,10 @@ public class FieldDescriptorTest {
     public void illegal_access() {
         FieldDescriptor fieldDescriptor = type.getField("privateField");
         try {
-            fieldDescriptor.field.setAccessible(false);
+            fieldDescriptor.getElement().setAccessible(false);
             fieldDescriptor.get(this);
         } finally {
-            fieldDescriptor.field.setAccessible(true);
+            fieldDescriptor.getElement().setAccessible(true);
         }
     }
 

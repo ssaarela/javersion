@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2015 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,14 @@
  */
 package org.javersion.reflect;
 
-public class ReflectionException extends RuntimeException {
+public interface Property {
 
-    private static final long serialVersionUID = -6256399002234684715L;
+    void set(Object object, Object value);
 
-    public ReflectionException(String message) {
-        super(message);
-    }
+    Object get(Object object);
 
-    public ReflectionException(Throwable cause) {
-        super(cause);
-    }
+    boolean applies(TypeDescriptor typeDescriptor);
 
-    public ReflectionException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    TypeDescriptor getType();
 
 }

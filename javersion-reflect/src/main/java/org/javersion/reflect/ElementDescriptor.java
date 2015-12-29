@@ -23,14 +23,11 @@ import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
 
-public abstract class ElementDescriptor<
-        F extends AbstractFieldDescriptor<F, T, D>,
-        T extends AbstractTypeDescriptor<F, T, D>,
-        D extends AbstractTypeDescriptors<F, T, D>> {
+public abstract class ElementDescriptor {
 
-    protected final D typeDescriptors;
+    protected final TypeDescriptors typeDescriptors;
 
-    public ElementDescriptor(D typeDescriptors) {
+    public ElementDescriptor(TypeDescriptors typeDescriptors) {
         this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
     }
 
@@ -46,14 +43,14 @@ public abstract class ElementDescriptor<
         return getElement().isAnnotationPresent(annotationClass);
     }
 
-    public D getTypeDescriptors() {
+    public TypeDescriptors getTypeDescriptors() {
         return typeDescriptors;
     }
-
-    public abstract AnnotatedElement getElement();
 
     public abstract boolean equals(Object obj);
 
     public abstract int hashCode();
+
+    abstract AnnotatedElement getElement();
 
 }

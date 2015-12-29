@@ -27,6 +27,9 @@ public class TypeDescriptorTest {
 
     static final TypeDescriptors TYPES = new TypeDescriptors();
 
+    @SuppressWarnings("unused")
+    static final Map<String, Integer> MAP = new HashMap<>();
+
     static final TypeDescriptors STATIC_FIELDS =
             new TypeDescriptors(input -> Modifier.isStatic(input.getModifiers()));
 
@@ -201,15 +204,15 @@ public class TypeDescriptorTest {
 
     @Test
     public void Resolve_Generic_Parameter() {
-        FieldDescriptor fieldDescriptor = STATIC_FIELDS.get(getClass()).getField("TYPES");
+        FieldDescriptor fieldDescriptor = STATIC_FIELDS.get(getClass()).getField("MAP");
 
         TypeDescriptor fieldType = fieldDescriptor.getType();
 
-        assertThat(fieldType.resolveGenericParameter(AbstractTypeDescriptors.class, 0))
-            .isEqualTo(STATIC_FIELDS.get(FieldDescriptor.class));
+        assertThat(fieldType.resolveGenericParameter(Map.class, 0))
+            .isEqualTo(STATIC_FIELDS.get(String.class));
 
-        assertThat(fieldType.resolveGenericParameter(AbstractTypeDescriptors.class, 1))
-                .isEqualTo(STATIC_FIELDS.get(TypeDescriptor.class));
+        assertThat(fieldType.resolveGenericParameter(Map.class, 1))
+                .isEqualTo(STATIC_FIELDS.get(Integer.class));
     }
 
 }

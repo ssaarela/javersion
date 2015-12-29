@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2015 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,16 @@
  */
 package org.javersion.reflect;
 
-public class ReflectionException extends RuntimeException {
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    private static final long serialVersionUID = -6256399002234684715L;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-    public ReflectionException(String message) {
-        super(message);
-    }
-
-    public ReflectionException(Throwable cause) {
-        super(cause);
-    }
-
-    public ReflectionException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
+@Target({ PARAMETER })
+@Retention(RUNTIME)
+@Documented
+public @interface Param {
+    String value();
 }
