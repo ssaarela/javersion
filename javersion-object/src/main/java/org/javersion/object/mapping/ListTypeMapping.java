@@ -18,7 +18,7 @@ package org.javersion.object.mapping;
 import java.util.List;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.ListType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -27,14 +27,14 @@ import org.javersion.reflect.TypeDescriptor;
 public class ListTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return path != null && localTypeDescriptor.typeDescriptor.getRawType().equals(List.class);
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return path != null && typeContext.type.getRawType().equals(List.class);
     }
 
     @Override
     public ValueType describe(PropertyPath path, TypeDescriptor listType, DescribeContext context) {
         TypeDescriptor elementType = listType.resolveGenericParameter(List.class, 0);
-        context.describeComponent(path.anyIndex(), listType, elementType);
+        context.describeAsync(path.anyIndex(), new TypeContext(listType, elementType));
         return new ListType();
     }
 

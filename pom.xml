@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.javersion</groupId>
-  <version>0.10.0</version>
+  <version>0.10.1-SNAPSHOT</version>
   <artifactId>javersion-root</artifactId>
   <packaging>pom</packaging>
 
@@ -93,6 +93,12 @@
       <groupId>org.assertj</groupId>
       <artifactId>assertj-guava</artifactId>
       <version>1.2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>nl.jqno.equalsverifier</groupId>
+      <artifactId>equalsverifier</artifactId>
+      <version>1.7.6</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

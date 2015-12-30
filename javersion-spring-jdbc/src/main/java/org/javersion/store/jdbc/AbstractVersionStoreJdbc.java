@@ -26,9 +26,12 @@ import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 import java.math.BigDecimal;
 import java.util.*;
 
-import org.javersion.core.*;
+import org.javersion.core.Persistent;
+import org.javersion.core.Revision;
+import org.javersion.core.VersionNode;
+import org.javersion.core.VersionNotFoundException;
+import org.javersion.core.VersionType;
 import org.javersion.object.ObjectVersion;
-import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.springframework.transaction.annotation.Transactional;
@@ -245,7 +248,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
                 changeset.put(path, versionAndParents.getOne(column));
             }
         }
-        return new ObjectVersionBuilder<M>(rev)
+        return new ObjectVersion.Builder<M>(rev)
                 .branch(versionAndParents.getOne(options.version.branch))
                 .type(versionAndParents.getOne(options.version.type))
                 .parents(versionAndParents.getSet(options.parent.parentRevision))

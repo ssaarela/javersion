@@ -16,7 +16,7 @@
 package org.javersion.object.mapping;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.EnumValueType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -25,8 +25,8 @@ import org.javersion.reflect.TypeDescriptor;
 public class EnumTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.isEnum();
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return typeContext.type.isEnum();
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

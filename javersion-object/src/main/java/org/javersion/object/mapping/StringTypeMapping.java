@@ -18,7 +18,7 @@ package org.javersion.object.mapping;
 import static org.javersion.object.types.StringValueType.STRING;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
@@ -26,8 +26,8 @@ import org.javersion.reflect.TypeDescriptor;
 public class StringTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.getRawType().equals(String.class);
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return typeContext.type.getRawType().equals(String.class);
     }
 
     @Override

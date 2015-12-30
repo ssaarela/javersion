@@ -16,7 +16,7 @@
 package org.javersion.object.mapping;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.JodaLocalDateType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -26,8 +26,8 @@ import org.joda.time.LocalDate;
 public class JodaLocalDateMapping implements TypeMapping {
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.isSubTypeOf(LocalDate.class);
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return typeContext.type.isSubTypeOf(LocalDate.class);
     }
 
     @Override

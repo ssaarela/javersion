@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2015 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.reflect;
 
-import javax.annotation.concurrent.Immutable;
+public interface Property {
 
-import org.javersion.util.Check;
+    void set(Object object, Object value);
 
-@Immutable
-public class QueueItem<K, V> {
-    public final K key;
-    public final V value;
-    public QueueItem(K key, V value) {
-        this.key = Check.notNull(key, "key");
-        this.value = value;
-    }
+    Object get(Object object);
+
+    boolean isReadableFrom(TypeDescriptor typeDescriptor);
+
+    boolean isWritableFrom(TypeDescriptor typeDescriptor);
+
+    TypeDescriptor getType();
+
 }

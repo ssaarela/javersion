@@ -16,14 +16,96 @@
 package org.javersion.reflect;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
-public class FieldDescriptor extends AbstractFieldDescriptor<
-            FieldDescriptor,
-            TypeDescriptor,
-            TypeDescriptors> {
+import javax.annotation.Nonnull;
 
-    public FieldDescriptor(TypeDescriptors typeDescriptors, Field field) {
-        super(typeDescriptors, field);
+import org.javersion.util.Check;
+
+public final class FieldDescriptor extends MemberDescriptor implements Property {
+
+    @Nonnull
+    private final Field field;
+
+    public FieldDescriptor(TypeDescriptor typeDescriptor, Field field) {
+        super(typeDescriptor);
+        this.field = Check.notNull(field, "field");
+        field.setAccessible(true);
+    }
+
+    public Object getStatic() {
+        return get(null);
+    }
+
+    public Object get(Object obj) {
+        try {
+            return field.get(obj);
+        } catch (IllegalAccessException e) {
+            throw new ReflectionException(e);
+        }
+    }
+
+    @Override
+    public boolean isReadableFrom(TypeDescriptor typeDescriptor) {
+        return typeDescriptor.isSubTypeOf(field.getDeclaringClass());
+    }
+
+    @Override
+    public boolean isWritableFrom(TypeDescriptor typeDescriptor) {
+        return typeDescriptor.isSubTypeOf(field.getDeclaringClass());
+    }
+
+    public void setStatic(Object value) {
+        set(null, value);
+    }
+
+    public void set(Object obj, Object value) {
+        try {
+            field.set(obj, value);
+        } catch (IllegalArgumentException | IllegalAccessException e) {
+            throw new ReflectionException(e);
+        }
+    }
+
+    public boolean isTransient() {
+        return Modifier.isTransient(field.getModifiers());
+    }
+
+    public TypeDescriptor getType() {
+        return resolveType(field.getGenericType());
+    }
+
+    @Override
+    Field getElement() {
+        return field;
+    }
+
+    public final int hashCode() {
+        return 31 * getDeclaringType().hashCode() + field.hashCode();
+    }
+
+    public final boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof FieldDescriptor) {
+            FieldDescriptor other = (FieldDescriptor) obj;
+            return field.equals(other.field) &&
+                    this.declaringType.equals(other.declaringType);
+        } else {
+            return false;
+        }
+    }
+
+    public String getName() {
+        return field.getName();
+    }
+
+    public String toString() {
+        return field.getDeclaringClass().getCanonicalName() + "." + getName();
+    }
+
+    public boolean isStatic() {
+        return Modifier.isStatic(field.getModifiers());
     }
 
 }

@@ -23,12 +23,10 @@ import org.javersion.object.WriteContext;
 import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
-import org.javersion.reflect.FieldDescriptor;
+import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 
 
@@ -38,16 +36,16 @@ public class ObjectType<O> implements ValueType {
 
     protected final Map<Class<?>, String> aliasByClass;
 
+    protected final Map<String, Property> properties;
+
     private final TypeDescriptor defaultType;
 
-    @SuppressWarnings("unchecked")
-    public ObjectType(String alias, TypeDescriptor type) {
-        this(ImmutableBiMap.of(alias, type));
-    }
-
-    public ObjectType(BiMap<String, TypeDescriptor> typesByAlias) {
+    public ObjectType(Map<String, TypeDescriptor> typesByAlias, Map<String, Property> properties) {
         Check.notNullOrEmpty(typesByAlias, "typesByAlias");
+        Check.notNullOrEmpty(properties, "properties");
         this.typesByAlias = ImmutableMap.copyOf(typesByAlias);
+        this.properties = ImmutableMap.copyOf(properties);
+
         ImmutableMap.Builder<Class<?>, String> builder = ImmutableMap.builder();
         for (Map.Entry<String, TypeDescriptor> entry : typesByAlias.entrySet()) {
             builder.put(entry.getValue().getRawType(), entry.getKey());
@@ -72,18 +70,20 @@ public class ObjectType<O> implements ValueType {
 
     @Override
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
-        TypeDescriptor typeDescriptor = getAlias(object.getClass());
+        TypeDescriptor typeDescriptor = getTypeDescriptor(object.getClass());
         for (PropertyTree child : propertyTree.getChildren()) {
             NodeId nodeId = child.getNodeId();
-            if (context.isMappedPath(child.path) && nodeId.isKey() && typeDescriptor.hasField(nodeId.getKey())) {
-                FieldDescriptor fieldDescriptor = typeDescriptor.getField(nodeId.getKey());
-                Object value = context.getObject(child);
-                fieldDescriptor.set(object, value);
+            if (nodeId.isKey()) {
+                Property property = properties.get(nodeId.getKey());
+                if (property != null && property.isWritableFrom(typeDescriptor)) {
+                    Object value = context.getObject(child);
+                    property.set(object, value);
+                }
             }
         }
     }
 
-    private TypeDescriptor getAlias(Class<?> clazz) {
+    private TypeDescriptor getTypeDescriptor(Class<?> clazz) {
         return typesByAlias.get(aliasByClass.get(clazz));
     }
 
@@ -92,13 +92,13 @@ public class ObjectType<O> implements ValueType {
         String alias = aliasByClass.get(object.getClass());
         context.put(path, Persistent.object(alias));
         TypeDescriptor typeDescriptor = typesByAlias.get(alias);
-        for (FieldDescriptor fieldDescriptor : typeDescriptor.getFields().values()) {
-            PropertyPath subPath = path.property(fieldDescriptor.getName());
-            if (context.isMappedPath(subPath)) {
-                Object value = fieldDescriptor.get(object);
+        properties.forEach((name, property) -> {
+            if (property.isReadableFrom(typeDescriptor)) {
+                PropertyPath subPath = path.property(name);
+                Object value = property.get(object);
                 context.serialize(subPath, value);
             }
-        }
+        });
     }
 
     public String toString() {

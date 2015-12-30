@@ -18,7 +18,7 @@ package org.javersion.object.mapping;
 import javax.annotation.Nullable;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.ToStringValueType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -40,8 +40,8 @@ public class ToStringTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(@Nullable PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
+    public boolean applies(@Nullable PropertyPath path, TypeContext typeContext) {
+        TypeDescriptor typeDescriptor = typeContext.type;
         if (matchSubClasses) {
             return typeDescriptor.isSubTypeOf(type);
         } else {

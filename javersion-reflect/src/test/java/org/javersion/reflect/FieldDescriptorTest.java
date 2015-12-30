@@ -18,20 +18,27 @@ package org.javersion.reflect;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.reflect.TypeDescriptorTest.STATIC_FIELDS;
 import static org.javersion.reflect.TypeDescriptorTest.TYPES;
+import static org.javersion.reflect.TypeDescriptors.DEFAULT;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 
 import org.junit.Test;
+
+import nl.jqno.equalsverifier.EqualsVerifier;
 
 public class FieldDescriptorTest {
 
     private static String staticField;
 
+    @SuppressWarnings("unused")
     private String privateField;
 
+    @SuppressWarnings("unused")
     private transient String transientField;
 
     @Deprecated
+    @SuppressWarnings("unused")
     private String deprecatedField;
 
     private static TypeDescriptor type = TYPES.get(FieldDescriptorTest.class);
@@ -78,26 +85,35 @@ public class FieldDescriptorTest {
     @Test
     public void element_is_field() {
         FieldDescriptor fieldDescriptor = type.getField("privateField");
-        assertThat(fieldDescriptor.getElement()).isSameAs(fieldDescriptor.field);
+        assertThat(fieldDescriptor.getElement()).isSameAs(fieldDescriptor.getElement());
     }
 
     @Test
     public void wraps_java_reflect_Field() throws NoSuchFieldException {
         Field field = FieldDescriptorTest.class.getDeclaredField("privateField");
         FieldDescriptor fieldDescriptor = type.getField("privateField");
-        assertThat(fieldDescriptor.field).isEqualTo(field);
+        assertThat(fieldDescriptor.getElement()).isEqualTo(field);
         assertThat(fieldDescriptor.toString())
                 .isEqualTo("org.javersion.reflect.FieldDescriptorTest.privateField");
+    }
+
+    @Test
+    public void applies() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        assertThat(fieldDescriptor.isReadableFrom(type)).isTrue();
+        assertThat(fieldDescriptor.isWritableFrom(type)).isTrue();
+        assertThat(fieldDescriptor.isReadableFrom(DEFAULT.get(MethodDescriptorTest.class))).isFalse();
+        assertThat(fieldDescriptor.isWritableFrom(DEFAULT.get(MethodDescriptorTest.class))).isFalse();
     }
 
     @Test(expected = ReflectionException.class)
     public void illegal_access() {
         FieldDescriptor fieldDescriptor = type.getField("privateField");
         try {
-            fieldDescriptor.field.setAccessible(false);
+            fieldDescriptor.getElement().setAccessible(false);
             fieldDescriptor.get(this);
         } finally {
-            fieldDescriptor.field.setAccessible(true);
+            fieldDescriptor.getElement().setAccessible(true);
         }
     }
 
@@ -109,13 +125,17 @@ public class FieldDescriptorTest {
     }
 
     @Test
-    public void equals() {
-        FieldDescriptor fieldDescriptor = type.getField("privateField");
-        assertThat(fieldDescriptor.equals(fieldDescriptor)).isTrue();
-        assertThat(fieldDescriptor.equals(new Object())).isFalse();
+    public void identity() {
+        Map<String, FieldDescriptor> fields = type.getFields();
+        EqualsVerifier.forClass(FieldDescriptor.class)
+                .withPrefabValues(Field.class, fields.get("privateField").getElement(), fields.get("transientField").getElement())
+                .verify();
+    }
 
-        FieldDescriptor other = type.getField("transientField");
-        assertThat(fieldDescriptor.equals(other)).isFalse();
+    @Test
+    public void transient_field() {
+        FieldDescriptor fieldDescriptor = type.getField("transientField");
+        assertThat(fieldDescriptor.isTransient()).isTrue();
     }
 
     @Test

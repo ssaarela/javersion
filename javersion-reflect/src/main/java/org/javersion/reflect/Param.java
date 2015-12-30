@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2015 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.reflect;
 
-import javax.annotation.concurrent.Immutable;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import org.javersion.util.Check;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-@Immutable
-public class QueueItem<K, V> {
-    public final K key;
-    public final V value;
-    public QueueItem(K key, V value) {
-        this.key = Check.notNull(key, "key");
-        this.value = value;
-    }
+@Target({ PARAMETER })
+@Retention(RUNTIME)
+@Documented
+public @interface Param {
+    String value();
 }

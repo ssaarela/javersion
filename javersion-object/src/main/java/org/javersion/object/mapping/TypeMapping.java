@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
@@ -27,7 +27,7 @@ import org.javersion.reflect.TypeDescriptor;
 @ThreadSafe
 public interface TypeMapping {
 
-    boolean applies(@Nullable PropertyPath path, LocalTypeDescriptor localTypeDescriptor);
+    boolean applies(@Nullable PropertyPath path, TypeContext typeContext);
 
     default ValueType getValueType() {
         throw new UnsupportedOperationException();
@@ -37,4 +37,7 @@ public interface TypeMapping {
         return getValueType();
     }
 
+    default ValueType describe(@Nullable PropertyPath path, TypeContext typeContext, DescribeContext context) {
+        return describe(path, typeContext.type, context);
+    }
 }

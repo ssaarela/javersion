@@ -23,7 +23,6 @@ import org.javersion.core.Version;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
-import org.javersion.object.ObjectVersionBuilder;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.object.ObjectVersionManager;
 import org.javersion.object.Versionable;
@@ -128,7 +127,7 @@ public class DocumentVersionStoreJdbcTest {
     @Test
     public void load_version_with_empty_changeset() {
         String docId = randomUUID().toString();
-        ObjectVersion<Void> emptyVersion = new ObjectVersionBuilder<Void>().build();
+        ObjectVersion<Void> emptyVersion = new ObjectVersion.Builder<Void>().build();
         ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.init(emptyVersion);
         documentStore.append(docId, versionGraph.getTip());
         documentStore.publish();

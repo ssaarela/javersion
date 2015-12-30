@@ -5,7 +5,7 @@
   <parent>
     <artifactId>javersion-root</artifactId>
     <groupId>org.javersion</groupId>
-    <version>0.10.0</version>
+    <version>0.10.1-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -35,6 +35,9 @@
         <configuration>
           <source>${javac.target}</source>
           <target>${javac.target}</target>
+          <compilerArgs>
+            <arg>-parameters</arg>
+          </compilerArgs>
         </configuration>
       </plugin>
     </plugins>

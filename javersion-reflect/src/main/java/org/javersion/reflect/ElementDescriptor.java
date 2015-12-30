@@ -16,44 +16,14 @@
 package org.javersion.reflect;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.util.List;
 
-import org.javersion.util.Check;
+public interface ElementDescriptor {
 
-import com.google.common.collect.ImmutableList;
+    List<Annotation> getAnnotations();
 
-public abstract class ElementDescriptor<
-        F extends AbstractFieldDescriptor<F, T, Ts>, 
-        T extends AbstractTypeDescriptor<F, T, Ts>,
-        Ts extends AbstractTypeDescriptors<F, T, Ts>> {
+    <A extends Annotation> A getAnnotation(Class<A> annotationClass);
 
-    protected final Ts typeDescriptors;
-
-    public ElementDescriptor(Ts typeDescriptors) {
-        this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
-    }
-
-    public List<Annotation> getAnnotations() {
-        return ImmutableList.copyOf(getElement().getAnnotations());
-    }
-    
-    public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
-        return getElement().getAnnotation(annotationClass);
-    }
-
-    public <A extends Annotation> boolean hasAnnotation(Class<A> annotationClass) {
-        return getElement().isAnnotationPresent(annotationClass);
-    }
-
-    public Ts getTypeDescriptors() {
-        return typeDescriptors;
-    }
-    
-    public abstract AnnotatedElement getElement();
-
-    public abstract boolean equals(Object obj);
-    
-    public abstract int hashCode();
+    <A extends Annotation> boolean hasAnnotation(Class<A> annotationClass);
 
 }

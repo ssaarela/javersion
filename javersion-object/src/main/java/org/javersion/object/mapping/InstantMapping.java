@@ -18,7 +18,7 @@ package org.javersion.object.mapping;
 import java.time.Instant;
 
 import org.javersion.object.DescribeContext;
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.InstantType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -28,8 +28,8 @@ public class InstantMapping implements TypeMapping {
 
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        return localTypeDescriptor.typeDescriptor.isSubTypeOf(Instant.class);
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return typeContext.type.isSubTypeOf(Instant.class);
     }
 
     @Override

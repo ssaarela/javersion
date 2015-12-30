@@ -35,7 +35,7 @@ import org.javersion.util.Check;
 import com.google.common.collect.Maps;
 
 @NotThreadSafe
-public class WriteContext {
+public final class WriteContext {
 
     private final Object root;
 

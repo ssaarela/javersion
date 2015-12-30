@@ -18,7 +18,7 @@ package org.javersion.reflect;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -28,9 +28,13 @@ public class TypeDescriptorTest {
 
     static final TypeDescriptors TYPES = new TypeDescriptors();
 
+    @SuppressWarnings("unused")
+    static final Map<String, Integer> MAP = new HashMap<>();
+
     static final TypeDescriptors STATIC_FIELDS =
             new TypeDescriptors(input -> Modifier.isStatic(input.getModifiers()));
 
+    @Deprecated
     public static class Cycle {
         Cycle cycle;
         public Cycle() {
@@ -45,33 +49,6 @@ public class TypeDescriptorTest {
     public static class Generic {
         Map<String, Long> map;
         Map<String, Map<String, Long>> mapOfMaps;
-    }
-
-    private final Class<?>[] expectedSuperClasses = {
-            LinkedHashMap.class,
-            HashMap.class,
-            AbstractMap.class,
-            Object.class
-    };
-
-    private final Class<?>[] expectedInterfaces = {
-            Map.class,
-            Cloneable.class,
-            Serializable.class
-    };
-
-    @Test
-    public void Get_Super_Classes() {
-        TypeDescriptor type = TYPES.get(LinkedHashMap.class);
-        Set<Class<?>> superClasses = type.getSuperClasses();
-        assertThat(superClasses).contains(expectedSuperClasses);
-    }
-
-    @Test
-    public void Get_Interfaces() {
-        TypeDescriptor type = TYPES.get(LinkedHashMap.class);
-        Set<Class<?>> superClasses = type.getInterfaces();
-        assertThat(superClasses).contains(expectedInterfaces);
     }
 
     @Test
@@ -122,7 +99,7 @@ public class TypeDescriptorTest {
 
     @Test
     public void get_element_returns_raw_type() {
-        assertThat(TYPES.get(Set.class).getElement()).isEqualTo(Set.class);
+        assertThat(TYPES.get(Set.class).getRawType()).isEqualTo(Set.class);
     }
 
     @Test
@@ -157,6 +134,8 @@ public class TypeDescriptorTest {
     public void super_type_check() {
         TypeDescriptor setType = TYPES.get(Set.class);
         assertThat(setType.isSuperTypeOf(Collection.class)).isFalse();
+        assertThat(setType.isSuperTypeOf(TYPES.get(Collection.class))).isFalse();
+        assertThat(setType.isSuperTypeOf(TYPES.get(Set.class))).isTrue();
         assertThat(setType.isSuperTypeOf(Set.class)).isTrue();
         assertThat(setType.isSuperTypeOf(SortedSet.class)).isTrue();
         assertThat(setType.isSuperTypeOf(TreeSet.class)).isTrue();
@@ -166,8 +145,10 @@ public class TypeDescriptorTest {
     public void sub_type_check() {
         TypeDescriptor setType = TYPES.get(Set.class);
         assertThat(setType.isSubTypeOf(Collection.class)).isTrue();
+        assertThat(setType.isSubTypeOf(TYPES.get(Collection.class))).isTrue();
         assertThat(setType.isSubTypeOf(Set.class)).isTrue();
         assertThat(setType.isSubTypeOf(SortedSet.class)).isFalse();
+        assertThat(setType.isSubTypeOf(TYPES.get(SortedSet.class))).isFalse();
     }
 
     @Test
@@ -223,36 +204,31 @@ public class TypeDescriptorTest {
     }
 
     @Test(expected=RuntimeException.class)
-    public void Unmodifiable_All_Classes() {
-        TYPES.get(LinkedHashMap.class).getAllClasses().add(TypeDescriptorTest.class);
-    }
-
-    @Test(expected=RuntimeException.class)
-    public void Unmodifiable_Interfaces() {
-        TYPES.get(LinkedHashMap.class).getInterfaces().add(TypeDescriptorTest.class);
-    }
-
-    @Test(expected=RuntimeException.class)
-    public void Unmodifiable_Super_Classes() {
-        TYPES.get(LinkedHashMap.class).getSuperClasses().add(TypeDescriptorTest.class);
-    }
-
-    @Test(expected=RuntimeException.class)
     public void Unmodifiable_Fields() {
         TYPES.get(ArrayList.class).getFields().remove("elementData");
     }
 
     @Test
     public void Resolve_Generic_Parameter() {
-        FieldDescriptor fieldDescriptor = STATIC_FIELDS.get(getClass()).getField("TYPES");
+        FieldDescriptor fieldDescriptor = STATIC_FIELDS.get(getClass()).getField("MAP");
 
         TypeDescriptor fieldType = fieldDescriptor.getType();
 
-        assertThat(fieldType.resolveGenericParameter(AbstractTypeDescriptors.class, 0))
-            .isEqualTo(STATIC_FIELDS.get(FieldDescriptor.class));
+        assertThat(fieldType.resolveGenericParameter(Map.class, 0))
+            .isEqualTo(STATIC_FIELDS.get(String.class));
 
-        assertThat(fieldType.resolveGenericParameter(AbstractTypeDescriptors.class, 1))
-                .isEqualTo(STATIC_FIELDS.get(TypeDescriptor.class));
+        assertThat(fieldType.resolveGenericParameter(Map.class, 1))
+                .isEqualTo(STATIC_FIELDS.get(Integer.class));
     }
 
+    @Test
+    public void annotations() {
+        TypeDescriptor type = TYPES.get(Cycle.class);
+        assertThat(type.hasAnnotation(Deprecated.class)).isTrue();
+        assertThat(type.getAnnotation(Deprecated.class)).isInstanceOf(Deprecated.class);
+
+        List<Annotation> annotations = type.getAnnotations();
+        assertThat(annotations).hasSize(1);
+        assertThat(annotations.get(0)).isInstanceOf(Deprecated.class);
+    }
 }

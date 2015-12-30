@@ -1,6 +1,6 @@
 package org.javersion.object.mapping;
 
-import org.javersion.object.LocalTypeDescriptor;
+import org.javersion.object.TypeContext;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
@@ -18,8 +18,8 @@ public class SimpleValueMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, LocalTypeDescriptor localTypeDescriptor) {
-        TypeDescriptor typeDescriptor = localTypeDescriptor.typeDescriptor;
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        TypeDescriptor typeDescriptor = typeContext.type;
         return typeDescriptor.getRawType().equals(type);
     }
 

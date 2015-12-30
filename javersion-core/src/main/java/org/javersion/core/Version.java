@@ -192,7 +192,7 @@ public class Version<K, V, M> {
         public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?, ?> versionGraph, Predicate<K> filter) {
             if (parentRevisions != null) {
                 Merge<K, V, M> merge = versionGraph.mergeRevisions(parentRevisions);
-                if (newProperties == null) {
+                if (newProperties == null || newProperties.isEmpty()) {
                     Map<K, V> oldProperties = filterKeys(merge.getProperties(), filter);
                     changeset(transformValues(oldProperties, v -> null));
                 } else {
