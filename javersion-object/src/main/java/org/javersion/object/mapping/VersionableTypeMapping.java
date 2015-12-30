@@ -33,10 +33,11 @@ public class VersionableTypeMapping implements TypeMapping {
 
 
     @Override
-    public  ValueType describe(PropertyPath path, TypeDescriptor type, DescribeContext context) {
+    public  ValueType describe(PropertyPath path, TypeContext typeContext, DescribeContext context) {
+        TypeDescriptor type = typeContext.type;
         String alias = getAlias(type.getAnnotation(Versionable.class), type);
         ObjectTypeMapping objectTypeMapping = new ObjectTypeMapping(ImmutableBiMap.of(alias, type));
-        return objectTypeMapping.describe(path, type, context);
+        return objectTypeMapping.describe(path, typeContext, context);
     }
 
     static String getAlias(Versionable versionable, TypeDescriptor type) {

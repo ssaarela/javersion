@@ -101,7 +101,7 @@ public final class DescribeContext {
 
     private synchronized ValueType createValueType(PropertyPath path, TypeContext typeContext) {
         TypeMapping typeMapping = typeMappings.getTypeMapping(path, typeContext);
-        return typeMapping.describe(path, typeContext.type, this);
+        return typeMapping.describe(path, typeContext, this);
     }
 
 }

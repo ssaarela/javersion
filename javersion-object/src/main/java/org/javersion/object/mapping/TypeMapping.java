@@ -37,4 +37,7 @@ public interface TypeMapping {
         return getValueType();
     }
 
+    default ValueType describe(@Nullable PropertyPath path, TypeContext typeContext, DescribeContext context) {
+        return describe(path, typeContext.type, context);
+    }
 }
