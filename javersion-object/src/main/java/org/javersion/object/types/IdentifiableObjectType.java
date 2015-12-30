@@ -23,15 +23,13 @@ import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
-import com.google.common.collect.BiMap;
-
 public class IdentifiableObjectType<O> extends ObjectType<O> implements IdentifiableType {
 
     private final Property idProperty;
 
     private final IdentifiableType idType;
 
-    public IdentifiableObjectType(BiMap<String, TypeDescriptor> typesByAlias, Map<String, Property> properties,
+    public IdentifiableObjectType(Map<String, TypeDescriptor> typesByAlias, Map<String, Property> properties,
                                   Property idProperty, IdentifiableType idType) {
         super(typesByAlias, properties);
         this.idProperty = Check.notNull(idProperty, "idProperty");

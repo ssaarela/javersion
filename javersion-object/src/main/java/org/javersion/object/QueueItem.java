@@ -27,10 +27,4 @@ public class QueueItem<K, V> {
         this.key = Check.notNull(key, "key");
         this.value = value;
     }
-    public boolean hasValue() {
-        return value != null;
-    }
-    public String toString() {
-        return key.toString() + "=" + value;
-    }
 }

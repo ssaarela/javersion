@@ -19,7 +19,9 @@ import static org.javersion.object.mapping.PrimitiveTypeMapping.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.annotation.concurrent.Immutable;
@@ -33,8 +35,6 @@ import org.javersion.reflect.TypeDescriptor;
 import org.javersion.reflect.TypeDescriptors;
 import org.javersion.util.Check;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -161,7 +161,7 @@ public final class TypeMappings {
 
             protected PropertyPath targetPath;
 
-            protected BiMap<String, TypeDescriptor> typesByAlias = HashBiMap.create();
+            protected Map<String, TypeDescriptor> typesByAlias = new LinkedHashMap<>();
 
             public HierarchyBuilder(Class<R> root) {
                 this(root, null);

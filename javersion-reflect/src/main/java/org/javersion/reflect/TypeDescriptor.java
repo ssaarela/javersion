@@ -155,8 +155,16 @@ public final class TypeDescriptor implements ElementDescriptor {
         return WRAPPER_TO_PRIMITIVE.containsKey(clazz) || WRAPPER_TO_PRIMITIVE.containsValue(clazz);
     }
 
+    public boolean isSuperTypeOf(TypeDescriptor type) {
+        return isSuperTypeOf(type.getRawType());
+    }
+
     public boolean isSuperTypeOf(Class<?> clazz) {
         return getRawType().isAssignableFrom(clazz);
+    }
+
+    public boolean isSubTypeOf(TypeDescriptor type) {
+        return isSubTypeOf(type.getRawType());
     }
 
     public boolean isSubTypeOf(Class<?> clazz) {

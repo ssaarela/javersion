@@ -16,6 +16,7 @@ public class PrimitiveTest {
 
     @Versionable
     public static class Primitives {
+        @VersionProperty("str")
         public String string;
 
         public Byte byteWrapper;
@@ -100,7 +101,7 @@ public class PrimitiveTest {
     private static Map<PropertyPath, Object> getProperties(Primitives primitives) {
         Map<PropertyPath, Object> expectedProperties = Maps.newHashMap();
         expectedProperties.put(ROOT, Persistent.object("PrimitiveTest$Primitives"));
-        expectedProperties.put(ROOT.property("string"), primitives.string);
+        expectedProperties.put(ROOT.property("str"), primitives.string);
 
         expectedProperties.put(ROOT.property("booleanPrimitive"), primitives.booleanPrimitive);
         expectedProperties.put(ROOT.property("booleanWrapper"), primitives.booleanWrapper);

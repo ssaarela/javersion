@@ -17,6 +17,7 @@ package org.javersion.object;
 
 import java.util.Objects;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
@@ -30,8 +31,9 @@ import org.javersion.util.Check;
 public final class TypeContext {
 
     @Nullable
-    private final ElementDescriptor parent;
+    public final ElementDescriptor parent;
 
+    @Nonnull
     public final TypeDescriptor type;
 
     public TypeContext(TypeDescriptor typeDescriptor) {
@@ -67,12 +69,4 @@ public final class TypeContext {
         }
     }
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        if (parent != null) {
-            sb.append(parent).append(": ");
-        }
-        sb.append(type);
-        return sb.toString();
-    }
 }

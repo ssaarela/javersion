@@ -27,7 +27,6 @@ import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
-import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableMap;
 
 
@@ -41,7 +40,7 @@ public class ObjectType<O> implements ValueType {
 
     private final TypeDescriptor defaultType;
 
-    public ObjectType(BiMap<String, TypeDescriptor> typesByAlias, Map<String, Property> properties) {
+    public ObjectType(Map<String, TypeDescriptor> typesByAlias, Map<String, Property> properties) {
         Check.notNullOrEmpty(typesByAlias, "typesByAlias");
         Check.notNullOrEmpty(properties, "properties");
         this.typesByAlias = ImmutableMap.copyOf(typesByAlias);

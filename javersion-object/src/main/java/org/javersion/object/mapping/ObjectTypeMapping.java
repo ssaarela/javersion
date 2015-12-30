@@ -15,7 +15,9 @@
  */
 package org.javersion.object.mapping;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.javersion.object.DescribeContext;
@@ -36,14 +38,14 @@ import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableMap;
 
 public class ObjectTypeMapping<O> implements TypeMapping {
 
-    private final BiMap<String, TypeDescriptor> typesByAlias;
+    private final ImmutableMap<String, TypeDescriptor> typesByAlias;
 
-    public ObjectTypeMapping(BiMap<String, TypeDescriptor> typesByAlias) {
-        this.typesByAlias = typesByAlias;
+    public ObjectTypeMapping(Map<String, TypeDescriptor> typesByAlias) {
+        this.typesByAlias = verifyAndSort(typesByAlias);
     }
 
     @Override
@@ -138,7 +140,9 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         }
 
         private boolean acceptProperty(BeanProperty property) {
-            return property.isReadable() && property.getReadMethod().hasAnnotation(VersionProperty.class);
+            return property.isReadable() &&
+                    (property.getReadMethod().hasAnnotation(VersionProperty.class) ||
+                            property.getReadMethod().hasAnnotation(Id.class));
         }
 
         private void validate(BeanProperty property) {
@@ -156,5 +160,30 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             }
             return defaultName;
         }
+    }
+
+    /**
+     * Sorts TypeDescriptors in topological order so that super class always precedes it's sub classes.
+     */
+    static ImmutableMap<String, TypeDescriptor> verifyAndSort(Map<String, TypeDescriptor> typesByAlias) {
+        List<String> sorted = new ArrayList<>();
+        for (Map.Entry<String, TypeDescriptor> entry : typesByAlias.entrySet()) {
+            String alias = entry.getKey();
+            TypeDescriptor type = entry.getValue();
+            int i = sorted.size()-1;
+            for (; i >= 0; i--) {
+                TypeDescriptor other = typesByAlias.get(sorted.get(i));
+                if (other.isSuperTypeOf(type.getRawType())) {
+                    break;
+                }
+            }
+            sorted.add(i+1, alias);
+        }
+
+        ImmutableMap.Builder<String, TypeDescriptor> result = ImmutableMap.builder();
+        for (String alias : sorted) {
+            result.put(alias, typesByAlias.get(alias));
+        }
+        return result.build();
     }
 }

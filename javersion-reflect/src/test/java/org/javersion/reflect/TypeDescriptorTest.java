@@ -134,6 +134,8 @@ public class TypeDescriptorTest {
     public void super_type_check() {
         TypeDescriptor setType = TYPES.get(Set.class);
         assertThat(setType.isSuperTypeOf(Collection.class)).isFalse();
+        assertThat(setType.isSuperTypeOf(TYPES.get(Collection.class))).isFalse();
+        assertThat(setType.isSuperTypeOf(TYPES.get(Set.class))).isTrue();
         assertThat(setType.isSuperTypeOf(Set.class)).isTrue();
         assertThat(setType.isSuperTypeOf(SortedSet.class)).isTrue();
         assertThat(setType.isSuperTypeOf(TreeSet.class)).isTrue();
@@ -143,8 +145,10 @@ public class TypeDescriptorTest {
     public void sub_type_check() {
         TypeDescriptor setType = TYPES.get(Set.class);
         assertThat(setType.isSubTypeOf(Collection.class)).isTrue();
+        assertThat(setType.isSubTypeOf(TYPES.get(Collection.class))).isTrue();
         assertThat(setType.isSubTypeOf(Set.class)).isTrue();
         assertThat(setType.isSubTypeOf(SortedSet.class)).isFalse();
+        assertThat(setType.isSubTypeOf(TYPES.get(SortedSet.class))).isFalse();
     }
 
     @Test
