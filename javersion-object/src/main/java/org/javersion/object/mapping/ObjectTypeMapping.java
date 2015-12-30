@@ -96,7 +96,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         }
 
         void add(TypeDescriptor type) {
-            type.getProperties().forEach(this::add);
+            type.getProperties().values().forEach(this::add);
             type.getFields().values().forEach(this::add);
         }
 

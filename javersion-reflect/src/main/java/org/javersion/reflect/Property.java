@@ -21,7 +21,9 @@ public interface Property {
 
     Object get(Object object);
 
-    boolean applies(TypeDescriptor typeDescriptor);
+    boolean isReadableFrom(TypeDescriptor typeDescriptor);
+
+    boolean isWritableFrom(TypeDescriptor typeDescriptor);
 
     TypeDescriptor getType();
 

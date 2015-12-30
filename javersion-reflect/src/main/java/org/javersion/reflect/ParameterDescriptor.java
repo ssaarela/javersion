@@ -17,14 +17,17 @@ package org.javersion.reflect;
 
 import java.lang.reflect.Parameter;
 
+import javax.annotation.Nonnull;
+
 import org.javersion.util.Check;
 
-public class ParameterDescriptor extends ElementDescriptor {
+public final class ParameterDescriptor extends MemberDescriptor {
 
+    @Nonnull
     private final Parameter parameter;
 
-    public ParameterDescriptor(TypeDescriptors typeDescriptors, Parameter parameter) {
-        super(typeDescriptors);
+    public ParameterDescriptor(TypeDescriptor declaringType, Parameter parameter) {
+        super(declaringType);
         this.parameter = Check.notNull(parameter, "parameter");
     }
 
@@ -40,14 +43,14 @@ public class ParameterDescriptor extends ElementDescriptor {
         } else if (obj instanceof ParameterDescriptor) {
             ParameterDescriptor other = (ParameterDescriptor) obj;
             return this.parameter.equals(other.parameter) &&
-                    this.typeDescriptors.equals(other.typeDescriptors);
+                    this.declaringType.equals(other.declaringType);
         } else {
             return false;
         }
     }
 
     public TypeDescriptor getType() {
-        return typeDescriptors.get(parameter.getParameterizedType());
+        return resolveType(parameter.getParameterizedType());
     }
 
     public String getName() {
@@ -63,6 +66,6 @@ public class ParameterDescriptor extends ElementDescriptor {
 
     @Override
     public int hashCode() {
-        return parameter.hashCode();
+        return 31 * getDeclaringType().hashCode() + parameter.hashCode();
     }
 }

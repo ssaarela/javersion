@@ -18,20 +18,27 @@ package org.javersion.reflect;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.reflect.TypeDescriptorTest.STATIC_FIELDS;
 import static org.javersion.reflect.TypeDescriptorTest.TYPES;
+import static org.javersion.reflect.TypeDescriptors.DEFAULT;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 
 import org.junit.Test;
+
+import nl.jqno.equalsverifier.EqualsVerifier;
 
 public class FieldDescriptorTest {
 
     private static String staticField;
 
+    @SuppressWarnings("unused")
     private String privateField;
 
+    @SuppressWarnings("unused")
     private transient String transientField;
 
     @Deprecated
+    @SuppressWarnings("unused")
     private String deprecatedField;
 
     private static TypeDescriptor type = TYPES.get(FieldDescriptorTest.class);
@@ -90,6 +97,15 @@ public class FieldDescriptorTest {
                 .isEqualTo("org.javersion.reflect.FieldDescriptorTest.privateField");
     }
 
+    @Test
+    public void applies() {
+        FieldDescriptor fieldDescriptor = type.getField("privateField");
+        assertThat(fieldDescriptor.isReadableFrom(type)).isTrue();
+        assertThat(fieldDescriptor.isWritableFrom(type)).isTrue();
+        assertThat(fieldDescriptor.isReadableFrom(DEFAULT.get(MethodDescriptorTest.class))).isFalse();
+        assertThat(fieldDescriptor.isWritableFrom(DEFAULT.get(MethodDescriptorTest.class))).isFalse();
+    }
+
     @Test(expected = ReflectionException.class)
     public void illegal_access() {
         FieldDescriptor fieldDescriptor = type.getField("privateField");
@@ -109,13 +125,17 @@ public class FieldDescriptorTest {
     }
 
     @Test
-    public void equals() {
-        FieldDescriptor fieldDescriptor = type.getField("privateField");
-        assertThat(fieldDescriptor.equals(fieldDescriptor)).isTrue();
-        assertThat(fieldDescriptor.equals(new Object())).isFalse();
+    public void identity() {
+        Map<String, FieldDescriptor> fields = type.getFields();
+        EqualsVerifier.forClass(FieldDescriptor.class)
+                .withPrefabValues(Field.class, fields.get("privateField").getElement(), fields.get("transientField").getElement())
+                .verify();
+    }
 
-        FieldDescriptor other = type.getField("transientField");
-        assertThat(fieldDescriptor.equals(other)).isFalse();
+    @Test
+    public void transient_field() {
+        FieldDescriptor fieldDescriptor = type.getField("transientField");
+        assertThat(fieldDescriptor.isTransient()).isTrue();
     }
 
     @Test

@@ -18,6 +18,7 @@ package org.javersion.reflect;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
@@ -33,6 +34,7 @@ public class TypeDescriptorTest {
     static final TypeDescriptors STATIC_FIELDS =
             new TypeDescriptors(input -> Modifier.isStatic(input.getModifiers()));
 
+    @Deprecated
     public static class Cycle {
         Cycle cycle;
         public Cycle() {
@@ -97,7 +99,7 @@ public class TypeDescriptorTest {
 
     @Test
     public void get_element_returns_raw_type() {
-        assertThat(TYPES.get(Set.class).getElement()).isEqualTo(Set.class);
+        assertThat(TYPES.get(Set.class).getRawType()).isEqualTo(Set.class);
     }
 
     @Test
@@ -215,4 +217,14 @@ public class TypeDescriptorTest {
                 .isEqualTo(STATIC_FIELDS.get(Integer.class));
     }
 
+    @Test
+    public void annotations() {
+        TypeDescriptor type = TYPES.get(Cycle.class);
+        assertThat(type.hasAnnotation(Deprecated.class)).isTrue();
+        assertThat(type.getAnnotation(Deprecated.class)).isInstanceOf(Deprecated.class);
+
+        List<Annotation> annotations = type.getAnnotations();
+        assertThat(annotations).hasSize(1);
+        assertThat(annotations.get(0)).isInstanceOf(Deprecated.class);
+    }
 }

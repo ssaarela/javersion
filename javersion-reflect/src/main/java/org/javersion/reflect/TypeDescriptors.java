@@ -24,12 +24,11 @@ import java.util.Map;
 
 import org.javersion.util.Check;
 
-import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
-public class TypeDescriptors {
+public final class TypeDescriptors {
 
     public static final Predicate<Member> NON_STATIC_OR_SYNTHETIC = member -> {
         int mod = member.getModifiers();
@@ -42,8 +41,6 @@ public class TypeDescriptors {
         Check.notNull(clazz, "clazz");
         return DEFAULT.get(clazz);
     }
-
-    public final Function<Class<?>, TypeDescriptor> getTypeDescriptor = input -> get(input);
 
     private final Map<TypeToken<?>, TypeDescriptor> cache = Maps.newHashMap();
 

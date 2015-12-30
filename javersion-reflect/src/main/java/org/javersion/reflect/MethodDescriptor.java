@@ -21,31 +21,31 @@ import java.lang.reflect.Parameter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
+
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
 
-public class MethodDescriptor extends ElementDescriptor {
+public final class MethodDescriptor extends MemberDescriptor {
 
+    @Nonnull
     private final Method method;
 
-    public MethodDescriptor(TypeDescriptors typeDescriptors, Method method) {
-        super(typeDescriptors);
+    public MethodDescriptor(TypeDescriptor declaringType, Method method) {
+        super(declaringType);
         this.method = Check.notNull(method, "method");
         method.setAccessible(true);
     }
 
     public TypeDescriptor getReturnType() {
-        return typeDescriptors.get(method.getGenericReturnType());
+        return resolveType(method.getGenericReturnType());
     }
 
-    public TypeDescriptor getDeclaringType() {
-        return typeDescriptors.get(method.getDeclaringClass());
-    }
     public List<ParameterDescriptor> getParameters() {
         ImmutableList.Builder<ParameterDescriptor> builder = ImmutableList.builder();
         for (Parameter parameter : method.getParameters()) {
-            builder.add(new ParameterDescriptor(typeDescriptors, parameter));
+            builder.add(new ParameterDescriptor(declaringType, parameter));
         }
         return builder.build();
     }
@@ -63,17 +63,12 @@ public class MethodDescriptor extends ElementDescriptor {
     }
 
     @Override
-    Method getElement() {
-        return method;
-    }
-
-    @Override
     public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         } else if (obj instanceof MethodDescriptor) {
             MethodDescriptor other = (MethodDescriptor) obj;
-            return this.typeDescriptors.equals(other.typeDescriptors) &&
+            return this.declaringType.equals(other.declaringType) &&
                     this.method.equals(other.method);
         } else {
             return false;
@@ -82,7 +77,7 @@ public class MethodDescriptor extends ElementDescriptor {
 
     @Override
     public int hashCode() {
-        return method.hashCode();
+        return 31 * declaringType.hashCode() + method.hashCode();
     }
 
     public boolean applies(TypeDescriptor typeDescriptor) {
@@ -90,17 +85,15 @@ public class MethodDescriptor extends ElementDescriptor {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        return getDeclaringType().getSimpleName() + "." + getName() +
+                getParameters().stream()
+                    .map(ParameterDescriptor::getType)
+                    .map(TypeDescriptor::getSimpleName)
+                    .collect(Collectors.joining(",", "(", ")"));
+    }
 
-        sb.append(getDeclaringType().getSimpleName())
-                .append(".")
-                .append(getName());
-
-        sb.append(getParameters().stream()
-                .map(ParameterDescriptor::getType)
-                .map(TypeDescriptor::getSimpleName)
-                .collect(Collectors.joining(", ", "(", ")")));
-
-        return sb.toString();
+    @Override
+    Method getElement() {
+        return method;
     }
 }

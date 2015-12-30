@@ -18,14 +18,17 @@ package org.javersion.reflect;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import javax.annotation.Nonnull;
+
 import org.javersion.util.Check;
 
-public class FieldDescriptor extends ElementDescriptor implements Property {
+public final class FieldDescriptor extends MemberDescriptor implements Property {
 
+    @Nonnull
     private final Field field;
 
-    public FieldDescriptor(TypeDescriptors typeDescriptors, Field field) {
-        super(typeDescriptors);
+    public FieldDescriptor(TypeDescriptor typeDescriptor, Field field) {
+        super(typeDescriptor);
         this.field = Check.notNull(field, "field");
         field.setAccessible(true);
     }
@@ -43,7 +46,12 @@ public class FieldDescriptor extends ElementDescriptor implements Property {
     }
 
     @Override
-    public boolean applies(TypeDescriptor typeDescriptor) {
+    public boolean isReadableFrom(TypeDescriptor typeDescriptor) {
+        return typeDescriptor.isSubTypeOf(field.getDeclaringClass());
+    }
+
+    @Override
+    public boolean isWritableFrom(TypeDescriptor typeDescriptor) {
         return typeDescriptor.isSubTypeOf(field.getDeclaringClass());
     }
 
@@ -64,7 +72,7 @@ public class FieldDescriptor extends ElementDescriptor implements Property {
     }
 
     public TypeDescriptor getType() {
-        return typeDescriptors.get(field.getGenericType());
+        return resolveType(field.getGenericType());
     }
 
     @Override
@@ -73,7 +81,7 @@ public class FieldDescriptor extends ElementDescriptor implements Property {
     }
 
     public final int hashCode() {
-        return 31 * typeDescriptors.hashCode() + field.hashCode();
+        return 31 * getDeclaringType().hashCode() + field.hashCode();
     }
 
     public final boolean equals(Object obj) {
@@ -82,7 +90,7 @@ public class FieldDescriptor extends ElementDescriptor implements Property {
         } else if (obj instanceof FieldDescriptor) {
             FieldDescriptor other = (FieldDescriptor) obj;
             return field.equals(other.field) &&
-                    this.typeDescriptors.equals(other.typeDescriptors);
+                    this.declaringType.equals(other.declaringType);
         } else {
             return false;
         }

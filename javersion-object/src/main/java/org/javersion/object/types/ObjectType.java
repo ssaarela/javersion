@@ -76,7 +76,7 @@ public class ObjectType<O> implements ValueType {
             NodeId nodeId = child.getNodeId();
             if (nodeId.isKey()) {
                 Property property = properties.get(nodeId.getKey());
-                if (property != null && property.applies(typeDescriptor)) {
+                if (property != null && property.isWritableFrom(typeDescriptor)) {
                     Object value = context.getObject(child);
                     property.set(object, value);
                 }
@@ -94,7 +94,7 @@ public class ObjectType<O> implements ValueType {
         context.put(path, Persistent.object(alias));
         TypeDescriptor typeDescriptor = typesByAlias.get(alias);
         properties.forEach((name, property) -> {
-            if (property.applies(typeDescriptor)) {
+            if (property.isReadableFrom(typeDescriptor)) {
                 PropertyPath subPath = path.property(name);
                 Object value = property.get(object);
                 context.serialize(subPath, value);

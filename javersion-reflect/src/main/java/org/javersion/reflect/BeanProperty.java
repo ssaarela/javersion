@@ -64,12 +64,13 @@ public class BeanProperty implements Property {
     }
 
     @Override
-    public boolean applies(TypeDescriptor typeDescriptor) {
-        if (readMethod != null) {
-            return readMethod.applies(typeDescriptor);
-        } else {
-            return writeMethod.applies(typeDescriptor);
-        }
+    public boolean isReadableFrom(TypeDescriptor typeDescriptor) {
+        return readMethod != null && readMethod.applies(typeDescriptor);
+    }
+
+    @Override
+    public boolean isWritableFrom(TypeDescriptor typeDescriptor) {
+        return writeMethod != null && writeMethod.applies(typeDescriptor);
     }
 
     public TypeDescriptor getDeclaringType() {

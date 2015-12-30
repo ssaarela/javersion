@@ -173,7 +173,7 @@ public final class TypeMappings {
             }
 
             private TypeDescriptor getTypeDescriptor(Class<?> clazz) {
-                return TypeDescriptors.DEFAULT.getTypeDescriptor.apply(clazz);
+                return TypeDescriptors.DEFAULT.get(clazz);
             }
 
             public Builder withMapping(TypeMapping typeMapping) {

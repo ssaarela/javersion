@@ -19,23 +19,24 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 
 import org.javersion.util.Check;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
-public class TypeDescriptor extends ElementDescriptor {
+public final class TypeDescriptor implements ElementDescriptor {
 
 
     public static final BiMap<Class<?>, Class<?>> WRAPPER_TO_PRIMITIVE;
@@ -56,11 +57,23 @@ public class TypeDescriptor extends ElementDescriptor {
 
     protected final TypeToken<?> typeToken;
 
-    private volatile SortedMap<String, FieldDescriptor> fields;
+    protected final TypeDescriptors typeDescriptors;
 
     public TypeDescriptor(TypeDescriptors typeDescriptors, TypeToken<?> typeToken) {
-        super(typeDescriptors);
+        this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
         this.typeToken = Check.notNull(typeToken, "typeToken");
+    }
+
+    public List<Annotation> getAnnotations() {
+        return ImmutableList.copyOf(getRawType().getAnnotations());
+    }
+
+    public <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
+        return getRawType().getAnnotation(annotationClass);
+    }
+
+    public <A extends Annotation> boolean hasAnnotation(Class<A> annotationClass) {
+        return getRawType().isAnnotationPresent(annotationClass);
     }
 
     public boolean equalTo(Class<?> type) {
@@ -68,22 +81,17 @@ public class TypeDescriptor extends ElementDescriptor {
     }
 
     public Map<String, FieldDescriptor> getFields() {
-        Map<String, FieldDescriptor> result = fields;
-        if (result == null) {
-            synchronized(this) {
-                result = fields;
-                if (result == null) {
-                    result = Maps.newHashMap();
-                    collectFields(typeToken.getRawType(), result);
-                    result = fields = ImmutableSortedMap.copyOf(result);
-                }
-            }
-        }
-        return result;
+        Map<String, FieldDescriptor> result = new HashMap<>();
+        collectFields(typeToken.getRawType(), result);
+        return ImmutableSortedMap.copyOf(result);
     }
 
     public String getSimpleName() {
-        String fqn = getRawType().getName();
+        return getSimpleName(getRawType());
+    }
+
+    public static String getSimpleName(Class<?> cls) {
+        String fqn = cls.getName();
         int i = fqn.lastIndexOf('.');
         if (i > 0) {
             return fqn.substring(i + 1);
@@ -92,15 +100,21 @@ public class TypeDescriptor extends ElementDescriptor {
         }
     }
 
-    public List<BeanProperty> getProperties() {
+    public Map<MethodSignature, MethodDescriptor> getMethods() {
+        Map<MethodSignature, MethodDescriptor> result = new HashMap<>();
+        collectMethods(getRawType(), result);
+        return ImmutableMap.copyOf(result);
+    }
+
+    public Map<String, BeanProperty> getProperties() {
         try {
-            ImmutableList.Builder<BeanProperty> properties = ImmutableList.builder();
-            BeanInfo beanInfo = Introspector.getBeanInfo(getRawType());
+            ImmutableMap.Builder<String, BeanProperty> properties = ImmutableMap.builder();
+            BeanInfo beanInfo = Introspector.getBeanInfo(getRawType(), Object.class);
             for (PropertyDescriptor propertyDescriptor : beanInfo.getPropertyDescriptors()) {
                 MethodDescriptor readMethod = getMethodDescriptor(propertyDescriptor.getReadMethod());
                 MethodDescriptor writeMethod = getMethodDescriptor(propertyDescriptor.getWriteMethod());
                 BeanProperty property = new BeanProperty(propertyDescriptor.getName(), readMethod, writeMethod);
-                properties.add(property);
+                properties.put(property.getName(), property);
             }
             return properties.build();
         } catch (IntrospectionException e) {
@@ -108,8 +122,8 @@ public class TypeDescriptor extends ElementDescriptor {
         }
     }
 
-    private MethodDescriptor getMethodDescriptor(Method readMethod) {
-        return readMethod != null ? new MethodDescriptor(typeDescriptors, readMethod) : null;
+    private MethodDescriptor getMethodDescriptor(Method method) {
+        return method != null ? new MethodDescriptor(this, method) : null;
     }
 
     public boolean hasField(String fieldName) {
@@ -128,25 +142,12 @@ public class TypeDescriptor extends ElementDescriptor {
         return typeDescriptors.get(typeToken.resolveType(genericClass.getTypeParameters()[genericParam]));
     }
 
-    @Override
-    Class<?> getElement() {
-        return getRawType();
-    }
-
     public Class<?> getRawType() {
         return typeToken.getRawType();
     }
 
-    private void collectFields(Class<?> clazz, Map<String, FieldDescriptor> fields) {
-        for (Field field : clazz.getDeclaredFields()) {
-            if (typeDescriptors.fieldFilter.apply(field) && !fields.containsKey(field.getName())) {
-                fields.put(field.getName(), new FieldDescriptor(typeDescriptors, field));
-            }
-        }
-        Class<?> superClass = clazz.getSuperclass();
-        if (superClass != null && !superClass.equals(Object.class)) {
-            collectFields(superClass, fields);
-        }
+    public TypeToken<?> getTypeToken() {
+        return typeToken;
     }
 
     public boolean isPrimitiveOrWrapper() {
@@ -177,6 +178,10 @@ public class TypeDescriptor extends ElementDescriptor {
         }
     }
 
+    public TypeDescriptors getTypeDescriptors() {
+        return typeDescriptors;
+    }
+
     @Override
     public final boolean equals(Object obj) {
         if (obj == this) {
@@ -199,4 +204,32 @@ public class TypeDescriptor extends ElementDescriptor {
     public String toString() {
         return typeToken.toString();
     }
+
+    private void collectFields(Class<?> clazz, Map<String, FieldDescriptor> allFields) {
+        for (Field field : clazz.getDeclaredFields()) {
+            if (typeDescriptors.fieldFilter.apply(field) && !allFields.containsKey(field.getName())) {
+                allFields.put(field.getName(), new FieldDescriptor(this, field));
+            }
+        }
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null && !superClass.equals(Object.class)) {
+            collectFields(superClass, allFields);
+        }
+    }
+
+    private void collectMethods(Class<?> clazz, Map<MethodSignature, MethodDescriptor> allMethods) {
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (typeDescriptors.methodFilter.apply(method)) {
+                MethodSignature identifier = new MethodSignature(method);
+                if (!allMethods.containsKey(identifier)) {
+                    allMethods.put(identifier, new MethodDescriptor(this, method));
+                }
+            }
+        }
+        Class<?> superClass = clazz.getSuperclass();
+        if (superClass != null) {
+            collectMethods(superClass, allMethods);
+        }
+    }
+
 }
