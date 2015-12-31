@@ -25,9 +25,9 @@ import org.javersion.object.Id;
 import org.javersion.object.TypeContext;
 import org.javersion.object.VersionIgnore;
 import org.javersion.object.VersionProperty;
-import org.javersion.object.types.IdentifiableObjectType;
 import org.javersion.object.types.IdentifiableType;
 import org.javersion.object.types.ObjectType;
+import org.javersion.object.types.ObjectType.Identifier;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.SubPath;
@@ -66,11 +66,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         Describe describe = new Describe(path, context);
         typesByAlias.values().forEach(describe::add);
 
-        if (describe.idProperty != null) {
-            return new IdentifiableObjectType<>(typesByAlias, describe.properties, describe.idProperty, describe.idType);
-        } else {
-            return new ObjectType<>(typesByAlias, describe.properties);
-        }
+        return ObjectType.of(typesByAlias, describe.properties, describe.identifier);
     }
 
     public static String getAlias(TypeDescriptor type) {
@@ -86,9 +82,10 @@ public class ObjectTypeMapping<O> implements TypeMapping {
 
     private static class Describe {
         Map<String, Property> properties = new HashMap<>();
-        Property idProperty = null;
-        IdentifiableType idType = null;
+        Identifier identifier;
 
+        boolean first = true;
+        private TypeDescriptor currentType;
         final PropertyPath path;
         final DescribeContext context;
 
@@ -98,59 +95,77 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         }
 
         void add(TypeDescriptor type) {
+            currentType = type;
             type.getProperties().values().forEach(this::add);
             type.getFields().values().forEach(this::add);
+            first = false;
+            currentType = null;
         }
 
         private void add(BeanProperty property) {
-            if (acceptProperty(property)) {
+            if (acceptIdProperty(property)) {
                 String name = getName(property.getReadMethod(), property.getName());
-                if (!properties.containsKey(name)) {
-                    validate(property);
-                    properties.put(name, property);
-                    SubPath subPath = path.property(name);
-                    if (property.getReadMethod().hasAnnotation(Id.class)) {
-                        idProperty = property;
-                        idType = (IdentifiableType) context.describeNow(subPath, new TypeContext(property));
-                    } else {
-                        context.describeAsync(subPath, new TypeContext(property));
-                    }
-                }
+                setIdentifier(name, property, new TypeContext(property));
+            }
+            else if (acceptProperty(property)) {
+                String name = getName(property.getReadMethod(), property.getName());
+                add(name, property, new TypeContext(property));
             }
         }
 
         private void add(FieldDescriptor fieldDescriptor) {
-            if (acceptField(fieldDescriptor)) {
+            if (acceptIdField(fieldDescriptor)) {
                 String name = getName(fieldDescriptor, fieldDescriptor.getName());
-                if (!properties.containsKey(name)) {
-                    properties.put(name, fieldDescriptor);
-                    SubPath subPath = path.property(name);
-                    if (fieldDescriptor.hasAnnotation(Id.class)) {
-                        idProperty = fieldDescriptor;
-                        idType = (IdentifiableType) context.describeNow(subPath, new TypeContext(fieldDescriptor));
-                    } else {
-                        context.describeAsync(subPath, new TypeContext(fieldDescriptor));
-                    }
-                }
+                setIdentifier(name, fieldDescriptor, new TypeContext(fieldDescriptor));
             }
+            else if (acceptField(fieldDescriptor)) {
+                String name = getName(fieldDescriptor, fieldDescriptor.getName());
+                add(name, fieldDescriptor, new TypeContext(fieldDescriptor));
+            }
+        }
+
+        private void setIdentifier(String name, Property property, TypeContext typeContext) {
+            if (identifier != null) {
+                throw new IllegalArgumentException(currentType.getSimpleName() + " should not have multiple @Id-properties");
+            }
+            IdentifiableType idType;
+            if (property.isWritableFrom(currentType)) {
+                idType = (IdentifiableType) context.describeNow(path.property(name), typeContext);
+            } else {
+                idType = (IdentifiableType) context.describeNow(null, typeContext);
+            }
+            identifier = new Identifier(property, idType, name);
+        }
+
+        private void add(String name, Property property, TypeContext typeContext) {
+            SubPath subPath = path.property(name);
+            if (!properties.containsKey(name)) {
+                properties.put(name, property);
+                context.describeAsync(subPath, typeContext);
+            }
+        }
+
+        private boolean acceptIdField(FieldDescriptor fieldDescriptor) {
+            return first && acceptField(fieldDescriptor) && fieldDescriptor.hasAnnotation(Id.class);
         }
 
         private boolean acceptField(FieldDescriptor fieldDescriptor) {
             return !fieldDescriptor.isTransient() && !fieldDescriptor.hasAnnotation(VersionIgnore.class);
         }
 
-        private boolean acceptProperty(BeanProperty property) {
-            return property.isReadable() &&
-                    (property.getReadMethod().hasAnnotation(VersionProperty.class) ||
-                            property.getReadMethod().hasAnnotation(Id.class));
+        private boolean acceptIdProperty(BeanProperty property) {
+            return first && property.isReadable() && property.getReadMethod().hasAnnotation(Id.class);
         }
 
-        private void validate(BeanProperty property) {
-            if (!property.isWritable()) {
-                throw new IllegalArgumentException("@VersionProperty " + property.getDeclaringType().getSimpleName() +
-                        "." + property.getName() +
-                        " should have a matching setter");
+        private boolean acceptProperty(BeanProperty property) {
+            if (property.isReadable() && property.getReadMethod().hasAnnotation(VersionProperty.class)) {
+                if (!property.isWritable()) {
+                    throw new IllegalArgumentException(currentType.getSimpleName() + ": @VersionProperty " + property.getName() +
+                            " should have a matching setter");
+                }
+                return true;
             }
+            return false;
         }
 
         private String getName(ElementDescriptor element, String defaultName) {
@@ -186,4 +201,5 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         }
         return result.build();
     }
+
 }

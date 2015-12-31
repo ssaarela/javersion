@@ -16,6 +16,7 @@
 package org.javersion.object.types;
 
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
@@ -32,40 +33,79 @@ import com.google.common.collect.ImmutableMap;
 
 public class ObjectType<O> implements ValueType {
 
+    public static ObjectType of(Map<String, TypeDescriptor> typesByAlias,
+                                Map<String, Property> properties,
+                                Identifier identifier) {
+        if (identifier != null) {
+            return new Identifiable<>(typesByAlias, properties, identifier);
+        } else {
+            return new ObjectType(typesByAlias, properties, identifier);
+        }
+    }
+
+    private static class Identifiable<O> extends ObjectType<O> implements IdentifiableType {
+        private Identifiable(Map<String, TypeDescriptor> typesByAlias, Map<String, Property> properties, Identifier identifier) {
+            super(typesByAlias, properties, identifier);
+        }
+    }
+
+    public static class Identifier {
+
+        final String name;
+
+        final Property property;
+
+        final IdentifiableType idType;
+
+        public Identifier(Property property, IdentifiableType idType, String name) {
+            this.property = Check.notNull(property, "property");
+            this.idType = Check.notNull(idType, "idType");
+            this.name = Check.notNullOrEmpty(name, "name");
+        }
+
+    }
+
     protected final Map<String, TypeDescriptor> typesByAlias;
 
     protected final Map<Class<?>, String> aliasByClass;
 
     protected final Map<String, Property> properties;
 
+    protected final Identifier identifier;
+
     private final TypeDescriptor defaultType;
 
-    public ObjectType(Map<String, TypeDescriptor> typesByAlias, Map<String, Property> properties) {
+    private ObjectType(Map<String, TypeDescriptor> typesByAlias,
+                      Map<String, Property> properties,
+                      Identifier identifier) {
         Check.notNullOrEmpty(typesByAlias, "typesByAlias");
-        Check.notNullOrEmpty(properties, "properties");
+        Check.notNull(properties, "properties");
         this.typesByAlias = ImmutableMap.copyOf(typesByAlias);
         this.properties = ImmutableMap.copyOf(properties);
+        this.identifier = identifier;
 
-        ImmutableMap.Builder<Class<?>, String> builder = ImmutableMap.builder();
-        for (Map.Entry<String, TypeDescriptor> entry : typesByAlias.entrySet()) {
-            builder.put(entry.getValue().getRawType(), entry.getKey());
-        }
-        aliasByClass = builder.build();
-        if (typesByAlias.size() == 1) {
-            defaultType = typesByAlias.values().iterator().next();
-        } else {
-            defaultType = null;
-        }
+        aliasByClass = aliasByClass(typesByAlias);
+        defaultType = defaultType(typesByAlias);
     }
 
     @Override
-    public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
+    public Object instantiate(PropertyTree propertyTree, Object valueObject, ReadContext context) throws Exception {
+        TypeDescriptor typeDescriptor;
+        Object object;
         if (defaultType != null) {
-            return defaultType.newInstance();
+            typeDescriptor = defaultType;
+            object = defaultType.newInstance();
+        } else {
+            String alias = ((Persistent.Object) valueObject).type;
+            typeDescriptor = Check.notNull$(typesByAlias.get(alias), "Unsupported type: %s", alias);
+            object = typeDescriptor.newInstance();
         }
-        String alias = ((Persistent.Object) value).type;
-        TypeDescriptor typeDescriptor = Check.notNull$(typesByAlias.get(alias), "Unsupported type: %s", alias);
-        return typeDescriptor.newInstance();
+        if (identifier != null && identifier.property.isWritableFrom(typeDescriptor)) {
+            PropertyTree child = propertyTree.get(NodeId.property(identifier.name));
+            Object value = context.getObject(child);
+            identifier.property.set(object, value);
+        }
+        return object;
     }
 
     @Override
@@ -92,13 +132,44 @@ public class ObjectType<O> implements ValueType {
         String alias = aliasByClass.get(object.getClass());
         context.put(path, Persistent.object(alias));
         TypeDescriptor typeDescriptor = typesByAlias.get(alias);
-        properties.forEach((name, property) -> {
+
+        BiConsumer<String, Property> setter = (name, property) -> {
             if (property.isReadableFrom(typeDescriptor)) {
                 PropertyPath subPath = path.property(name);
                 Object value = property.get(object);
                 context.serialize(subPath, value);
             }
-        });
+        };
+
+        properties.forEach(setter);
+
+        if (identifier != null) {
+            setter.accept(identifier.name, identifier.property);
+        }
+    }
+
+    public NodeId toNodeId(Object object, WriteContext writeContext) {
+        if (identifier == null) {
+            throw new UnsupportedOperationException("toNodeId is not supported for composite ids");
+        }
+        Object id = identifier.property.get(object);
+        return identifier.idType.toNodeId(id, writeContext);
+    }
+
+    private static TypeDescriptor defaultType(Map<String, TypeDescriptor> typesByAlias) {
+        if (typesByAlias.size() == 1) {
+            return typesByAlias.values().iterator().next();
+        } else {
+            return null;
+        }
+    }
+
+    private static ImmutableMap<Class<?>, String> aliasByClass(Map<String, TypeDescriptor> typesByAlias) {
+        ImmutableMap.Builder<Class<?>, String> builder = ImmutableMap.builder();
+        for (Map.Entry<String, TypeDescriptor> entry : typesByAlias.entrySet()) {
+            builder.put(entry.getValue().getRawType(), entry.getKey());
+        }
+        return builder.build();
     }
 
     public String toString() {

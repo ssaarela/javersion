@@ -98,7 +98,7 @@ public abstract class NodeId implements Comparable<NodeId> {
         return new KeyId(key);
     }
 
-    static PropertyId property(String property) {
+    public static PropertyId property(String property) {
         return new PropertyId(property);
     }
 
