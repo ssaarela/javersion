@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object.mapping;
+package org.javersion.object;
 
-import java.util.List;
-import java.util.NavigableSet;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import org.javersion.object.types.SetType.Key;
-import org.javersion.object.types.SortedSetType;
-import org.javersion.object.types.ValueType;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class NavigableSetMapping extends SetTypeMapping {
-
-    public NavigableSetMapping() {
-        super(NavigableSet.class);
-    }
-
-    @Override
-    protected ValueType newSetType(List<Key> keys) {
-        return new SortedSetType(keys);
-    }
+@Target({ FIELD, METHOD, TYPE })
+@Retention(RUNTIME)
+@Documented
+public @interface SetKey {
+    String[] value();
 }

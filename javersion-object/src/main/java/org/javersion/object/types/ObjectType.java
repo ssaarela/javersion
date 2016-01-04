@@ -51,11 +51,11 @@ public class ObjectType<O> implements ValueType {
 
     public static class Identifier {
 
-        final String name;
+        public final String name;
 
-        final Property property;
+        public final Property property;
 
-        final IdentifiableType idType;
+        public final IdentifiableType idType;
 
         public Identifier(Property property, IdentifiableType idType, String name) {
             this.property = Check.notNull(property, "property");
@@ -121,6 +121,14 @@ public class ObjectType<O> implements ValueType {
                 }
             }
         }
+    }
+
+    public Identifier getIdentifier() {
+        return identifier;
+    }
+
+    public Property getProperty(String name) {
+        return properties.get(name);
     }
 
     private TypeDescriptor getTypeDescriptor(Class<?> clazz) {
