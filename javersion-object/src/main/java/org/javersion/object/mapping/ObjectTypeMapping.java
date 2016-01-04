@@ -19,26 +19,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import org.javersion.object.DescribeContext;
-import org.javersion.object.Id;
-import org.javersion.object.TypeContext;
-import org.javersion.object.VersionIgnore;
-import org.javersion.object.VersionProperty;
+import org.javersion.object.*;
+import org.javersion.object.types.BasicObjectType;
 import org.javersion.object.types.IdentifiableType;
-import org.javersion.object.types.ObjectType;
-import org.javersion.object.types.ObjectType.Identifier;
+import org.javersion.object.types.ObjectIdentifier;
+import org.javersion.object.types.PolymorphicObjectType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.SubPath;
-import org.javersion.reflect.BeanProperty;
-import org.javersion.reflect.ElementDescriptor;
-import org.javersion.reflect.FieldDescriptor;
-import org.javersion.reflect.Property;
-import org.javersion.reflect.TypeDescriptor;
+import org.javersion.reflect.*;
+import org.javersion.util.Check;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 public class ObjectTypeMapping<O> implements TypeMapping {
 
@@ -64,9 +61,9 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     @Override
     public  synchronized ValueType describe(PropertyPath path, TypeDescriptor typeDescriptor, DescribeContext context) {
         Describe describe = new Describe(path, context);
-        typesByAlias.values().forEach(describe::add);
+        typesByAlias.forEach(describe::add);
 
-        return ObjectType.of(typesByAlias, describe.properties, describe.identifier);
+        return describe.build();
     }
 
     public static String getAlias(TypeDescriptor type) {
@@ -81,25 +78,81 @@ public class ObjectTypeMapping<O> implements TypeMapping {
     }
 
     private static class Describe {
-        Map<String, Property> properties = new HashMap<>();
-        Identifier identifier;
-
-        boolean first = true;
-        private TypeDescriptor currentType;
         final PropertyPath path;
         final DescribeContext context;
+
+        private BasicObjectType root;
+        private List<BasicObjectType> subclasses = new ArrayList<>();
+
+        private TypeDescriptor type;
+        private String alias;
+        private ConstructorDescriptor constructor;
+        private ConstructorDescriptor defaultConstructor;
+        private Set<String> constructorParameters;
+        private ObjectIdentifier identifier;
+        private Map<String, Property> properties;
 
         Describe(PropertyPath path, DescribeContext context) {
             this.path = path;
             this.context = context;
+            clear();
         }
 
-        void add(TypeDescriptor type) {
-            currentType = type;
+        void add(String alias, TypeDescriptor type) {
+            this.alias = alias;
+            this.type = type;
+            assignConstructor(type);
             type.getProperties().values().forEach(this::add);
             type.getFields().values().forEach(this::add);
-            first = false;
-            currentType = null;
+
+            BasicObjectType objectType = BasicObjectType.of(type, alias, constructor, identifier, properties);
+            if (root == null) {
+                root = objectType;
+            } else {
+                subclasses.add(objectType);
+            }
+            clear();
+        }
+
+        private void clear() {
+            type = null;
+            alias = null;
+            constructor = null;
+            defaultConstructor = null;
+            constructorParameters = ImmutableSet.of();
+            identifier = null;
+            properties = new HashMap<>();
+        }
+
+        private void assignConstructor(TypeDescriptor type) {
+            if (!type.isAbstract()) {
+                type.getConstructors().values().forEach(this::add);
+                if (constructor == null) {
+                    constructor = defaultConstructor;
+                }
+                Check.notNull(constructor, "constructor");
+            }
+        }
+
+        private void add(ConstructorDescriptor constructor) {
+            List<ParameterDescriptor> parameters = constructor.getParameters();
+            if (parameters.isEmpty()) {
+                defaultConstructor = constructor;
+            }
+            if (acceptConstructor(constructor)) {
+                if (this.constructor != null) {
+                    throw new IllegalArgumentException("Duplicate constructor mapping: " + type.getSimpleName());
+                }
+                this.constructor = constructor;
+
+                constructorParameters = parameters.stream()
+                        .map(ParameterDescriptor::getName)
+                        .collect(Collectors.toSet());
+            }
+        }
+
+        private boolean acceptConstructor(ConstructorDescriptor constructor) {
+            return constructor.hasAnnotation(VersionConstructor.class);
         }
 
         private void add(BeanProperty property) {
@@ -126,18 +179,23 @@ public class ObjectTypeMapping<O> implements TypeMapping {
 
         private void setIdentifier(String name, Property property, TypeContext typeContext) {
             if (identifier != null) {
-                throw new IllegalArgumentException(currentType.getSimpleName() + " should not have multiple @Id-properties");
+                throw new IllegalArgumentException(type.getSimpleName() + " should not have multiple @Id-properties");
             }
             IdentifiableType idType;
-            if (property.isWritableFrom(currentType)) {
+            if (property.isWritableFrom(type) || constructorParameters.contains(name)) {
                 idType = (IdentifiableType) context.describeNow(path.property(name), typeContext);
             } else {
                 idType = (IdentifiableType) context.describeNow(null, typeContext);
             }
-            identifier = new Identifier(property, idType, name);
+            identifier = new ObjectIdentifier(property, idType, name);
         }
 
         private void add(String name, Property property, TypeContext typeContext) {
+            if (!property.isWritableFrom(type) && !constructorParameters.contains(name)) {
+                throw new IllegalArgumentException(type.getSimpleName() + "."
+                        + name + " should have a matching setter or constructor parameter");
+            }
+
             SubPath subPath = path.property(name);
             if (!properties.containsKey(name)) {
                 properties.put(name, property);
@@ -146,7 +204,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         }
 
         private boolean acceptIdField(FieldDescriptor fieldDescriptor) {
-            return first && acceptField(fieldDescriptor) && fieldDescriptor.hasAnnotation(Id.class);
+            return acceptField(fieldDescriptor) && fieldDescriptor.hasAnnotation(Id.class);
         }
 
         private boolean acceptField(FieldDescriptor fieldDescriptor) {
@@ -154,18 +212,11 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         }
 
         private boolean acceptIdProperty(BeanProperty property) {
-            return first && property.isReadable() && property.getReadMethod().hasAnnotation(Id.class);
+            return property.isReadable() && property.getReadMethod().hasAnnotation(Id.class);
         }
 
         private boolean acceptProperty(BeanProperty property) {
-            if (property.isReadable() && property.getReadMethod().hasAnnotation(VersionProperty.class)) {
-                if (!property.isWritable()) {
-                    throw new IllegalArgumentException(currentType.getSimpleName() + ": @VersionProperty " + property.getName() +
-                            " should have a matching setter");
-                }
-                return true;
-            }
-            return false;
+            return property.isReadable() && property.getReadMethod().hasAnnotation(VersionProperty.class);
         }
 
         private String getName(ElementDescriptor element, String defaultName) {
@@ -174,6 +225,14 @@ public class ObjectTypeMapping<O> implements TypeMapping {
                 return versionProperty.value();
             }
             return defaultName;
+        }
+
+        public ObjectType build() {
+            if (subclasses.isEmpty()) {
+                return root;
+            } else {
+                return PolymorphicObjectType.of(root, subclasses);
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Samppa Saarela
+ * Copyright 2016 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object;
+package org.javersion.object.mapping;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.util.Map;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import org.javersion.object.types.ObjectIdentifier;
+import org.javersion.object.types.ValueType;
+import org.javersion.reflect.Property;
 
-@Target({ FIELD, METHOD, TYPE })
-@Retention(RUNTIME)
-@Documented
-public @interface SetKey {
-    String[] value();
+public interface ObjectType extends ValueType {
+
+    ObjectIdentifier getIdentifier();
+
+    Map<String, Property> getProperties();
+
 }

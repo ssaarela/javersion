@@ -3,6 +3,7 @@ package org.javersion.object;
 import static java.util.Collections.singleton;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.javersion.path.PropertyPath.parse;
 import static org.junit.Assert.assertThat;
@@ -10,6 +11,8 @@ import static org.junit.Assert.assertThat;
 import java.util.*;
 
 import org.javersion.core.Persistent;
+import org.javersion.object.PolymorphismTest.Cat;
+import org.javersion.object.PolymorphismTest.Pet;
 import org.javersion.object.ReferencesTest.Node;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -144,6 +147,12 @@ public class SetTest {
     @Versionable
     static class ReadOnlyIdContainer {
         Set<ReadOnlyId> set;
+    }
+
+    @Versionable
+    static class PetContainer {
+        @SetKey("name")
+        Set<Pet> set;
     }
 
     public static TypeMappings typeMappings = TypeMappings.builder()
@@ -290,6 +299,20 @@ public class SetTest {
         container = serializer.fromPropertyMap(properties);
 
         assertThat(container.set, equalTo(ImmutableSet.of(roi2, roi1)));
+    }
+
+    @Test
+    public void set_of_pets() {
+        ObjectSerializer<PetContainer> serializer = new ObjectSerializer<>(PetContainer.class);
+        PetContainer container = new PetContainer();
+        container.set = ImmutableSet.of(new Cat("cat"));
+
+        Map<PropertyPath, Object> properties = serializer.toPropertyMap(container);
+        container = serializer.fromPropertyMap(properties);
+
+        Pet pet = container.set.iterator().next();
+        assertThat(pet, instanceOf(Cat.class));
+        assertThat(pet.name, equalTo("cat"));
     }
 
     private Set<MyComposite> getContainerSet() {

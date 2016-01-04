@@ -24,7 +24,6 @@ import org.javersion.object.SetKey;
 import org.javersion.object.TypeContext;
 import org.javersion.object.WriteContext;
 import org.javersion.object.types.IdentifiableType;
-import org.javersion.object.types.ObjectType;
 import org.javersion.object.types.SetType;
 import org.javersion.object.types.SetType.Key;
 import org.javersion.object.types.ValueType;
@@ -111,7 +110,7 @@ public class SetTypeMapping implements TypeMapping {
             List<Key> keys = new ArrayList<>();
             for (String idProperty : setKey.value()) {
                 IdentifiableType idType = (IdentifiableType) context.getValueType(elementPath.property(idProperty));
-                Property property = objectType.getProperty(idProperty);
+                Property property = objectType.getProperties().get(idProperty);
                 keys.add(new PropertyKey(property, idType));
             }
             return newSetType(keys);

@@ -152,6 +152,14 @@ public class TypeDescriptorTest {
     }
 
     @Test
+    public void abstract_type() {
+        TypeDescriptor type = TYPES.get(Set.class);
+        assertThat(type.isAbstract()).isTrue();
+        type = TYPES.get(HashSet.class);
+        assertThat(type.isAbstract()).isFalse();
+    }
+
+    @Test
     public void not_equal() {
         assertThat(TypeDescriptors.getTypeDescriptor(Object.class)).isNotEqualTo(new Object());
     }

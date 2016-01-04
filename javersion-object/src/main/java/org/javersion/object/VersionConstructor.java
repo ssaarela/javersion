@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Samppa Saarela
+ * Copyright 2016 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,15 @@
  */
 package org.javersion.object;
 
-import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.ElementType.CONSTRUCTOR;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-@Target({ TYPE })
+@Target(CONSTRUCTOR)
 @Retention(RUNTIME)
 @Documented
-public @interface Versionable {
-
-    String alias() default "";
-
-    String targetPath() default "";
-
-    Subclass[] subclasses() default {};
-
-    @interface Subclass {
-        String alias() default "";
-        Class<?> value();
-    }
-
+public @interface VersionConstructor {
 }

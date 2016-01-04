@@ -6,16 +6,19 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
+import org.javersion.object.Versionable.Subclass;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
 
 public class PolymorphismTest {
 
+    @Versionable(subclasses = {
+            @Subclass(Dog.class),
+            @Subclass(Cat.class)
+    })
     public static class Pet {
         String name;
-        protected Pet() {
-            // for deserialization
-        }
+        @VersionConstructor
         public Pet(String name) {
             this.name = name;
         }
@@ -23,8 +26,7 @@ public class PolymorphismTest {
 
     public static class Dog extends Pet {
         boolean bark = true;
-        @SuppressWarnings("unused")
-        private Dog() {}
+        @VersionConstructor
         public Dog(String name) {
             super(name);
         }
@@ -32,8 +34,7 @@ public class PolymorphismTest {
 
     public static class Cat extends Pet {
         boolean meow = true;
-        @SuppressWarnings("unused")
-        private Cat() {}
+        @VersionConstructor
         public Cat(String name) {
             super(name);
         }

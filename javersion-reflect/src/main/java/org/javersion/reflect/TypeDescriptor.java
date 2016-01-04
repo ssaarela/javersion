@@ -23,6 +23,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -254,4 +255,7 @@ public final class TypeDescriptor implements ElementDescriptor {
         }
     }
 
+    public boolean isAbstract() {
+        return Modifier.isAbstract(getRawType().getModifiers());
+    }
 }
