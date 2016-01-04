@@ -105,6 +105,47 @@ public class SetTest {
         public Set<MyBadType> set;
     }
 
+    @Versionable
+    static class ReadOnlyId {
+        int a;
+
+        int b;
+
+        private ReadOnlyId() {}
+
+        public ReadOnlyId(int a, int b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        @Id
+        public int getId() {
+            return a + b;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj instanceof ReadOnlyId) {
+                ReadOnlyId other = (ReadOnlyId) obj;
+                return getId() == other.getId();
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return getId();
+        }
+    }
+
+    @Versionable
+    static class ReadOnlyIdContainer {
+        Set<ReadOnlyId> set;
+    }
+
     public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
             .havingSubClasses(NodeExt.class)
@@ -229,6 +270,26 @@ public class SetTest {
     @Test(expected = IllegalArgumentException.class)
     public void both_id_and_setKey_not_allowed() {
         new ObjectSerializer<>(MyBadTypeContainer.class);
+    }
+
+    @Test
+    public void read_only_id() {
+        ObjectSerializer<ReadOnlyIdContainer> serializer = new ObjectSerializer<ReadOnlyIdContainer>(ReadOnlyIdContainer.class);
+        ReadOnlyId roi1 = new ReadOnlyId(1, 3);
+        ReadOnlyId roi2 = new ReadOnlyId(2, 3);
+        ReadOnlyIdContainer container = new ReadOnlyIdContainer();
+        container.set = ImmutableSet.of(roi1, roi2);
+
+        Map<PropertyPath, Object> properties = serializer.toPropertyMap(container);
+        assertThat(properties.keySet(), hasSize(8));
+        assertThat(properties.get(parse("set[4].a")), equalTo(1l));
+        assertThat(properties.get(parse("set[4].b")), equalTo(3l));
+        assertThat(properties.get(parse("set[5].a")), equalTo(2l));
+        assertThat(properties.get(parse("set[5].b")), equalTo(3l));
+
+        container = serializer.fromPropertyMap(properties);
+
+        assertThat(container.set, equalTo(ImmutableSet.of(roi2, roi1)));
     }
 
     private Set<MyComposite> getContainerSet() {

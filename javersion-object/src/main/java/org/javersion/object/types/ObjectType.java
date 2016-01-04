@@ -141,7 +141,7 @@ public class ObjectType<O> implements ValueType {
         context.put(path, Persistent.object(alias));
         TypeDescriptor typeDescriptor = typesByAlias.get(alias);
 
-        BiConsumer<String, Property> setter = (name, property) -> {
+        BiConsumer<String, Property> propertySerializer = (name, property) -> {
             if (property.isReadableFrom(typeDescriptor)) {
                 PropertyPath subPath = path.property(name);
                 Object value = property.get(object);
@@ -149,10 +149,10 @@ public class ObjectType<O> implements ValueType {
             }
         };
 
-        properties.forEach(setter);
+        properties.forEach(propertySerializer);
 
-        if (identifier != null) {
-            setter.accept(identifier.name, identifier.property);
+        if (identifier != null && identifier.property.isWritableFrom(typeDescriptor)) {
+            propertySerializer.accept(identifier.name, identifier.property);
         }
     }
 
