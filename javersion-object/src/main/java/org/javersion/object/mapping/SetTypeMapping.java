@@ -15,17 +15,62 @@
  */
 package org.javersion.object.mapping;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.javersion.object.DescribeContext;
+import org.javersion.object.SetKey;
 import org.javersion.object.TypeContext;
+import org.javersion.object.WriteContext;
 import org.javersion.object.types.IdentifiableType;
+import org.javersion.object.types.ObjectType;
 import org.javersion.object.types.SetType;
+import org.javersion.object.types.SetType.Key;
 import org.javersion.object.types.ValueType;
+import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
+import org.javersion.path.PropertyPath.SubPath;
+import org.javersion.reflect.ElementDescriptor;
+import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
+import org.javersion.util.Check;
+
+import com.google.common.collect.ImmutableList;
 
 public class SetTypeMapping implements TypeMapping {
+
+    public static class IdentifiableTypeKey implements Key {
+
+        private final IdentifiableType identifiableType;
+
+        public IdentifiableTypeKey(IdentifiableType identifiableType) {
+            this.identifiableType = Check.notNull(identifiableType, "identifiableType");
+        }
+
+        @Override
+        public NodeId toNodeId(Object object, WriteContext context) {
+            return identifiableType.toNodeId(object, context);
+        }
+    }
+
+    public static class PropertyKey implements Key {
+
+        private final Property property;
+
+        private final IdentifiableType identifiableType;
+
+        public PropertyKey(Property property, IdentifiableType identifiableType) {
+            this.property = Check.notNull(property, "property");
+            this.identifiableType = Check.notNull(identifiableType, "identifiableType");
+        }
+
+        @Override
+        public NodeId toNodeId(Object object, WriteContext context) {
+            Object keyValue = property.get(object);
+            return identifiableType.toNodeId(keyValue, context);
+        }
+    }
 
     private final Class<? extends Set> setType;
 
@@ -38,21 +83,66 @@ public class SetTypeMapping implements TypeMapping {
     }
 
     @Override
-    public boolean applies(PropertyPath path, TypeContext descriptor) {
-        return path != null && descriptor.type.getRawType().equals(setType);
+    public boolean applies(PropertyPath path, TypeContext typeContext) {
+        return path != null && typeContext.type.getRawType().equals(setType);
     }
 
     @Override
-    public ValueType describe(PropertyPath path, TypeDescriptor setType, DescribeContext context) {
+    public ValueType describe(PropertyPath path, TypeContext typeContext, DescribeContext context) {
+        TypeDescriptor setType = typeContext.type;
         TypeDescriptor elementType = setType.resolveGenericParameter(Set.class, 0);
-        IdentifiableType valueType = (IdentifiableType) context.describeNow(path.anyKey(), new TypeContext(setType, elementType));
-        context.describeAsync(path.anyIndex(), new TypeContext(setType, elementType));
+        SetKey setKey = findSetKey(typeContext.parent, elementType);
 
-        return newSetType(valueType);
+        if (setKey == null) {
+            ValueType valueType = context.describeNow(path.any(), new TypeContext(setType, elementType));
+            return newSetType((IdentifiableType) valueType);
+        } else {
+            PropertyPath elementPath = getElementPath(path, setKey.value());
+            ObjectType objectType = (ObjectType) context.describeNow((SubPath) elementPath, new TypeContext(setType, elementType));
+
+            if (objectType.getIdentifier() != null) {
+                throw new IllegalArgumentException("Element should not have both @SetKey and @Id: " +
+                        (typeContext.parent != null ? typeContext.parent : typeContext.type));
+            }
+
+            // Ensure that nested mappings are processed before accessing them
+            context.processMappings();
+
+            List<Key> keys = new ArrayList<>();
+            for (String idProperty : setKey.value()) {
+                IdentifiableType idType = (IdentifiableType) context.getValueType(elementPath.property(idProperty));
+                Property property = objectType.getProperty(idProperty);
+                keys.add(new PropertyKey(property, idType));
+            }
+            return newSetType(keys);
+        }
     }
 
-    protected ValueType newSetType(IdentifiableType valueType) {
-        return new SetType(valueType);
+    private PropertyPath getElementPath(PropertyPath path, String[] properties) {
+        PropertyPath elementPath = path;
+        for (int i = properties.length; i > 0; i--) {
+            elementPath = elementPath.any();
+        }
+        return elementPath;
+    }
+
+    private SetKey findSetKey(ElementDescriptor parent, TypeDescriptor elementType) {
+        SetKey setKey = null;
+        if (parent != null) {
+            setKey = parent.getAnnotation(SetKey.class);
+        }
+        if (setKey == null) {
+            setKey = elementType.getAnnotation(SetKey.class);
+        }
+        return setKey;
+    }
+
+    protected final ValueType newSetType(IdentifiableType valueType) {
+        return newSetType(ImmutableList.of(new IdentifiableTypeKey(valueType)));
+    }
+
+    protected ValueType newSetType(List<Key> valueTypes) {
+        return new SetType(valueTypes);
     }
 
 }

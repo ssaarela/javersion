@@ -71,7 +71,11 @@ public final class DescribeContext {
         return registerMapping(path, typeContext);
     }
 
-    private void processMappings() {
+    public ValueType getValueType(PropertyPath path) {
+        return schemaRoot.get(path).getValue();
+    }
+
+    public void processMappings() {
         QueueItem<SubPath, TypeContext> currentItem;
         while ((currentItem = queue.poll()) != null) {
             registerMapping(currentItem.key, currentItem.value);

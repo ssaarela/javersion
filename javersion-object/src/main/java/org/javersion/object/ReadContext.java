@@ -37,9 +37,7 @@ public final class ReadContext {
 
     private final PropertyTree rootNode;
 
-    private final Deque<PropertyTree> lowPriorityQueue = new ArrayDeque<>();
-
-    private final Deque<PropertyTree> highPriorityQueue = new ArrayDeque<>();
+    private final Deque<PropertyTree> bindQueue = new ArrayDeque<>();
 
     private final Map<PropertyPath, Object> objects = Maps.newHashMap();
 
@@ -61,16 +59,14 @@ public final class ReadContext {
             valueType.bind(rootNode, result, this);
             bindAll();
             return result;
-        } catch (RuntimeException e) {
-            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void bindAll() throws Exception {
-        while (queueIsNotEmpty()) {
-            PropertyTree propertyTree = nextQueueItem();
+    public void bindAll() throws Exception {
+        while (!bindQueue.isEmpty()) {
+            PropertyTree propertyTree = bindQueue.removeFirst();
             Schema<ValueType> schema = schemaRoot.get(propertyTree.path);
             ValueType valueType = schema.getValue();
             Object object = objects.get(propertyTree.path);
@@ -78,32 +74,11 @@ public final class ReadContext {
         }
     }
 
-    private boolean queueIsNotEmpty() {
-        return !(highPriorityQueue.isEmpty() && lowPriorityQueue.isEmpty());
-    }
-
-    private PropertyTree nextQueueItem() {
-        return !highPriorityQueue.isEmpty() ? highPriorityQueue.removeFirst() : lowPriorityQueue.removeFirst();
-    }
-
-    public Object prepareObject(PropertyPath path) {
-        PropertyTree propertyTree = rootNode.get(path);
-        return prepareObject(propertyTree);
-    }
-
-    public boolean isMappedPath(PropertyPath path) {
-        return schemaRoot.find(path) != null;
-    }
-
-    public Object prepareObject(PropertyTree propertyTree) {
-        return getObject(propertyTree, true);
+    public Object getObject(PropertyPath path) {
+        return getObject(rootNode.get(path));
     }
 
     public Object getObject(PropertyTree propertyTree) {
-        return getObject(propertyTree, false);
-    }
-
-    private Object getObject(PropertyTree propertyTree, boolean highPriority) {
         if (objects.containsKey(propertyTree.path)) {
             return objects.get(propertyTree.path);
         } else {
@@ -118,11 +93,7 @@ public final class ReadContext {
                     Object result = valueType.instantiate(propertyTree, value, this);
                     objects.put(propertyTree.path, result);
                     if (result != null && schema.hasChildren()) {
-                        if (highPriority) {
-                            highPriorityQueue.addLast(propertyTree);
-                        } else {
-                            lowPriorityQueue.addFirst(propertyTree);
-                        }
+                        bindQueue.addFirst(propertyTree);
                     }
                     return result;
                 } catch (Exception e) {

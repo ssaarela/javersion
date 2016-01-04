@@ -4,10 +4,12 @@ import static java.util.Collections.singleton;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.javersion.path.PropertyPath.parse;
 import static org.junit.Assert.assertThat;
 
 import java.util.*;
 
+import org.javersion.core.Persistent;
 import org.javersion.object.ReferencesTest.Node;
 import org.javersion.path.PropertyPath;
 import org.junit.Test;
@@ -33,6 +35,117 @@ public class SetTest {
         Set<Float> floats = new HashSet<>();
     }
 
+
+    @Versionable(alias = "MyComposite")
+    @SetKey({ "first", "second", "third" })
+    static class MyComposite {
+
+        final int first;
+
+        final String second;
+
+        @VersionProperty("third")
+        final int another;
+
+        @SuppressWarnings("unused")
+        private MyComposite() {
+            first = 0;
+            second = null;
+            another = 0;
+        }
+
+        public MyComposite(int first, String second, int another) {
+            this.first = first;
+            this.second = second;
+            this.another = another;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            MyComposite that = (MyComposite) o;
+
+            if (first != that.first) return false;
+            if (another != that.another) return false;
+            return second != null ? second.equals(that.second) : that.second == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = first;
+            result = 31 * result + (second != null ? second.hashCode() : 0);
+            result = 31 * result + another;
+            return result;
+        }
+    }
+
+    @Versionable
+    static class MyCompositeContainerField {
+        @SetKey({ "first", "second", "third" })
+        Set<MyComposite> set = new HashSet<>();
+    }
+
+    @Versionable
+    static class MyCompositeContainerType {
+        Set<MyComposite> set = new HashSet<>();
+    }
+
+    @Versionable
+    static class MyBadType {
+        @Id
+        public int id;
+    }
+
+    @Versionable
+    static class MyBadTypeContainer {
+        @SetKey("id")
+        public Set<MyBadType> set;
+    }
+
+    @Versionable
+    static class ReadOnlyId {
+        int a;
+
+        int b;
+
+        private ReadOnlyId() {}
+
+        public ReadOnlyId(int a, int b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        @Id
+        public int getId() {
+            return a + b;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            }
+            if (obj instanceof ReadOnlyId) {
+                ReadOnlyId other = (ReadOnlyId) obj;
+                return getId() == other.getId();
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return getId();
+        }
+    }
+
+    @Versionable
+    static class ReadOnlyIdContainer {
+        Set<ReadOnlyId> set;
+    }
+
     public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
             .havingSubClasses(NodeExt.class)
@@ -44,6 +157,11 @@ public class SetTest {
     private final ObjectSerializer<NodeExt> nodeExtSerializer = new ObjectSerializer<>(NodeExt.class, typeMappings);
 
     private final ObjectSerializer<DoubleSet> doubleSetSerializer = new ObjectSerializer<>(DoubleSet.class, typeMappings);
+
+    private final MyComposite c1 = new MyComposite(1, "foo", 1);
+    private final MyComposite c2 = new MyComposite(1, "bar", 1);
+    private final MyComposite c3 = new MyComposite(2, "foo", 1);
+    private final MyComposite c4 = new MyComposite(2, "foo", 2);
 
     @Test
     public void Write_And_Read_NodeSet() {
@@ -121,5 +239,72 @@ public class SetTest {
 
         assertThat(dset.doubles, equalTo(doubles));
         assertThat(dset.floats, equalTo(floats));
+    }
+
+    @Test
+    public void composite_id_field_annotation() {
+        ObjectSerializer<MyCompositeContainerField> compositeSerializer = new ObjectSerializer<>(MyCompositeContainerField.class);
+        MyCompositeContainerField container = new MyCompositeContainerField();
+        container.set = getContainerSet();
+
+        Map<PropertyPath, Object> properties = compositeSerializer.toPropertyMap(container);
+        assertContainerProperties(properties);
+
+        container = compositeSerializer.fromPropertyMap(properties);
+        assertContainerSet(container.set);
+    }
+
+    @Test
+    public void composite_id_type_annotation() {
+        ObjectSerializer<MyCompositeContainerType> compositeSerializer = new ObjectSerializer<>(MyCompositeContainerType.class);
+        MyCompositeContainerType container = new MyCompositeContainerType();
+        container.set = getContainerSet();
+
+        Map<PropertyPath, Object> properties = compositeSerializer.toPropertyMap(container);
+        assertContainerProperties(properties);
+
+        container = compositeSerializer.fromPropertyMap(properties);
+        assertContainerSet(container.set);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void both_id_and_setKey_not_allowed() {
+        new ObjectSerializer<>(MyBadTypeContainer.class);
+    }
+
+    @Test
+    public void read_only_id() {
+        ObjectSerializer<ReadOnlyIdContainer> serializer = new ObjectSerializer<ReadOnlyIdContainer>(ReadOnlyIdContainer.class);
+        ReadOnlyId roi1 = new ReadOnlyId(1, 3);
+        ReadOnlyId roi2 = new ReadOnlyId(2, 3);
+        ReadOnlyIdContainer container = new ReadOnlyIdContainer();
+        container.set = ImmutableSet.of(roi1, roi2);
+
+        Map<PropertyPath, Object> properties = serializer.toPropertyMap(container);
+        assertThat(properties.keySet(), hasSize(8));
+        assertThat(properties.get(parse("set[4].a")), equalTo(1l));
+        assertThat(properties.get(parse("set[4].b")), equalTo(3l));
+        assertThat(properties.get(parse("set[5].a")), equalTo(2l));
+        assertThat(properties.get(parse("set[5].b")), equalTo(3l));
+
+        container = serializer.fromPropertyMap(properties);
+
+        assertThat(container.set, equalTo(ImmutableSet.of(roi2, roi1)));
+    }
+
+    private Set<MyComposite> getContainerSet() {
+        return ImmutableSet.of(c1, c2, c3, c4);
+    }
+
+    private void assertContainerSet(Set<MyComposite> set) {
+        assertThat(set, equalTo(ImmutableSet.of(c4, c3, c2, c1)));
+    }
+
+    private void assertContainerProperties(Map<PropertyPath, Object> properties) {
+        assertThat(properties.keySet(), hasSize(18));
+        assertThat(properties.get(parse("set[1][\"foo\"][1].first")), equalTo(1l));
+        assertThat(properties.get(parse("set[1][\"bar\"][1].second")), equalTo("bar"));
+        assertThat(properties.get(parse("set[2][\"foo\"][1]")), equalTo(Persistent.object("MyComposite")));
+        assertThat(properties.get(parse("set[2][\"foo\"][2].third")), equalTo(2l));
     }
 }

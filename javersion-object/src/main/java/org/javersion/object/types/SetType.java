@@ -17,29 +17,36 @@ package org.javersion.object.types;
 
 import static com.google.common.collect.Sets.newHashSetWithExpectedSize;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
-import org.javersion.path.PropertyPath;
 import org.javersion.path.NodeId;
+import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
-import org.javersion.util.Check;
+
+import com.google.common.collect.ImmutableList;
 
 public class SetType implements ValueType {
 
+    public interface Key {
+        NodeId toNodeId(Object object, WriteContext context);
+    }
+
     private final static Persistent.Object CONSTANT = Persistent.object();
 
-    private final IdentifiableType identifiableType;
+    private final List<Key> keys;
 
-    public SetType(IdentifiableType identifiableType) {
-        this.identifiableType = Check.notNull(identifiableType, "keyType");
+    public SetType(List<Key> keys) {
+        this.keys = ImmutableList.copyOf(keys);
     }
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object value, ReadContext context) throws Exception {
-        prepareElements(propertyTree, context);
         return newSet(propertyTree.getChildren().size());
     }
 
@@ -47,18 +54,25 @@ public class SetType implements ValueType {
         return newHashSetWithExpectedSize(size);
     }
 
-    private void prepareElements(PropertyTree propertyTree, ReadContext context) {
-        for (PropertyTree elementPath : propertyTree.getChildren()) {
-            context.prepareObject(elementPath);
-        }
-    }
-
     @Override
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
         @SuppressWarnings("unchecked")
         Set<Object> set = (Set<Object>) object;
-        for (PropertyTree elementPath : propertyTree.getChildren()) {
-            set.add(context.getObject(elementPath));
+        List<Object> elements = new ArrayList<>();
+        forEachElement(propertyTree, elementPath -> elements.add(context.getObject(elementPath)));
+        context.bindAll();
+        set.addAll(elements);
+    }
+
+    private void forEachElement(PropertyTree elementPath, Consumer<PropertyTree> action) {
+        forEachElement(elementPath, action, 0);
+    }
+
+    private void forEachElement(PropertyTree elementPath, Consumer<PropertyTree> action, int currentLevel) {
+        if (currentLevel < keys.size()) {
+            elementPath.getChildren().forEach(child -> forEachElement(child, action, currentLevel + 1));
+        } else {
+            action.accept(elementPath);
         }
     }
 
@@ -68,8 +82,12 @@ public class SetType implements ValueType {
         context.put(path, CONSTANT);
 
         for (Object element : set) {
-            NodeId key = identifiableType.toNodeId(element, context);
-            context.serialize(path.node(key), element);
+            PropertyPath elementPath = path;
+            for (Key key : keys) {
+                NodeId keyNode = key.toNodeId(element, context);
+                elementPath = elementPath.node(keyNode);
+            }
+            context.serialize(elementPath, element);
         }
     }
 
