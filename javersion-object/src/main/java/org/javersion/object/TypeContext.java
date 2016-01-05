@@ -69,4 +69,14 @@ public final class TypeContext {
         }
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(type.getSimpleName());
+        if (parent != null) {
+            sb.append("@");
+            sb.append(parent);
+        }
+        return sb.toString();
+    }
+
 }
