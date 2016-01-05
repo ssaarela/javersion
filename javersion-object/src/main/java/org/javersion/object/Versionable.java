@@ -31,4 +31,11 @@ public @interface Versionable {
 
     String targetPath() default "";
 
+    Subclass[] subclasses() default {};
+
+    @interface Subclass {
+        String alias() default "";
+        Class<?> value();
+    }
+
 }

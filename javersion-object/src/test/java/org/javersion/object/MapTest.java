@@ -45,6 +45,11 @@ public class MapTest {
         public Map<KeyValue, KeyValue> objects = Maps.newLinkedHashMap();
     }
 
+    @Versionable
+    public static class NonScalarKey {
+        Map<Map<String, String>, String> map;
+    }
+
     private final ObjectSerializer<Mab> serializer = new ObjectSerializer<>(Mab.class);
 
     @Test
@@ -91,6 +96,11 @@ public class MapTest {
         mab = serializer.fromPropertyMap(serializer.toPropertyMap(mab));
         assertThat(mab.primitives, equalTo(map("null", null)));
         assertThat(mab.objects, equalTo(map(new KeyValue(1), null)));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void non_scalar_key_not_allowed() {
+        new ObjectSerializer<>(NonScalarKey.class);
     }
 
     @SuppressWarnings("unused")

@@ -100,6 +100,8 @@ public class FieldDescriptorTest {
     @Test
     public void applies() {
         FieldDescriptor fieldDescriptor = type.getField("privateField");
+        assertThat(fieldDescriptor.isReadable()).isTrue();
+        assertThat(fieldDescriptor.isWritable()).isTrue();
         assertThat(fieldDescriptor.isReadableFrom(type)).isTrue();
         assertThat(fieldDescriptor.isWritableFrom(type)).isTrue();
         assertThat(fieldDescriptor.isReadableFrom(DEFAULT.get(MethodDescriptorTest.class))).isFalse();

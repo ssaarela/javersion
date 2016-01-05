@@ -6,36 +6,45 @@ import static org.junit.Assert.assertThat;
 
 import java.util.Map;
 
+import org.javersion.object.Versionable.Subclass;
 import org.javersion.path.PropertyPath;
+import org.javersion.reflect.Param;
 import org.junit.Test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PolymorphismTest {
 
+    @Versionable(subclasses = {
+            @Subclass(Dog.class),
+            @Subclass(Cat.class)
+    })
     public static class Pet {
         String name;
-        protected Pet() {
-            // for deserialization
-        }
-        public Pet(String name) {
-            this.name = name;
+        @VersionConstructor
+        public Pet(@Param("name") String baz) {
+            this.name = baz;
         }
     }
 
     public static class Dog extends Pet {
         boolean bark = true;
-        @SuppressWarnings("unused")
-        private Dog() {}
-        public Dog(String name) {
-            super(name);
+        @JsonCreator
+        public Dog(int number) {
+            this(Integer.toString(number));
+        }
+        @VersionConstructor
+        public Dog(@Param("name") String bar) {
+            super(bar);
         }
     }
 
     public static class Cat extends Pet {
         boolean meow = true;
-        @SuppressWarnings("unused")
-        private Cat() {}
-        public Cat(String name) {
-            super(name);
+        @JsonCreator
+        public Cat(@JsonProperty("name")  String foo) {
+            super(foo);
         }
     }
 

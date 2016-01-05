@@ -15,6 +15,8 @@
  */
 package org.javersion.reflect;
 
+import static org.javersion.reflect.ConstructorSignature.DEFAULT_CONSTRUCTOR;
+
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -23,6 +25,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +79,10 @@ public final class TypeDescriptor implements ElementDescriptor {
         return getRawType().isAnnotationPresent(annotationClass);
     }
 
+    public boolean equalTo(TypeDescriptor type) {
+        return equalTo(type.getRawType());
+    }
+
     public boolean equalTo(Class<?> type) {
         return getRawType().equals(type);
     }
@@ -98,6 +105,16 @@ public final class TypeDescriptor implements ElementDescriptor {
         } else {
             return fqn;
         }
+    }
+
+    public Map<ConstructorSignature, ConstructorDescriptor> getConstructors() {
+        ImmutableMap.Builder<ConstructorSignature, ConstructorDescriptor> result = ImmutableMap.builder();
+        for (Constructor<?> constructor : getRawType().getDeclaredConstructors()) {
+            if (typeDescriptors.constructorFilter.apply(constructor)) {
+                result.put(new ConstructorSignature(constructor), new ConstructorDescriptor(this, constructor));
+            }
+        }
+        return result.build();
     }
 
     public Map<MethodSignature, MethodDescriptor> getMethods() {
@@ -175,6 +192,10 @@ public final class TypeDescriptor implements ElementDescriptor {
         return getRawType().isEnum();
     }
 
+    public ConstructorDescriptor getDefaultConstructor() {
+        return getConstructors().get(DEFAULT_CONSTRUCTOR);
+    }
+
     public Object newInstance() {
         Constructor<?> constructor;
         try {
@@ -240,4 +261,7 @@ public final class TypeDescriptor implements ElementDescriptor {
         }
     }
 
+    public boolean isAbstract() {
+        return Modifier.isAbstract(getRawType().getModifiers());
+    }
 }

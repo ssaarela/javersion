@@ -15,14 +15,16 @@
  */
 package org.javersion.object.mapping;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.javersion.object.DescribeContext;
 import org.javersion.object.TypeContext;
 import org.javersion.object.Versionable;
+import org.javersion.object.Versionable.Subclass;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
-
-import com.google.common.collect.ImmutableBiMap;
 
 public class VersionableTypeMapping implements TypeMapping {
 
@@ -34,14 +36,32 @@ public class VersionableTypeMapping implements TypeMapping {
 
     @Override
     public  ValueType describe(PropertyPath path, TypeContext typeContext, DescribeContext context) {
+        Map<String, TypeDescriptor> typesByAlias = new LinkedHashMap<>();
         TypeDescriptor type = typeContext.type;
-        String alias = getAlias(type.getAnnotation(Versionable.class), type);
-        ObjectTypeMapping objectTypeMapping = new ObjectTypeMapping(ImmutableBiMap.of(alias, type));
+        Versionable versionable = type.getAnnotation(Versionable.class);
+        String alias = getAlias(versionable, type);
+        typesByAlias.put(alias, type);
+
+        for (Subclass subclass : versionable.subclasses()) {
+            TypeDescriptor subtype = type.getTypeDescriptors().get(subclass.value());
+            if (subtype.hasAnnotation(Versionable.class)) {
+                throw new IllegalArgumentException(subtype.getSimpleName() + "" +
+                        " islready mapped in " + type.getSimpleName());
+            }
+            alias = getAlias(subclass, subtype);
+            typesByAlias.put(alias, subtype);
+        }
+
+        ObjectTypeMapping objectTypeMapping = new ObjectTypeMapping(typesByAlias);
         return objectTypeMapping.describe(path, typeContext, context);
     }
 
     static String getAlias(Versionable versionable, TypeDescriptor type) {
         return ObjectTypeMapping.getAlias(versionable.alias(), type);
+    }
+
+    static String getAlias(Subclass subclass, TypeDescriptor type) {
+        return ObjectTypeMapping.getAlias(subclass.alias(), type);
     }
 
 }

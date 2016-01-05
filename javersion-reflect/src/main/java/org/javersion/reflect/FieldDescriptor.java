@@ -46,8 +46,18 @@ public final class FieldDescriptor extends MemberDescriptor implements Property 
     }
 
     @Override
+    public boolean isReadable() {
+        return true;
+    }
+
+    @Override
     public boolean isReadableFrom(TypeDescriptor typeDescriptor) {
         return typeDescriptor.isSubTypeOf(field.getDeclaringClass());
+    }
+
+    @Override
+    public boolean isWritable() {
+        return true;
     }
 
     @Override

@@ -15,11 +15,7 @@
  */
 package org.javersion.reflect;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Map;
 
 import org.javersion.util.Check;
@@ -30,9 +26,9 @@ import com.google.common.reflect.TypeToken;
 
 public final class TypeDescriptors {
 
-    public static final Predicate<Member> NON_STATIC_OR_SYNTHETIC = member -> {
+    public static final Predicate<Member> NON_STATIC_ABSTRACT_OR_SYNTHETIC = member -> {
         int mod = member.getModifiers();
-        return !(Modifier.isStatic(mod) || member.isSynthetic());
+        return !(Modifier.isStatic(mod) || member.isSynthetic() || Modifier.isAbstract(mod));
     };
 
     public static final TypeDescriptors DEFAULT = new TypeDescriptors();
@@ -48,18 +44,23 @@ public final class TypeDescriptors {
 
     protected final Predicate<? super Method> methodFilter;
 
+    protected final Predicate<? super Constructor> constructorFilter;
+
 
     public TypeDescriptors() {
-        this(NON_STATIC_OR_SYNTHETIC);
+        this(NON_STATIC_ABSTRACT_OR_SYNTHETIC);
     }
 
     public TypeDescriptors(Predicate<? super Member> memberFilter) {
-        this(memberFilter, memberFilter);
+        this(memberFilter, memberFilter, memberFilter);
     }
 
-    public TypeDescriptors(Predicate<? super Field> fieldFilter, Predicate<? super Method> methodFilter) {
+    public TypeDescriptors(Predicate<? super Field> fieldFilter,
+                           Predicate<? super Method> methodFilter,
+                           Predicate<? super Constructor> constructorFilter) {
         this.fieldFilter = Check.notNull(fieldFilter, "fieldFilter");
         this.methodFilter = Check.notNull(methodFilter, "methodFilter");
+        this.constructorFilter = Check.notNull(constructorFilter, "constructorFilter");
     }
 
 

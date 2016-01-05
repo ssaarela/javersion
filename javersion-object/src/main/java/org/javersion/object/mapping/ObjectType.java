@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Samppa Saarela
+ * Copyright 2016 Samppa Saarela
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.reflect;
+package org.javersion.object.mapping;
 
-public interface Property {
+import java.util.Map;
 
-    void set(Object object, Object value);
+import org.javersion.object.types.ObjectIdentifier;
+import org.javersion.object.types.ValueType;
+import org.javersion.reflect.Property;
 
-    Object get(Object object);
+public interface ObjectType extends ValueType {
 
-    boolean isReadable();
+    ObjectIdentifier getIdentifier();
 
-    boolean isReadableFrom(TypeDescriptor typeDescriptor);
-
-    boolean isWritable();
-
-    boolean isWritableFrom(TypeDescriptor typeDescriptor);
-
-    TypeDescriptor getType();
+    Map<String, Property> getProperties();
 
 }
