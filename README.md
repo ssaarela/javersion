@@ -119,7 +119,7 @@ handled with grace.
 
 As with any VCS, first you checkout some branch, then modify it and when done, commit changes.
 
-Javersions core model is an in-memory data-structure. You decide yourself if and 
+Javersion´s core model is an in-memory data-structure. You decide yourself if and 
 how you want to persist the versions.
 
 Unlike most version control systems, Javersion doesn't prevent you from committing 
@@ -151,12 +151,15 @@ sources of data, and merge those when reading.
 
 ## Deleting Data?
 
-Thou shall not delete data! - You overwrite it with null's. 
+Thou shall not delete data! - You overwrite it with nulls.
 
 ## Null Handling
 
-Null have a special meaning, which is that given key has been removed. Keys with null values
-should be treated as if they didn't exists in the first place. Null keys are not allowed.
+Null have a special meaning, which is that given key has been removed (i.e. tombstone). 
+Keys with null values should be treated as if they didn't exists in the first place. 
+Null keys are not allowed. In some rare cases where null is actually to be treated as a value, 
+e.g. Map with null values, one may use `Persistent.NULL` in a custom `ValueType`.
+
 
 # Getting Started With Java Objects
 
@@ -165,15 +168,16 @@ As you can parse most any data into Java Objects, it's a good starting point.
 1. Design your domain class(es) so that all relevant data can be reached from a single root.
     * Thinking of something that can be serialized to JSON helps.
     * No need for getters and setters - Javersion uses fields directly.
-    * Private and final fields are OK.
-    * Default no-args constructor is required (currently).
-    * Transient fields are skipped, as are `@VersionIgnore`-annotated fields.
-    * Null values are (mostly) skipped.
+      * Private and final fields are OK.
+      * Transient and `@VersionIgnore` fields are skipped.
+      * Java Bean properties may be versioned with `@VersionProperty` annotated getter method with matchin setter.
+    * Default (no-args) or `@VersionConstructor` or `@JsonCreator` -annotated constructor.
+      * Constructor parameters need to be named with `javac -parameters`, `@Param` or `@JsonProperty`.
     
 1. Annotate your classes with `@Versionable` or use `TypeMappings.builder()` to configure
    how your domain model is to be serialized.
 
-1. Create a `ObjectSerializer` instance for your class. It's immutable and thread-safe
+1. Create an `ObjectSerializer` instance for your class. It's immutable and thread-safe
    so you might just as well save it in a final static field.
 ```java
 static final ObjectSerializer MY_OBJECT_SERIALIZER = new ObjectSerializer(MyObject.class);
@@ -225,7 +229,8 @@ persistence to meet your requirements or choose one of Javersion's.
 While versions have a generic key, value and metadata types, you'll get a long way with just a few 
 concrete alternatives.
 
-ObjectSerializer uses `PropertyPath` for keys and mostly JSON compatible set of objects for values:
+ObjectSerializer uses `PropertyPath` for keys and mostly JSON compatible set of objects for values
+(see `org.javersion.core.Persistent.Type`):
 
 * null
 * Object - immutable wrapper for type alias (e.g. classes simple name, or Map for generic object)
@@ -238,7 +243,7 @@ Nested structures are split into nested property paths with values from the list
 
 Simplest relational model for this consists of three tables: `version`, `version_parent` and `version_property`. 
 
-Javersion contains two SQL-based persistence strategies: `DocumentVersionStore` and `EntityVersionStore`.
+Javersion contains two SQL-based persistence strategies: `DocumentVersionStoreJdbc` and `EntityVersionStoreJdbc`.
 Both are optimized for use with cache and for synchronizing to external systems. 
 
 ## Searching
@@ -448,6 +453,32 @@ listOfTreeNodes.children["<any-index>"] = treeNode;
 
 # Object Mapping
 
+## Properties
+
+By default Javersion processes all non-transient fields. Fields may be ignored also with `@VersionIgnore` annotation. 
+
+Simple Java Bean compatible properties (get/is/set) can be versioned with `@VersionProperty` on a getter with
+matching setter. 
+
+Property name used in versioning defaults to field's or property's name. Default name can be
+overridden with `@VersionProperty("versionableName")`. 
+
+`@VersionProperty` annotated getter overrides a field with
+a name that matches it's _versionable name_. Therefore if property name is overridden, one may
+have to ignore the field separately.
+
+## Constructors
+
+Javersion uses default (no-args) constructor by default. Other constructor may also be used 
+by annotating it with `@VersionConstructor` or Jackson's `@JsonCreator`. 
+
+When other than default constructor is used, Javersion needs to know _versionable_ property names
+that are bound to constructor parameters. Parameter names can be defined by
+
+  * compiling with `javac -parameters` option allows using source code parameter names
+  * `@Param("versionableName")` annotation
+  * `@JsonProperty("versionableName")` annotation
+
 ## Nulls
 
 If a property has null value in changeset, it is skipped in binding. Thus setting a property to null,
@@ -482,7 +513,7 @@ Null keys are not supported, but values may be null (as of version 0.10.0).
 
 ## Sets
 
-Javersion supports `Set` (HashSet), `SortedSet` and `NavigableSet` (both TreeSet). 
+Javersion supports `Set` (HashSet), `SortedSet` and `NavigableSet` (both via TreeSet). 
 You should use these interfaces instead of concrete classes in your domain model.
 
 Sets are a kind of a special case of maps and require an identifying key,
@@ -490,9 +521,17 @@ i.e. element `ValueType`´ must implement `IdentifiableType`.
 Unlike lists, changeset of removing an element from a Set only affects 
 that particular element. 
 
-A set of primitives, Strings and other scalar can be used as such, but
-complex objects require an identifier field that is annotated with `@Id`.
-Object's equals and hashCode should be based on that same key.
+A set of primitives, Strings and other scalar values can be used as such, but
+complex objects require either an identifier property (field or getter) 
+that is annotated with `@Id`. An identifier may be non-versionable
+(read-only) by annotating a getter without matching setter. 
+
+An alternative to `@Id` annotation is `@SetKey` on element type or on a Set-field.
+SetKey refers to versionable properties used for element keys by their 
+versionable name. SetKey allows defining composite keys.
+
+However Set's elements are identified, the versionable identity should match
+equals/hashCode identity of the element.
 
 Null elements are not supported.
 
@@ -501,7 +540,9 @@ Null elements are not supported.
 Objects should have default no-args constructor. They can be mapped with `TypeMappings.builder()` or with
 `@Versionable` annotation.
 
-You need to use `TypeMappings.builder` to define class hierarchies: 
+You can define polymorphic classes with `@Versionable(subclasses=...}` on 
+the root class, or use `TypeMappings.builder`: 
+
 ```
 TypeMappings.builder()
     .withClass(Pet.class, "Pet")
@@ -516,7 +557,7 @@ Sub classes should not have properties with same name unless they are also of sa
 
 ## References
 
-Objects with an `@Id`-field may be replaced with a reference by id in serialization. 
+Objects with an `@Id` property (field or getter+setter) may be replaced with a reference by id in serialization.
 This allows serializing and versioning complex object graphs, not just trees like with JSON. 
 These graphs may even even contain cycles.
 
@@ -588,7 +629,7 @@ using
 ```TypeMappings.Builder.withMapping(new ToStringMapping(MyStringComponent.class))```
 
 `ToStringMapping` also allows matching sub classes of the given class with `boolean matchSubClasses`-parameter, 
-but beware that it does not support polymorphism! If your field is of type `MySuperStringComponent` then 
+but beware that it does not support polymorphism! If your property is of type `MySuperStringComponent` then 
 that's what you're going to get out event if you assign `MySubStringComponent` to it. 
 
 # Modules
@@ -603,13 +644,14 @@ that's what you're going to get out event if you assign `MySubStringComponent` t
 * Helper classes for object versioning
 
 ## Spring JDBC
-* Spring + Querydsl based RDB persistence for versions
+* Spring + Querydsl SQL based persistence for versions
 
 ## Util
-* Persistent data structures (similar to Clojure's)
+* Persistent data structures.
 
 ## Reflect
-* Simplified reflection: TypeDescriptor, FieldDescriptor
+* Simplified reflection: TypeDescriptor, FieldDescriptor, MethodDescriptor, ConstructorDescriptor, ParameterDescriptor and BeanProperty.
+* Uses Guava's TypeToken to resolve all resolvable generic bindings.
 
 ## Path
 * Model of Java/JavaScript compliant paths
