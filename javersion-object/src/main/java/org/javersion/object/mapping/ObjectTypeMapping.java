@@ -132,6 +132,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             alias = null;
             constructor = null;
             constructorPrecedence = Precedence.NA;
+            constructorParameters = ImmutableSet.of();
             identifier = null;
             properties = new HashMap<>();
         }

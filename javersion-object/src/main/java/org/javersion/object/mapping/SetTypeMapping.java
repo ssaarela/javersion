@@ -94,7 +94,7 @@ public class SetTypeMapping implements TypeMapping {
 
         if (setKey == null) {
             ValueType valueType = context.describeNow(path.any(), new TypeContext(setType, elementType));
-            return newSetType((IdentifiableType) valueType);
+            return newSetType(requireIdentifiable(valueType, typeContext));
         } else {
             PropertyPath elementPath = getElementPath(path, setKey.value());
             ObjectType objectType = (ObjectType) context.describeNow((SubPath) elementPath, new TypeContext(setType, elementType));
@@ -109,12 +109,19 @@ public class SetTypeMapping implements TypeMapping {
 
             List<Key> keys = new ArrayList<>();
             for (String idProperty : setKey.value()) {
-                IdentifiableType idType = (IdentifiableType) context.getValueType(elementPath.property(idProperty));
+                IdentifiableType idType = requireIdentifiable(context.getValueType(elementPath.property(idProperty)), typeContext);
                 Property property = objectType.getProperties().get(idProperty);
                 keys.add(new PropertyKey(property, idType));
             }
             return newSetType(keys);
         }
+    }
+
+    private IdentifiableType requireIdentifiable(ValueType valueType, TypeContext typeContext) {
+        if (valueType instanceof IdentifiableType) {
+            return (IdentifiableType) valueType;
+        }
+        throw new IllegalArgumentException(typeContext.toString() + ": expected IdentifiableType, got " + valueType.getClass());
     }
 
     private PropertyPath getElementPath(PropertyPath path, String[] properties) {
