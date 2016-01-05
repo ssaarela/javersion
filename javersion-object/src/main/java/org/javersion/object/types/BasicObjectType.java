@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
+import javax.annotation.Nullable;
+
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
@@ -26,23 +28,42 @@ import org.javersion.object.mapping.ObjectType;
 import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
-import org.javersion.reflect.ConstructorDescriptor;
-import org.javersion.reflect.ParameterDescriptor;
+import org.javersion.reflect.FieldDescriptor;
 import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 
 public class BasicObjectType implements ObjectType {
 
+    public static BasicObjectType of(TypeDescriptor type) {
+        return of(type, type.getSimpleName(), null);
+    }
+
+    public static BasicObjectType of(TypeDescriptor type, @Nullable  Set<String> fieldNames) {
+        return of(type, type.getSimpleName(), fieldNames);
+    }
+
+    public static BasicObjectType of(TypeDescriptor type, String alias) {
+        return of(type, alias, null);
+    }
+
+    public static BasicObjectType of(TypeDescriptor type, String alias, @Nullable Set<String> fieldNames) {
+        Map<String, FieldDescriptor> fields = type.getFields();
+        if (fields != null) {
+            fields = Maps.filterEntries(fields, entry -> fieldNames.contains(entry.getKey()));
+        }
+        return of(type, alias, new ObjectConstructor(type), null, fields);
+    }
+
     public static BasicObjectType of(TypeDescriptor type,
                                      String alias,
-                                     ConstructorDescriptor constructor,
+                                     ObjectConstructor constructor,
                                      ObjectIdentifier identifier,
-                                     Map<String, Property> properties) {
+                                     Map<String, ? extends Property> properties) {
         if (identifier != null) {
             return new Identifiable(type, alias, constructor, identifier, properties);
         } else {
@@ -53,18 +74,16 @@ public class BasicObjectType implements ObjectType {
     private static class Identifiable extends BasicObjectType implements IdentifiableType {
         private Identifiable(TypeDescriptor type,
                              String alias,
-                             ConstructorDescriptor constructor,
+                             ObjectConstructor constructor,
                              ObjectIdentifier identifier,
-                             Map<String, Property> properties) {
+                             Map<String, ? extends Property> properties) {
             super(type, alias, constructor, identifier, properties);
         }
     }
 
     private final Map<String, Property> properties;
 
-    private final ConstructorDescriptor constructor;
-
-    private final Set<String> constructorParameters;
+    private final ObjectConstructor constructor;
 
     private final ObjectIdentifier identifier;
 
@@ -74,42 +93,38 @@ public class BasicObjectType implements ObjectType {
 
     private BasicObjectType(TypeDescriptor type,
                             String alias,
-                            ConstructorDescriptor constructor,
+                            ObjectConstructor constructor,
                             ObjectIdentifier identifier,
-                            Map<String, Property> properties) {
+                            Map<String, ? extends Property> properties) {
         this.type = Check.notNull(type, "type");
         this.alias = Check.notNullOrEmpty(alias, "alias");
         this.constructor = constructor;
         this.properties = ImmutableMap.copyOf(properties);
         this.identifier = identifier;
-
-        ImmutableSet.Builder<String> paramBuilder = ImmutableSet.builder();
-        if (constructor != null) {
-            for (ParameterDescriptor param : constructor.getParameters()) {
-                paramBuilder.add(param.getName());
-            }
-        }
-        this.constructorParameters = paramBuilder.build();
     }
 
     @Override
     public Object instantiate(PropertyTree propertyTree, Object valueObject, ReadContext context) throws Exception {
-        Object[] params = new Object[constructorParameters.size()];
+        Object[] params = constructor.newParametersArray();
         int i=0;
-        for (String param : constructorParameters) {
+        for (String param : constructor.getParameters()) {
             PropertyTree child = propertyTree.get(NodeId.property(param));
-            Object value = context.getObject(child);
+            Object value = child != null ? context.getObject(child) : null;
             params[i++] = value;
         }
-        if (!constructorParameters.isEmpty()) {
+        if (constructor.hasParameters()) {
             // Ensure that constructor parameters are bound
             context.bindAll();
         }
         Object object = constructor.newInstance(params);
-        if (identifier != null && !constructorParameters.contains(identifier.name) && identifier.property.isWritableFrom(type)) {
+        if (identifier != null && !constructor.hasParameter(identifier.name) && identifier.property.isWritable()) {
             PropertyTree child = propertyTree.get(NodeId.property(identifier.name));
-            Object value = context.getObject(child);
-            identifier.property.set(object, value);
+            if (child != null) {
+                Object value = context.getObject(child);
+                if (value != null) {
+                    identifier.property.set(object, value);
+                }
+            }
         }
         return object;
     }
@@ -118,9 +133,9 @@ public class BasicObjectType implements ObjectType {
     public void bind(PropertyTree propertyTree, Object object, ReadContext context) throws Exception {
         for (PropertyTree child : propertyTree.getChildren()) {
             NodeId nodeId = child.getNodeId();
-            if (nodeId.isKey() && !constructorParameters.contains(nodeId.getKey())) {
+            if (nodeId.isKey() && !constructor.hasParameter(nodeId.getKey())) {
                 Property property = properties.get(nodeId.getKey());
-                if (property != null && property.isWritableFrom(type)) {
+                if (property != null && property.isWritable()) {
                     Object value = context.getObject(child);
                     property.set(object, value);
                 }
@@ -146,7 +161,7 @@ public class BasicObjectType implements ObjectType {
         };
         properties.forEach(propertySerializer);
 
-        if (identifier != null && identifier.property.isWritableFrom(type)) {
+        if (identifier != null && identifier.property.isWritable()) {
             propertySerializer.accept(identifier.name, identifier.property);
         }
     }

@@ -99,7 +99,7 @@ public final class TypeMappings {
         DEFAULT_MAPPINGS = mappings.build();
     }
 
-    private static boolean classFound(String className) {
+    public static boolean classFound(String className) {
         try {
             Class.forName(className);
             return true;

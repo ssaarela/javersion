@@ -113,7 +113,7 @@ public class PolymorphicObjectType implements ObjectType {
     }
 
     public String toString() {
-        return "PolymorphicObjectType of " + typesByAlias.values();
+        return "PolymorphicObjectType of " + typesByAlias.values().toString();
     }
 
     private BasicObjectType getObjectType(Object object) {

@@ -24,6 +24,12 @@
       <artifactId>javersion-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.6.4</version>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 
   <build>
@@ -35,9 +41,6 @@
         <configuration>
           <source>${javac.target}</source>
           <target>${javac.target}</target>
-          <compilerArgs>
-            <arg>-parameters</arg>
-          </compilerArgs>
         </configuration>
       </plugin>
     </plugins>

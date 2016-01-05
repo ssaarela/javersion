@@ -15,6 +15,8 @@
  */
 package org.javersion.reflect;
 
+import static org.javersion.reflect.ConstructorSignature.DEFAULT_CONSTRUCTOR;
+
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -188,6 +190,10 @@ public final class TypeDescriptor implements ElementDescriptor {
 
     public boolean isEnum() {
         return getRawType().isEnum();
+    }
+
+    public ConstructorDescriptor getDefaultConstructor() {
+        return getConstructors().get(DEFAULT_CONSTRUCTOR);
     }
 
     public Object newInstance() {

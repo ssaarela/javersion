@@ -61,7 +61,7 @@ public final class ParameterDescriptor extends MemberDescriptor {
         if (parameter.isNamePresent()) {
             return parameter.getName();
         }
-        throw new ReflectionException("Accessing parameter names requires either @Param annotation or compiling with -parameters option");
+        return null;
     }
 
     @Override

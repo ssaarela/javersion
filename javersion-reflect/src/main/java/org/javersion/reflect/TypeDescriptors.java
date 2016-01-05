@@ -26,9 +26,9 @@ import com.google.common.reflect.TypeToken;
 
 public final class TypeDescriptors {
 
-    public static final Predicate<Member> NON_STATIC_OR_SYNTHETIC = member -> {
+    public static final Predicate<Member> NON_STATIC_ABSTRACT_OR_SYNTHETIC = member -> {
         int mod = member.getModifiers();
-        return !(Modifier.isStatic(mod) || member.isSynthetic());
+        return !(Modifier.isStatic(mod) || member.isSynthetic() || Modifier.isAbstract(mod));
     };
 
     public static final TypeDescriptors DEFAULT = new TypeDescriptors();
@@ -48,7 +48,7 @@ public final class TypeDescriptors {
 
 
     public TypeDescriptors() {
-        this(NON_STATIC_OR_SYNTHETIC);
+        this(NON_STATIC_ABSTRACT_OR_SYNTHETIC);
     }
 
     public TypeDescriptors(Predicate<? super Member> memberFilter) {

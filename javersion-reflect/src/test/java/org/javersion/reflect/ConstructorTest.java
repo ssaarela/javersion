@@ -78,7 +78,7 @@ public class ConstructorTest {
 
     @Test(expected = ReflectionException.class)
     public void illegal_access() {
-        ConstructorDescriptor constructor = getConstructors().get(DEFAULT_CONSTRUCTOR);
+        ConstructorDescriptor constructor = DEFAULT.get(Constructors.class).getDefaultConstructor();
         try {
             constructor.getElement().setAccessible(false);
             constructor.newInstance();

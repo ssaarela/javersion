@@ -8,7 +8,11 @@ import java.util.Map;
 
 import org.javersion.object.Versionable.Subclass;
 import org.javersion.path.PropertyPath;
+import org.javersion.reflect.Param;
 import org.junit.Test;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class PolymorphismTest {
 
@@ -19,24 +23,28 @@ public class PolymorphismTest {
     public static class Pet {
         String name;
         @VersionConstructor
-        public Pet(String name) {
-            this.name = name;
+        public Pet(@Param("name") String baz) {
+            this.name = baz;
         }
     }
 
     public static class Dog extends Pet {
         boolean bark = true;
+        @JsonCreator
+        public Dog(int number) {
+            this(Integer.toString(number));
+        }
         @VersionConstructor
-        public Dog(String name) {
-            super(name);
+        public Dog(@Param("name") String bar) {
+            super(bar);
         }
     }
 
     public static class Cat extends Pet {
         boolean meow = true;
-        @VersionConstructor
-        public Cat(String name) {
-            super(name);
+        @JsonCreator
+        public Cat(@JsonProperty("name")  String foo) {
+            super(foo);
         }
     }
 
