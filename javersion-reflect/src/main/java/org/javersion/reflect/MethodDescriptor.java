@@ -27,7 +27,7 @@ import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
 
-public final class MethodDescriptor extends MemberDescriptor {
+public final class MethodDescriptor extends JavaMemberDescriptor<Method> implements StaticExecutable {
 
     @Nonnull
     private final Method method;
@@ -42,6 +42,10 @@ public final class MethodDescriptor extends MemberDescriptor {
         return resolveType(method.getGenericReturnType());
     }
 
+    public Class<?> getRawReturnType() {
+        return method.getReturnType();
+    }
+
     public List<ParameterDescriptor> getParameters() {
         ImmutableList.Builder<ParameterDescriptor> builder = ImmutableList.builder();
         for (Parameter parameter : method.getParameters()) {
@@ -50,8 +54,21 @@ public final class MethodDescriptor extends MemberDescriptor {
         return builder.build();
     }
 
+    public int getParameterCount() {
+        return method.getParameterCount();
+    }
+
     public String getName() {
         return method.getName();
+    }
+
+    public List<Class<?>> getParameterTypes() {
+        return ImmutableList.copyOf(method.getParameterTypes());
+    }
+
+    @Override
+    public Object invokeStatic(Object... args) {
+        return invoke(null, args);
     }
 
     public Object invoke(Object object, Object... args) {

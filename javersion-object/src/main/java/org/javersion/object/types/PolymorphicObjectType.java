@@ -21,7 +21,6 @@ import java.util.Map;
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
-import org.javersion.object.mapping.ObjectType;
 import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;

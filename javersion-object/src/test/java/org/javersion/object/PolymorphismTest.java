@@ -22,7 +22,7 @@ public class PolymorphismTest {
     })
     public static class Pet {
         String name;
-        @VersionConstructor
+        @VersionCreator
         public Pet(@Param("name") String baz) {
             this.name = baz;
         }
@@ -34,7 +34,7 @@ public class PolymorphismTest {
         public Dog(int number) {
             this(Integer.toString(number));
         }
-        @VersionConstructor
+        @VersionCreator
         public Dog(@Param("name") String bar) {
             super(bar);
         }

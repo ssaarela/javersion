@@ -37,7 +37,7 @@ public class SetType implements ValueType {
         NodeId toNodeId(Object object, WriteContext context);
     }
 
-    private final static Persistent.Object CONSTANT = Persistent.object();
+    public final static Persistent.Array CONSTANT = Persistent.array();
 
     private final List<Key> keys;
 

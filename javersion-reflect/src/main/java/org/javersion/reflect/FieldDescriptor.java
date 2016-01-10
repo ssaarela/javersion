@@ -22,7 +22,7 @@ import javax.annotation.Nonnull;
 
 import org.javersion.util.Check;
 
-public final class FieldDescriptor extends MemberDescriptor implements Property {
+public final class FieldDescriptor extends JavaMemberDescriptor<Field> implements Property {
 
     @Nonnull
     private final Field field;
@@ -112,10 +112,6 @@ public final class FieldDescriptor extends MemberDescriptor implements Property 
 
     public String toString() {
         return field.getDeclaringClass().getCanonicalName() + "." + getName();
-    }
-
-    public boolean isStatic() {
-        return Modifier.isStatic(field.getModifiers());
     }
 
 }

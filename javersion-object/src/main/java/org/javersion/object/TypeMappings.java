@@ -38,24 +38,29 @@ import org.javersion.util.Check;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 
 @Immutable
 public final class TypeMappings {
-
-    public static final TypeMapping STRING = new StringTypeMapping();
-
-    public static final TypeMapping BIG_INTEGER = new ToStringTypeMapping(BigInteger.class);
-    public static final TypeMapping BIG_DECIMAL = new ToStringTypeMapping(BigDecimal.class);
-
-    public static final TypeMapping ENUM = new EnumTypeMapping();
 
     public static Builder builder() {
         return new Builder();
     }
 
     public static Builder builder(List<TypeMapping> mappings) {
-        return new Builder(mappings);
+        return builder(DEFAULT_TYPES, mappings);
     }
+
+    public static Builder builder(TypeDescriptors typeDescriptors, List<TypeMapping> mappings) {
+        return new Builder(typeDescriptors, mappings);
+    }
+
+    public static final boolean USE_JACKSON_ANNOTATIONS = classFound("com.fasterxml.jackson.annotation.JacksonAnnotation");
+
+    public static final TypeMapping STRING = new StringTypeMapping();
+    public static final TypeMapping BIG_INTEGER = new ToStringTypeMapping(BigInteger.class);
+    public static final TypeMapping BIG_DECIMAL = new ToStringTypeMapping(BigDecimal.class);
+    public static final TypeMapping ENUM = new EnumTypeMapping();
 
     public static final List<TypeMapping> DEFAULT_MAPPINGS;
 
@@ -96,25 +101,30 @@ public final class TypeMappings {
             mappings.add(new JodaLocalDateMapping());
         }
 
+        mappings.add(new DelegateTypeMapping());
         DEFAULT_MAPPINGS = mappings.build();
     }
 
-    public static boolean classFound(String className) {
-        try {
-            Class.forName(className);
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
+    public static final TypeDescriptors DEFAULT_TYPES = new TypeDescriptors(member -> !member.isSynthetic());
+    public static final TypeMappings DEFAULT = new TypeMappings(TypeDescriptors.DEFAULT, DEFAULT_MAPPINGS);
 
-    public static final TypeMappings DEFAULT = new TypeMappings(DEFAULT_MAPPINGS);
 
     private final List<TypeMapping> types;
 
-    public TypeMappings(Iterable<TypeMapping> types) {
+    private final TypeDescriptors typeDescriptors;
+
+    public TypeMappings(TypeDescriptors typeDescriptors, Iterable<TypeMapping> types) {
+        this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
         ImmutableList.Builder<TypeMapping> builder = ImmutableList.builder();
         this.types = builder.addAll(types).build();
+    }
+
+    public TypeDescriptor getTypeDescriptor(Class<?> cls) {
+        return typeDescriptors.get(cls);
+    }
+
+    public TypeDescriptor getTypeDescriptor(TypeToken<?> typeToken) {
+        return typeDescriptors.get(typeToken);
     }
 
     public TypeMapping getTypeMapping(PropertyPath path, TypeContext typeContext) {
@@ -128,15 +138,18 @@ public final class TypeMappings {
 
     public final static class Builder {
 
+        private final TypeDescriptors typeDescriptors;
+
         private final List<TypeMapping> defaultMappings;
 
         private final List<TypeMapping> mappings = Lists.newArrayList();
 
         public Builder() {
-            this(DEFAULT_MAPPINGS);
+            this(DEFAULT_TYPES, DEFAULT_MAPPINGS);
         }
 
-        public Builder(List<TypeMapping> defaultMappings) {
+        public Builder(TypeDescriptors typeDescriptors, List<TypeMapping> defaultMappings) {
+            this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
             this.defaultMappings = Check.notNull(defaultMappings, "defaultMappings");
         }
 
@@ -154,7 +167,7 @@ public final class TypeMappings {
         }
 
         public TypeMappings build() {
-            return new TypeMappings(Iterables.concat(mappings, defaultMappings));
+            return new TypeMappings(typeDescriptors, Iterables.concat(mappings, defaultMappings));
         }
 
         public final class HierarchyBuilder<R> {
@@ -173,7 +186,7 @@ public final class TypeMappings {
             }
 
             private TypeDescriptor getTypeDescriptor(Class<?> clazz) {
-                return TypeDescriptors.DEFAULT.get(clazz);
+                return typeDescriptors.get(clazz);
             }
 
             public Builder withMapping(TypeMapping typeMapping) {
@@ -241,5 +254,14 @@ public final class TypeMappings {
 
         }
 
+    }
+
+    public static boolean classFound(String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 }

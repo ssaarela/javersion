@@ -15,8 +15,6 @@
  */
 package org.javersion.object;
 
-import static org.javersion.reflect.TypeDescriptors.getTypeDescriptor;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
@@ -31,6 +29,7 @@ import org.javersion.path.Schema;
 import org.javersion.reflect.TypeDescriptor;
 
 import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
 
 @NotThreadSafe
 public final class DescribeContext {
@@ -49,7 +48,11 @@ public final class DescribeContext {
     }
 
     public Schema describeSchema(Class<?> rootClass) {
-        return describeSchema(getTypeDescriptor(rootClass));
+        return describeSchema(typeMappings.getTypeDescriptor(rootClass));
+    }
+
+    public Schema describeSchema(TypeToken rootType) {
+        return describeSchema(typeMappings.getTypeDescriptor(rootType));
     }
 
     public Schema describeSchema(TypeDescriptor rootType) {
@@ -67,7 +70,7 @@ public final class DescribeContext {
         queue.add(new QueueItem<>(path, typeContext));
     }
 
-    public ValueType describeNow(SubPath path, TypeContext typeContext) {
+    public ValueType describeNow(PropertyPath path, TypeContext typeContext) {
         return registerMapping(path, typeContext);
     }
 

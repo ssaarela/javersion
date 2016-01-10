@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.javersion.object.mapping;
+package org.javersion.object;
 
-import java.util.Map;
+import static java.lang.annotation.ElementType.CONSTRUCTOR;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import org.javersion.object.types.ObjectIdentifier;
-import org.javersion.object.types.ValueType;
-import org.javersion.reflect.Property;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public interface ObjectType extends ValueType {
-
-    ObjectIdentifier getIdentifier();
-
-    Map<String, Property> getProperties();
-
+@Target({ CONSTRUCTOR, METHOD })
+@Retention(RUNTIME)
+@Documented
+public @interface VersionCreator {
 }

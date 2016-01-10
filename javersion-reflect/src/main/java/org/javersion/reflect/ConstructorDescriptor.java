@@ -28,7 +28,7 @@ import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
 
-public final class ConstructorDescriptor extends MemberDescriptor {
+public final class ConstructorDescriptor extends JavaMemberDescriptor<Constructor<?>> implements StaticExecutable {
 
     @Nonnull
     private final Constructor<?> constructor;
@@ -45,6 +45,11 @@ public final class ConstructorDescriptor extends MemberDescriptor {
             builder.add(new ParameterDescriptor(declaringType, parameter));
         }
         return builder.build();
+    }
+
+    @Override
+    public Object invokeStatic(Object... args) {
+        return newInstance(args);
     }
 
     public Object newInstance(Object... args) {

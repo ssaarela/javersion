@@ -24,6 +24,7 @@ import org.javersion.object.SetKey;
 import org.javersion.object.TypeContext;
 import org.javersion.object.WriteContext;
 import org.javersion.object.types.IdentifiableType;
+import org.javersion.object.types.ObjectType;
 import org.javersion.object.types.SetType;
 import org.javersion.object.types.SetType.Key;
 import org.javersion.object.types.ValueType;

@@ -25,6 +25,8 @@ import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.Schema;
 
+import com.google.common.reflect.TypeToken;
+
 @Immutable
 public class ObjectSerializer<O> {
 
@@ -34,8 +36,16 @@ public class ObjectSerializer<O> {
         this.schemaRoot = new DescribeContext(DEFAULT).describeSchema(clazz);
     }
 
+    public ObjectSerializer(TypeToken<O> typeToken) {
+        this.schemaRoot = new DescribeContext(DEFAULT).describeSchema(typeToken);
+    }
+
     public ObjectSerializer(Class<O> clazz, TypeMappings typeMappings) {
         this.schemaRoot = new DescribeContext(typeMappings).describeSchema(clazz);
+    }
+
+    public ObjectSerializer(TypeToken<O> typeToken, TypeMappings typeMappings) {
+        this.schemaRoot = new DescribeContext(typeMappings).describeSchema(typeToken);
     }
 
     public Map<PropertyPath, Object> toPropertyMap(O object) {

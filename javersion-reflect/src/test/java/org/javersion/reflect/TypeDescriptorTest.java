@@ -26,7 +26,10 @@ import org.junit.Test;
 
 public class TypeDescriptorTest {
 
-    static final TypeDescriptors TYPES = new TypeDescriptors();
+    static final TypeDescriptors TYPES = new TypeDescriptors(member -> {
+        int mod = member.getModifiers();
+        return !(member.isSynthetic() || Modifier.isAbstract(mod) || Modifier.isStatic(mod));
+    });
 
     @SuppressWarnings("unused")
     static final Map<String, Integer> MAP = new HashMap<>();
@@ -55,8 +58,7 @@ public class TypeDescriptorTest {
     public void Get_Fields() {
         TypeDescriptor type = TYPES.get(ArrayList.class);
         assertThat(type.getFields().keySet()).isEqualTo((Set<String>) newHashSet(
-                "elementData", "size",
-                "modCount"));
+                "elementData", "size", "modCount"));
     }
 
     @Test

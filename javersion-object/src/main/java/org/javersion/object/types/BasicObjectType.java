@@ -24,7 +24,6 @@ import javax.annotation.Nullable;
 import org.javersion.core.Persistent;
 import org.javersion.object.ReadContext;
 import org.javersion.object.WriteContext;
-import org.javersion.object.mapping.ObjectType;
 import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
@@ -67,17 +66,7 @@ public class BasicObjectType implements ObjectType {
         if (identifier != null) {
             return new Identifiable(type, alias, constructor, identifier, properties);
         } else {
-            return new BasicObjectType(type, alias, constructor, identifier, properties);
-        }
-    }
-
-    private static class Identifiable extends BasicObjectType implements IdentifiableType {
-        private Identifiable(TypeDescriptor type,
-                             String alias,
-                             ObjectConstructor constructor,
-                             ObjectIdentifier identifier,
-                             Map<String, ? extends Property> properties) {
-            super(type, alias, constructor, identifier, properties);
+            return new BasicObjectType(type, alias, constructor, null, properties);
         }
     }
 
@@ -99,8 +88,8 @@ public class BasicObjectType implements ObjectType {
         this.type = Check.notNull(type, "type");
         this.alias = Check.notNullOrEmpty(alias, "alias");
         this.constructor = constructor;
-        this.properties = ImmutableMap.copyOf(properties);
         this.identifier = identifier;
+        this.properties = ImmutableMap.copyOf(properties);
     }
 
     @Override
@@ -184,6 +173,17 @@ public class BasicObjectType implements ObjectType {
 
     public String toString() {
         return "BasicObjectType of " + type;
+    }
+
+
+    private static class Identifiable extends BasicObjectType implements IdentifiableType {
+        private Identifiable(TypeDescriptor type,
+                             String alias,
+                             ObjectConstructor constructor,
+                             ObjectIdentifier identifier,
+                             Map<String, ? extends Property> properties) {
+            super(type, alias, constructor, identifier, properties);
+        }
     }
 
 }

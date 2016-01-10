@@ -25,6 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.google.common.collect.ImmutableMap;
 import com.mysema.query.sql.ColumnMetadata;
 import com.mysema.query.sql.H2Templates;
+import com.mysema.query.sql.PostgresTemplates;
 import com.mysema.query.sql.SQLExpressions;
 import com.mysema.query.sql.SQLQueryFactory;
 import com.mysema.query.types.path.StringPath;
@@ -39,7 +40,7 @@ public class PersistenceTestConfiguration {
 
     @Bean
     public com.mysema.query.sql.Configuration configuration() {
-        com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new H2Templates());
+        com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new PostgresTemplates());
         AbstractVersionStoreJdbc.registerTypes("DOCUMENT_", configuration);
         AbstractVersionStoreJdbc.registerTypes("ENTITY_", configuration);
         return configuration;

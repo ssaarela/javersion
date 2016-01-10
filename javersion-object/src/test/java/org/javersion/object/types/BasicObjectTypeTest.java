@@ -11,7 +11,7 @@ import java.util.Map;
 import org.javersion.object.Id;
 import org.javersion.object.ObjectSerializer;
 import org.javersion.object.PolymorphismTest.Pet;
-import org.javersion.object.VersionConstructor;
+import org.javersion.object.VersionCreator;
 import org.javersion.object.Versionable;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
@@ -41,7 +41,7 @@ public class BasicObjectTypeTest {
             this.bar = bar;
         }
 
-        @VersionConstructor
+        @VersionCreator
         public MyClass(@JsonProperty("bar") String bar) {
             this.foo = foo;
             this.bar = bar;

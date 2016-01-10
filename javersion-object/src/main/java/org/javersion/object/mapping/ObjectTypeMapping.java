@@ -15,6 +15,8 @@
  */
 package org.javersion.object.mapping;
 
+import static org.javersion.object.TypeMappings.USE_JACKSON_ANNOTATIONS;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +37,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 public class ObjectTypeMapping<O> implements TypeMapping {
-
-    public static final boolean USE_JACKSON_ANNOTATIONS = TypeMappings.classFound("com.fasterxml.jackson.annotation.JsonProperty");
 
     private final ImmutableMap<String, TypeDescriptor> typesByAlias;
 
@@ -169,14 +169,14 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             }
             if (name == null) {
                 throw new IllegalArgumentException(type.getSimpleName() +
-                        ": @VersionConstructor parameter names not found. " +
+                        ": @VersionCreator parameter names not found. " +
                         "Use javac -parameters, @Param or Jackson's @JsonProperty.");
             }
             return name;
         }
 
         private Precedence acceptConstructor(ConstructorDescriptor constructor) {
-            if (constructor.hasAnnotation(VersionConstructor.class)) {
+            if (constructor.hasAnnotation(VersionCreator.class)) {
                 return Precedence.MAIN;
             } else if (USE_JACKSON_ANNOTATIONS && constructor.hasAnnotation(JsonCreator.class)) {
                 return Precedence.ALTERNATE;
@@ -240,7 +240,10 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         }
 
         private boolean acceptField(FieldDescriptor fieldDescriptor) {
-            return !fieldDescriptor.isTransient() && !fieldDescriptor.hasAnnotation(VersionIgnore.class);
+            return !fieldDescriptor.isTransient() &&
+                    !fieldDescriptor.isStatic() &&
+                    !fieldDescriptor.isSynthetic() &&
+                    !fieldDescriptor.hasAnnotation(VersionIgnore.class);
         }
 
         private boolean acceptIdProperty(BeanProperty property) {
