@@ -15,90 +15,79 @@
  */
 package org.javersion.object.mapping;
 
-import static org.javersion.object.TypeMappings.USE_JACKSON_ANNOTATIONS;
-
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Nullable;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.TypeContext;
-import org.javersion.object.VersionCreator;
-import org.javersion.object.VersionValue;
+import org.javersion.object.mapping.MappingResolver.Result;
 import org.javersion.object.types.DelegateType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
-import org.javersion.reflect.*;
+import org.javersion.reflect.ConstructorDescriptor;
+import org.javersion.reflect.ConstructorSignature;
+import org.javersion.reflect.MethodDescriptor;
+import org.javersion.reflect.StaticExecutable;
+import org.javersion.reflect.TypeDescriptor;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.ImmutableList;
 
 public class DelegateTypeMapping implements TypeMapping {
 
     @Override
-    public boolean applies(@Nullable PropertyPath path, TypeContext typeContext) {
-        return typeContext.type.getMethods().values().stream().anyMatch(method -> getValuePrecedence(method) > 0);
-    }
-
-    @Override
-    public ValueType describe(@Nullable PropertyPath path, TypeContext typeContext, DescribeContext context) {
+    public Optional<ValueType> describe(@Nullable PropertyPath path, TypeContext typeContext, DescribeContext context) {
         TypeDescriptor type = typeContext.type;
-        MethodDescriptor valueMethod = getValueMethod(type);
-        Class<?> rawDelegateType = valueMethod.getRawReturnType();
-        StaticExecutable creator = getCreator(type, rawDelegateType);
-        ValueType valueType = context.describeNow(path, new TypeContext(valueMethod));
-        return DelegateType.of(valueMethod, creator, valueType);
-    }
-
-    private MethodDescriptor getValueMethod(TypeDescriptor type) {
-        MethodDescriptor valueMethod = null;
-        int valuePrecedence = 0;
-        for (MethodDescriptor method : type.getMethods().values()) {
-            int precedence = getValuePrecedence(method);
-            if (precedence > valuePrecedence) {
-                valueMethod = method;
-                valuePrecedence = precedence;
-            }
-            else if (precedence > 0 && precedence == valuePrecedence) {
-                throw new IllegalArgumentException("Found two @VersionValue/@JsonValue methods from " + type);
-            }
+        MappingResolver mappingResolver = context.getMappingResolver();
+        MethodDescriptor valueMethod = getValueMethod(type, mappingResolver);
+        if (valueMethod != null) {
+            Class<?> rawDelegateType = valueMethod.getRawReturnType();
+            StaticExecutable creator = getCreator(type, rawDelegateType, mappingResolver);
+            ValueType valueType = context.describeNow(path, new TypeContext(valueMethod));
+            return Optional.of(DelegateType.of(valueMethod, creator, valueType));
         }
-        validateValueMethod(valueMethod);
-        return valueMethod;
+        return Optional.empty();
     }
 
-    private StaticExecutable getCreator(TypeDescriptor type, Class<?> delegateType) {
-        final List<Class<?>> expectedParameters = ImmutableList.of(delegateType);
-        StaticExecutable creator = null;
-        int creatorPrecedence = 0;
+    private MethodDescriptor getValueMethod(TypeDescriptor type, MappingResolver mappingResolver) {
+        final String samePriorityError = "Found two @VersionValue/@JsonValue methods from " + type;
+        Result<MethodDescriptor> valueMethod = Result.notFound();
+
         for (MethodDescriptor method : type.getMethods().values()) {
-            int precedence = getCreatorPrecedence(method);
-            if (precedence > creatorPrecedence) {
-                creator = method;
-                creatorPrecedence = precedence;
-            } else if (precedence > 0 && precedence == creatorPrecedence) {
-                throw new IllegalArgumentException("Found two @VersionCreator/@JsonCreator methods from " + type);
-            }
+            valueMethod = MappingResolver.higherOf(valueMethod, mappingResolver.delegateValue(method), samePriorityError);
+        }
+        if (valueMethod.isPreset()) {
+            validateValueMethod(valueMethod.value);
+            return valueMethod.value;
+        }
+        return null;
+    }
+
+    private StaticExecutable getCreator(TypeDescriptor type, Class<?> delegateType, MappingResolver mappingResolver) {
+        final String samePriorityError = "Found two @VersionCreator/@JsonCreator methods from " + type;
+        Result<StaticExecutable> creator = Result.notFound();
+
+        for (MethodDescriptor method : type.getMethods().values()) {
+            creator = MappingResolver.higherOf(creator, mappingResolver.creator(method), samePriorityError);
         }
         ConstructorDescriptor constructor = getConstructor(type, delegateType);
         if (constructor != null) {
-            int precedence = getCreatorPrecedence(constructor);
-            if (precedence > creatorPrecedence || creator == null) {
-                creator = constructor;
-            } else if (precedence == creatorPrecedence) {
-                throw new IllegalArgumentException("Found two @VersionCreator/@JsonCreator methods from " + type);
+            if (creator.isPreset()) {
+                creator = MappingResolver.higherOf(creator, mappingResolver.creator(constructor), samePriorityError);
+            } else {
+                creator = Result.of(constructor);
             }
         }
-        validateCreator(creator, type, expectedParameters);
+        if (creator.isAbsent()) {
+            throw new IllegalArgumentException("Could not find mathing constructor or creator method for " + type);
+        }
+        validateCreator(creator.value, type, ImmutableList.of(delegateType));
 
-        return creator;
+        return creator.value;
     }
 
     private void validateCreator(StaticExecutable creator, TypeDescriptor type, List<Class<?>> expectedParameters) {
-        if (creator == null) {
-            throw new IllegalArgumentException("Could not find mathing constructor or creator method for " + type);
-        }
         if (creator instanceof MethodDescriptor) {
             MethodDescriptor method = (MethodDescriptor) creator;
             if (!method.getParameterTypes().equals(expectedParameters)) {
@@ -116,7 +105,7 @@ public class DelegateTypeMapping implements TypeMapping {
     }
 
     private ConstructorDescriptor getConstructor(TypeDescriptor type, Class<?> delegateType) {
-        StaticExecutable creator;ConstructorSignature signature = new ConstructorSignature(delegateType);
+        ConstructorSignature signature = new ConstructorSignature(delegateType);
         return type.getConstructors().get(signature);
     }
 
@@ -133,25 +122,5 @@ public class DelegateTypeMapping implements TypeMapping {
         if (method.getRawReturnType() == void.class) {
             throw new IllegalArgumentException("@VersionValue/@JsonValue cannot be void");
         }
-    }
-
-    private static int getValuePrecedence(MethodDescriptor method) {
-        if (method.hasAnnotation(VersionValue.class)) {
-            return 10;
-        }
-        if (USE_JACKSON_ANNOTATIONS && method.hasAnnotation(JsonValue.class)) {
-            return 5;
-        }
-        return 0;
-    }
-
-    private static int getCreatorPrecedence(ElementDescriptor creator) {
-        if (creator.hasAnnotation(VersionCreator.class)) {
-            return 10;
-        }
-        if (USE_JACKSON_ANNOTATIONS && creator.hasAnnotation(JsonCreator.class)) {
-            return 5;
-        }
-        return 0;
     }
 }

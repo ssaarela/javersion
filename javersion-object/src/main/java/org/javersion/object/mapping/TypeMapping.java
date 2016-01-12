@@ -15,6 +15,9 @@
  */
 package org.javersion.object.mapping;
 
+import java.util.Optional;
+
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 
@@ -27,17 +30,21 @@ import org.javersion.reflect.TypeDescriptor;
 @ThreadSafe
 public interface TypeMapping {
 
-    boolean applies(@Nullable PropertyPath path, TypeContext typeContext);
+    default boolean applies(@Nullable PropertyPath path, TypeContext typeContext) {
+        return false;
+    }
 
-    default ValueType getValueType() {
+    @Nonnull
+    default ValueType describe(@Nullable PropertyPath path, TypeDescriptor type, DescribeContext context) {
         throw new UnsupportedOperationException();
     }
 
-    default ValueType describe(@Nullable PropertyPath path, TypeDescriptor type, DescribeContext context) {
-        return getValueType();
+    @Nonnull
+    default Optional<ValueType> describe(@Nullable PropertyPath path, TypeContext typeContext, DescribeContext context) {
+        if (applies(path, typeContext)) {
+            return Optional.of(describe(path, typeContext.type, context));
+        }
+        return Optional.empty();
     }
 
-    default ValueType describe(@Nullable PropertyPath path, TypeContext typeContext, DescribeContext context) {
-        return describe(path, typeContext.type, context);
-    }
 }

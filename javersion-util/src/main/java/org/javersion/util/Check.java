@@ -21,10 +21,13 @@ import static java.lang.String.format;
 import java.util.Collection;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 public class Check {
 
     private static final String NOT_NULL_OR_EMPTY_FMT = "%s shoud not be null or empty. Got %s";
 
+    @Nonnull
     public static <T> T notNull(T reference, String fieldName) {
         if (reference == null) {
             // Avoid creating new Object[] (varargs) for normal flow
@@ -33,9 +36,17 @@ public class Check {
         return reference;
     }
 
+    @Nonnull
     public static <T> T notNull$(T reference, String messageFormat, Object... args) {
         if (reference == null) {
             throw new IllegalArgumentException(format(messageFormat, args));
+        }
+        return reference;
+    }
+
+    public static String notNullOrEmpty(String reference, String fieldName) {
+        if (reference == null || reference.length() == 0) {
+            throw new IllegalArgumentException(format(NOT_NULL_OR_EMPTY_FMT, fieldName, reference));
         }
         return reference;
     }
@@ -44,10 +55,12 @@ public class Check {
         checkArgument(expression, messageFormat, args);
     }
 
+    @Nonnull
     public static <T extends Iterable<?>> T notNullOrEmpty(T reference, String fieldName) {
         return notNullOrEmpty$(reference, NOT_NULL_OR_EMPTY_FMT, fieldName, reference);
     }
 
+    @Nonnull
     public static <T extends Iterable<?>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
         checkArgument(!(reference == null || !reference.iterator().hasNext()), messageFormat, args);
         return reference;
@@ -68,13 +81,6 @@ public class Check {
 
     public static <K, V, T extends Map<K, V>> T notNullOrEmpty$(T reference, String messageFormat, Object... args) {
         checkArgument(!(reference == null || reference.isEmpty()), messageFormat, args);
-        return reference;
-    }
-
-    public static String notNullOrEmpty(String reference, String fieldName) {
-        if (reference == null || reference.length() == 0) {
-            throw new IllegalArgumentException(format(NOT_NULL_OR_EMPTY_FMT, fieldName, reference));
-        }
         return reference;
     }
 

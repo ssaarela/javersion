@@ -17,6 +17,7 @@ package org.javersion.object.mapping;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.javersion.object.DescribeContext;
@@ -88,34 +89,38 @@ public class SetTypeMapping implements TypeMapping {
     }
 
     @Override
-    public ValueType describe(PropertyPath path, TypeContext typeContext, DescribeContext context) {
-        TypeDescriptor setType = typeContext.type;
-        TypeDescriptor elementType = setType.resolveGenericParameter(Set.class, 0);
-        SetKey setKey = findSetKey(typeContext.parent, elementType);
+    public Optional<ValueType> describe(PropertyPath path, TypeContext typeContext, DescribeContext context) {
+        ValueType setValueType = null;
+        if (applies(path, typeContext)) {
+            TypeDescriptor setType = typeContext.type;
+            TypeDescriptor elementType = setType.resolveGenericParameter(Set.class, 0);
+            SetKey setKey = findSetKey(typeContext.parent, elementType);
 
-        if (setKey == null) {
-            ValueType valueType = context.describeNow(path.any(), new TypeContext(setType, elementType));
-            return newSetType(requireIdentifiable(valueType, typeContext));
-        } else {
-            PropertyPath elementPath = getElementPath(path, setKey.value());
-            ObjectType objectType = (ObjectType) context.describeNow((SubPath) elementPath, new TypeContext(setType, elementType));
+            if (setKey == null) {
+                ValueType valueType = context.describeNow(path.any(), new TypeContext(setType, elementType));
+                setValueType = newSetType(requireIdentifiable(valueType, typeContext));
+            } else {
+                PropertyPath elementPath = getElementPath(path, setKey.value());
+                ObjectType objectType = (ObjectType) context.describeNow((SubPath) elementPath, new TypeContext(setType, elementType));
 
-            if (objectType.getIdentifier() != null) {
-                throw new IllegalArgumentException("Element should not have both @SetKey and @Id: " +
-                        (typeContext.parent != null ? typeContext.parent : typeContext.type));
+                if (objectType.getIdentifier() != null) {
+                    throw new IllegalArgumentException("Element should not have both @SetKey and @Id: " +
+                            (typeContext.parent != null ? typeContext.parent : typeContext.type));
+                }
+
+                // Ensure that nested mappings are processed before accessing them
+                context.processMappings();
+
+                List<Key> keys = new ArrayList<>();
+                for (String idProperty : setKey.value()) {
+                    IdentifiableType idType = requireIdentifiable(context.getValueType(elementPath.property(idProperty)), typeContext);
+                    Property property = objectType.getProperties().get(idProperty);
+                    keys.add(new PropertyKey(property, idType));
+                }
+                setValueType = newSetType(keys);
             }
-
-            // Ensure that nested mappings are processed before accessing them
-            context.processMappings();
-
-            List<Key> keys = new ArrayList<>();
-            for (String idProperty : setKey.value()) {
-                IdentifiableType idType = requireIdentifiable(context.getValueType(elementPath.property(idProperty)), typeContext);
-                Property property = objectType.getProperties().get(idProperty);
-                keys.add(new PropertyKey(property, idType));
-            }
-            return newSetType(keys);
         }
+        return Optional.ofNullable(setValueType);
     }
 
     private IdentifiableType requireIdentifiable(ValueType valueType, TypeContext typeContext) {

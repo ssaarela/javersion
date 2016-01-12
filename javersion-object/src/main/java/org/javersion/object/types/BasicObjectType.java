@@ -55,12 +55,12 @@ public class BasicObjectType implements ObjectType {
         if (fields != null) {
             fields = Maps.filterEntries(fields, entry -> fieldNames.contains(entry.getKey()));
         }
-        return of(type, alias, new ObjectConstructor(type), null, fields);
+        return of(type, alias, new ObjectCreator(type), null, fields);
     }
 
     public static BasicObjectType of(TypeDescriptor type,
                                      String alias,
-                                     ObjectConstructor constructor,
+                                     ObjectCreator constructor,
                                      ObjectIdentifier identifier,
                                      Map<String, ? extends Property> properties) {
         if (identifier != null) {
@@ -72,7 +72,7 @@ public class BasicObjectType implements ObjectType {
 
     private final Map<String, Property> properties;
 
-    private final ObjectConstructor constructor;
+    private final ObjectCreator constructor;
 
     private final ObjectIdentifier identifier;
 
@@ -82,7 +82,7 @@ public class BasicObjectType implements ObjectType {
 
     private BasicObjectType(TypeDescriptor type,
                             String alias,
-                            ObjectConstructor constructor,
+                            ObjectCreator constructor,
                             ObjectIdentifier identifier,
                             Map<String, ? extends Property> properties) {
         this.type = Check.notNull(type, "type");
@@ -179,7 +179,7 @@ public class BasicObjectType implements ObjectType {
     private static class Identifiable extends BasicObjectType implements IdentifiableType {
         private Identifiable(TypeDescriptor type,
                              String alias,
-                             ObjectConstructor constructor,
+                             ObjectCreator constructor,
                              ObjectIdentifier identifier,
                              Map<String, ? extends Property> properties) {
             super(type, alias, constructor, identifier, properties);

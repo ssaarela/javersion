@@ -15,20 +15,27 @@
  */
 package org.javersion.object.mapping;
 
+import javax.annotation.Nullable;
+
+import org.javersion.object.DescribeContext;
 import org.javersion.object.TypeContext;
 import org.javersion.object.types.PrimitiveValueType;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
+import org.javersion.reflect.TypeDescriptor;
 
-public abstract class PrimitiveTypeMapping implements TypeMapping {
+public final class PrimitiveTypeMapping implements TypeMapping {
 
     private final Class<?> primitiveType;
 
     private final Class<?> wrapperType;
 
-    private PrimitiveTypeMapping(Class<?> wrapperType, Class<?> primitiveType) {
+    private final ValueType valueType;
+
+    private PrimitiveTypeMapping(Class<?> wrapperType, Class<?> primitiveType, ValueType valueType) {
         this.wrapperType = wrapperType;
         this.primitiveType = primitiveType;
+        this.valueType = valueType;
     }
 
     @Override
@@ -37,60 +44,25 @@ public abstract class PrimitiveTypeMapping implements TypeMapping {
         return wrapperType.equals(clazz) || primitiveType.equals(clazz);
     }
 
-    public static final PrimitiveTypeMapping LONG = new PrimitiveTypeMapping(Long.class, long.class) {
-        @Override
-        public ValueType getValueType() {
-            return PrimitiveValueType.LONG;
-        }
-    };
+    @Override
+    public ValueType describe(@Nullable PropertyPath path, TypeDescriptor type, DescribeContext context) {
+        return valueType;
+    }
 
-    public static final PrimitiveTypeMapping INT = new PrimitiveTypeMapping(Integer.class, int.class) {
-        @Override
-        public ValueType getValueType() {
-            return PrimitiveValueType.INT;
-        }
-    };
+    public static final PrimitiveTypeMapping LONG = new PrimitiveTypeMapping(Long.class, long.class, PrimitiveValueType.LONG);
 
-    public static final PrimitiveTypeMapping SHORT = new PrimitiveTypeMapping(Short.class, short.class) {
-        @Override
-        public ValueType getValueType() {
-            return PrimitiveValueType.SHORT;
-        }
-    };
+    public static final PrimitiveTypeMapping INT = new PrimitiveTypeMapping(Integer.class, int.class, PrimitiveValueType.INT);
 
-    public static final PrimitiveTypeMapping BYTE = new PrimitiveTypeMapping(Byte.class, byte.class) {
-        @Override
-        public ValueType getValueType() {
-            return PrimitiveValueType.BYTE;
-        }
-    };
+    public static final PrimitiveTypeMapping SHORT = new PrimitiveTypeMapping(Short.class, short.class, PrimitiveValueType.SHORT);
 
-    public static final PrimitiveTypeMapping BOOLEAN = new PrimitiveTypeMapping(Boolean.class, boolean.class) {
-        @Override
-        public ValueType getValueType() {
-            return PrimitiveValueType.BOOLEAN;
-        }
-    };
+    public static final PrimitiveTypeMapping BYTE = new PrimitiveTypeMapping(Byte.class, byte.class, PrimitiveValueType.BYTE);
 
-    public static final PrimitiveTypeMapping DOUBLE = new PrimitiveTypeMapping(Double.class, double.class) {
-        @Override
-        public ValueType getValueType() {
-            return PrimitiveValueType.DOUBLE;
-        }
-    };
+    public static final PrimitiveTypeMapping BOOLEAN = new PrimitiveTypeMapping(Boolean.class, boolean.class, PrimitiveValueType.BOOLEAN);
 
-    public static final PrimitiveTypeMapping FLOAT = new PrimitiveTypeMapping(Float.class, float.class) {
-        @Override
-        public ValueType getValueType() {
-            return PrimitiveValueType.FLOAT;
-        }
-    };
+    public static final PrimitiveTypeMapping DOUBLE = new PrimitiveTypeMapping(Double.class, double.class, PrimitiveValueType.DOUBLE);
 
-    public static final PrimitiveTypeMapping CHAR = new PrimitiveTypeMapping(Character.class, char.class) {
-        @Override
-        public ValueType getValueType() {
-            return PrimitiveValueType.CHAR;
-        }
-    };
+    public static final PrimitiveTypeMapping FLOAT = new PrimitiveTypeMapping(Float.class, float.class, PrimitiveValueType.FLOAT);
+
+    public static final PrimitiveTypeMapping CHAR = new PrimitiveTypeMapping(Character.class, char.class, PrimitiveValueType.CHAR);
 
 }

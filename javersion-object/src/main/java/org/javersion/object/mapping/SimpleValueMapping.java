@@ -1,5 +1,8 @@
 package org.javersion.object.mapping;
 
+import javax.annotation.Nullable;
+
+import org.javersion.object.DescribeContext;
 import org.javersion.object.TypeContext;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
@@ -24,7 +27,7 @@ public class SimpleValueMapping implements TypeMapping {
     }
 
     @Override
-    public ValueType getValueType() {
+    public ValueType describe(@Nullable PropertyPath path, TypeDescriptor type, DescribeContext context) {
         return valueType;
     }
 
