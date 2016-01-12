@@ -15,6 +15,7 @@
  */
 package org.javersion.object.mapping;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.javersion.object.TypeMappings.USE_JACKSON_ANNOTATIONS;
 
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ import org.javersion.util.Check;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Strings;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -65,15 +66,27 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         return describe.build();
     }
 
-    public static String getAlias(TypeDescriptor type) {
-        return type.getSimpleName();
-    }
-
     public static String getAlias(String aliasOrEmpty, TypeDescriptor type) {
-        if (!Strings.isNullOrEmpty(aliasOrEmpty)) {
+        if (!isNullOrEmpty(aliasOrEmpty)) {
             return aliasOrEmpty;
         }
         return getAlias(type);
+    }
+
+    public static String getAlias(TypeDescriptor type) {
+        if (type.hasAnnotation(Versionable.class)) {
+            String alias = type.getAnnotation(Versionable.class).alias();
+            if (!isNullOrEmpty(alias)) {
+                return alias;
+            }
+        }
+        if (USE_JACKSON_ANNOTATIONS && type.hasAnnotation(JsonTypeName.class)) {
+            String alias = type.getAnnotation(JsonTypeName.class).value();
+            if (!isNullOrEmpty(alias)) {
+                return alias;
+            }
+        }
+        return type.getSimpleName();
     }
 
     private static class Describe {

@@ -15,6 +15,9 @@
  */
 package org.javersion.object.mapping;
 
+import static org.javersion.object.TypeMappings.USE_JACKSON_ANNOTATIONS;
+
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -25,6 +28,8 @@ import org.javersion.object.Versionable.Subclass;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 
 public class VersionableTypeMapping implements TypeMapping {
 
@@ -38,30 +43,57 @@ public class VersionableTypeMapping implements TypeMapping {
     public  ValueType describe(PropertyPath path, TypeContext typeContext, DescribeContext context) {
         Map<String, TypeDescriptor> typesByAlias = new LinkedHashMap<>();
         TypeDescriptor type = typeContext.type;
-        Versionable versionable = type.getAnnotation(Versionable.class);
-        String alias = getAlias(versionable, type);
+        String alias = ObjectTypeMapping.getAlias(type);
         typesByAlias.put(alias, type);
 
-        for (Subclass subclass : versionable.subclasses()) {
-            TypeDescriptor subtype = type.getTypeDescriptors().get(subclass.value());
-            if (subtype.hasAnnotation(Versionable.class)) {
-                throw new IllegalArgumentException(subtype.getSimpleName() + "" +
-                        " islready mapped in " + type.getSimpleName());
-            }
-            alias = getAlias(subclass, subtype);
-            typesByAlias.put(alias, subtype);
+        Map<String, TypeDescriptor> subclasses = getVersionSubclasses(type);
+        if (subclasses == null) {
+            subclasses = getJacksonSubclasses(type);
+        }
+        if (subclasses != null) {
+            typesByAlias.putAll(subclasses);
         }
 
         ObjectTypeMapping objectTypeMapping = new ObjectTypeMapping(typesByAlias);
         return objectTypeMapping.describe(path, typeContext, context);
     }
 
-    static String getAlias(Versionable versionable, TypeDescriptor type) {
-        return ObjectTypeMapping.getAlias(versionable.alias(), type);
+    private Map<String, TypeDescriptor> getVersionSubclasses(TypeDescriptor type) {
+        Map<String, TypeDescriptor>  typesByAlias = null;
+        Versionable versionable = type.getAnnotation(Versionable.class);
+        if (versionable != null && versionable.subclasses().length > 0) {
+            typesByAlias = new HashMap<>();
+            for (Subclass subclass : versionable.subclasses()) {
+                TypeDescriptor subtype = type.getTypeDescriptors().get(subclass.value());
+                String alias = getAlias(subclass, subtype);
+                typesByAlias.put(alias, subtype);
+            }
+        }
+        return typesByAlias;
+    }
+
+    private Map<String, TypeDescriptor> getJacksonSubclasses(TypeDescriptor type) {
+        Map<String, TypeDescriptor>  typesByAlias = null;
+        if (USE_JACKSON_ANNOTATIONS) {
+            JsonSubTypes subTypes = type.getAnnotation(JsonSubTypes.class);
+            if (subTypes != null) {
+                typesByAlias = new HashMap<>();
+                for (JsonSubTypes.Type subType : subTypes.value()) {
+                    TypeDescriptor subtype = type.getTypeDescriptors().get(subType.value());
+                    String alias = getAlias(subType, subtype);
+                    typesByAlias.put(alias, subtype);
+                }
+            }
+        }
+        return typesByAlias;
     }
 
     static String getAlias(Subclass subclass, TypeDescriptor type) {
         return ObjectTypeMapping.getAlias(subclass.alias(), type);
+    }
+
+    static String getAlias(JsonSubTypes.Type subclass, TypeDescriptor type) {
+        return ObjectTypeMapping.getAlias(subclass.name(), type);
     }
 
 }

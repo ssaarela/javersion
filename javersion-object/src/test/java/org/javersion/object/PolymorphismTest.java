@@ -13,6 +13,9 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 public class PolymorphismTest {
 
@@ -46,6 +49,15 @@ public class PolymorphismTest {
         public Cat(@JsonProperty("name")  String foo) {
             super(foo);
         }
+    }
+
+    @Versionable
+    @JsonTypeName("Pet")
+    @JsonSubTypes({ @Type(value = JacksonDog.class, name="Dog") })
+    static class JacksonPet {
+    }
+
+    static class JacksonDog extends JacksonPet {
     }
 
     @Versionable
@@ -85,5 +97,15 @@ public class PolymorphismTest {
         assertThat(owner.pet, instanceOf(Cat.class));
         assertThat(owner.pet.name, equalTo("Mirri"));
         assertThat(((Cat) owner.pet).meow, equalTo(true));
+    }
+
+    @Test
+    public void test_jackson_annotation() {
+        ObjectSerializer<JacksonPet> serializer = new ObjectSerializer<>(JacksonPet.class);
+        JacksonPet pet = serializer.fromPropertyMap(serializer.toPropertyMap(new JacksonPet()));
+        assertThat(pet.getClass(), equalTo(JacksonPet.class));
+
+        pet = serializer.fromPropertyMap(serializer.toPropertyMap(new JacksonDog()));
+        assertThat(pet.getClass(), equalTo(JacksonDog.class));
     }
 }
