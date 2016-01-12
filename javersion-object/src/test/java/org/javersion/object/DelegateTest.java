@@ -55,7 +55,9 @@ public class DelegateTest {
     static class Container<T> {
         Set<T> set = new HashSet<>();
 
-        public Container() {}
+        public Container(T... values) {
+            this(ImmutableSet.copyOf(values));
+        }
 
         public Container(Set<T> set) {
             this.set = set;
@@ -96,6 +98,46 @@ public class DelegateTest {
         @Override
         public int hashCode() {
             return id;
+        }
+    }
+
+    @Versionable
+    static class SetKeyObject {
+        final String value;
+
+        @VersionCreator
+        public SetKeyObject(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            SetKeyObject that = (SetKeyObject) o;
+
+            return value.equals(that.value);
+
+        }
+
+        @Override
+        public int hashCode() {
+            return value.hashCode();
+        }
+    }
+
+    static class SetKeyContainer {
+        private Set<SetKeyObject> set;
+
+        public SetKeyContainer(Set<SetKeyObject> set) {
+            this.set = set;
+        }
+
+        @SetKey("value")
+        @VersionValue
+        public Set<SetKeyObject> asSet() {
+            return set;
         }
     }
 
@@ -259,8 +301,7 @@ public class DelegateTest {
         ObjectSerializer<Container<Wrapper<String>>> serializer =
                 new ObjectSerializer<>(new TypeToken<Container<Wrapper<String>>>() {});
 
-        Container<Wrapper<String>> container = new Container<>();
-        container.set.add(new Wrapper<>("foo"));
+        Container<Wrapper<String>> container = new Container<>(new Wrapper<>("foo"));
 
         Map<PropertyPath, Object> properties = serializer.toPropertyMap(container);
         assertThat(properties).isEqualTo(ImmutableMap.of(
@@ -278,8 +319,7 @@ public class DelegateTest {
                 new ObjectSerializer<>(new TypeToken<Container<Wrapper<Int>>>() {});
 
         Wrapper<Int> wrapper = new Wrapper<>(new Int(123));
-        Container<Wrapper<Int>> container = new Container<>();
-        container.set.add(wrapper);
+        Container<Wrapper<Int>> container = new Container<>(wrapper);
 
         Map<PropertyPath, Object> properties = serializer.toPropertyMap(container);
         assertThat(properties).isEqualTo(ImmutableMap.of(
@@ -307,6 +347,18 @@ public class DelegateTest {
 
         Map<Wrapper<String>, Wrapper<String>> result = serializer.fromPropertyMap(properties);
         assertThat(result).isEqualTo(map);
+    }
+
+    @Test
+    public void set_delegate_with_SetKey() {
+        ObjectSerializer<SetKeyContainer> serializer = new ObjectSerializer<>(SetKeyContainer.class);
+
+        SetKeyContainer container = new SetKeyContainer(ImmutableSet.of(new SetKeyObject("foobar")));
+
+        Map<PropertyPath, Object> properties = serializer.toPropertyMap(container);
+
+        container = serializer.fromPropertyMap(properties);
+        assertThat(container.set).isEqualTo(ImmutableSet.of(new SetKeyObject("foobar")));
     }
 
     @Test

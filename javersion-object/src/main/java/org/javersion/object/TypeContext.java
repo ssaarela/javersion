@@ -24,6 +24,7 @@ import javax.annotation.concurrent.Immutable;
 import org.javersion.reflect.BeanProperty;
 import org.javersion.reflect.ElementDescriptor;
 import org.javersion.reflect.FieldDescriptor;
+import org.javersion.reflect.MethodDescriptor;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
@@ -46,6 +47,10 @@ public final class TypeContext {
 
     public TypeContext(BeanProperty beanProperty) {
         this(beanProperty.getReadMethod(), beanProperty.getType());
+    }
+
+    public TypeContext(MethodDescriptor methodDescriptor) {
+        this(methodDescriptor, methodDescriptor.getReturnType());
     }
 
     public TypeContext(ElementDescriptor parent, TypeDescriptor typeDescriptor) {

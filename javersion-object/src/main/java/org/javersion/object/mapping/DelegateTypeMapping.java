@@ -47,7 +47,7 @@ public class DelegateTypeMapping implements TypeMapping {
         MethodDescriptor valueMethod = getValueMethod(type);
         Class<?> rawDelegateType = valueMethod.getRawReturnType();
         StaticExecutable creator = getCreator(type, rawDelegateType);
-        ValueType valueType = context.describeNow(path, new TypeContext(valueMethod.getReturnType()));
+        ValueType valueType = context.describeNow(path, new TypeContext(valueMethod));
         return DelegateType.of(valueMethod, creator, valueType);
     }
 
