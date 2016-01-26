@@ -20,6 +20,8 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 
 import org.javersion.object.mapping.MappingResolver;
@@ -72,7 +74,7 @@ public final class DescribeContext {
         queue.add(new QueueItem<>(path, typeContext));
     }
 
-    public ValueType describeNow(PropertyPath path, TypeContext typeContext) {
+    public ValueType describeNow(@Nullable PropertyPath path, @Nonnull  TypeContext typeContext) {
         return registerMapping(path, typeContext);
     }
 

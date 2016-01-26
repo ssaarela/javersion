@@ -16,7 +16,6 @@ import org.javersion.reflect.Param;
 import org.junit.Test;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
@@ -259,13 +258,18 @@ public class DelegateTest {
         }
     }
 
+    @Versionable
     static class VersionAnnotationOverridesJson {
 
         private final String value;
 
-        @VersionCreator
         VersionAnnotationOverridesJson(String value) {
             this.value = value;
+        }
+
+        @VersionCreator
+        public static VersionAnnotationOverridesJson fromValue(String value) {
+            return new VersionAnnotationOverridesJson(value);
         }
 
         @JsonCreator
@@ -273,16 +277,6 @@ public class DelegateTest {
             throw new UnsupportedOperationException();
         }
 
-        @Override
-        @VersionValue
-        public String toString() {
-            return value;
-        }
-
-        @JsonValue
-        public int value() {
-            throw new UnsupportedOperationException();
-        }
     }
 
     @Test
