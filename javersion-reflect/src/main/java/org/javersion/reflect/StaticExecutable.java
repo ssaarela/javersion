@@ -15,7 +15,12 @@
  */
 package org.javersion.reflect;
 
+import java.util.List;
+
 public interface StaticExecutable {
 
     Object invokeStatic(Object... args);
+
+    List<ParameterDescriptor> getParameters();
+
 }

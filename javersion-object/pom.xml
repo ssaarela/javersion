@@ -41,6 +41,7 @@
         <configuration>
           <source>${javac.target}</source>
           <target>${javac.target}</target>
+          <compilerArgument>-parameters</compilerArgument>
         </configuration>
       </plugin>
     </plugins>

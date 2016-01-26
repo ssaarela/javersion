@@ -15,24 +15,24 @@
  */
 package org.javersion.object.mapping;
 
-import static org.javersion.object.TypeMappings.USE_JACKSON_ANNOTATIONS;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.javersion.object.*;
+import org.javersion.object.DescribeContext;
+import org.javersion.object.Id;
+import org.javersion.object.TypeContext;
+import org.javersion.object.VersionIgnore;
+import org.javersion.object.VersionProperty;
+import org.javersion.object.mapping.MappingResolver.Result;
 import org.javersion.object.types.*;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.reflect.*;
 import org.javersion.util.Check;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
@@ -65,25 +65,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         return describe.build();
     }
 
-    public static String getAlias(TypeDescriptor type) {
-        return type.getSimpleName();
-    }
-
-    public static String getAlias(String aliasOrEmpty, TypeDescriptor type) {
-        if (!Strings.isNullOrEmpty(aliasOrEmpty)) {
-            return aliasOrEmpty;
-        }
-        return getAlias(type);
-    }
-
     private static class Describe {
-
-        private enum Precedence {
-            NA,
-            DEFAULT,
-            ALTERNATE,
-            MAIN
-        }
 
         final PropertyPath path;
         final DescribeContext context;
@@ -93,9 +75,8 @@ public class ObjectTypeMapping<O> implements TypeMapping {
 
         private TypeDescriptor type;
         private String alias;
-        private ConstructorDescriptor constructor;
-        private Precedence constructorPrecedence;
-        private ImmutableSet<String> constructorParameters;
+        private Result<StaticExecutable> creator;
+        private ImmutableSet<String> creatorParameters;
         private ObjectIdentifier identifier;
         private Map<String, Property> properties;
 
@@ -113,7 +94,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             type.getProperties().values().forEach(this::add);
             type.getFields().values().forEach(this::add);
 
-            ObjectConstructor objectConstructor = getObjectConstructor();
+            ObjectCreator objectConstructor = getObjectConstructor();
 
             BasicObjectType objectType = BasicObjectType.of(type, alias, objectConstructor, identifier, properties);
             if (root == null) {
@@ -123,68 +104,48 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             }
         }
 
-        private ObjectConstructor getObjectConstructor() {
-            return constructor != null ? new ObjectConstructor(constructor, constructorParameters) : null;
+        private ObjectCreator getObjectConstructor() {
+            return creator != null ? new ObjectCreator(creator.value, creatorParameters) : null;
         }
 
         private void clear() {
             type = null;
             alias = null;
-            constructor = null;
-            constructorPrecedence = Precedence.NA;
-            constructorParameters = ImmutableSet.of();
+            creator = Result.notFound();
+            creatorParameters = ImmutableSet.of();
             identifier = null;
             properties = new HashMap<>();
         }
 
         private void assignConstructor(TypeDescriptor type) {
+            type.getConstructors().values().forEach(this::add);
+            type.getMethods().values().forEach(this::add);
             if (!type.isAbstract()) {
-                type.getConstructors().values().forEach(this::add);
-                Check.notNull(constructor, "constructor");
-                constructorParameters = ImmutableSet.copyOf(getConstructorParameters());
+                Check.notNull(creator, "constructor");
+                creatorParameters = ImmutableSet.copyOf(getCreatorParameters());
             }
         }
 
         private void add(ConstructorDescriptor constructor) {
-            Precedence precedence = acceptConstructor(constructor);
-            if (precedence.compareTo(constructorPrecedence) > 0) {
-                this.constructor = constructor;
-                this.constructorPrecedence = precedence;
+            Result<StaticExecutable> creator = context.getMappingResolver().creator(constructor);
+            this.creator = MappingResolver.higherOf(this.creator, creator);
+        }
+
+        private void add(MethodDescriptor creatorMethod) {
+            if (creatorMethod.isStatic() && creatorMethod.getRawReturnType() != void.class) {
+                Result<StaticExecutable> creator = context.getMappingResolver().creator(creatorMethod);
+                this.creator = MappingResolver.higherOf(this.creator, creator);
             }
         }
 
-        private List<String> getConstructorParameters() {
-            return constructor.getParameters().stream()
+        private List<String> getCreatorParameters() {
+            return creator.value.getParameters().stream()
                     .map(this::getParameterName)
                     .collect(Collectors.toList());
         }
 
         private String getParameterName(ParameterDescriptor parameter) {
-            String name = parameter.getName();
-            if (name == null && USE_JACKSON_ANNOTATIONS) {
-                JsonProperty jsonProperty = parameter.getAnnotation(JsonProperty.class);
-                if (jsonProperty != null) {
-                    name = jsonProperty.value();
-                }
-            }
-            if (name == null) {
-                throw new IllegalArgumentException(type.getSimpleName() +
-                        ": @VersionCreator parameter names not found. " +
-                        "Use javac -parameters, @Param or Jackson's @JsonProperty.");
-            }
-            return name;
-        }
-
-        private Precedence acceptConstructor(ConstructorDescriptor constructor) {
-            if (constructor.hasAnnotation(VersionCreator.class)) {
-                return Precedence.MAIN;
-            } else if (USE_JACKSON_ANNOTATIONS && constructor.hasAnnotation(JsonCreator.class)) {
-                return Precedence.ALTERNATE;
-            } else if (constructor.getParameters().isEmpty()) {
-                return Precedence.DEFAULT;
-            } else {
-                return Precedence.NA;
-            }
+            return Check.notNull(context.getMappingResolver().name(parameter), type.getSimpleName() + " parameter name").value;
         }
 
         private void add(BeanProperty property) {
@@ -214,7 +175,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
                 throw new IllegalArgumentException(type.getSimpleName() + " should not have multiple @Id-properties");
             }
             IdentifiableType idType;
-            if (property.isWritable() || constructorParameters.contains(name)) {
+            if (property.isWritable() || creatorParameters.contains(name)) {
                 idType = (IdentifiableType) context.describeNow(path.property(name), typeContext);
             } else {
                 idType = (IdentifiableType) context.describeNow(null, typeContext);
@@ -223,7 +184,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         }
 
         private void add(String name, Property property, TypeContext typeContext) {
-            if (!property.isWritable() && !constructorParameters.contains(name)) {
+            if (!property.isWritable() && !creatorParameters.contains(name)) {
                 throw new IllegalArgumentException(type.getSimpleName() + "."
                         + name + " should have a matching setter or constructor parameter");
             }

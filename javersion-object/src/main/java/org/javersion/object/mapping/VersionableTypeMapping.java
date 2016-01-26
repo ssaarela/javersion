@@ -15,16 +15,20 @@
  */
 package org.javersion.object.mapping;
 
+import static com.google.common.base.Strings.isNullOrEmpty;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.javersion.object.DescribeContext;
 import org.javersion.object.TypeContext;
 import org.javersion.object.Versionable;
-import org.javersion.object.Versionable.Subclass;
+import org.javersion.object.mapping.MappingResolver.Result;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.reflect.TypeDescriptor;
+import org.javersion.util.Check;
 
 public class VersionableTypeMapping implements TypeMapping {
 
@@ -35,33 +39,33 @@ public class VersionableTypeMapping implements TypeMapping {
 
 
     @Override
-    public  ValueType describe(PropertyPath path, TypeContext typeContext, DescribeContext context) {
+    public Optional<ValueType> describe(PropertyPath path, TypeContext typeContext, DescribeContext context) {
+        if (!applies(path, typeContext)) {
+            return Optional.empty();
+        }
+
+        MappingResolver mappingResolver = context.getMappingResolver();
         Map<String, TypeDescriptor> typesByAlias = new LinkedHashMap<>();
         TypeDescriptor type = typeContext.type;
-        Versionable versionable = type.getAnnotation(Versionable.class);
-        String alias = getAlias(versionable, type);
+        String alias = Check.notNull(mappingResolver.alias(type).value, "alias");
         typesByAlias.put(alias, type);
-
-        for (Subclass subclass : versionable.subclasses()) {
-            TypeDescriptor subtype = type.getTypeDescriptors().get(subclass.value());
-            if (subtype.hasAnnotation(Versionable.class)) {
-                throw new IllegalArgumentException(subtype.getSimpleName() + "" +
-                        " islready mapped in " + type.getSimpleName());
-            }
-            alias = getAlias(subclass, subtype);
-            typesByAlias.put(alias, subtype);
-        }
+        registerSubclasses(mappingResolver, typesByAlias, mappingResolver.subclasses(type));
 
         ObjectTypeMapping objectTypeMapping = new ObjectTypeMapping(typesByAlias);
         return objectTypeMapping.describe(path, typeContext, context);
     }
 
-    static String getAlias(Versionable versionable, TypeDescriptor type) {
-        return ObjectTypeMapping.getAlias(versionable.alias(), type);
-    }
-
-    static String getAlias(Subclass subclass, TypeDescriptor type) {
-        return ObjectTypeMapping.getAlias(subclass.alias(), type);
+    private void registerSubclasses(MappingResolver mappingResolver, Map<String, TypeDescriptor> typesByAlias, Result<Map<TypeDescriptor, String>> subclasses) {
+        if (subclasses.isPreset()) {
+            for (Map.Entry<TypeDescriptor, String> entry : subclasses.value.entrySet()) {
+                TypeDescriptor type = entry.getKey();
+                String alias = entry.getValue();
+                if (isNullOrEmpty(alias)) {
+                    alias = Check.notNull(mappingResolver.alias(type).value, "alias");
+                }
+                typesByAlias.put(alias, type);
+            }
+        }
     }
 
 }

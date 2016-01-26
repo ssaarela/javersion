@@ -1,24 +1,31 @@
 package org.javersion.object;
 
+import static com.google.common.collect.ImmutableSet.copyOf;
+import static com.google.common.collect.ImmutableSet.of;
 import static java.util.Collections.singleton;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.sameInstance;
+import static org.javersion.core.Persistent.array;
 import static org.javersion.path.PropertyPath.parse;
 import static org.junit.Assert.assertThat;
 
 import java.util.*;
+import java.util.function.Function;
 
 import org.javersion.core.Persistent;
 import org.javersion.object.PolymorphismTest.Cat;
 import org.javersion.object.PolymorphismTest.Pet;
 import org.javersion.object.ReferencesTest.Node;
 import org.javersion.path.PropertyPath;
+import org.javersion.util.Check;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 
 public class SetTest {
 
@@ -155,6 +162,47 @@ public class SetTest {
         Set<Pet> set;
     }
 
+    @SetKey(by = SetWrapper.Key.class)
+    static class SetWrapper {
+        final Set<Integer> set;
+
+        SetWrapper(Integer... set) {
+            this(copyOf(set));
+        }
+        @VersionCreator
+        SetWrapper(Set<Integer> set) {
+            this.set = Check.notNullOrEmpty(set, "set");
+        }
+
+        @VersionValue
+        Set<Integer> toSet() {
+            return set;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            SetWrapper that = (SetWrapper) o;
+
+            return set.equals(that.set);
+
+        }
+
+        @Override
+        public int hashCode() {
+            return set.hashCode();
+        }
+
+        static class Key implements Function<SetWrapper, Integer> {
+            @Override
+            public Integer apply(SetWrapper setWrapper) {
+                return setWrapper.set.stream().reduce((a, b) -> a^b).get();
+            }
+        }
+    }
+
     public static TypeMappings typeMappings = TypeMappings.builder()
             .withClass(Node.class)
             .havingSubClasses(NodeExt.class)
@@ -228,13 +276,13 @@ public class SetTest {
 
     @Test
     public void double_set() {
-        Set<Double> doubles = ImmutableSet.of(
+        Set<Double> doubles = of(
                 Double.NaN,
                 Double.POSITIVE_INFINITY,
                 Double.NEGATIVE_INFINITY,
                 1.1
         );
-        Set<Float> floats = ImmutableSet.of(
+        Set<Float> floats = of(
                 Float.NaN,
                 Float.POSITIVE_INFINITY,
                 Float.NEGATIVE_INFINITY,
@@ -287,7 +335,7 @@ public class SetTest {
         ReadOnlyId roi1 = new ReadOnlyId(1, 3);
         ReadOnlyId roi2 = new ReadOnlyId(2, 3);
         ReadOnlyIdContainer container = new ReadOnlyIdContainer();
-        container.set = ImmutableSet.of(roi1, roi2);
+        container.set = of(roi1, roi2);
 
         Map<PropertyPath, Object> properties = serializer.toPropertyMap(container);
         assertThat(properties.keySet(), hasSize(8));
@@ -298,14 +346,14 @@ public class SetTest {
 
         container = serializer.fromPropertyMap(properties);
 
-        assertThat(container.set, equalTo(ImmutableSet.of(roi2, roi1)));
+        assertThat(container.set, equalTo(of(roi2, roi1)));
     }
 
     @Test
     public void set_of_pets() {
         ObjectSerializer<PetContainer> serializer = new ObjectSerializer<>(PetContainer.class);
         PetContainer container = new PetContainer();
-        container.set = ImmutableSet.of(new Cat("cat"));
+        container.set = of(new Cat("cat"));
 
         Map<PropertyPath, Object> properties = serializer.toPropertyMap(container);
         container = serializer.fromPropertyMap(properties);
@@ -315,12 +363,37 @@ public class SetTest {
         assertThat(pet.name, equalTo("cat"));
     }
 
+    @Test
+    public void functional_set_key() {
+        final ImmutableSet<SetWrapper> input = of(
+                new SetWrapper(1, 2),
+                new SetWrapper(1, 3));
+
+        ObjectSerializer<Set<SetWrapper>> serializer = new ObjectSerializer<>(new TypeToken<Set<SetWrapper>>() {});
+        Map<PropertyPath, Object> properties = serializer.toPropertyMap(input);
+
+        final Map<PropertyPath, Object> expected = ImmutableMap.<PropertyPath, Object>builder()
+                .put(parse(""), array())
+                .put(parse("[3]"), array())
+                .put(parse("[3][1]"), 1l)
+                .put(parse("[3][2]"), 2l)
+                .put(parse("[2]"), array())
+                .put(parse("[2][1]"), 1l)
+                .put(parse("[2][3]"), 3l)
+                .build();
+
+        assertThat(properties, equalTo(expected));
+
+        Set<SetWrapper> output = serializer.fromPropertyMap(properties);
+        assertThat(output, equalTo(input));
+    }
+
     private Set<MyComposite> getContainerSet() {
-        return ImmutableSet.of(c1, c2, c3, c4);
+        return of(c1, c2, c3, c4);
     }
 
     private void assertContainerSet(Set<MyComposite> set) {
-        assertThat(set, equalTo(ImmutableSet.of(c4, c3, c2, c1)));
+        assertThat(set, equalTo(of(c4, c3, c2, c1)));
     }
 
     private void assertContainerProperties(Map<PropertyPath, Object> properties) {

@@ -54,7 +54,7 @@ public class BasicObjectTypeTest {
         BasicObjectType objectType = BasicObjectType.of(
                 type,
                 "Pet",
-                new ObjectConstructor(type.getConstructors().get(STRING_CONSTRUCTOR)),
+                new ObjectCreator(type.getConstructors().get(STRING_CONSTRUCTOR)),
                 null,
                 ImmutableMap.of()
         );
@@ -64,7 +64,7 @@ public class BasicObjectTypeTest {
     @Test
     public void default_constructor() {
         TypeDescriptor type = DEFAULT.get(MyClass.class);
-        ObjectConstructor objectConstructor = new ObjectConstructor(type);
+        ObjectCreator objectConstructor = new ObjectCreator(type);
         assertThat(objectConstructor.getParameters()).isEmpty();
     }
 

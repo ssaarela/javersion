@@ -20,34 +20,34 @@ import static java.util.stream.Collectors.toList;
 import java.util.List;
 import java.util.Set;
 
-import org.javersion.reflect.ConstructorDescriptor;
 import org.javersion.reflect.ParameterDescriptor;
+import org.javersion.reflect.StaticExecutable;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-public class ObjectConstructor {
+public class ObjectCreator {
 
-    public final ConstructorDescriptor constructor;
+    public final StaticExecutable creator;
 
     public final Set<String> parameters;
 
-    public ObjectConstructor(TypeDescriptor type) {
+    public ObjectCreator(TypeDescriptor type) {
         this(type.getDefaultConstructor(), ImmutableList.of());
     }
 
-    public ObjectConstructor(ConstructorDescriptor constructor) {
-        this(constructor, constructor.getParameters().stream().map(ParameterDescriptor::getName).collect(toList()));
+    public ObjectCreator(StaticExecutable creator) {
+        this(creator, creator.getParameters().stream().map(ParameterDescriptor::getName).collect(toList()));
     }
 
-    public ObjectConstructor(ConstructorDescriptor constructor, List<String> parameters) {
-        this(constructor, ImmutableSet.copyOf(parameters));
+    public ObjectCreator(StaticExecutable creator, List<String> parameters) {
+        this(creator, ImmutableSet.copyOf(parameters));
     }
 
-    public ObjectConstructor(ConstructorDescriptor constructor, ImmutableSet<String> parameters) {
-        this.constructor = Check.notNull(constructor, "constructor");
+    public ObjectCreator(StaticExecutable creator, ImmutableSet<String> parameters) {
+        this.creator = Check.notNull(creator, "creator");
         this.parameters = ImmutableSet.copyOf(parameters);
     }
 
@@ -64,7 +64,7 @@ public class ObjectConstructor {
     }
 
     public Object newInstance(Object[] params) {
-        return constructor.newInstance(params);
+        return creator.invokeStatic(params);
     }
 
     public boolean hasParameter(String name) {
