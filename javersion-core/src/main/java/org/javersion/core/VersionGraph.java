@@ -132,6 +132,10 @@ public abstract class VersionGraph<K, V, M,
         return getHeads().valueStream().map(VersionNode::getRevision).collect(Collectors.toList());
     }
 
+    public final Iterable<Revision> getHeadRevisions(String branch) {
+        return Iterables.transform(getHeads(branch), VersionNode::getRevision);
+    }
+
     public final This at(Revision revision) {
         return newBuilder().at(getVersionNode(revision)).build();
     }
@@ -181,4 +185,5 @@ public abstract class VersionGraph<K, V, M,
         }
         return builder.build();
     }
+
 }
