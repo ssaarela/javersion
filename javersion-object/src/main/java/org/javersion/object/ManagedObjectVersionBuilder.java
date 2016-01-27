@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
+import org.javersion.core.Revision;
 import org.javersion.core.Version;
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
@@ -16,6 +17,8 @@ public class ManagedObjectVersionBuilder<M> extends Version.BuilderBase<Property
 
     private final Map<PropertyPath, Object> newProperties;
 
+    private Iterable<Revision> rebaseOn;
+
     public ManagedObjectVersionBuilder(ObjectVersionManager<?, M> manager, Map<PropertyPath, Object> newProperties) {
         this.manager = manager;
         this.newProperties = newProperties;
@@ -27,11 +30,19 @@ public class ManagedObjectVersionBuilder<M> extends Version.BuilderBase<Property
         } else {
             changeset(newProperties, manager.getVersionGraph());
         }
+        if (rebaseOn != null) {
+            parents(rebaseOn);
+        }
         ObjectVersion<M> version = new ObjectVersion<>(this);
         if (commit) {
             manager.commit(version);
         }
         return version;
+    }
+
+    public ManagedObjectVersionBuilder<M> rebaseOn(Iterable<Revision> revisions) {
+        this.rebaseOn = revisions;
+        return this;
     }
 
     @Override
