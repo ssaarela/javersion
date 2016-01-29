@@ -171,7 +171,7 @@ As you can parse most any data into Java Objects, it's a good starting point.
       * Private and final fields are OK.
       * Transient and `@VersionIgnore` fields are skipped.
       * Java Bean properties may be versioned with `@VersionProperty` annotated getter method with matchin setter.
-    * Default (no-args) or `@VersionConstructor` or `@JsonCreator` -annotated constructor.
+    * Default (no-args) or `@VersionCreator` or `@JsonCreator` -annotated constructor.
       * Constructor parameters need to be named with `javac -parameters`, `@Param` or `@JsonProperty`.
     
 1. Annotate your classes with `@Versionable` or use `TypeMappings.builder()` to configure
@@ -469,8 +469,8 @@ have to ignore the field separately.
 
 ## Constructors
 
-Javersion uses default (no-args) constructor by default. Other constructor may also be used 
-by annotating it with `@VersionConstructor` or Jackson's `@JsonCreator`. 
+Javersion uses default (no-args) constructor by default. Other constructor or static method 
+may be used by annotating it with `@VersionCreator` or Jackson's `@JsonCreator`. 
 
 When other than default constructor is used, Javersion needs to know _versionable_ property names
 that are bound to constructor parameters. Parameter names can be defined by
@@ -526,9 +526,11 @@ complex objects require either an identifier property (field or getter)
 that is annotated with `@Id`. An identifier may be non-versionable
 (read-only) by annotating a getter without matching setter. 
 
-An alternative to `@Id` annotation is `@SetKey` on element type or on a Set-field.
-SetKey refers to versionable properties used for element keys by their 
-versionable name. SetKey allows defining composite keys.
+An alternative to `@Id` annotation is `@SetKey` on element type, field or getter.
+SetKey defines either property names used for (composite) key or 
+a `Function` that is used to convert elements to identifying keys.
+SetKey's value refers to versionable properties used for element keys by their 
+versionable name.  
 
 However Set's elements are identified, the versionable identity should match
 equals/hashCode identity of the element.
@@ -540,7 +542,7 @@ Null elements are not supported.
 Objects should have default no-args constructor. They can be mapped with `TypeMappings.builder()` or with
 `@Versionable` annotation.
 
-You can define polymorphic classes with `@Versionable(subclasses=...}` on 
+You can define polymorphic classes with `@Versionable(subclasses=...}` (or `@JsonSubTypes`) on 
 the root class, or use `TypeMappings.builder`: 
 
 ```
@@ -631,6 +633,20 @@ using
 `ToStringMapping` also allows matching sub classes of the given class with `boolean matchSubClasses`-parameter, 
 but beware that it does not support polymorphism! If your property is of type `MySuperStringComponent` then 
 that's what you're going to get out event if you assign `MySubStringComponent` to it. 
+
+### Delegate Mapping
+
+`@VersionValue` (or `@JsonValue`) can be used to mark a no-args instance method with non-void return type as a 
+delegate for versioning. It requires a matching `@VersionCreate` constructor or static method for reading
+versions back to given object. 
+
+### Configurable Annotations Search Path
+
+Javersion's TypeMappings checks if Jackson is in found in classpath and in that cases uses Jackson's annotations
+as secondary mapping annotations. Javersion's own annotations can always be used to override Jackson's annotations. 
+As a fallback Javersion uses basic reflection, e.g. javac -parameters for parameters and Class.getSimpleName() 
+for alias. However, this search path can be configured using `TypeMappings.withMappingResolvers`
+and one may implement a custom `MappingResolver`. 
 
 # Modules
 

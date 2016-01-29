@@ -23,9 +23,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * Used on a Java Bean property getter method (isX/getX), marks it to be versioned.
- *
- * Used on a field, allows redefining property name used in versioning.
+ * Marks a no-args instance method with non-void return type as a versioning
+ * delegate for given object. Requires @VersionCreator constructor or method
+ * with matching parameter type for reading versioned data.
  */
 @Target({ METHOD })
 @Retention(RUNTIME)
