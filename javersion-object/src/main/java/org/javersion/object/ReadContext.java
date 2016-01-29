@@ -41,7 +41,7 @@ public final class ReadContext {
 
     private final Map<PropertyPath, Object> objects = Maps.newHashMap();
 
-    protected ReadContext(Schema<ValueType> schemaRoot, Map<PropertyPath, Object> properties) {
+    public ReadContext(Schema<ValueType> schemaRoot, Map<PropertyPath, Object> properties) {
         this.properties = properties;
         this.schemaRoot = schemaRoot;
         this.rootNode = PropertyTree.build(properties.keySet());
