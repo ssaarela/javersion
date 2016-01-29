@@ -25,6 +25,10 @@ public class SimpleVersion extends Version<String, String, String> {
         return new Builder();
     }
 
+    public static Builder builder(Revision revision) {
+        return new Builder(revision);
+    }
+
     public static class Builder extends BuilderBase<String, String, String, Builder> {
 
         public Builder() {
