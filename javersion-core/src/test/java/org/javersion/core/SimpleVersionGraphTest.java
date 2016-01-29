@@ -16,6 +16,7 @@
 package org.javersion.core;
 
 import static com.google.common.base.Predicates.notNull;
+import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
@@ -26,6 +27,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
+import static org.javersion.core.SimpleVersion.builder;
+import static org.javersion.core.SimpleVersionGraph.init;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
@@ -37,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.javersion.core.SimpleVersion.Builder;
 import org.junit.Test;
 
 import com.google.common.base.Function;
@@ -378,7 +382,7 @@ public class SimpleVersionGraphTest {
 
     @Test
     public void Sequential_Updates() {
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init();
+        SimpleVersionGraph versionGraph = init();
         Revision revision = null;
         for (VersionExpectation expectation : EXPECTATIONS) {
             if (expectation.version != null) {
@@ -406,7 +410,7 @@ public class SimpleVersionGraphTest {
             if (expectation.getRevision() != null) {
                 revision = expectation.getRevision();
             }
-            SimpleVersionGraph versionGraph = SimpleVersionGraph.init(getVersions(expectations));
+            SimpleVersionGraph versionGraph = init(getVersions(expectations));
             assertGraphExpectations(versionGraph, revision, expectation);
             assertMergeExpectations(versionGraph, revision, expectation);
         }
@@ -414,36 +418,36 @@ public class SimpleVersionGraphTest {
 
     @Test
     public void Visit_Older_Versions() {
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(getVersions(EXPECTATIONS));
+        SimpleVersionGraph versionGraph = init(getVersions(EXPECTATIONS));
         runExpectations(versionGraph, EXPECTATIONS);
     }
 
     @Test
     public void Bulk_Commit() {
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(EXPECTATIONS.get(0).version);
+        SimpleVersionGraph versionGraph = init(EXPECTATIONS.get(0).version);
         versionGraph = versionGraph.commit(getVersions(EXPECTATIONS.subList(1, EXPECTATIONS.size())));
         runExpectations(versionGraph, EXPECTATIONS);
     }
 
     @Test
     public void Tip_of_an_Empty_Graph() {
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init();
+        SimpleVersionGraph versionGraph = init();
         assertNull(versionGraph.getTip());
         assertTrue(newArrayList(versionGraph.getVersions()).isEmpty());
     }
 
     @Test(expected = VersionNotFoundException.class)
     public void Version_Not_Found() {
-        SimpleVersionGraph.init().getVersionNode(new Revision());
+        init().getVersionNode(new Revision());
     }
 
     @Test
     public void VersionNode_getChangeset_should_not_throw_NPE() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new Builder()
                 .changeset(mapOf("value", null))
                 .build();
 
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v1));
+        SimpleVersionGraph versionGraph = init(asList(v1));
         VersionNode versionNode = versionGraph.getVersionNode(v1.revision);
         assertThat(versionNode.getChangeset(), equalTo(mapOf("value", null)));
     }
@@ -452,23 +456,23 @@ public class SimpleVersionGraphTest {
 
     @Test
     public void VersionNode_Should_Analyze_Actual_Changeset() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new Builder()
                 .changeset(ImmutableMap.of("id", "id1", "name", "name1"))
                 .build();
 
         // v2.parents == v3.parents, non-conflicting changes from not-a-diff-based versions
 
-        SimpleVersion v2 = new SimpleVersion.Builder()
+        SimpleVersion v2 = new Builder()
                 .changeset(ImmutableMap.of("id", "id2", "name", "name1"))
                 .parents(v1.revision)
                 .build();
 
-        SimpleVersion v3 = new SimpleVersion.Builder()
+        SimpleVersion v3 = new Builder()
                 .changeset(ImmutableMap.of("id", "id1", "name", "name2"))
                 .parents(v1.revision)
                 .build();
 
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v1, v2, v3));
+        SimpleVersionGraph versionGraph = init(asList(v1, v2, v3));
 
         VersionNode versionNode = versionGraph.getVersionNode(v2.revision);
         assertThat(versionNode.getChangeset(), equalTo(ImmutableMap.of("id", "id2")));
@@ -492,17 +496,17 @@ public class SimpleVersionGraphTest {
 
     @Test
     public void at() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new Builder()
                 .branch("branch1")
                 .changeset(ImmutableMap.of("key", "value1"))
                 .build();
-        SimpleVersion v2 = new SimpleVersion.Builder()
+        SimpleVersion v2 = new Builder()
                 .branch("branch2")
                 .changeset(ImmutableMap.of("key", "value2"))
                 .parents(v1.revision)
                 .build();
 
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v1, v2));
+        SimpleVersionGraph versionGraph = init(asList(v1, v2));
         assertThat(versionGraph.getBranches(), equalTo(ImmutableSet.of("branch1", "branch2")));
         assertThat(versionGraph.getHead("branch1"), equalTo(versionGraph.getVersionNode(v1.revision)));
         assertThat(versionGraph.getHead("branch2"), equalTo(versionGraph.getVersionNode(v2.revision)));
@@ -521,16 +525,16 @@ public class SimpleVersionGraphTest {
 
     @Test
     public void merge_revisions() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new Builder()
                 .branch("branch1")
                 .changeset(ImmutableMap.of("key","value1", "foo","bar"))
                 .build();
-        SimpleVersion v2 = new SimpleVersion.Builder()
+        SimpleVersion v2 = new Builder()
                 .branch("branch2")
                 .changeset(ImmutableMap.of("key", "value2", "bar", "foo"))
                 .build();
 
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v1, v2));
+        SimpleVersionGraph versionGraph = init(asList(v1, v2));
         Merge<String, String, String> merge = versionGraph.mergeRevisions(v1.revision, v2.revision);
         assertThat(merge.getProperties(), equalTo(ImmutableMap.of(
                 "key","value2", "foo","bar", "bar","foo")));
@@ -543,16 +547,16 @@ public class SimpleVersionGraphTest {
 
     @Test
     public void version_order_is_maintained() {
-        SimpleVersion v1 = new SimpleVersion.Builder()
+        SimpleVersion v1 = new Builder()
                 .changeset(ImmutableMap.of("key", "value1"))
                 .build();
-        SimpleVersion v2 = new SimpleVersion.Builder()
+        SimpleVersion v2 = new Builder()
                 .changeset(ImmutableMap.of("key", "value2"))
                 .build();
 
         assertThat(v1.revision, lessThan(v2.revision));
 
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(asList(v2, v1));
+        SimpleVersionGraph versionGraph = init(asList(v2, v1));
         Merge<String, String, String> merge = versionGraph.mergeBranches(DEFAULT_BRANCH);
         // Insertion order doesn't affect merge
         assertThat(merge.getProperties().get("key"), equalTo("value2"));
@@ -563,12 +567,26 @@ public class SimpleVersionGraphTest {
     @Test(expected = IllegalArgumentException.class)
     public void duplicate_revision_throws_exception() {
         Revision rev = new Revision();
-        SimpleVersion v1 = new SimpleVersion.Builder(rev)
-                .build();
-        SimpleVersion v2 = new SimpleVersion.Builder(rev)
-                .build();
+        SimpleVersion v1 = builder(rev).build();
+        SimpleVersion v2 = new Builder(rev).build();
 
-        SimpleVersionGraph.init(asList(v1, v2));
+        init(asList(v1, v2));
+    }
+
+    @Test
+    public void is_empty() {
+        assertThat(init().isEmpty(), equalTo(true));
+        assertThat(init(new Builder().build()).isEmpty(), equalTo(false));
+    }
+
+    @Test
+    public void get_heads() {
+        Revision r1 = new Revision(),
+                r2 = new Revision();
+        SimpleVersionGraph graph = init(builder(r1).branch("b1").build(), builder(r2).branch("b2").build());
+        assertThat(graph.getHeadRevisions(), equalTo(asList(r1, r2)));
+        assertThat(copyOf(graph.getHeadRevisions("b1")), equalTo(ImmutableSet.of(r1)));
+        assertThat(copyOf(graph.getHeadRevisions("b2")), equalTo(ImmutableSet.of(r2)));
     }
 
     private int findIndex(List<VersionExpectation> expectations, int versionNumber) {
@@ -697,11 +715,11 @@ public class SimpleVersionGraphTest {
         }
     }
 
-    public static SimpleVersion.Builder version(Revision rev) {
-        return new SimpleVersion.Builder(rev);
+    public static Builder version(Revision rev) {
+        return new Builder(rev);
     }
 
-    public static VersionExpectation when(SimpleVersion.Builder builder) {
+    public static VersionExpectation when(Builder builder) {
         return new VersionExpectation(builder.build());
     }
     public static VersionExpectation then(String title) {
@@ -710,7 +728,7 @@ public class SimpleVersionGraphTest {
 
     @SafeVarargs
     public static <T> Set<T> setOf(T... revs) {
-        return ImmutableSet.copyOf(revs);
+        return copyOf(revs);
     }
 
     public static Map<String, String> mapOf(String... entries) {

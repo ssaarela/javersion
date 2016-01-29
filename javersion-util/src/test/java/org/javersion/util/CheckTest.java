@@ -29,16 +29,6 @@ public class CheckTest {
     }
 
     @Test
-    public void notNull_error_custom_message() {
-        try {
-            Check.notNull(null, "formatted %s", "message");
-            fail("Expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo("formatted message");
-        }
-    }
-
-    @Test
     public void notNullOrEmptyString() {
         String result = Check.notNullOrEmpty("result", "field");
         assertThat(result).isEqualTo("result");

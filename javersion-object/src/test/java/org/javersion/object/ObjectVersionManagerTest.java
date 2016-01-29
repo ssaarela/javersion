@@ -1,6 +1,7 @@
 package org.javersion.object;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Collections.singleton;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
@@ -150,6 +151,29 @@ public class ObjectVersionManagerTest {
         version = versionManager.versionBuilder(product).build();
         assertThat(version.changeset.size(), equalTo(1));
         defaultMergeNoConflicts(product);
+    }
+
+    @Test
+    public void rebase() {
+        Revision v1 = new Revision(),
+                 v2 = new Revision();
+
+        Product product = new Product();
+        product.name = "name";
+        versionManager.versionBuilder(product).revision(v1).build();
+
+        product.name = "change";
+        versionManager.versionBuilder(product).revision(v2).build();
+
+        product.name = "rebased conflict";
+        versionManager.versionBuilder(product)
+                .parents(v1)
+                .rebaseOn(singleton(v2))
+                .build();
+
+        MergeObject<Product, Void> merge = versionManager.mergeBranches();
+        assertThat(merge.getConflicts().isEmpty(), equalTo(true));
+        assertThat(merge.object.name, equalTo("rebased conflict"));
     }
 
     @Test

@@ -131,17 +131,17 @@ public class Version<K, V, M> {
     @NotThreadSafe
     public abstract static class BuilderBase<K, V, M, This extends BuilderBase<K, V, M, This>> {
 
-        protected Revision revision;
+        public Revision revision;
 
-        protected VersionType type;
+        public VersionType type;
 
-        protected String branch;
+        public String branch;
 
-        protected Iterable<Revision> parentRevisions;
+        public Iterable<Revision> parentRevisions;
 
-        protected Map<K, V> changeset;
+        public Map<K, V> changeset;
 
-        protected M meta;
+        public M meta;
 
         public BuilderBase() {
         }

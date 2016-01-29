@@ -50,11 +50,6 @@ public final class Check {
     }
 
     @Nonnull
-    public static <T> T notNull(T object, String messageFormat, Object arg1, Object... rest) {
-        return that(object, NOT_NULL, messageFormat, arg1, rest);
-    }
-
-    @Nonnull
     public static String notNullOrEmpty(String string, String fieldName) {
         notNull(string, fieldName);
         return that(string, NOT_EMPTY_STRING, NOT_EMPTY_FMT, fieldName);
