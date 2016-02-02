@@ -15,7 +15,6 @@
  */
 package org.javersion.core;
 
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -89,11 +88,11 @@ public class MergeBuilder<K, V, M> {
             }
         };
 
-        for (Map.Entry<K, V> entry : version.changeset.entrySet()) {
-            VersionProperty<V> versionProperty = new VersionProperty<V>(version.revision, entry.getValue());
-            mergedProperties.merge(entry.getKey(), versionProperty, overwriteMerger);
-            conflicts.removeAll(entry.getKey());
-        }
+        version.changeset.forEach((path, value) -> {
+            VersionProperty<V> versionProperty = new VersionProperty<V>(version.revision, value);
+            mergedProperties.merge(path, versionProperty, overwriteMerger);
+            conflicts.removeAll(path);
+        });
         heads.removeAll(version.parentRevisions);
         mergedRevisions.addAllFrom(version.parentRevisions);
         mergedRevisions.add(version.revision);
@@ -146,17 +145,17 @@ public class MergeBuilder<K, V, M> {
                 VersionProperty<V> prevValue = oldEntry.getValue();
                 VersionProperty<V> nextValue = newEntry.getValue();
 
-                // Keep older value if there's no change
-                if (Objects.equals(prevValue.value, nextValue.value)) {
-                    return nextValue.isBefore(prevValue);
-                }
                 // Keep prevValue if nextValue is from common ancestor
-                else if (mergedRevisions.contains(nextValue.revision)) {
+                if (mergedRevisions.contains(nextValue.revision)) {
                     return false;
                 }
                 // Keep nextValue if prevValue is from common ancestor
                 else if (node.mergedRevisions.contains(prevValue.revision)) {
                     return true;
+                }
+                // Keep older value if there's no change
+                else if (Objects.equals(prevValue.value, nextValue.value)) {
+                    return nextValue.isBefore(prevValue);
                 }
                 // For conflicting value, keep newer and report the other as a conflict
                 else {

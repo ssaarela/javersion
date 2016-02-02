@@ -85,9 +85,7 @@ public final class Diff {
         Map<K, V> diff = new HashMap<>(diffSizeEstimate(from.size(), to.size()));
 
         // New and changed keys
-        to.entrySet().stream().forEach( entry -> {
-            K key = entry.getKey();
-            V newValue = entry.getValue();
+        to.forEach( (key, newValue) -> {
             V oldValue = from.get(key);
             if (!Objects.equals(newValue, oldValue)) {
                 diff.put(key, newValue);
@@ -95,7 +93,7 @@ public final class Diff {
         });
 
         // Removed keys
-        from.keySet().stream().forEach( key -> {
+        from.forEach( (key, value) -> {
             if (!to.containsKey(key)) {
                 diff.put(key, null);
             }
