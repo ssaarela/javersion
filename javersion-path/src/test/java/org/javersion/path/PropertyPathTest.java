@@ -351,6 +351,13 @@ public class PropertyPathTest {
         testConstructionFromNodes(path);
     }
 
+    @Test
+    public void ecmascript_keys() {
+        PropertyPath path = ROOT.property("map").key("a/b'c");
+        PropertyPath parsed = PropertyPath.parse(path.toString());
+        assertThat(parsed).isEqualTo(path);
+    }
+
     private void testConstructionFromNodes(PropertyPath path) {
         PropertyPath nodePath = ROOT;
         for (SubPath element : path.asList()) {

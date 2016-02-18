@@ -1,8 +1,7 @@
-// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
+// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5.1
 package org.javersion.path.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -17,144 +16,144 @@ public class PropertyPathBaseListener implements PropertyPathListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterParsePath(@NotNull PropertyPathParser.ParsePathContext ctx) { }
+	@Override public void enterParsePath(PropertyPathParser.ParsePathContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitParsePath(@NotNull PropertyPathParser.ParsePathContext ctx) { }
+	@Override public void exitParsePath(PropertyPathParser.ParsePathContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterParseProperty(@NotNull PropertyPathParser.ParsePropertyContext ctx) { }
+	@Override public void enterParseProperty(PropertyPathParser.ParsePropertyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitParseProperty(@NotNull PropertyPathParser.ParsePropertyContext ctx) { }
+	@Override public void exitParseProperty(PropertyPathParser.ParsePropertyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx) { }
+	@Override public void enterIndexedOrAny(PropertyPathParser.IndexedOrAnyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx) { }
+	@Override public void exitIndexedOrAny(PropertyPathParser.IndexedOrAnyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterProperty(@NotNull PropertyPathParser.PropertyContext ctx) { }
+	@Override public void enterProperty(PropertyPathParser.PropertyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitProperty(@NotNull PropertyPathParser.PropertyContext ctx) { }
+	@Override public void exitProperty(PropertyPathParser.PropertyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterIndex(@NotNull PropertyPathParser.IndexContext ctx) { }
+	@Override public void enterIndex(PropertyPathParser.IndexContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitIndex(@NotNull PropertyPathParser.IndexContext ctx) { }
+	@Override public void exitIndex(PropertyPathParser.IndexContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterKey(@NotNull PropertyPathParser.KeyContext ctx) { }
+	@Override public void enterKey(PropertyPathParser.KeyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitKey(@NotNull PropertyPathParser.KeyContext ctx) { }
+	@Override public void exitKey(PropertyPathParser.KeyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx) { }
+	@Override public void enterAnyProperty(PropertyPathParser.AnyPropertyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx) { }
+	@Override public void exitAnyProperty(PropertyPathParser.AnyPropertyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterAnyIndex(@NotNull PropertyPathParser.AnyIndexContext ctx) { }
+	@Override public void enterAnyIndex(PropertyPathParser.AnyIndexContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitAnyIndex(@NotNull PropertyPathParser.AnyIndexContext ctx) { }
+	@Override public void exitAnyIndex(PropertyPathParser.AnyIndexContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterAnyKey(@NotNull PropertyPathParser.AnyKeyContext ctx) { }
+	@Override public void enterAnyKey(PropertyPathParser.AnyKeyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitAnyKey(@NotNull PropertyPathParser.AnyKeyContext ctx) { }
+	@Override public void exitAnyKey(PropertyPathParser.AnyKeyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterAny(@NotNull PropertyPathParser.AnyContext ctx) { }
+	@Override public void enterAny(PropertyPathParser.AnyContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitAny(@NotNull PropertyPathParser.AnyContext ctx) { }
+	@Override public void exitAny(PropertyPathParser.AnyContext ctx) { }
 
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterEveryRule(@NotNull ParserRuleContext ctx) { }
+	@Override public void enterEveryRule(ParserRuleContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitEveryRule(@NotNull ParserRuleContext ctx) { }
+	@Override public void exitEveryRule(ParserRuleContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void visitTerminal(@NotNull TerminalNode node) { }
+	@Override public void visitTerminal(TerminalNode node) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void visitErrorNode(@NotNull ErrorNode node) { }
+	@Override public void visitErrorNode(ErrorNode node) { }
 }

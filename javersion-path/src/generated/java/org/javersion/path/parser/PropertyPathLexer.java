@@ -1,4 +1,4 @@
-// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
+// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5.1
 package org.javersion.path.parser;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class PropertyPathLexer extends Lexer {
-	static { RuntimeMetaData.checkVersion("4.5", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.5.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -65,7 +65,7 @@ public class PropertyPathLexer extends Lexer {
 	}
 
 	@Override
-	@NotNull
+
 	public Vocabulary getVocabulary() {
 		return VOCABULARY;
 	}
@@ -94,27 +94,27 @@ public class PropertyPathLexer extends Lexer {
 	@Override
 	public boolean sempred(RuleContext _localctx, int ruleIndex, int predIndex) {
 		switch (ruleIndex) {
-		case 8: 
+		case 8:
 			return JavaIdentifierStart_sempred((RuleContext)_localctx, predIndex);
-		case 9: 
+		case 9:
 			return JavaIdentifierPart_sempred((RuleContext)_localctx, predIndex);
 		}
 		return true;
 	}
 	private boolean JavaIdentifierStart_sempred(RuleContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 0: 
+		case 0:
 			return Character.isJavaIdentifierStart(_input.LA(-1));
-		case 1: 
+		case 1:
 			return Character.isJavaIdentifierStart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)));
 		}
 		return true;
 	}
 	private boolean JavaIdentifierPart_sempred(RuleContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 2: 
+		case 2:
 			return Character.isJavaIdentifierPart(_input.LA(-1));
-		case 3: 
+		case 3:
 			return Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)));
 		}
 		return true;
@@ -135,35 +135,36 @@ public class PropertyPathLexer extends Lexer {
 		"\2\2\30\3\3\5\4\7\5\t\6\13\7\r\b\17\t\21\n\23\2\25\2\27\13\31\2\33\2\35"+
 		"\f\37\2!\2#\2%\2\'\2)\2+\2-\2\3\2\16\6\2&&C\\aac|\4\2\2\u00a3\ud802\udc01"+
 		"\3\2\ud802\udc01\3\2\udc02\ue001\7\2&&\62;C\\aac|\b\2&&\62;C\\aac|\ud802"+
-		"\udc01\3\2\63;\4\2$$^^\n\2$$))^^ddhhppttvv\3\2\62\65\5\2\62;CHch\3\2\62"+
-		"9\u009c\2\3\3\2\2\2\2\5\3\2\2\2\2\7\3\2\2\2\2\t\3\2\2\2\2\13\3\2\2\2\2"+
-		"\r\3\2\2\2\2\17\3\2\2\2\2\21\3\2\2\2\2\27\3\2\2\2\2\35\3\2\2\2\3/\3\2"+
-		"\2\2\5\61\3\2\2\2\7\63\3\2\2\2\t\65\3\2\2\2\138\3\2\2\2\r;\3\2\2\2\17"+
-		">\3\2\2\2\21@\3\2\2\2\23M\3\2\2\2\25U\3\2\2\2\27b\3\2\2\2\31f\3\2\2\2"+
-		"\33h\3\2\2\2\35j\3\2\2\2\37q\3\2\2\2!w\3\2\2\2#}\3\2\2\2%\u008a\3\2\2"+
-		"\2\'\u008c\3\2\2\2)\u0093\3\2\2\2+\u0095\3\2\2\2-\u0097\3\2\2\2/\60\7"+
-		"\60\2\2\60\4\3\2\2\2\61\62\7]\2\2\62\6\3\2\2\2\63\64\7_\2\2\64\b\3\2\2"+
-		"\2\65\66\7\60\2\2\66\67\7,\2\2\67\n\3\2\2\289\7]\2\29:\7_\2\2:\f\3\2\2"+
-		"\2;<\7}\2\2<=\7\177\2\2=\16\3\2\2\2>?\7,\2\2?\20\3\2\2\2@D\5\23\n\2AC"+
-		"\5\25\13\2BA\3\2\2\2CF\3\2\2\2DB\3\2\2\2DE\3\2\2\2E\22\3\2\2\2FD\3\2\2"+
-		"\2GN\t\2\2\2HI\n\3\2\2IN\6\n\2\2JK\t\4\2\2KL\t\5\2\2LN\6\n\3\2MG\3\2\2"+
-		"\2MH\3\2\2\2MJ\3\2\2\2N\24\3\2\2\2OV\t\6\2\2PQ\n\7\2\2QV\6\13\4\2RS\t"+
-		"\4\2\2ST\t\5\2\2TV\6\13\5\2UO\3\2\2\2UP\3\2\2\2UR\3\2\2\2V\26\3\2\2\2"+
-		"Wc\7\62\2\2XZ\7/\2\2YX\3\2\2\2YZ\3\2\2\2Z[\3\2\2\2[_\5\33\16\2\\^\5\31"+
-		"\r\2]\\\3\2\2\2^a\3\2\2\2_]\3\2\2\2_`\3\2\2\2`c\3\2\2\2a_\3\2\2\2bW\3"+
-		"\2\2\2bY\3\2\2\2c\30\3\2\2\2dg\7\62\2\2eg\5\33\16\2fd\3\2\2\2fe\3\2\2"+
-		"\2g\32\3\2\2\2hi\t\b\2\2i\34\3\2\2\2jl\7$\2\2km\5\37\20\2lk\3\2\2\2lm"+
-		"\3\2\2\2mn\3\2\2\2no\7$\2\2o\36\3\2\2\2pr\5!\21\2qp\3\2\2\2rs\3\2\2\2"+
-		"sq\3\2\2\2st\3\2\2\2t \3\2\2\2ux\n\t\2\2vx\5#\22\2wu\3\2\2\2wv\3\2\2\2"+
-		"x\"\3\2\2\2yz\7^\2\2z~\t\n\2\2{~\5%\23\2|~\5\'\24\2}y\3\2\2\2}{\3\2\2"+
-		"\2}|\3\2\2\2~$\3\2\2\2\177\u0080\7^\2\2\u0080\u008b\5-\27\2\u0081\u0082"+
-		"\7^\2\2\u0082\u0083\5-\27\2\u0083\u0084\5-\27\2\u0084\u008b\3\2\2\2\u0085"+
-		"\u0086\7^\2\2\u0086\u0087\5)\25\2\u0087\u0088\5-\27\2\u0088\u0089\5-\27"+
-		"\2\u0089\u008b\3\2\2\2\u008a\177\3\2\2\2\u008a\u0081\3\2\2\2\u008a\u0085"+
-		"\3\2\2\2\u008b&\3\2\2\2\u008c\u008d\7^\2\2\u008d\u008e\7w\2\2\u008e\u008f"+
-		"\5+\26\2\u008f\u0090\5+\26\2\u0090\u0091\5+\26\2\u0091\u0092\5+\26\2\u0092"+
-		"(\3\2\2\2\u0093\u0094\t\13\2\2\u0094*\3\2\2\2\u0095\u0096\t\f\2\2\u0096"+
-		",\3\2\2\2\u0097\u0098\t\r\2\2\u0098.\3\2\2\2\17\2DMUY_bflsw}\u008a\2";
+		"\udc01\3\2\63;\4\2$$^^\13\2$$))\61\61^^ddhhppttvv\3\2\62\65\5\2\62;CH"+
+		"ch\3\2\629\u009c\2\3\3\2\2\2\2\5\3\2\2\2\2\7\3\2\2\2\2\t\3\2\2\2\2\13"+
+		"\3\2\2\2\2\r\3\2\2\2\2\17\3\2\2\2\2\21\3\2\2\2\2\27\3\2\2\2\2\35\3\2\2"+
+		"\2\3/\3\2\2\2\5\61\3\2\2\2\7\63\3\2\2\2\t\65\3\2\2\2\138\3\2\2\2\r;\3"+
+		"\2\2\2\17>\3\2\2\2\21@\3\2\2\2\23M\3\2\2\2\25U\3\2\2\2\27b\3\2\2\2\31"+
+		"f\3\2\2\2\33h\3\2\2\2\35j\3\2\2\2\37q\3\2\2\2!w\3\2\2\2#}\3\2\2\2%\u008a"+
+		"\3\2\2\2\'\u008c\3\2\2\2)\u0093\3\2\2\2+\u0095\3\2\2\2-\u0097\3\2\2\2"+
+		"/\60\7\60\2\2\60\4\3\2\2\2\61\62\7]\2\2\62\6\3\2\2\2\63\64\7_\2\2\64\b"+
+		"\3\2\2\2\65\66\7\60\2\2\66\67\7,\2\2\67\n\3\2\2\289\7]\2\29:\7_\2\2:\f"+
+		"\3\2\2\2;<\7}\2\2<=\7\177\2\2=\16\3\2\2\2>?\7,\2\2?\20\3\2\2\2@D\5\23"+
+		"\n\2AC\5\25\13\2BA\3\2\2\2CF\3\2\2\2DB\3\2\2\2DE\3\2\2\2E\22\3\2\2\2F"+
+		"D\3\2\2\2GN\t\2\2\2HI\n\3\2\2IN\6\n\2\2JK\t\4\2\2KL\t\5\2\2LN\6\n\3\2"+
+		"MG\3\2\2\2MH\3\2\2\2MJ\3\2\2\2N\24\3\2\2\2OV\t\6\2\2PQ\n\7\2\2QV\6\13"+
+		"\4\2RS\t\4\2\2ST\t\5\2\2TV\6\13\5\2UO\3\2\2\2UP\3\2\2\2UR\3\2\2\2V\26"+
+		"\3\2\2\2Wc\7\62\2\2XZ\7/\2\2YX\3\2\2\2YZ\3\2\2\2Z[\3\2\2\2[_\5\33\16\2"+
+		"\\^\5\31\r\2]\\\3\2\2\2^a\3\2\2\2_]\3\2\2\2_`\3\2\2\2`c\3\2\2\2a_\3\2"+
+		"\2\2bW\3\2\2\2bY\3\2\2\2c\30\3\2\2\2dg\7\62\2\2eg\5\33\16\2fd\3\2\2\2"+
+		"fe\3\2\2\2g\32\3\2\2\2hi\t\b\2\2i\34\3\2\2\2jl\7$\2\2km\5\37\20\2lk\3"+
+		"\2\2\2lm\3\2\2\2mn\3\2\2\2no\7$\2\2o\36\3\2\2\2pr\5!\21\2qp\3\2\2\2rs"+
+		"\3\2\2\2sq\3\2\2\2st\3\2\2\2t \3\2\2\2ux\n\t\2\2vx\5#\22\2wu\3\2\2\2w"+
+		"v\3\2\2\2x\"\3\2\2\2yz\7^\2\2z~\t\n\2\2{~\5%\23\2|~\5\'\24\2}y\3\2\2\2"+
+		"}{\3\2\2\2}|\3\2\2\2~$\3\2\2\2\177\u0080\7^\2\2\u0080\u008b\5-\27\2\u0081"+
+		"\u0082\7^\2\2\u0082\u0083\5-\27\2\u0083\u0084\5-\27\2\u0084\u008b\3\2"+
+		"\2\2\u0085\u0086\7^\2\2\u0086\u0087\5)\25\2\u0087\u0088\5-\27\2\u0088"+
+		"\u0089\5-\27\2\u0089\u008b\3\2\2\2\u008a\177\3\2\2\2\u008a\u0081\3\2\2"+
+		"\2\u008a\u0085\3\2\2\2\u008b&\3\2\2\2\u008c\u008d\7^\2\2\u008d\u008e\7"+
+		"w\2\2\u008e\u008f\5+\26\2\u008f\u0090\5+\26\2\u0090\u0091\5+\26\2\u0091"+
+		"\u0092\5+\26\2\u0092(\3\2\2\2\u0093\u0094\t\13\2\2\u0094*\3\2\2\2\u0095"+
+		"\u0096\t\f\2\2\u0096,\3\2\2\2\u0097\u0098\t\r\2\2\u0098.\3\2\2\2\17\2"+
+		"DMUY_bflsw}\u008a\2";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

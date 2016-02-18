@@ -107,7 +107,7 @@ fragment StringCharacter
 
 
 fragment EscapeSequence
-	: '\\' [btnfr"'\\]
+	: '\\' [btnfr"'\\/]
 	| OctalEscape
 	| UnicodeEscape
 	;

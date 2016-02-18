@@ -1,4 +1,4 @@
-// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
+// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5.1
 package org.javersion.path.parser;
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class PropertyPathParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.5", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.5.1", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -63,7 +63,7 @@ public class PropertyPathParser extends Parser {
 	}
 
 	@Override
-	@NotNull
+
 	public Vocabulary getVocabulary() {
 		return VOCABULARY;
 	}
@@ -128,7 +128,7 @@ public class PropertyPathParser extends Parser {
 			switch (_input.LA(1)) {
 			case Identifier:
 				{
-				setState(20); 
+				setState(20);
 				property();
 				}
 				break;
@@ -138,7 +138,7 @@ public class PropertyPathParser extends Parser {
 			case T__5:
 			case T__6:
 				{
-				setState(21); 
+				setState(21);
 				indexedOrAny();
 				}
 				break;
@@ -154,9 +154,9 @@ public class PropertyPathParser extends Parser {
 				switch (_input.LA(1)) {
 				case T__0:
 					{
-					setState(24); 
+					setState(24);
 					match(T__0);
-					setState(25); 
+					setState(25);
 					property();
 					}
 					break;
@@ -166,7 +166,7 @@ public class PropertyPathParser extends Parser {
 				case T__5:
 				case T__6:
 					{
-					setState(26); 
+					setState(26);
 					indexedOrAny();
 					}
 					break;
@@ -178,7 +178,7 @@ public class PropertyPathParser extends Parser {
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(32); 
+			setState(32);
 			match(EOF);
 			}
 		}
@@ -223,9 +223,9 @@ public class PropertyPathParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(34); 
+			setState(34);
 			property();
-			setState(35); 
+			setState(35);
 			match(EOF);
 			}
 		}
@@ -287,54 +287,54 @@ public class PropertyPathParser extends Parser {
 			case T__1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(37); 
+				setState(37);
 				match(T__1);
 				setState(40);
 				switch (_input.LA(1)) {
 				case Integer:
 					{
-					setState(38); 
+					setState(38);
 					index();
 					}
 					break;
 				case Key:
 					{
-					setState(39); 
+					setState(39);
 					key();
 					}
 					break;
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(42); 
+				setState(42);
 				match(T__2);
 				}
 				break;
 			case T__3:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(44); 
+				setState(44);
 				anyProperty();
 				}
 				break;
 			case T__4:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(45); 
+				setState(45);
 				anyIndex();
 				}
 				break;
 			case T__5:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(46); 
+				setState(46);
 				anyKey();
 				}
 				break;
 			case T__6:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(47); 
+				setState(47);
 				any();
 				}
 				break;
@@ -380,7 +380,7 @@ public class PropertyPathParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(50); 
+			setState(50);
 			match(Identifier);
 			}
 		}
@@ -422,7 +422,7 @@ public class PropertyPathParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(52); 
+			setState(52);
 			match(Integer);
 			}
 		}
@@ -464,7 +464,7 @@ public class PropertyPathParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(54); 
+			setState(54);
 			match(Key);
 			}
 		}
@@ -505,7 +505,7 @@ public class PropertyPathParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(56); 
+			setState(56);
 			match(T__3);
 			}
 		}
@@ -546,7 +546,7 @@ public class PropertyPathParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(58); 
+			setState(58);
 			match(T__4);
 			}
 		}
@@ -587,7 +587,7 @@ public class PropertyPathParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(60); 
+			setState(60);
 			match(T__5);
 			}
 		}
@@ -628,7 +628,7 @@ public class PropertyPathParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(62); 
+			setState(62);
 			match(T__6);
 			}
 		}

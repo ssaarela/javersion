@@ -1,6 +1,5 @@
-// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
+// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5.1
 package org.javersion.path.parser;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
 /**
@@ -12,100 +11,100 @@ public interface PropertyPathListener extends ParseTreeListener {
 	 * Enter a parse tree produced by {@link PropertyPathParser#parsePath}.
 	 * @param ctx the parse tree
 	 */
-	void enterParsePath(@NotNull PropertyPathParser.ParsePathContext ctx);
+	void enterParsePath(PropertyPathParser.ParsePathContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#parsePath}.
 	 * @param ctx the parse tree
 	 */
-	void exitParsePath(@NotNull PropertyPathParser.ParsePathContext ctx);
+	void exitParsePath(PropertyPathParser.ParsePathContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#parseProperty}.
 	 * @param ctx the parse tree
 	 */
-	void enterParseProperty(@NotNull PropertyPathParser.ParsePropertyContext ctx);
+	void enterParseProperty(PropertyPathParser.ParsePropertyContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#parseProperty}.
 	 * @param ctx the parse tree
 	 */
-	void exitParseProperty(@NotNull PropertyPathParser.ParsePropertyContext ctx);
+	void exitParseProperty(PropertyPathParser.ParsePropertyContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#indexedOrAny}.
 	 * @param ctx the parse tree
 	 */
-	void enterIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx);
+	void enterIndexedOrAny(PropertyPathParser.IndexedOrAnyContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#indexedOrAny}.
 	 * @param ctx the parse tree
 	 */
-	void exitIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx);
+	void exitIndexedOrAny(PropertyPathParser.IndexedOrAnyContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#property}.
 	 * @param ctx the parse tree
 	 */
-	void enterProperty(@NotNull PropertyPathParser.PropertyContext ctx);
+	void enterProperty(PropertyPathParser.PropertyContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#property}.
 	 * @param ctx the parse tree
 	 */
-	void exitProperty(@NotNull PropertyPathParser.PropertyContext ctx);
+	void exitProperty(PropertyPathParser.PropertyContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#index}.
 	 * @param ctx the parse tree
 	 */
-	void enterIndex(@NotNull PropertyPathParser.IndexContext ctx);
+	void enterIndex(PropertyPathParser.IndexContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#index}.
 	 * @param ctx the parse tree
 	 */
-	void exitIndex(@NotNull PropertyPathParser.IndexContext ctx);
+	void exitIndex(PropertyPathParser.IndexContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#key}.
 	 * @param ctx the parse tree
 	 */
-	void enterKey(@NotNull PropertyPathParser.KeyContext ctx);
+	void enterKey(PropertyPathParser.KeyContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#key}.
 	 * @param ctx the parse tree
 	 */
-	void exitKey(@NotNull PropertyPathParser.KeyContext ctx);
+	void exitKey(PropertyPathParser.KeyContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#anyProperty}.
 	 * @param ctx the parse tree
 	 */
-	void enterAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx);
+	void enterAnyProperty(PropertyPathParser.AnyPropertyContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#anyProperty}.
 	 * @param ctx the parse tree
 	 */
-	void exitAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx);
+	void exitAnyProperty(PropertyPathParser.AnyPropertyContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#anyIndex}.
 	 * @param ctx the parse tree
 	 */
-	void enterAnyIndex(@NotNull PropertyPathParser.AnyIndexContext ctx);
+	void enterAnyIndex(PropertyPathParser.AnyIndexContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#anyIndex}.
 	 * @param ctx the parse tree
 	 */
-	void exitAnyIndex(@NotNull PropertyPathParser.AnyIndexContext ctx);
+	void exitAnyIndex(PropertyPathParser.AnyIndexContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#anyKey}.
 	 * @param ctx the parse tree
 	 */
-	void enterAnyKey(@NotNull PropertyPathParser.AnyKeyContext ctx);
+	void enterAnyKey(PropertyPathParser.AnyKeyContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#anyKey}.
 	 * @param ctx the parse tree
 	 */
-	void exitAnyKey(@NotNull PropertyPathParser.AnyKeyContext ctx);
+	void exitAnyKey(PropertyPathParser.AnyKeyContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link PropertyPathParser#any}.
 	 * @param ctx the parse tree
 	 */
-	void enterAny(@NotNull PropertyPathParser.AnyContext ctx);
+	void enterAny(PropertyPathParser.AnyContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link PropertyPathParser#any}.
 	 * @param ctx the parse tree
 	 */
-	void exitAny(@NotNull PropertyPathParser.AnyContext ctx);
+	void exitAny(PropertyPathParser.AnyContext ctx);
 }

@@ -1,6 +1,5 @@
-// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5
+// Generated from /Users/samppa/Personal/javersion/javersion-path/src/main/antlr/PropertyPath.g4 by ANTLR 4.5.1
 package org.javersion.path.parser;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 /**
@@ -18,68 +17,68 @@ public class PropertyPathBaseVisitor<T> extends AbstractParseTreeVisitor<T> impl
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitParsePath(@NotNull PropertyPathParser.ParsePathContext ctx) { return visitChildren(ctx); }
+	@Override public T visitParsePath(PropertyPathParser.ParsePathContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitParseProperty(@NotNull PropertyPathParser.ParsePropertyContext ctx) { return visitChildren(ctx); }
+	@Override public T visitParseProperty(PropertyPathParser.ParsePropertyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIndexedOrAny(@NotNull PropertyPathParser.IndexedOrAnyContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIndexedOrAny(PropertyPathParser.IndexedOrAnyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitProperty(@NotNull PropertyPathParser.PropertyContext ctx) { return visitChildren(ctx); }
+	@Override public T visitProperty(PropertyPathParser.PropertyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIndex(@NotNull PropertyPathParser.IndexContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIndex(PropertyPathParser.IndexContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitKey(@NotNull PropertyPathParser.KeyContext ctx) { return visitChildren(ctx); }
+	@Override public T visitKey(PropertyPathParser.KeyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAnyProperty(@NotNull PropertyPathParser.AnyPropertyContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAnyProperty(PropertyPathParser.AnyPropertyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAnyIndex(@NotNull PropertyPathParser.AnyIndexContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAnyIndex(PropertyPathParser.AnyIndexContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAnyKey(@NotNull PropertyPathParser.AnyKeyContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAnyKey(PropertyPathParser.AnyKeyContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAny(@NotNull PropertyPathParser.AnyContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAny(PropertyPathParser.AnyContext ctx) { return visitChildren(ctx); }
 }
