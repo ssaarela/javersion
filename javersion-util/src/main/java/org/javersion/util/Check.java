@@ -26,21 +26,21 @@ import javax.annotation.Nonnull;
 
 public final class Check {
 
-    private static final String NOT_NULL_FMT = "%s should not be null";
+    public static final String NOT_NULL_FMT = "%s should not be null";
 
-    private static final String NOT_EMPTY_FMT = "%s should not be empty";
+    public static final String NOT_EMPTY_FMT = "%s should not be empty";
 
-    private static final Predicate<Boolean> IS_TRUE = v -> v;
+    public static final Predicate<Boolean> IS_TRUE = v -> v;
 
-    private static final Predicate<Object> NOT_NULL = v -> v != null;
+    public static final Predicate<Object> NOT_NULL = v -> v != null;
 
-    private static final Predicate<String> NOT_EMPTY_STRING = s -> !s.isEmpty();
+    public static final Predicate<String> NOT_EMPTY_STRING = s -> !s.isEmpty();
 
-    private static final Predicate<Iterable<?>> NOT_EMPTY_ITERABLE = i -> i.iterator().hasNext();
+    public static final Predicate<Iterable<?>> NOT_EMPTY_ITERABLE = i -> i.iterator().hasNext();
 
-    private static final Predicate<Collection<?>> NOT_EMPTY_COLLECTION = c -> !c.isEmpty();
+    public static final Predicate<Collection<?>> NOT_EMPTY_COLLECTION = c -> !c.isEmpty();
 
-    private static final Predicate<Map<?, ?>> NOT_EMPTY_MAP = m -> !m.isEmpty();
+    public static final Predicate<Map<?, ?>> NOT_EMPTY_MAP = m -> !m.isEmpty();
 
     private Check() {}
 
