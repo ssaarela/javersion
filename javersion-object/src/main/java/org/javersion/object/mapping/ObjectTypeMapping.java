@@ -121,7 +121,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             type.getConstructors().values().forEach(this::add);
             type.getMethods().values().forEach(this::add);
             if (!type.isAbstract()) {
-                Check.notNull(creator, "constructor");
+                Check.that(creator.isPreset(), "%s: creator method or constructor not found.", type.getSimpleName());
                 creatorParameters = ImmutableSet.copyOf(getCreatorParameters());
             }
         }
