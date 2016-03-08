@@ -15,7 +15,8 @@
  */
 package org.javersion.store.jdbc;
 
-import static com.mysema.query.group.GroupBy.groupBy;
+import static com.querydsl.core.group.GroupBy.groupBy;
+import static com.querydsl.core.types.Projections.tuple;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
@@ -37,22 +38,19 @@ import org.javersion.path.PropertyPath;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.*;
-import com.mysema.query.ResultTransformer;
-import com.mysema.query.Tuple;
-import com.mysema.query.group.Group;
-import com.mysema.query.group.GroupBy;
-import com.mysema.query.group.QPair;
-import com.mysema.query.sql.Configuration;
-import com.mysema.query.sql.SQLQuery;
-import com.mysema.query.sql.dml.SQLUpdateClause;
-import com.mysema.query.sql.types.EnumByNameType;
-import com.mysema.query.types.Expression;
-import com.mysema.query.types.OrderSpecifier;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.QTuple;
-import com.mysema.query.types.expr.BooleanExpression;
-import com.mysema.query.types.query.NumberSubQuery;
-
+import com.querydsl.core.ResultTransformer;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.group.Group;
+import com.querydsl.core.group.GroupBy;
+import com.querydsl.core.group.QPair;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.sql.Configuration;
+import com.querydsl.sql.SQLQuery;
+import com.querydsl.sql.dml.SQLUpdateClause;
+import com.querydsl.sql.types.EnumByNameType;
 
 public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, V>> {
 
@@ -71,11 +69,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected final Expression<?>[] versionAndParentColumns;
 
-    protected final ResultTransformer<List<Group>>  versionAndParents;
+    protected final ResultTransformer<List<Group>> versionAndParents;
 
     protected final QPair<Revision, Id> revisionAndDocId;
 
-    protected final NumberSubQuery<Long> maxOrdinalSubQuery;
+    protected final SQLQuery<Long> maxOrdinalSubQuery;
 
     protected final ResultTransformer<Map<Revision, List<Tuple>>> properties;
 
@@ -101,7 +99,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         maxOrdinalSubQuery = maxOrdinalSubQuery(options);
 
         Expression<?>[] propertyColumns = without(options.property.all(), options.property.revision);
-        properties = groupBy(options.property.revision).as(GroupBy.list(new QTuple(propertyColumns)));
+        properties = groupBy(options.property.revision).as(GroupBy.list(tuple(propertyColumns)));
     }
 
     public abstract ObjectVersionGraph<M> load(Id docId);
@@ -173,10 +171,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     protected long lockRepositoryAndGetMaxOrdinal() {
         // Use List-result as a safe-guard against missing repository row
         List<Long> results = options.queryFactory
+                .select(maxOrdinalSubQuery)
                 .from(options.repository)
                 .where(options.repository.id.eq(options.repositoryId))
                 .forUpdate()
-                .list(maxOrdinalSubQuery);
+                .fetch();
 
         if (results.isEmpty()) {
             throw new IllegalStateException("Repository with id " + options.repositoryId + " not found from " + options.repository.getTableName());
@@ -185,8 +184,8 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return maxOrdinal != null ? maxOrdinal : 0;
     }
 
-    private NumberSubQuery<Long> maxOrdinalSubQuery(Options options) {
-        return options.queryFactory.subQuery().from(options.version).unique(options.version.ordinal.max());
+    private SQLQuery<Long> maxOrdinalSubQuery(Options options) {
+        return options.queryFactory.select(options.version.ordinal.max()).from(options.version);
     }
 
     protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, BooleanExpression predicate) {
@@ -209,12 +208,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     }
 
     protected Map<Revision, List<Tuple>> fetchProperties(BooleanExpression predicate) {
-        SQLQuery qry = options.queryFactory
+        return options.queryFactory
                 .from(options.property)
                 .innerJoin(options.version).on(options.version.revision.eq(options.property.revision))
-                .where(predicate);
-
-        return qry.transform(properties);
+                .where(predicate)
+                .transform(properties);
     }
 
     protected List<Group> fetchVersionsAndParents(BooleanExpression predicate, OrderSpecifier<?> orderBy) {

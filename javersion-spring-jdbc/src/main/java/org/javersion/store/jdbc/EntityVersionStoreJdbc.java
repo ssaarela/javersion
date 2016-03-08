@@ -15,13 +15,13 @@
  */
 package org.javersion.store.jdbc;
 
-import static com.mysema.query.group.GroupBy.groupBy;
-import static com.mysema.query.support.Expressions.constant;
-import static com.mysema.query.support.Expressions.predicate;
-import static com.mysema.query.types.Ops.EQ;
-import static com.mysema.query.types.Ops.GT;
-import static com.mysema.query.types.Ops.IN;
-import static com.mysema.query.types.Ops.IS_NULL;
+import static com.querydsl.core.group.GroupBy.groupBy;
+import static com.querydsl.core.types.Ops.EQ;
+import static com.querydsl.core.types.Ops.GT;
+import static com.querydsl.core.types.Ops.IN;
+import static com.querydsl.core.types.Ops.IS_NULL;
+import static com.querydsl.core.types.dsl.Expressions.constant;
+import static com.querydsl.core.types.dsl.Expressions.predicate;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
@@ -38,12 +38,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.mysema.query.ResultTransformer;
-import com.mysema.query.group.Group;
-import com.mysema.query.sql.SQLQuery;
-import com.mysema.query.sql.dml.SQLUpdateClause;
-import com.mysema.query.types.Expression;
-import com.mysema.query.types.expr.BooleanExpression;
+import com.querydsl.core.ResultTransformer;
+import com.querydsl.core.group.Group;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.sql.SQLQuery;
+import com.querydsl.sql.dml.SQLUpdateClause;
 
 public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityVersion<Id>> extends AbstractVersionStoreJdbc<Id, M, V,
         EntityStoreOptions<Id, V>> {
@@ -129,7 +129,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
     }
 
     protected List<Group> versionsAndParentsSince(Id docId, Revision since) {
-        SQLQuery qry = options.queryFactory.from(options.sinceVersion);
+        SQLQuery<?> qry = options.queryFactory.from(options.sinceVersion);
 
         // Left join version version on version.ordinal > since.ordinal and version.doc_id = since.doc_id
         qry.leftJoin(options.version).on(
@@ -153,7 +153,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
                 .from(options.version)
                 .where(options.version.ordinal.isNull())
                 .orderBy(options.version.localOrdinal.asc())
-                .map(options.version.revision, options.version.docId);
+                .transform(groupBy(options.version.revision).as(options.version.docId));
     }
 
 }

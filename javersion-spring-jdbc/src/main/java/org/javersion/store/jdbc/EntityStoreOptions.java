@@ -17,8 +17,6 @@ package org.javersion.store.jdbc;
 
 import org.javersion.util.Check;
 
-import com.mysema.query.sql.SQLQueryFactory;
-
 public class EntityStoreOptions<Id extends Comparable, V extends JEntityVersion<Id>> extends StoreOptions<Id, V> {
 
     public static <Id extends Comparable, V extends JEntityVersion<Id>> Builder<Id, V> builder() {

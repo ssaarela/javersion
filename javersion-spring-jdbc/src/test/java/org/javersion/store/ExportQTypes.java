@@ -20,9 +20,9 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
-import com.mysema.query.sql.Configuration;
-import com.mysema.query.sql.codegen.DefaultNamingStrategy;
-import com.mysema.query.sql.codegen.MetaDataExporter;
+import com.querydsl.sql.Configuration;
+import com.querydsl.sql.codegen.DefaultNamingStrategy;
+import com.querydsl.sql.codegen.MetaDataExporter;
 
 @org.springframework.context.annotation.Configuration
 @EnableAutoConfiguration
@@ -48,30 +48,27 @@ public class ExportQTypes {
 
     @Bean
     public CommandLineRunner runner() {
-        return new CommandLineRunner() {
-            @Override
-            public void run(String... args) throws Exception {
-                MetaDataExporter exporter = new MetaDataExporter();
-                exporter.setPackageName(PACKAGE_NAME);
-                exporter.setInnerClassesForKeys(false);
-                exporter.setSpatial(false);
-                exporter.setNamePrefix(NAME_PREFIX);
-                exporter.setNamingStrategy(new DefaultNamingStrategy());
-                exporter.setTargetFolder(new File(TARGET_FOLDER));
-                exporter.setConfiguration(configuration);
-                Connection conn = null;
-                try {
-                    conn = dataSource.getConnection();
-                    deleteOldQTypes(TARGET_FOLDER, PACKAGE_NAME);
-                    exporter.export(conn.getMetaData());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    if (conn != null) {
-                        try {
-                            conn.close();
-                        } catch (SQLException e) {}
-                    }
+        return (args) -> {
+            MetaDataExporter exporter = new MetaDataExporter();
+            exporter.setPackageName(PACKAGE_NAME);
+            exporter.setInnerClassesForKeys(false);
+            exporter.setSpatial(false);
+            exporter.setNamePrefix(NAME_PREFIX);
+            exporter.setNamingStrategy(new DefaultNamingStrategy());
+            exporter.setTargetFolder(new File(TARGET_FOLDER));
+            exporter.setConfiguration(configuration);
+            Connection conn = null;
+            try {
+                conn = dataSource.getConnection();
+                deleteOldQTypes(TARGET_FOLDER, PACKAGE_NAME);
+                exporter.export(conn.getMetaData());
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (conn != null) {
+                    try {
+                        conn.close();
+                    } catch (SQLException e) {}
                 }
             }
         };

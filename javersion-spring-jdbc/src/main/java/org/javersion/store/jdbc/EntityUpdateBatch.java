@@ -15,10 +15,11 @@
  */
 package org.javersion.store.jdbc;
 
-import static com.mysema.query.support.Expressions.constant;
-import static com.mysema.query.support.Expressions.predicate;
-import static com.mysema.query.types.Ops.EQ;
-import static com.mysema.query.types.Ops.IN;
+import static com.querydsl.core.group.GroupBy.groupBy;
+import static com.querydsl.core.types.dsl.Expressions.constant;
+import static com.querydsl.core.types.dsl.Expressions.predicate;
+import static com.querydsl.core.types.Ops.EQ;
+import static com.querydsl.core.types.Ops.IN;
 
 import java.util.Collection;
 import java.util.Map;
@@ -28,11 +29,10 @@ import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 
 import com.google.common.collect.ImmutableSet;
-import com.mysema.query.sql.SQLQuery;
-import com.mysema.query.sql.dml.SQLInsertClause;
-import com.mysema.query.types.Order;
-import com.mysema.query.types.OrderSpecifier;
-import com.mysema.query.types.query.NumberSubQuery;
+import com.querydsl.sql.SQLQuery;
+import com.querydsl.sql.dml.SQLInsertClause;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 
 public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersion<Id>> extends AbstractUpdateBatch<Id, M, V, EntityStoreOptions<Id, V>> {
 
@@ -97,21 +97,20 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
     }
 
     protected Map<Id, Long> lockEntitiesForUpdate(EntityStoreOptions<Id, V> options, Collection<Id> docIds) {
-        SQLQuery entityQuery = options.queryFactory
+        return options.queryFactory
                 .from(options.entity)
                 .where(predicate(IN, options.entity.id, constant(docIds)))
                 .orderBy(new OrderSpecifier<>(Order.ASC, options.entity.id))
-                .forUpdate();
-
-        return entityQuery.map(options.entity.id, maxLocalOrdinalByEntity(options));
+                .forUpdate()
+                .transform(groupBy(options.entity.id).as(maxLocalOrdinalByEntity(options)));
     }
 
-    protected NumberSubQuery<Long> maxLocalOrdinalByEntity(EntityStoreOptions<Id, V> options) {
-        return options.queryFactory.subQuery()
+    protected SQLQuery<Long> maxLocalOrdinalByEntity(EntityStoreOptions<Id, V> options) {
+        return options.queryFactory
+                .select(options.version.localOrdinal.max())
                 .from(options.version)
                 .where(predicate(EQ, options.version.docId, options.entity.id))
-                .groupBy(options.entity.id)
-                .unique(options.version.localOrdinal.max());
+                .groupBy(options.entity.id);
     }
 
     protected void verifyDocId(Id docId) {

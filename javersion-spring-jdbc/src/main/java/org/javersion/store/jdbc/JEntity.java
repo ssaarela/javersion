@@ -15,10 +15,10 @@
  */
 package org.javersion.store.jdbc;
 
-import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.Path;
+import com.querydsl.core.types.Path;
+import com.querydsl.sql.RelationalPathBase;
 
-public class JEntity<Id extends Comparable> extends RelationalPathBase<JEntity>  {
+public class JEntity<Id extends Comparable> extends RelationalPathBase<JEntity> {
 
     public final Path<Id> id;
 

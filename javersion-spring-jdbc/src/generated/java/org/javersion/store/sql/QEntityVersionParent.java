@@ -1,24 +1,25 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.*;
+import static com.querydsl.core.types.PathMetadataFactory.forVariable;
 
-import com.mysema.query.types.path.*;
-
-import com.mysema.query.types.PathMetadata;
-import javax.annotation.Generated;
-import com.mysema.query.types.Path;
-
-import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
 
+import javax.annotation.Generated;
 
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.ForeignKey;
+import com.querydsl.sql.PrimaryKey;
+import com.querydsl.sql.RelationalPathBase;
 
 
 /**
  * QEntityVersionParent is a Querydsl query type for QEntityVersionParent
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QEntityVersionParent extends com.mysema.query.sql.RelationalPathBase<QEntityVersionParent> {
+public class QEntityVersionParent extends RelationalPathBase<QEntityVersionParent> {
 
     private static final long serialVersionUID = 281216146;
 
@@ -28,11 +29,11 @@ public class QEntityVersionParent extends com.mysema.query.sql.RelationalPathBas
 
     public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
-    public final com.mysema.query.sql.PrimaryKey<QEntityVersionParent> constraintE = createPrimaryKey(parentRevision, revision);
+    public final PrimaryKey<QEntityVersionParent> constraintE = createPrimaryKey(parentRevision, revision);
 
-    public final com.mysema.query.sql.ForeignKey<QEntityVersion> entityVersionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
+    public final ForeignKey<QEntityVersion> entityVersionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QEntityVersion> entityVersionParentRevisionFk = createForeignKey(revision, "REVISION");
+    public final ForeignKey<QEntityVersion> entityVersionParentRevisionFk = createForeignKey(revision, "REVISION");
 
     public QEntityVersionParent(String variable) {
         super(QEntityVersionParent.class, forVariable(variable), "PUBLIC", "ENTITY_VERSION_PARENT");
@@ -49,7 +50,7 @@ public class QEntityVersionParent extends com.mysema.query.sql.RelationalPathBas
         addMetadata();
     }
 
-    public QEntityVersionParent(PathMetadata<?> metadata) {
+    public QEntityVersionParent(PathMetadata metadata) {
         super(QEntityVersionParent.class, metadata, "PUBLIC", "ENTITY_VERSION_PARENT");
         addMetadata();
     }

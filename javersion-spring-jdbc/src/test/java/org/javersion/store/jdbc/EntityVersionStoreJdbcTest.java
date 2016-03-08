@@ -21,7 +21,7 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.mysema.query.sql.SQLQueryFactory;
+import com.querydsl.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -137,7 +137,11 @@ public class EntityVersionStoreJdbcTest {
                 "name", "Fixed name"
         ));
 
-        String persistedName = queryFactory.from(entity).where(entity.id.eq(docId1)).singleResult(entity.name);
+        String persistedName = queryFactory
+                .select(entity.name)
+                .from(entity)
+                .where(entity.id.eq(docId1))
+                .fetchOne();
         assertThat(persistedName).isEqualTo("Fixed name");
     }
 
@@ -195,10 +199,18 @@ public class EntityVersionStoreJdbcTest {
                 "name", "doc2"
         ));
 
-        String persistedName = queryFactory.from(entity).where(entity.id.eq(docId1)).singleResult(entity.name);
+        String persistedName = queryFactory
+                .select(entity.name)
+                .from(entity)
+                .where(entity.id.eq(docId1))
+                .fetchOne();
         assertThat(persistedName).isEqualTo("doc1");
 
-        persistedName = queryFactory.from(entity).where(entity.id.eq(docId2)).singleResult(entity.name);
+        persistedName = queryFactory
+                .select(entity.name)
+                .from(entity)
+                .where(entity.id.eq(docId2))
+                .fetchOne();
         assertThat(persistedName).isEqualTo("doc2");
     }
 

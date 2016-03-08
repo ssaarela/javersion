@@ -21,8 +21,8 @@ import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableMap;
-import com.mysema.query.sql.SQLQueryFactory;
-import com.mysema.query.types.Path;
+import com.querydsl.core.types.Path;
+import com.querydsl.sql.SQLQueryFactory;
 
 public class StoreOptions<Id, V extends JVersion<Id>> {
 

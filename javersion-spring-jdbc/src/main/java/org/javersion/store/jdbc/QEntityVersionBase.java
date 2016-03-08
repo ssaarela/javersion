@@ -20,13 +20,13 @@ import java.sql.Types;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionType;
 
-import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.PathMetadata;
-import com.mysema.query.types.path.EnumPath;
-import com.mysema.query.types.path.NumberPath;
-import com.mysema.query.types.path.SimplePath;
-import com.mysema.query.types.path.StringPath;
+import com.querydsl.core.types.dsl.EnumPath;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.RelationalPathBase;
+import com.querydsl.core.types.PathMetadata;
 
 /**
  * This class may be used as a base for custom QXYZVersion class.
@@ -52,7 +52,7 @@ public abstract class QEntityVersionBase<T> extends RelationalPathBase<T> {
         addMetadata();
     }
 
-    public QEntityVersionBase(Class<? extends T> type, PathMetadata<?> metadata, String schema, String table) {
+    public QEntityVersionBase(Class<? extends T> type, PathMetadata metadata, String schema, String table) {
         super(type, metadata, schema, table);
         addMetadata();
     }

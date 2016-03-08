@@ -17,20 +17,22 @@ package org.javersion.store.jdbc;
 
 import java.sql.Types;
 
-import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.PathMetadataFactory;
-import com.mysema.query.types.path.NumberPath;
-import com.mysema.query.types.path.SimplePath;
-import com.mysema.query.types.path.StringPath;
+import org.javersion.core.Revision;
 
-public class JVersionProperty extends com.mysema.query.sql.RelationalPathBase<JVersionProperty> {
+import com.querydsl.core.types.PathMetadataFactory;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.RelationalPathBase;
+
+public class JVersionProperty extends RelationalPathBase<JVersionProperty> {
 
     public final NumberPath<Long> nbr = createNumber("nbr", Long.class);
 
     public final StringPath path = createString("path");
 
-    public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
+    public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
     public final StringPath str = createString("str");
 

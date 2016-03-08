@@ -17,7 +17,7 @@ package org.javersion.store.jdbc;
 
 import org.javersion.util.Check;
 
-import com.mysema.query.types.Expression;
+import com.querydsl.core.types.Expression;
 
 public class DocumentStoreOptions<Id, V extends JDocumentVersion<Id>> extends StoreOptions<Id, V> {
 

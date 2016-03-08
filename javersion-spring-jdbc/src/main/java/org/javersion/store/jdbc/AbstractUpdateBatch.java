@@ -26,9 +26,9 @@ import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 
-import com.mysema.query.dml.StoreClause;
-import com.mysema.query.sql.dml.SQLInsertClause;
-import com.mysema.query.types.Path;
+import com.querydsl.core.dml.StoreClause;
+import com.querydsl.core.types.Path;
+import com.querydsl.sql.dml.SQLInsertClause;
 
 public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, V>> {
 
