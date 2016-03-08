@@ -94,9 +94,8 @@ public class MergeBuilder<K, V, M> {
             conflicts.removeAll(path);
         });
         heads.removeAll(version.parentRevisions);
-        mergedRevisions.addAllFrom(version.parentRevisions);
-        mergedRevisions.add(version.revision);
         heads.add(version.revision);
+        mergedRevisions.add(version.revision);
         return this;
     }
 
