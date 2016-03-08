@@ -1,24 +1,30 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.*;
+import static com.querydsl.core.types.PathMetadataFactory.forVariable;
 
-import com.mysema.query.types.path.*;
-
-import com.mysema.query.types.PathMetadata;
-import javax.annotation.Generated;
-import com.mysema.query.types.Path;
-
-import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
 
+import javax.annotation.Generated;
 
+import org.javersion.core.Revision;
+import org.javersion.core.VersionType;
 
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.EnumPath;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.ForeignKey;
+import com.querydsl.sql.PrimaryKey;
+import com.querydsl.sql.RelationalPathBase;
 
 /**
  * QDocumentVersion is a Querydsl query type for QDocumentVersion
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QDocumentVersion extends com.mysema.query.sql.RelationalPathBase<QDocumentVersion> {
+public class QDocumentVersion extends RelationalPathBase<QDocumentVersion> {
 
     private static final long serialVersionUID = 2075230416;
 
@@ -34,21 +40,21 @@ public class QDocumentVersion extends com.mysema.query.sql.RelationalPathBase<QD
 
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
-    public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
+    public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
     public final NumberPath<Long> txOrdinal = createNumber("txOrdinal", Long.class);
 
-    public final EnumPath<org.javersion.core.VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
+    public final EnumPath<VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 
-    public final com.mysema.query.sql.PrimaryKey<QDocumentVersion> constraint4 = createPrimaryKey(revision);
+    public final PrimaryKey<QDocumentVersion> constraint4 = createPrimaryKey(revision);
 
-    public final com.mysema.query.sql.ForeignKey<QVersionType> documentVersionTypeFk = createForeignKey(type, "NAME");
+    public final ForeignKey<QVersionType> documentVersionTypeFk = createForeignKey(type, "NAME");
 
-    public final com.mysema.query.sql.ForeignKey<QDocumentVersionParent> _documentVersionParentRevisionFk = createInvForeignKey(revision, "REVISION");
+    public final ForeignKey<QDocumentVersionParent> _documentVersionParentRevisionFk = createInvForeignKey(revision, "REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QDocumentVersionParent> _documentVersionParentParentRevisionFk = createInvForeignKey(revision, "PARENT_REVISION");
+    public final ForeignKey<QDocumentVersionParent> _documentVersionParentParentRevisionFk = createInvForeignKey(revision, "PARENT_REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QDocumentVersionProperty> _documentVersionPropertyRevisionFk = createInvForeignKey(revision, "REVISION");
+    public final ForeignKey<QDocumentVersionProperty> _documentVersionPropertyRevisionFk = createInvForeignKey(revision, "REVISION");
 
     public QDocumentVersion(String variable) {
         super(QDocumentVersion.class, forVariable(variable), "PUBLIC", "DOCUMENT_VERSION");
@@ -65,7 +71,7 @@ public class QDocumentVersion extends com.mysema.query.sql.RelationalPathBase<QD
         addMetadata();
     }
 
-    public QDocumentVersion(PathMetadata<?> metadata) {
+    public QDocumentVersion(PathMetadata metadata) {
         super(QDocumentVersion.class, metadata, "PUBLIC", "DOCUMENT_VERSION");
         addMetadata();
     }

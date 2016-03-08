@@ -1,24 +1,28 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.*;
+import static com.querydsl.core.types.PathMetadataFactory.forVariable;
 
-import com.mysema.query.types.path.*;
-
-import com.mysema.query.types.PathMetadata;
-import javax.annotation.Generated;
-import com.mysema.query.types.Path;
-
-import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
 
+import javax.annotation.Generated;
 
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.EnumPath;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.ForeignKey;
+import com.querydsl.sql.PrimaryKey;
+import com.querydsl.sql.RelationalPathBase;
 
 
 /**
  * QEntityVersion is a Querydsl query type for QEntityVersion
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QEntityVersion extends com.mysema.query.sql.RelationalPathBase<QEntityVersion> {
+public class QEntityVersion extends RelationalPathBase<QEntityVersion> {
 
     private static final long serialVersionUID = 185370056;
 
@@ -38,17 +42,17 @@ public class QEntityVersion extends com.mysema.query.sql.RelationalPathBase<QEnt
 
     public final EnumPath<org.javersion.core.VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 
-    public final com.mysema.query.sql.PrimaryKey<QEntityVersion> constraint86 = createPrimaryKey(revision);
+    public final PrimaryKey<QEntityVersion> constraint86 = createPrimaryKey(revision);
 
-    public final com.mysema.query.sql.ForeignKey<QEntity> entityVersionDocIdFk = createForeignKey(docId, "ID");
+    public final ForeignKey<QEntity> entityVersionDocIdFk = createForeignKey(docId, "ID");
 
-    public final com.mysema.query.sql.ForeignKey<QVersionType> entityVersionTypeFk = createForeignKey(type, "NAME");
+    public final ForeignKey<QVersionType> entityVersionTypeFk = createForeignKey(type, "NAME");
 
-    public final com.mysema.query.sql.ForeignKey<QEntityVersionParent> _entityVersionParentParentRevisionFk = createInvForeignKey(revision, "PARENT_REVISION");
+    public final ForeignKey<QEntityVersionParent> _entityVersionParentParentRevisionFk = createInvForeignKey(revision, "PARENT_REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QEntityVersionParent> _entityVersionParentRevisionFk = createInvForeignKey(revision, "REVISION");
+    public final ForeignKey<QEntityVersionParent> _entityVersionParentRevisionFk = createInvForeignKey(revision, "REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QEntityVersionProperty> _entityVersionPropertyRevisionFk = createInvForeignKey(revision, "REVISION");
+    public final ForeignKey<QEntityVersionProperty> _entityVersionPropertyRevisionFk = createInvForeignKey(revision, "REVISION");
 
     public QEntityVersion(String variable) {
         super(QEntityVersion.class, forVariable(variable), "PUBLIC", "ENTITY_VERSION");
@@ -65,7 +69,7 @@ public class QEntityVersion extends com.mysema.query.sql.RelationalPathBase<QEnt
         addMetadata();
     }
 
-    public QEntityVersion(PathMetadata<?> metadata) {
+    public QEntityVersion(PathMetadata metadata) {
         super(QEntityVersion.class, metadata, "PUBLIC", "ENTITY_VERSION");
         addMetadata();
     }

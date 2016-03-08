@@ -13,7 +13,6 @@ import javax.sql.DataSource;
 import org.javersion.store.jdbc.*;
 import org.javersion.store.jdbc.DocumentStoreOptions.Builder;
 import org.javersion.store.sql.QDocumentVersion;
-import org.javersion.store.sql.QRepository;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,12 +22,11 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.collect.ImmutableMap;
-import com.mysema.query.sql.ColumnMetadata;
-import com.mysema.query.sql.H2Templates;
-import com.mysema.query.sql.PostgresTemplates;
-import com.mysema.query.sql.SQLExpressions;
-import com.mysema.query.sql.SQLQueryFactory;
-import com.mysema.query.types.path.StringPath;
+import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.PostgreSQLTemplates;
+import com.querydsl.sql.SQLExpressions;
+import com.querydsl.sql.SQLQueryFactory;
 
 @Configuration
 @EnableAutoConfiguration
@@ -39,15 +37,15 @@ public class PersistenceTestConfiguration {
     PlatformTransactionManager transactionManager;
 
     @Bean
-    public com.mysema.query.sql.Configuration configuration() {
-        com.mysema.query.sql.Configuration configuration = new com.mysema.query.sql.Configuration(new PostgresTemplates());
+    public com.querydsl.sql.Configuration configuration() {
+        com.querydsl.sql.Configuration configuration = new com.querydsl.sql.Configuration(new PostgreSQLTemplates());
         AbstractVersionStoreJdbc.registerTypes("DOCUMENT_", configuration);
         AbstractVersionStoreJdbc.registerTypes("ENTITY_", configuration);
         return configuration;
     }
 
     @Bean
-    public SQLQueryFactory queryFactory(final DataSource dataSource, com.mysema.query.sql.Configuration configuration) {
+    public SQLQueryFactory queryFactory(final DataSource dataSource, com.querydsl.sql.Configuration configuration) {
         return new SQLQueryFactory(configuration, () -> DataSourceUtils.getConnection(dataSource));
     }
 

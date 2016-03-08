@@ -1,15 +1,18 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.*;
+import static com.querydsl.core.types.PathMetadataFactory.forVariable;
 
-import com.mysema.query.types.path.*;
-
-import com.mysema.query.types.PathMetadata;
-import javax.annotation.Generated;
-import com.mysema.query.types.Path;
-
-import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
+
+import javax.annotation.Generated;
+
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.ForeignKey;
+import com.querydsl.sql.PrimaryKey;
+import com.querydsl.sql.RelationalPathBase;
 
 
 
@@ -18,7 +21,7 @@ import java.sql.Types;
  * QDocumentVersionParent is a Querydsl query type for QDocumentVersionParent
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QDocumentVersionParent extends com.mysema.query.sql.RelationalPathBase<QDocumentVersionParent> {
+public class QDocumentVersionParent extends RelationalPathBase<QDocumentVersionParent> {
 
     private static final long serialVersionUID = -642672230;
 
@@ -28,11 +31,11 @@ public class QDocumentVersionParent extends com.mysema.query.sql.RelationalPathB
 
     public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
-    public final com.mysema.query.sql.PrimaryKey<QDocumentVersionParent> constraint5 = createPrimaryKey(parentRevision, revision);
+    public final PrimaryKey<QDocumentVersionParent> constraint5 = createPrimaryKey(parentRevision, revision);
 
-    public final com.mysema.query.sql.ForeignKey<QDocumentVersion> documentVersionParentRevisionFk = createForeignKey(revision, "REVISION");
+    public final ForeignKey<QDocumentVersion> documentVersionParentRevisionFk = createForeignKey(revision, "REVISION");
 
-    public final com.mysema.query.sql.ForeignKey<QDocumentVersion> documentVersionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
+    public final ForeignKey<QDocumentVersion> documentVersionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
 
     public QDocumentVersionParent(String variable) {
         super(QDocumentVersionParent.class, forVariable(variable), "PUBLIC", "DOCUMENT_VERSION_PARENT");
@@ -49,7 +52,7 @@ public class QDocumentVersionParent extends com.mysema.query.sql.RelationalPathB
         addMetadata();
     }
 
-    public QDocumentVersionParent(PathMetadata<?> metadata) {
+    public QDocumentVersionParent(PathMetadata metadata) {
         super(QDocumentVersionParent.class, metadata, "PUBLIC", "DOCUMENT_VERSION_PARENT");
         addMetadata();
     }

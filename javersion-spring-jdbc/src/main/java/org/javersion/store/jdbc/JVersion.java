@@ -18,14 +18,14 @@ package org.javersion.store.jdbc;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionType;
 
-import com.mysema.query.sql.RelationalPathBase;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.path.EnumPath;
-import com.mysema.query.types.path.NumberPath;
-import com.mysema.query.types.path.SimplePath;
-import com.mysema.query.types.path.StringPath;
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.dsl.EnumPath;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.sql.RelationalPathBase;
 
-public abstract class JVersion<Id> extends RelationalPathBase<JVersion>  {
+public abstract class JVersion<Id> extends RelationalPathBase<JVersion> {
 
     public final Path<Id> docId;
 

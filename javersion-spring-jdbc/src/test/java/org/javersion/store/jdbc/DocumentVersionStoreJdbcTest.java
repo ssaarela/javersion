@@ -38,7 +38,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import com.mysema.query.sql.SQLQueryFactory;
+import com.querydsl.core.group.GroupBy;
+import com.querydsl.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -180,7 +181,7 @@ public class DocumentVersionStoreJdbcTest {
         // Verify that first insert is not yet visible
         long count = queryFactory.from(documentVersion)
                 .where(documentVersion.docId.eq(docId))
-                .count();
+                .fetchCount();
         assertThat(count).isEqualTo(1);
 
         // Let the first transaction commit
@@ -191,7 +192,7 @@ public class DocumentVersionStoreJdbcTest {
         // Verify that first insert is now visible (committed)
         count = queryFactory.from(documentVersion)
                 .where(documentVersion.docId.eq(docId))
-                .count();
+                .fetchCount();
         assertThat(count).isEqualTo(2);
 
         // Before documentStore.publish(), unpublished version should not have ordinal
@@ -208,7 +209,7 @@ public class DocumentVersionStoreJdbcTest {
     private Map<Revision, Long> findOrdinals(String docId) {
         return queryFactory.from(documentVersion)
                 .where(documentVersion.docId.eq(docId))
-                .map(documentVersion.revision, documentVersion.ordinal);
+                .transform(GroupBy.groupBy(documentVersion.revision).as(documentVersion.ordinal));
     }
 
     @Test
@@ -301,12 +302,12 @@ public class DocumentVersionStoreJdbcTest {
         documentStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
         documentStore.publish();
 
-        assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).count()).isEqualTo(6);
+        assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).fetchCount()).isEqualTo(6);
 
         documentStore.optimize(docId,
                 versionNode -> versionNode.revision.equals(v5.revision) || versionNode.revision.equals(v6.revision));
 
-        assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).count()).isEqualTo(3);
+        assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).fetchCount()).isEqualTo(3);
 
         versionGraph = documentStore.load(docId);
 
@@ -431,7 +432,7 @@ public class DocumentVersionStoreJdbcTest {
         long count = queryFactory.from(documentVersionProperty)
                 .innerJoin(documentVersionProperty.documentVersionPropertyRevisionFk, documentVersion)
                 .where(documentVersion.docId.eq(docId))
-                .count();
+                .fetchCount();
         assertThat(count).isEqualTo(0);
 
         ObjectVersion<Void> v2 = ObjectVersion.<Void>builder()
@@ -447,7 +448,7 @@ public class DocumentVersionStoreJdbcTest {
                         documentVersion.revision.eq(v2.revision),
                         documentVersion.name.eq("name"),
                         documentVersion.id.eq(5l))
-                .count();
+                .fetchCount();
         assertThat(count).isEqualTo(1);
         assertThat(mappedDocumentStore.load(docId).getTip().getVersion()).isEqualTo(v2);
     }

@@ -1,24 +1,27 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.*;
+import static com.querydsl.core.types.PathMetadataFactory.forVariable;
 
-import com.mysema.query.types.path.*;
-
-import com.mysema.query.types.PathMetadata;
-import javax.annotation.Generated;
-import com.mysema.query.types.Path;
-
-import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
 
+import javax.annotation.Generated;
 
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.ForeignKey;
+import com.querydsl.sql.PrimaryKey;
+import com.querydsl.sql.RelationalPathBase;
 
 
 /**
  * QDocumentVersionProperty is a Querydsl query type for QDocumentVersionProperty
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QDocumentVersionProperty extends com.mysema.query.sql.RelationalPathBase<QDocumentVersionProperty> {
+public class QDocumentVersionProperty extends RelationalPathBase<QDocumentVersionProperty> {
 
     private static final long serialVersionUID = -1301024059;
 
@@ -34,9 +37,9 @@ public class QDocumentVersionProperty extends com.mysema.query.sql.RelationalPat
 
     public final StringPath type = createString("type");
 
-    public final com.mysema.query.sql.PrimaryKey<QDocumentVersionProperty> constraint80 = createPrimaryKey(path, revision);
+    public final PrimaryKey<QDocumentVersionProperty> constraint80 = createPrimaryKey(path, revision);
 
-    public final com.mysema.query.sql.ForeignKey<QDocumentVersion> documentVersionPropertyRevisionFk = createForeignKey(revision, "REVISION");
+    public final ForeignKey<QDocumentVersion> documentVersionPropertyRevisionFk = createForeignKey(revision, "REVISION");
 
     public QDocumentVersionProperty(String variable) {
         super(QDocumentVersionProperty.class, forVariable(variable), "PUBLIC", "DOCUMENT_VERSION_PROPERTY");
@@ -53,7 +56,7 @@ public class QDocumentVersionProperty extends com.mysema.query.sql.RelationalPat
         addMetadata();
     }
 
-    public QDocumentVersionProperty(PathMetadata<?> metadata) {
+    public QDocumentVersionProperty(PathMetadata metadata) {
         super(QDocumentVersionProperty.class, metadata, "PUBLIC", "DOCUMENT_VERSION_PROPERTY");
         addMetadata();
     }

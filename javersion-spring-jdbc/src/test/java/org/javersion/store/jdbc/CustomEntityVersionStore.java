@@ -12,8 +12,8 @@ import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.mysema.query.group.Group;
-import com.mysema.query.sql.dml.SQLUpdateClause;
+import com.querydsl.core.group.Group;
+import com.querydsl.sql.dml.SQLUpdateClause;
 
 public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, String, JEntityVersion<String>> {
 

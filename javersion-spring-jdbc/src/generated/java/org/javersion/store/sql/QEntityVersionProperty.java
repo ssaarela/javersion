@@ -1,24 +1,27 @@
 package org.javersion.store.sql;
 
-import static com.mysema.query.types.PathMetadataFactory.*;
+import static com.querydsl.core.types.PathMetadataFactory.forVariable;
 
-import com.mysema.query.types.path.*;
-
-import com.mysema.query.types.PathMetadata;
-import javax.annotation.Generated;
-import com.mysema.query.types.Path;
-
-import com.mysema.query.sql.ColumnMetadata;
 import java.sql.Types;
 
+import javax.annotation.Generated;
 
+import com.querydsl.core.types.Path;
+import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.NumberPath;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.sql.ColumnMetadata;
+import com.querydsl.sql.ForeignKey;
+import com.querydsl.sql.PrimaryKey;
+import com.querydsl.sql.RelationalPathBase;
 
 
 /**
  * QEntityVersionProperty is a Querydsl query type for QEntityVersionProperty
  */
 @Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QEntityVersionProperty extends com.mysema.query.sql.RelationalPathBase<QEntityVersionProperty> {
+public class QEntityVersionProperty extends RelationalPathBase<QEntityVersionProperty> {
 
     private static final long serialVersionUID = 1792442301;
 
@@ -34,9 +37,9 @@ public class QEntityVersionProperty extends com.mysema.query.sql.RelationalPathB
 
     public final StringPath type = createString("type");
 
-    public final com.mysema.query.sql.PrimaryKey<QEntityVersionProperty> constraint2 = createPrimaryKey(path, revision);
+    public final PrimaryKey<QEntityVersionProperty> constraint2 = createPrimaryKey(path, revision);
 
-    public final com.mysema.query.sql.ForeignKey<QEntityVersion> entityVersionPropertyRevisionFk = createForeignKey(revision, "REVISION");
+    public final ForeignKey<QEntityVersion> entityVersionPropertyRevisionFk = createForeignKey(revision, "REVISION");
 
     public QEntityVersionProperty(String variable) {
         super(QEntityVersionProperty.class, forVariable(variable), "PUBLIC", "ENTITY_VERSION_PROPERTY");
@@ -53,7 +56,7 @@ public class QEntityVersionProperty extends com.mysema.query.sql.RelationalPathB
         addMetadata();
     }
 
-    public QEntityVersionProperty(PathMetadata<?> metadata) {
+    public QEntityVersionProperty(PathMetadata metadata) {
         super(QEntityVersionProperty.class, metadata, "PUBLIC", "ENTITY_VERSION_PROPERTY");
         addMetadata();
     }
