@@ -15,6 +15,7 @@
  */
 package org.javersion.store.jdbc;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 import java.util.Iterator;
@@ -37,21 +38,34 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class VersionGraphCache<Id, M> {
 
+    @SuppressWarnings("unchecked")
+    private static final CacheOptions DEFAULT_CACHE_OPTIONS = new CacheOptions();
+
     protected final Logger log = LoggerFactory.getLogger(VersionGraph.class);
 
     protected final LoadingCache<Id, ObjectVersionGraph<M>> cache;
 
     private final AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore;
 
+    private final CacheOptions<Id, M> cacheOptions;
+
     protected final Set<Id> cachedDocIds;
 
+    public VersionGraphCache(AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore,
+                             CacheBuilder<Object, Object> cacheBuilder) {
+        this(versionStore, cacheBuilder, null);
+    }
 
     // About CacheBuilder generics: https://code.google.com/p/guava-libraries/issues/detail?id=738
-    public VersionGraphCache(AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore, CacheBuilder<Object, Object> cacheBuilder) {
+    @SuppressWarnings("unchecked")
+    public VersionGraphCache(AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore,
+                             CacheBuilder<Object, Object> cacheBuilder,
+                             CacheOptions<Id, M> cacheOptions) {
         this.versionStore = versionStore;
 
         this.cache = cacheBuilder.build(newCacheLoader(versionStore));
         this.cachedDocIds = cache.asMap().keySet();
+        this.cacheOptions = firstNonNull(cacheOptions, DEFAULT_CACHE_OPTIONS);
     }
 
     public ObjectVersionGraph<M> load(Id docId) {
@@ -95,7 +109,7 @@ public class VersionGraphCache<Id, M> {
 
             @Override
             public ObjectVersionGraph<M> load(Id docId) throws Exception {
-                return versionStore.load(docId);
+                return compactIfRequired(versionStore.load(docId));
             }
 
             @Override
@@ -108,12 +122,20 @@ public class VersionGraphCache<Id, M> {
                         if (!updates.isEmpty()) {
                             newValue = oldValue.commit(updates);
                         }
-                        return immediateFuture(newValue);
+                        return immediateFuture(compactIfRequired(newValue));
                     } catch (VersionNotFoundException e) {
                         // since revision is deleted - reload graph
                     }
                 }
-                return immediateFuture(versionStore.load(docId));
+                return immediateFuture(compactIfRequired(versionStore.load(docId)));
+            }
+
+            private ObjectVersionGraph<M> compactIfRequired(ObjectVersionGraph<M> graph) {
+                if (cacheOptions.compactWhen.test(graph)) {
+                    return graph.optimize(cacheOptions.compactKeep.apply(graph));
+                } else {
+                    return graph;
+                }
             }
 
         };

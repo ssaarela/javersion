@@ -178,9 +178,9 @@ public abstract class VersionGraph<K, V, M,
         return optimize(versionNode -> revisions.contains(versionNode.revision));
     }
 
-    public This optimize(Predicate<VersionNode<K, V, M>> revisions) {
+    public This optimize(Predicate<VersionNode<K, V, M>> keep) {
         B builder = newEmptyBuilder();
-        for (Version<K, V, M> version : new OptimizedGraphBuilder<>(this, revisions).getOptimizedVersions()) {
+        for (Version<K, V, M> version : new OptimizedGraphBuilder<>(this, keep).getOptimizedVersions()) {
             builder.add(version);
         }
         return builder.build();
