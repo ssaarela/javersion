@@ -80,7 +80,7 @@ public class EntityVersionStoreJdbcTest {
 
         bulk_load_after_publish();
 
-        optimize_doc1();
+        prune_doc1();
     }
 
     @Test
@@ -214,8 +214,8 @@ public class EntityVersionStoreJdbcTest {
         assertThat(persistedName).isEqualTo("doc2");
     }
 
-    private void optimize_doc1() {
-        entityVersionStore.optimize(docId1, v -> v.revision.equals(rev4));
+    private void prune_doc1() {
+        entityVersionStore.prune(docId1, v -> v.revision.equals(rev4));
         ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
         assertThat(graph.versionNodes.size()).isEqualTo(1);
     }

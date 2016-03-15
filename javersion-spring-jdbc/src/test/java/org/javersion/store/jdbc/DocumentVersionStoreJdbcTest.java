@@ -258,7 +258,7 @@ public class DocumentVersionStoreJdbcTest {
      * v6*
      */
     @Test
-    public void optimize() {
+    public void prune() {
         String docId = randomUUID().toString();
 
         ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
@@ -304,7 +304,7 @@ public class DocumentVersionStoreJdbcTest {
 
         assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).fetchCount()).isEqualTo(6);
 
-        documentStore.optimize(docId,
+        documentStore.prune(docId,
                 versionNode -> versionNode.revision.equals(v5.revision) || versionNode.revision.equals(v6.revision));
 
         assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).fetchCount()).isEqualTo(3);
@@ -329,7 +329,7 @@ public class DocumentVersionStoreJdbcTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void optimize_should_not_delete_all_versions() {
+    public void prune_should_not_delete_all_versions() {
         String docId = randomUUID().toString();
 
         ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
@@ -340,11 +340,11 @@ public class DocumentVersionStoreJdbcTest {
         documentStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
         documentStore.publish();
 
-        documentStore.optimize(docId, v -> false);
+        documentStore.prune(docId, v -> false);
     }
 
     @Test(expected = RuntimeException.class)
-    public void unpublished_version_may_prevent_optimization() {
+    public void unpublished_version_may_fail_pruning() {
         String docId = randomUUID().toString();
 
         ObjectVersion<Void> v1 = ObjectVersion.<Void>builder()
@@ -370,7 +370,7 @@ public class DocumentVersionStoreJdbcTest {
         documentStore.append(docId, versionGraph.getVersionNode(v3.revision));
 
         // v3 is not published yet!
-        documentStore.optimize(docId, v -> v.revision.equals(v2.revision));
+        documentStore.prune(docId, v -> v.revision.equals(v2.revision));
     }
 
     @Test

@@ -69,7 +69,7 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         }
     }
 
-    public void optimize(Id docId, ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+    public void prune(Id docId, ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
         OptimizedGraphBuilder<PropertyPath, Object, M> optimizedGraphBuilder = new OptimizedGraphBuilder<>(graph, keep);
 
         List<Revision> keptRevisions = optimizedGraphBuilder.getKeptRevisions();
@@ -105,6 +105,7 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         versionBatch.addBatch();
     }
 
+    @SuppressWarnings("unused")
     protected void insertParents(Id docId, VersionNode<PropertyPath, Object, M> version) {
         for (Revision parentRevision : version.parentRevisions) {
             parentBatch
@@ -118,18 +119,20 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         insertProperties(docId, version.revision, version.getChangeset());
     }
 
+    @SuppressWarnings("unused")
     protected void insertProperties(Id docId, Revision revision, Map<PropertyPath, Object> changeset) {
-        for (Map.Entry<PropertyPath, Object> entry : changeset.entrySet()) {
-            if (!options.versionTableProperties.containsKey(entry.getKey())) {
+        changeset.forEach((key, value) -> {
+            if (!options.versionTableProperties.containsKey(key)) {
                 propertyBatch
                         .set(options.property.revision, revision)
-                        .set(options.property.path, entry.getKey().toString());
-                setValue(entry.getKey(), entry.getValue());
+                        .set(options.property.path, key.toString());
+                setValue(key, value);
                 propertyBatch.addBatch();
             }
-        }
+        });
     }
 
+    @SuppressWarnings("unused")
     protected void setValue(PropertyPath path, Object value) {
         // type:
         // n=null, O=object, A=array, s=string,
@@ -157,7 +160,7 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
                 break;
             case BOOLEAN:
                 type = 'b';
-                nbr = ((Boolean) value) ? 1l : 0l;
+                nbr = ((Boolean) value) ? 1L : 0L;
                 break;
             case LONG:
                 type = 'l';

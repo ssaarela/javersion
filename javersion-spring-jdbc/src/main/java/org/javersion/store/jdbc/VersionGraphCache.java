@@ -24,12 +24,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.javersion.core.Revision;
-import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -40,8 +37,6 @@ public class VersionGraphCache<Id, M> {
 
     @SuppressWarnings("unchecked")
     private static final CacheOptions DEFAULT_CACHE_OPTIONS = new CacheOptions();
-
-    protected final Logger log = LoggerFactory.getLogger(VersionGraph.class);
 
     protected final LoadingCache<Id, ObjectVersionGraph<M>> cache;
 

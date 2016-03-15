@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 import org.javersion.core.Revision;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
@@ -124,6 +126,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         return versionUpdateBatch.set(options.version.ordinal, ordinal);
     }
 
+    @Nonnull
     private BooleanExpression versionsOf(Id docId) {
         return predicate(EQ, options.version.docId, constant(docId));
     }

@@ -110,7 +110,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
 
     @Override
     public DocumentUpdateBatch<Id, M, V> updateBatch(Collection<Id> ids) {
-        return new DocumentUpdateBatch<Id, M, V>(options);
+        return new DocumentUpdateBatch<>(options);
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)

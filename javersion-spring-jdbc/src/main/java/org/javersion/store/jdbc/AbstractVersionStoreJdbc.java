@@ -15,17 +15,26 @@
  */
 package org.javersion.store.jdbc;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.querydsl.core.group.GroupBy.groupBy;
 import static com.querydsl.core.types.Projections.tuple;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nonnull;
 
 import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
@@ -112,7 +121,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     /**
      * NOTE: publish() needs to be called in a separate transaction from append()!
-     * E.g. asynchronously in TransactionSynchronization.afterCommit.
+     * E.g. (a)synchronously from TransactionSynchronization.afterCommit.
      *
      * Calling publish() in the same transaction with append() severely limits concurrency
      * and might end up in deadlock.
@@ -147,9 +156,9 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void optimize(Id docId, java.util.function.Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        AbstractUpdateBatch<Id, M, V, Options> batch = updateBatch(Arrays.asList(docId));
-        batch.optimize(docId, load(docId), keep);
+    public void prune(Id docId, java.util.function.Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+        AbstractUpdateBatch<Id, M, V, Options> batch = updateBatch(singletonList(docId));
+        batch.prune(docId, load(docId), keep);
         batch.execute();
     }
 
@@ -164,6 +173,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return null;
     }
 
+    @SuppressWarnings("unused")
     protected void afterPublish(Multimap<Id, Revision> publishedDocs) {
         // After publish hook for sub classes to override
     }
@@ -268,8 +278,9 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return changeset;
     }
 
+    @SuppressWarnings("unused")
     protected Object getPropertyValue(PropertyPath path, Tuple tuple) {
-        String type = tuple.get(options.property.type);
+        String type = firstNonNull(tuple.get(options.property.type), "N");
         String str = tuple.get(options.property.str);
         Long nbr = tuple.get(options.property.nbr);
 
@@ -277,12 +288,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
             case 'O': return Persistent.object(str);
             case 'A': return Persistent.array();
             case 's': return str;
-            case 'b': return nbr != 0;
+            case 'b': return nbr != null ? nbr != 0 : null;
             case 'l': return nbr;
-            case 'd': return Double.longBitsToDouble(nbr);
-            case 'D': return new BigDecimal(str);
-            case 'n': return null;
+            case 'd': return nbr != null ? Double.longBitsToDouble(nbr) : null;
+            case 'D': return !isNullOrEmpty(str) ? new BigDecimal(str) : null;
             case 'N': return Persistent.NULL;
+            case 'n': return null;
             default:
                 throw new IllegalArgumentException("Unsupported type: " + type);
         }
@@ -295,6 +306,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return expressions;
     }
 
+    @Nonnull
     protected static Expression<?>[] without(Expression<?>[] expressions, Expression<?> expr) {
         List<Expression<?>> list = new ArrayList<>(asList(expressions));
         list.remove(expr);
