@@ -86,6 +86,11 @@ public class MergeBuilder<K, V, M> {
                 // Keep prevValue if there's no change
                 return !Objects.equals(prevEntry.getValue().value, nextEntry.getValue().value);
             }
+
+            @Override
+            public boolean insert(Entry<K, VersionProperty<V>> newEntry) {
+                return newEntry.getValue().value != null;
+            }
         };
 
         version.changeset.forEach((path, value) -> {

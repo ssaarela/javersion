@@ -444,12 +444,12 @@ public class SimpleVersionGraphTest {
     @Test
     public void VersionNode_getChangeset_should_not_throw_NPE() {
         SimpleVersion v1 = new Builder()
-                .changeset(mapOf("value", null))
+                .changeset(mapOf("key", "value", "null", null))
                 .build();
 
         SimpleVersionGraph versionGraph = init(asList(v1));
         VersionNode versionNode = versionGraph.getVersionNode(v1.revision);
-        assertThat(versionNode.getChangeset(), equalTo(mapOf("value", null)));
+        assertThat(versionNode.getChangeset(), equalTo(mapOf("key", "value")));
     }
 
 
@@ -562,6 +562,15 @@ public class SimpleVersionGraphTest {
         assertThat(merge.getProperties().get("key"), equalTo("value2"));
 
         assertThat(versionGraph.getTip().revision, equalTo(v1.revision));
+    }
+
+    @Test
+    public void discard_unnecessary_nulls() {
+        SimpleVersion v1 = new Builder()
+                .changeset(mapOf("key1", null, "key2", null))
+                .build();
+        SimpleVersionGraph graph = init(v1);
+        assertThat(graph.getTip().getChangeset().isEmpty(), equalTo(true));
     }
 
     @Test(expected = IllegalArgumentException.class)

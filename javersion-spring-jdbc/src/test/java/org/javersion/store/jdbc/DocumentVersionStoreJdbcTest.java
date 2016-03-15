@@ -387,10 +387,15 @@ public class DocumentVersionStoreJdbcTest {
                 "BigDecimal", BigDecimal.TEN,
                 "Void", null);
 
-        ObjectVersion<Void> version = ObjectVersion.<Void>builder().changeset(changeset).build();
-        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
+        ObjectVersion<Void>
+                v1 = ObjectVersion.<Void>builder().changeset(mapOf("Void", "null")).build(),
+                v2 = ObjectVersion.<Void>builder().parents(v1.revision).changeset(changeset).build();
+
+        ObjectVersionGraph<Void> graph = ObjectVersionGraph.init(v1, v2);
+        documentStore.append(docId, graph.getVersionNode(v1.revision));
+        documentStore.append(docId, graph.getVersionNode(v2.revision));
         documentStore.publish();
-        assertThat(documentStore.load(docId).getTip().getVersion()).isEqualTo(version);
+        assertThat(documentStore.load(docId).getVersionNode(v2.revision).getVersion()).isEqualTo(v2);
     }
 
     @Test
