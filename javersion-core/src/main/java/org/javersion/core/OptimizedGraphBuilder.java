@@ -50,7 +50,7 @@ public class OptimizedGraphBuilder<K, V, M> {
         // optimizedVersions and heads are in reverse topological order (newest first)
         for (VersionNode<K, V, M> versionNode : versionGraph.getVersionNodes()) {
             List<OptimizedVersionBuilder<K, V, M>> children = findChildren(heads, versionNode.revision);
-            Set<Revision> directChildRevisions = directChildrenRevisions(children);
+            Set<Revision> directChildRevisions = directChildRevisions(children);
             if (directChildRevisions.size() > 1 || keep.test(versionNode)) {
                 keep(versionNode, children, directChildRevisions);
             } else {
@@ -119,7 +119,7 @@ public class OptimizedGraphBuilder<K, V, M> {
                 .collect(Collectors.toList());
     }
 
-    private Set<Revision> directChildrenRevisions(List<OptimizedVersionBuilder<K, V, M>> children) {
+    private Set<Revision> directChildRevisions(List<OptimizedVersionBuilder<K, V, M>> children) {
         Set<Revision> result = Sets.newHashSetWithExpectedSize(children.size());
         for (int i = children.size()-1; i >= 0; i--) {
             boolean redundant = false;
