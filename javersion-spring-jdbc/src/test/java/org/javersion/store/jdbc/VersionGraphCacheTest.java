@@ -3,6 +3,7 @@ package org.javersion.store.jdbc;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.store.jdbc.CacheOptions.keepHeadsAndNewest;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 
 import java.util.concurrent.TimeUnit;
@@ -138,7 +139,7 @@ public class VersionGraphCacheTest {
     @Test
     public void return_empty_if_fetch_fails() throws InterruptedException {
         String docId = randomUUID().toString();
-        VersionGraphCache<String, Void> cache = newRefreshingCache(1); // 100 ms
+        VersionGraphCache<String, Void> cache = newRefreshingCache();
 
         ObjectVersion<Void> version = ObjectVersion.<Void>builder().build(); // empty version
         documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
@@ -186,15 +187,93 @@ public class VersionGraphCacheTest {
         assertThat(cacheRefreshed.getValue()).isFalse();
     }
 
-    private VersionGraphCache<String, Void> newRefreshingCache() {
-        return newRefreshingCache(1);
+    /**
+     *  Keep heads + 1 newest
+     *
+     *   v1
+     *   |
+     *   v2
+     *  / \
+     * v3 |
+     * |  v4
+     * v5 |
+     * |  |
+     * v6 |
+     *  \/
+     *  v7
+     */
+    @Test
+    public void compact_keep_heads_and_one_newest() {
+        ObjectVersionGraph<Void> graph = ObjectVersionGraph.init();
+        VersionGraphCache<String, Void> cache = newRefreshingCache(1, keepHeadsAndNewest(1, 2));
+
+        String docId = randomUUID().toString();
+        Revision v1 = new Revision(0, 1),
+                v2 = new Revision(0, 2),
+                v3 = new Revision(0, 3),
+                v4 = new Revision(0, 4),
+                v5 = new Revision(0, 5),
+                v6 = new Revision(0, 6),
+                v7 = new Revision(0, 7);
+
+        graph = graph.commit(ObjectVersion.<Void>builder(v1).build());
+        documentStore.append(docId, graph.getTip());
+        graph = graph.commit(ObjectVersion.<Void>builder(v2).parents(v1).build());
+        documentStore.append(docId, graph.getTip());
+        assertCacheContains(cache, docId, v1, v2);
+
+        // v1 is dropped
+        graph = graph.commit(ObjectVersion.<Void>builder(v3).parents(v2).build());
+        documentStore.append(docId, graph.getTip());
+        assertCacheContains(cache, docId, v2, v3);
+
+        // heads v5 and v4 + one newer (v3) and LCA (v2) are kept
+        graph = graph.commit(ObjectVersion.<Void>builder(v4).parents(v2).build());
+        documentStore.append(docId, graph.getTip());
+        graph = graph.commit(ObjectVersion.<Void>builder(v5).parents(v3).build());
+        documentStore.append(docId, graph.getTip());
+        assertCacheContains(cache, docId, v2, v3, v4, v5);
+
+        // v3 is dropped
+        graph = graph.commit(ObjectVersion.<Void>builder(v6).parents(v5).build());
+        documentStore.append(docId, graph.getTip());
+        assertCacheContains(cache, docId, v2, v4, v5, v6);
+
+        // all other than tip (v7) and second newest are dropped
+        graph = graph.commit(ObjectVersion.<Void>builder(v7).parents(v6, v4).build());
+        documentStore.append(docId, graph.getTip());
+        assertCacheContains(cache, docId, v6, v7);
     }
 
-    private VersionGraphCache<String, Void> newRefreshingCache(long refreshAfterNanos) {
+    @Test(expected = IllegalArgumentException.class)
+    public void keep_predicate_function_is_required() {
+        new CacheOptions<String, String>(g -> true, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void when_predicate_is_required() {
+        new CacheOptions<String, String>(null, (g) -> v -> true);
+    }
+
+    private void assertCacheContains(VersionGraphCache<String, Void> cache, String docId, Revision... revisions) {
+        cache.publish();
+        ObjectVersionGraph<Void> graph = cache.load(docId);
+        assertThat(graph.versionNodes.size()).isEqualTo(revisions.length);
+        for (Revision revision : revisions) {
+            assertThat(graph.versionNodes.containsKey(revision)).isTrue().overridingErrorMessage("%s not found", revision);
+        }
+    }
+
+    private VersionGraphCache<String, Void> newRefreshingCache() {
+        return newRefreshingCache(1, new CacheOptions<>());
+    }
+
+    private VersionGraphCache<String, Void> newRefreshingCache(long refreshAfterNanos, CacheOptions<String, Void> cacheOptions) {
         return new VersionGraphCache<>(documentStore,
                 CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
                         .maximumSize(8)
-                        .refreshAfterWrite(refreshAfterNanos, TimeUnit.NANOSECONDS)
+                        .refreshAfterWrite(refreshAfterNanos, TimeUnit.NANOSECONDS),
+                cacheOptions
         );
     }
 
