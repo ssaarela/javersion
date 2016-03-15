@@ -41,22 +41,24 @@ public final class UpdateContext<T> implements Merger<T> {
             }
         }
 
-        void insert(T newEntry) {
-            change = 1;
-            if (merger != null) {
-                merger.insert(newEntry);
+        boolean insert(T newEntry) {
+            if (merger == null || merger.insert(newEntry)) {
+                change = 1;
+                return true;
             }
+            return false;
         }
 
         boolean merge(T oldEntry, T newEntry) {
-            return merger == null ? true : merger.merge(oldEntry, newEntry);
+            return merger == null || merger.merge(oldEntry, newEntry);
         }
 
-        void delete(T oldEntry) {
-            change = -1;
-            if (merger != null) {
-                merger.delete(oldEntry);
+        boolean delete(T oldEntry) {
+            if (merger == null || merger.delete(oldEntry)) {
+                change = -1;
+                return true;
             }
+            return false;
         }
 
     }
@@ -110,8 +112,8 @@ public final class UpdateContext<T> implements Merger<T> {
     }
 
     @Override
-    public void insert(T newEntry) {
-        context.insert(newEntry);
+    public boolean insert(T newEntry) {
+        return context.insert(newEntry);
     }
 
     @Override
@@ -120,7 +122,7 @@ public final class UpdateContext<T> implements Merger<T> {
     }
 
     @Override
-    public void delete(T oldEntry) {
-        context.delete(oldEntry);
+    public boolean delete(T oldEntry) {
+        return context.delete(oldEntry);
     }
 }

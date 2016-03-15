@@ -31,8 +31,9 @@ public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableSo
     private final Merger<Entry<K, V>> defaultMerger = new Merger<Map.Entry<K,V>>() {
 
         @Override
-        public void insert(java.util.Map.Entry<K, V> newEntry) {
+        public boolean insert(java.util.Map.Entry<K, V> newEntry) {
             previousValue = null;
+            return true;
         }
 
         @Override
@@ -42,8 +43,9 @@ public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableSo
         }
 
         @Override
-        public void delete(java.util.Map.Entry<K, V> oldEntry) {
+        public boolean delete(java.util.Map.Entry<K, V> oldEntry) {
             previousValue = oldEntry.getValue();
+            return true;
         }
     };
 

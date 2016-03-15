@@ -173,8 +173,11 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
 
     protected final This doAdd(UpdateContext<? super N> context, N root, N node) {
         if (root == null) {
-            context.insert(node);
-            return commitAndReturn(context, comparator, node.edit(context, BLACK, null, null), 1);
+            if (context.insert(node)) {
+                return commitAndReturn(context, comparator, node.edit(context, BLACK, null, null), 1);
+            } else {
+                return self();
+            }
         } else {
             N newRoot = root.add(context, node.edit(context, RED, null, null), comparator);
             if (newRoot == null) {
@@ -265,14 +268,14 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
 
         protected This add(UpdateContext<? super This> currentContext, final This node, Comparator<? super K> comparator) {
             This self = self();
-            int cmpr = comparator.compare(node.key, key);
-            if (cmpr == 0) {
+            int cmp = comparator.compare(node.key, key);
+            if (cmp == 0) {
                 if (currentContext.merge(self, node)) {
                     return replaceWith(currentContext, node);
                 } else {
                     return null;
                 }
-            } else if (cmpr < 0) {
+            } else if (cmp < 0) {
                 return LEFT.add(currentContext, self, node, comparator);
             } else {
                 return RIGHT.add(currentContext, self, node, comparator);
@@ -281,11 +284,14 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
 
         protected This remove(UpdateContext<? super This> currentContext, final K key, Comparator<? super K> comparator) {
             This self = self();
-            int cmpr = comparator.compare(key, self.key);
-            if (cmpr == 0) {
-                currentContext.delete(self());
-                return append(currentContext, left, right);
-            } else if (cmpr < 0) {
+            int cmp = comparator.compare(key, self.key);
+            if (cmp == 0) {
+                if (currentContext.delete(self())) {
+                    return append(currentContext, left, right);
+                } else {
+                    return null;
+                }
+            } else if (cmp < 0) {
                 return LEFT.remove(currentContext, self, key, comparator);
             } else {
                 return RIGHT.remove(currentContext, self, key, comparator);
@@ -490,10 +496,11 @@ public abstract class AbstractRedBlackTree<K, N extends Node<K, N>, This extends
         }
         final <K, N extends Node<K, N>> N add(UpdateContext<? super N> currentContext, N self, N node, Comparator<? super K> comparator) {
             N left = leftOf(self);
-            N newChild;
+            N newChild = null;
             if (left == null) {
-                currentContext.insert(node);
-                newChild = node;
+                if (currentContext.insert(node)) {
+                    newChild = node;
+                }
             } else {
                 newChild = left.add(currentContext, node, comparator);
             }

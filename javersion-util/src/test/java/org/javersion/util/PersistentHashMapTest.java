@@ -39,6 +39,23 @@ import com.google.common.collect.ImmutableSet;
 
 public class PersistentHashMapTest extends AbstractPersistentMapTest<PersistentHashMap<Integer,Integer>>{
 
+    private static <K, V> Merger<Map.Entry<K, V>> vetoMerger() {
+        return new MergerAdapter<Map.Entry<K, V>>() {
+            @Override
+            public boolean merge(Map.Entry<K, V> oldEntry, Map.Entry<K, V> newEntry) {
+                return false;
+            }
+            @Override
+            public boolean insert(Map.Entry<K, V> newEntry) {
+                return false;
+            }
+            @Override
+            public boolean delete(Map.Entry<K, V> oldEntry) {
+                return false;
+            }
+        };
+    }
+
     static class HashKey {
         public final int hash;
         public HashKey(int hash) {
@@ -169,7 +186,22 @@ public class PersistentHashMapTest extends AbstractPersistentMapTest<PersistentH
     }
 
     @Test
-    public void Collisions() {
+    public void ArrayNode_insert() {
+        PersistentMap<Integer, Integer> map = emptyMap(), result;
+        for (int i=0; i < 32; i++) {
+            map = map.assoc(i, i);
+        }
+        map = map.dissoc(7);
+        map = map.assoc(7, 7);
+        assertThat(map.containsKey(7), equalTo(true));
+
+        map = map.dissoc(13);
+        result = map.merge(13, 13, vetoMerger());
+        assertThat(result, sameInstance(map));
+    }
+
+    @Test
+    public void collisions() {
         HashKey k1 = new HashKey(1);
         HashKey k2 = new HashKey(1);
         HashKey k3 = new HashKey(1);
@@ -205,6 +237,36 @@ public class PersistentHashMapTest extends AbstractPersistentMapTest<PersistentH
         assertThat(map.get(k3), nullValue());
 
         assertThat(map.size(), equalTo(0));
+    }
+
+    @Test
+    public void collisions_veto() {
+        Merger<Map.Entry<HashKey, HashKey>> merger = PersistentHashMapTest.<HashKey, HashKey>vetoMerger();
+        HashKey k1 = new HashKey(1);
+        HashKey k2 = new HashKey(1);
+        HashKey k3 = new HashKey(1);
+
+        PersistentHashMap<HashKey, HashKey> map = PersistentHashMap.empty(),
+                result;
+        map = map.assoc(k1, k1);
+
+        result = map.merge(k2, k2, merger);
+        assertThat(result, sameInstance(map));
+        assertThat(result.size(), equalTo(1));
+
+        map = map.assoc(k2, k2);
+
+        result = map.merge(k3, k3, merger);
+        assertThat(result, sameInstance(map));
+        assertThat(result.size(), equalTo(2));
+
+        result = map.merge(k2, k3, merger);
+        assertThat(result, sameInstance(map));
+        assertThat(result.size(), equalTo(2));
+
+        result = map.dissoc(k1, merger);
+        assertThat(result, sameInstance(map));
+        assertThat(result.size(), equalTo(2));
     }
 
     /**

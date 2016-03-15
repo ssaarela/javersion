@@ -21,7 +21,8 @@ import javax.annotation.concurrent.NotThreadSafe;
 public class MergerAdapter<T> implements Merger<T> {
 
     @Override
-    public void insert(T newEntry) {
+    public boolean insert(T newEntry) {
+        return true;
     }
 
     @Override
@@ -30,7 +31,8 @@ public class MergerAdapter<T> implements Merger<T> {
     }
 
     @Override
-    public void delete(T oldEntry) {
+    public boolean delete(T oldEntry) {
+        return true;
     }
 
 }
