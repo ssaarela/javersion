@@ -26,7 +26,6 @@ import java.util.Map.Entry;
 import org.javersion.util.AbstractTreeMap.Node;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 
 public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, This>>
@@ -147,14 +146,6 @@ public abstract class AbstractTreeMap<K, V, This extends AbstractTreeMap<K, V, T
                 return Iterators.transform(doRangeIterator(root(), asc, from, fromInclusive, to, toInclusive),  Map.Entry.class::cast);
             }
         };
-    }
-
-    public Iterable<K> keys() {
-        return Iterables.transform(this, MapUtils.<K>mapKeyFunction());
-    }
-
-    public Iterable<V> values() {
-        return Iterables.transform(this, MapUtils.<V>mapValueFunction());
     }
 
     static class Node<K, V> extends AbstractRedBlackTree.Node<K, Node<K,V>> implements Map.Entry<K, V>{
