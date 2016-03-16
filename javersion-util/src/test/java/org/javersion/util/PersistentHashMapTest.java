@@ -40,7 +40,7 @@ import com.google.common.collect.ImmutableSet;
 public class PersistentHashMapTest extends AbstractPersistentMapTest<PersistentHashMap<Integer,Integer>>{
 
     private static <K, V> Merger<Map.Entry<K, V>> vetoMerger() {
-        return new MergerAdapter<Map.Entry<K, V>>() {
+        return new Merger<Map.Entry<K, V>>() {
             @Override
             public boolean merge(Map.Entry<K, V> oldEntry, Map.Entry<K, V> newEntry) {
                 return false;

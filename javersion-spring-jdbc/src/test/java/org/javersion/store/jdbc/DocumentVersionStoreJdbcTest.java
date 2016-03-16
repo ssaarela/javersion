@@ -382,7 +382,7 @@ public class DocumentVersionStoreJdbcTest {
                 "Array", Persistent.array(),
                 "String", "String",
                 "Boolean", true,
-                "Long", 123l,
+                "Long", 123L,
                 "Double", 123.456,
                 "BigDecimal", BigDecimal.TEN,
                 "Void", null);

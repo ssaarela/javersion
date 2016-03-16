@@ -225,7 +225,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
 
     @Test
     public void veto_insert() {
-        final MergerAdapter<Entry<Integer, Integer>> merger = new MergerAdapter<Entry<Integer, Integer>>() {
+        final Merger<Entry<Integer, Integer>> merger = new Merger<Entry<Integer, Integer>>() {
             @Override
             public boolean insert(Entry<Integer, Integer> newEntry) {
                 return false;
@@ -246,7 +246,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
     @Test
     public void veto_delete() {
         PersistentMap<Integer, Integer> map = emptyMap().assoc(1, 1);
-        PersistentMap<Integer, Integer> result = map.dissoc(1, new MergerAdapter<Entry<Integer, Integer>>() {
+        PersistentMap<Integer, Integer> result = map.dissoc(1, new Merger<Entry<Integer, Integer>>() {
             @Override
             public boolean delete(Entry<Integer, Integer> newEntry) {
                 return false;
