@@ -8,18 +8,18 @@ import javax.annotation.Generated;
 
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.PathMetadata;
+import com.querydsl.core.types.dsl.EnumPath;
 import com.querydsl.core.types.dsl.SimplePath;
 import com.querydsl.sql.ColumnMetadata;
-import com.querydsl.sql.ForeignKey;
-import com.querydsl.sql.PrimaryKey;
-import com.querydsl.sql.RelationalPathBase;
+
+
 
 
 /**
  * QEntityVersionParent is a Querydsl query type for QEntityVersionParent
  */
-@Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QEntityVersionParent extends RelationalPathBase<QEntityVersionParent> {
+@Generated("com.querydsl.sql.codegen.MetaDataSerializer")
+public class QEntityVersionParent extends com.querydsl.sql.RelationalPathBase<QEntityVersionParent> {
 
     private static final long serialVersionUID = 281216146;
 
@@ -29,11 +29,13 @@ public class QEntityVersionParent extends RelationalPathBase<QEntityVersionParen
 
     public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
-    public final PrimaryKey<QEntityVersionParent> constraintE = createPrimaryKey(parentRevision, revision);
+    public final EnumPath<org.javersion.store.jdbc.VersionStatus> status = createEnum("status", org.javersion.store.jdbc.VersionStatus.class);
 
-    public final ForeignKey<QEntityVersion> entityVersionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
+    public final com.querydsl.sql.PrimaryKey<QEntityVersionParent> constraintE = createPrimaryKey(parentRevision, revision);
 
-    public final ForeignKey<QEntityVersion> entityVersionParentRevisionFk = createForeignKey(revision, "REVISION");
+    public final com.querydsl.sql.ForeignKey<QEntityVersion> entityVersionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
+
+    public final com.querydsl.sql.ForeignKey<QEntityVersion> entityVersionParentRevisionFk = createForeignKey(revision, "REVISION");
 
     public QEntityVersionParent(String variable) {
         super(QEntityVersionParent.class, forVariable(variable), "PUBLIC", "ENTITY_VERSION_PARENT");
@@ -58,6 +60,7 @@ public class QEntityVersionParent extends RelationalPathBase<QEntityVersionParen
     public void addMetadata() {
         addMetadata(parentRevision, ColumnMetadata.named("PARENT_REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(status, ColumnMetadata.named("STATUS").withIndex(3).ofType(Types.DECIMAL).withSize(1).notNull());
     }
 
 }

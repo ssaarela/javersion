@@ -15,6 +15,8 @@
  */
 package org.javersion.store.jdbc;
 
+import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
+
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -90,6 +92,7 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         versionBatch
                 .set(options.version.docId, docId)
                 .set(options.version.revision, version.revision)
+                .set(options.version.status, ACTIVE)
                 .set(options.version.type, version.type)
                 .set(options.version.branch, version.branch);
 
@@ -111,6 +114,7 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
             parentBatch
                     .set(options.parent.revision, version.revision)
                     .set(options.parent.parentRevision, parentRevision)
+                    .set(options.parent.status, ACTIVE)
                     .addBatch();
         }
     }
@@ -125,7 +129,8 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
             if (!options.versionTableProperties.containsKey(key)) {
                 propertyBatch
                         .set(options.property.revision, revision)
-                        .set(options.property.path, key.toString());
+                        .set(options.property.path, key.toString())
+                        .set(options.property.status, ACTIVE);
                 setValue(key, value);
                 propertyBatch.addBatch();
             }

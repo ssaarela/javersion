@@ -1,24 +1,24 @@
 package org.javersion.store.sql;
 
-import static com.querydsl.core.types.PathMetadataFactory.forVariable;
+import static com.querydsl.core.types.PathMetadataFactory.*;
 
+import com.querydsl.core.types.dsl.*;
+
+import com.querydsl.core.types.PathMetadata;
+import javax.annotation.Generated;
+import com.querydsl.core.types.Path;
+
+import com.querydsl.sql.ColumnMetadata;
 import java.sql.Types;
 
-import javax.annotation.Generated;
 
-import com.querydsl.core.types.Path;
-import com.querydsl.core.types.PathMetadata;
-import com.querydsl.core.types.dsl.StringPath;
-import com.querydsl.sql.ColumnMetadata;
-import com.querydsl.sql.PrimaryKey;
-import com.querydsl.sql.RelationalPathBase;
 
 
 /**
  * QRepository is a Querydsl query type for QRepository
  */
-@Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QRepository extends RelationalPathBase<QRepository> {
+@Generated("com.querydsl.sql.codegen.MetaDataSerializer")
+public class QRepository extends com.querydsl.sql.RelationalPathBase<QRepository> {
 
     private static final long serialVersionUID = -1904416297;
 
@@ -26,7 +26,7 @@ public class QRepository extends RelationalPathBase<QRepository> {
 
     public final StringPath id = createString("id");
 
-    public final PrimaryKey<QRepository> constraint9 = createPrimaryKey(id);
+    public final com.querydsl.sql.PrimaryKey<QRepository> constraint9 = createPrimaryKey(id);
 
     public QRepository(String variable) {
         super(QRepository.class, forVariable(variable), "PUBLIC", "REPOSITORY");

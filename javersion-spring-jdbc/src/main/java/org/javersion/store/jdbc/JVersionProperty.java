@@ -20,6 +20,7 @@ import java.sql.Types;
 import org.javersion.core.Revision;
 
 import com.querydsl.core.types.PathMetadataFactory;
+import com.querydsl.core.types.dsl.EnumPath;
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.core.types.dsl.SimplePath;
 import com.querydsl.core.types.dsl.StringPath;
@@ -28,11 +29,13 @@ import com.querydsl.sql.RelationalPathBase;
 
 public class JVersionProperty extends RelationalPathBase<JVersionProperty> {
 
+    public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
+
+    public final EnumPath<VersionStatus> status = createEnum("status", VersionStatus.class);
+
     public final NumberPath<Long> nbr = createNumber("nbr", Long.class);
 
     public final StringPath path = createString("path");
-
-    public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
     public final StringPath str = createString("str");
 
@@ -49,15 +52,12 @@ public class JVersionProperty extends RelationalPathBase<JVersionProperty> {
 
     public JVersionProperty(String schema, String table) {
         super(JVersionProperty.class, PathMetadataFactory.forVariable(table), schema, table);
-        addMetadata();
-    }
-
-    protected void addMetadata() {
-        addMetadata(nbr, ColumnMetadata.named("NBR").withIndex(5).ofType(Types.BIGINT).withSize(19));
-        addMetadata(path, ColumnMetadata.named("PATH").withIndex(2).ofType(Types.VARCHAR).withSize(512).notNull());
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
-        addMetadata(str, ColumnMetadata.named("STR").withIndex(4).ofType(Types.VARCHAR).withSize(1024));
-        addMetadata(type, ColumnMetadata.named("TYPE").withIndex(3).ofType(Types.CHAR).withSize(1));
+        addMetadata(status, ColumnMetadata.named("STATUS").withIndex(2).ofType(Types.INTEGER).withSize(1).notNull());
+        addMetadata(path, ColumnMetadata.named("PATH").withIndex(3).ofType(Types.VARCHAR).withSize(512).notNull());
+        addMetadata(type, ColumnMetadata.named("TYPE").withIndex(4).ofType(Types.CHAR).withSize(1).notNull());
+        addMetadata(str, ColumnMetadata.named("STR").withIndex(5).ofType(Types.VARCHAR).withSize(1024));
+        addMetadata(nbr, ColumnMetadata.named("NBR").withIndex(6).ofType(Types.BIGINT).withSize(19));
     }
 
 }

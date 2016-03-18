@@ -35,15 +35,13 @@ public abstract class JVersion<Id> extends RelationalPathBase<JVersion> {
 
     public final EnumPath<VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 
+    public final EnumPath<VersionStatus> status = createEnum("status", VersionStatus.class);
+
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
 
     protected JVersion(RelationalPathBase<?> table, Path<Id> docId) {
         super(JVersion.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
         this.docId = docId;
-        copyMetadata(table);
-    }
-
-    protected void copyMetadata(RelationalPathBase<?> table) {
         table.getColumns().forEach(path -> addMetadata(path, table.getMetadata(path)));
     }
 

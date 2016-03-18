@@ -60,17 +60,23 @@ import com.querydsl.sql.Configuration;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.types.EnumByNameType;
+import com.querydsl.sql.types.EnumByOrdinalType;
 
 public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, V>> {
+
+    public static EnumByOrdinalType<VersionStatus> VERSION_STATUS_TYPE = new EnumByOrdinalType<>(VersionStatus.class);
 
     public static void registerTypes(String tablePrefix, Configuration configuration) {
         configuration.register(tablePrefix + "VERSION", "TYPE", new EnumByNameType<>(VersionType.class));
         configuration.register(tablePrefix + "VERSION", "REVISION", REVISION_TYPE);
+        configuration.register(tablePrefix + "VERSION", "STATUS", VERSION_STATUS_TYPE);
 
         configuration.register(tablePrefix + "VERSION_PARENT", "REVISION", REVISION_TYPE);
         configuration.register(tablePrefix + "VERSION_PARENT", "PARENT_REVISION", REVISION_TYPE);
+        configuration.register(tablePrefix + "VERSION_PARENT", "STATUS", VERSION_STATUS_TYPE);
 
         configuration.register(tablePrefix + "VERSION_PROPERTY", "REVISION", REVISION_TYPE);
+        configuration.register(tablePrefix + "VERSION_PROPERTY", "STATUS", VERSION_STATUS_TYPE);
     }
 
 

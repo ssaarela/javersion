@@ -37,13 +37,15 @@ import com.querydsl.core.types.PathMetadata;
  */
 public abstract class QEntityVersionBase<T> extends RelationalPathBase<T> {
 
+    public final SimplePath<Revision> revision = createSimple("revision", Revision.class);
+
+    public final EnumPath<VersionStatus> status = createEnum("status", VersionStatus.class);
+
     public final StringPath branch = createString("branch");
 
     public final NumberPath<Long> localOrdinal = createNumber("localOrdinal", Long.class);
 
     public final NumberPath<Long> ordinal = createNumber("ordinal", Long.class);
-
-    public final SimplePath<Revision> revision = createSimple("revision", Revision.class);
 
     public final EnumPath<VersionType> type = createEnum("type", VersionType.class);
 
@@ -63,6 +65,7 @@ public abstract class QEntityVersionBase<T> extends RelationalPathBase<T> {
         addMetadata(ordinal, ColumnMetadata.named("ORDINAL").ofType(Types.BIGINT).withSize(19));
         addMetadata(revision, ColumnMetadata.named("REVISION").ofType(Types.VARCHAR).withSize(32).notNull());
         addMetadata(type, ColumnMetadata.named("TYPE").ofType(Types.VARCHAR).withSize(8).notNull());
+        addMetadata(status, ColumnMetadata.named("STATUS").ofType(Types.INTEGER).withSize(1).notNull());
     }
 
 }

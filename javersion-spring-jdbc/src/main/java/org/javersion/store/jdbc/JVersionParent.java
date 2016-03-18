@@ -20,6 +20,7 @@ import java.sql.Types;
 import org.javersion.core.Revision;
 
 import com.querydsl.core.types.PathMetadataFactory;
+import com.querydsl.core.types.dsl.EnumPath;
 import com.querydsl.core.types.dsl.SimplePath;
 import com.querydsl.sql.ColumnMetadata;
 import com.querydsl.sql.RelationalPathBase;
@@ -29,6 +30,8 @@ public class JVersionParent extends RelationalPathBase<JVersionParent> {
     public final SimplePath<Revision> parentRevision = createSimple("parentRevision", org.javersion.core.Revision.class);
 
     public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
+
+    public final EnumPath<VersionStatus> status = createEnum("status", VersionStatus.class);
 
     public JVersionParent(RelationalPathBase<?> table) {
         super(JVersionParent.class, table.getMetadata(), table.getSchemaName(), table.getTableName());
@@ -41,12 +44,9 @@ public class JVersionParent extends RelationalPathBase<JVersionParent> {
 
     public JVersionParent(String schema, String table) {
         super(JVersionParent.class, PathMetadataFactory.forVariable(table), schema, table);
-        addMetadata();
-    }
-
-    protected void addMetadata() {
-        addMetadata(parentRevision, ColumnMetadata.named("PARENT_REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(parentRevision, ColumnMetadata.named("PARENT_REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(status, ColumnMetadata.named("STATUS").withIndex(3).ofType(Types.INTEGER).withSize(1).notNull());
     }
 
 }

@@ -2,6 +2,7 @@ package org.javersion.store.jdbc;
 
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.javersion.core.Revision.NODE;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.store.jdbc.CacheOptions.keepHeadsAndNewest;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
@@ -208,13 +209,13 @@ public class VersionGraphCacheTest {
         VersionGraphCache<String, Void> cache = newRefreshingCache(1, keepHeadsAndNewest(1, 2));
 
         String docId = randomUUID().toString();
-        Revision v1 = new Revision(0, 1),
-                v2 = new Revision(0, 2),
-                v3 = new Revision(0, 3),
-                v4 = new Revision(0, 4),
-                v5 = new Revision(0, 5),
-                v6 = new Revision(0, 6),
-                v7 = new Revision(0, 7);
+        Revision v1 = new Revision(NODE, 1),
+                v2 = new Revision(NODE, 2),
+                v3 = new Revision(NODE, 3),
+                v4 = new Revision(NODE, 4),
+                v5 = new Revision(NODE, 5),
+                v6 = new Revision(NODE, 6),
+                v7 = new Revision(NODE, 7);
 
         graph = graph.commit(ObjectVersion.<Void>builder(v1).build());
         documentStore.append(docId, graph.getTip());

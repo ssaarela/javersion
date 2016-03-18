@@ -1,18 +1,15 @@
 package org.javersion.store.sql;
 
-import static com.querydsl.core.types.PathMetadataFactory.forVariable;
+import static com.querydsl.core.types.PathMetadataFactory.*;
 
-import java.sql.Types;
+import com.querydsl.core.types.dsl.*;
 
-import javax.annotation.Generated;
-
-import com.querydsl.core.types.Path;
 import com.querydsl.core.types.PathMetadata;
-import com.querydsl.core.types.dsl.SimplePath;
+import javax.annotation.Generated;
+import com.querydsl.core.types.Path;
+
 import com.querydsl.sql.ColumnMetadata;
-import com.querydsl.sql.ForeignKey;
-import com.querydsl.sql.PrimaryKey;
-import com.querydsl.sql.RelationalPathBase;
+import java.sql.Types;
 
 
 
@@ -20,8 +17,8 @@ import com.querydsl.sql.RelationalPathBase;
 /**
  * QDocumentVersionParent is a Querydsl query type for QDocumentVersionParent
  */
-@Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QDocumentVersionParent extends RelationalPathBase<QDocumentVersionParent> {
+@Generated("com.querydsl.sql.codegen.MetaDataSerializer")
+public class QDocumentVersionParent extends com.querydsl.sql.RelationalPathBase<QDocumentVersionParent> {
 
     private static final long serialVersionUID = -642672230;
 
@@ -31,11 +28,13 @@ public class QDocumentVersionParent extends RelationalPathBase<QDocumentVersionP
 
     public final SimplePath<org.javersion.core.Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
 
-    public final PrimaryKey<QDocumentVersionParent> constraint5 = createPrimaryKey(parentRevision, revision);
+    public final EnumPath<org.javersion.store.jdbc.VersionStatus> status = createEnum("status", org.javersion.store.jdbc.VersionStatus.class);
 
-    public final ForeignKey<QDocumentVersion> documentVersionParentRevisionFk = createForeignKey(revision, "REVISION");
+    public final com.querydsl.sql.PrimaryKey<QDocumentVersionParent> constraint5 = createPrimaryKey(parentRevision, revision);
 
-    public final ForeignKey<QDocumentVersion> documentVersionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
+    public final com.querydsl.sql.ForeignKey<QDocumentVersion> documentVersionParentRevisionFk = createForeignKey(revision, "REVISION");
+
+    public final com.querydsl.sql.ForeignKey<QDocumentVersion> documentVersionParentParentRevisionFk = createForeignKey(parentRevision, "REVISION");
 
     public QDocumentVersionParent(String variable) {
         super(QDocumentVersionParent.class, forVariable(variable), "PUBLIC", "DOCUMENT_VERSION_PARENT");
@@ -60,6 +59,7 @@ public class QDocumentVersionParent extends RelationalPathBase<QDocumentVersionP
     public void addMetadata() {
         addMetadata(parentRevision, ColumnMetadata.named("PARENT_REVISION").withIndex(2).ofType(Types.VARCHAR).withSize(32).notNull());
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
+        addMetadata(status, ColumnMetadata.named("STATUS").withIndex(3).ofType(Types.DECIMAL).withSize(1).notNull());
     }
 
 }

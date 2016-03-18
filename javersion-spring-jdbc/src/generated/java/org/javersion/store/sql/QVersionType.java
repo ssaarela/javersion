@@ -10,16 +10,15 @@ import com.querydsl.core.types.Path;
 import com.querydsl.core.types.PathMetadata;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.sql.ColumnMetadata;
-import com.querydsl.sql.ForeignKey;
-import com.querydsl.sql.PrimaryKey;
-import com.querydsl.sql.RelationalPathBase;
+
+
 
 
 /**
  * QVersionType is a Querydsl query type for QVersionType
  */
-@Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QVersionType extends RelationalPathBase<QVersionType> {
+@Generated("com.querydsl.sql.codegen.MetaDataSerializer")
+public class QVersionType extends com.querydsl.sql.RelationalPathBase<QVersionType> {
 
     private static final long serialVersionUID = 1436464965;
 
@@ -27,11 +26,11 @@ public class QVersionType extends RelationalPathBase<QVersionType> {
 
     public final StringPath name = createString("name");
 
-    public final PrimaryKey<QVersionType> constraint8 = createPrimaryKey(name);
+    public final com.querydsl.sql.PrimaryKey<QVersionType> constraint8 = createPrimaryKey(name);
 
-    public final ForeignKey<QDocumentVersion> _documentVersionTypeFk = createInvForeignKey(name, "TYPE");
+    public final com.querydsl.sql.ForeignKey<QDocumentVersion> _documentVersionTypeFk = createInvForeignKey(name, "TYPE");
 
-    public final ForeignKey<QEntityVersion> _entityVersionTypeFk = createInvForeignKey(name, "TYPE");
+    public final com.querydsl.sql.ForeignKey<QEntityVersion> _entityVersionTypeFk = createInvForeignKey(name, "TYPE");
 
     public QVersionType(String variable) {
         super(QVersionType.class, forVariable(variable), "PUBLIC", "VERSION_TYPE");

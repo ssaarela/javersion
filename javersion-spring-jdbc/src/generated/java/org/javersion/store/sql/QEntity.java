@@ -1,25 +1,24 @@
 package org.javersion.store.sql;
 
-import static com.querydsl.core.types.PathMetadataFactory.forVariable;
+import static com.querydsl.core.types.PathMetadataFactory.*;
 
+import com.querydsl.core.types.dsl.*;
+
+import com.querydsl.core.types.PathMetadata;
+import javax.annotation.Generated;
+import com.querydsl.core.types.Path;
+
+import com.querydsl.sql.ColumnMetadata;
 import java.sql.Types;
 
-import javax.annotation.Generated;
 
-import com.querydsl.core.types.Path;
-import com.querydsl.core.types.PathMetadata;
-import com.querydsl.core.types.dsl.StringPath;
-import com.querydsl.sql.ColumnMetadata;
-import com.querydsl.sql.ForeignKey;
-import com.querydsl.sql.PrimaryKey;
-import com.querydsl.sql.RelationalPathBase;
 
 
 /**
  * QEntity is a Querydsl query type for QEntity
  */
-@Generated("com.mysema.query.sql.codegen.MetaDataSerializer")
-public class QEntity extends RelationalPathBase<QEntity> {
+@Generated("com.querydsl.sql.codegen.MetaDataSerializer")
+public class QEntity extends com.querydsl.sql.RelationalPathBase<QEntity> {
 
     private static final long serialVersionUID = 1880310000;
 
@@ -29,9 +28,9 @@ public class QEntity extends RelationalPathBase<QEntity> {
 
     public final StringPath name = createString("name");
 
-    public final PrimaryKey<QEntity> constraint7 = createPrimaryKey(id);
+    public final com.querydsl.sql.PrimaryKey<QEntity> constraint7 = createPrimaryKey(id);
 
-    public final ForeignKey<QEntityVersion> _entityVersionDocIdFk = createInvForeignKey(id, "DOC_ID");
+    public final com.querydsl.sql.ForeignKey<QEntityVersion> _entityVersionDocIdFk = createInvForeignKey(id, "DOC_ID");
 
     public QEntity(String variable) {
         super(QEntity.class, forVariable(variable), "PUBLIC", "ENTITY");
