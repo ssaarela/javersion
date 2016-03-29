@@ -51,15 +51,15 @@ public final class DescribeContext {
         this.typeMappings = typeMappings;
     }
 
-    public Schema describeSchema(Class<?> rootClass) {
+    public Schema<ValueType> describeSchema(Class<?> rootClass) {
         return describeSchema(typeMappings.getTypeDescriptor(rootClass));
     }
 
-    public Schema describeSchema(TypeToken rootType) {
+    public Schema<ValueType> describeSchema(TypeToken rootType) {
         return describeSchema(typeMappings.getTypeDescriptor(rootType));
     }
 
-    public Schema describeSchema(TypeDescriptor rootType) {
+    public Schema<ValueType> describeSchema(TypeDescriptor rootType) {
         schemaRoot = new Schema.Builder<>();
         TypeContext typeContext = new TypeContext(rootType);
 
