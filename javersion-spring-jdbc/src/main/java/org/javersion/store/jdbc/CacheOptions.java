@@ -27,6 +27,7 @@ import javax.annotation.concurrent.Immutable;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionGraph;
 import org.javersion.core.VersionNode;
+import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 
@@ -65,17 +66,17 @@ public class CacheOptions<Id, M> {
     }
 
     @Nonnull
-    public final Predicate<VersionGraph<PropertyPath, Object, M, ?, ?>> compactWhen;
+    public final Predicate<ObjectVersionGraph<M>> compactWhen;
 
     @Nonnull
-    public final Function<VersionGraph<PropertyPath, Object, M, ?, ?>, Predicate<VersionNode<PropertyPath, Object, M>>> compactKeep;
+    public final Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> compactKeep;
 
     public CacheOptions() {
         this(null, null);
     }
 
-    public CacheOptions(@Nullable Predicate<VersionGraph<PropertyPath, Object, M, ?, ?>> compactWhen,
-                        @Nullable Function<VersionGraph<PropertyPath, Object, M, ?, ?>, Predicate<VersionNode<PropertyPath, Object, M>>> compactKeep) {
+    public CacheOptions(@Nullable Predicate<ObjectVersionGraph<M>> compactWhen,
+                        @Nullable Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> compactKeep) {
         if (compactWhen != null) {
             if (compactKeep == null) {
                 throw new IllegalArgumentException("compactWhen requires compactKeep");
