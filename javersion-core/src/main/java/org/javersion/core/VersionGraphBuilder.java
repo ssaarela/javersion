@@ -50,6 +50,7 @@ public abstract class VersionGraphBuilder<K, V, M,
         this.tip = parentGraph.getTip();
     }
 
+    @SuppressWarnings("unchecked")
     public final B at(VersionNode<K, V, M> at) {
         this.at = at;
         return (B) this;
