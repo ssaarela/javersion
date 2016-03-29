@@ -95,7 +95,7 @@ public class DocumentVersionStoreJdbcTest {
         assertThat(documentStore.load(docId).isEmpty()).isTrue();
 
         documentStore.publish();
-        VersionGraph versionGraph = documentStore.load(docId);
+        ObjectVersionGraph<Void> versionGraph = documentStore.load(docId);
         assertThat(versionGraph.isEmpty()).isFalse();
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(versionOne);
 
@@ -305,7 +305,7 @@ public class DocumentVersionStoreJdbcTest {
         assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).fetchCount()).isEqualTo(6);
 
         documentStore.prune(docId,
-                versionNode -> versionNode.revision.equals(v5.revision) || versionNode.revision.equals(v6.revision));
+                graph -> versionNode -> versionNode.revision.equals(v5.revision) || versionNode.revision.equals(v6.revision));
 
         assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).fetchCount()).isEqualTo(3);
 
@@ -340,7 +340,7 @@ public class DocumentVersionStoreJdbcTest {
         documentStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
         documentStore.publish();
 
-        documentStore.prune(docId, v -> false);
+        documentStore.prune(docId, graph -> v -> false);
     }
 
     @Test(expected = RuntimeException.class)
@@ -370,7 +370,7 @@ public class DocumentVersionStoreJdbcTest {
         documentStore.append(docId, versionGraph.getVersionNode(v3.revision));
 
         // v3 is not published yet!
-        documentStore.prune(docId, v -> v.revision.equals(v2.revision));
+        documentStore.prune(docId, graph -> v -> v.revision.equals(v2.revision));
     }
 
     @Test

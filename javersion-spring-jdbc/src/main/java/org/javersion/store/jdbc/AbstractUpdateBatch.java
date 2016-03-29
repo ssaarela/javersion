@@ -16,9 +16,13 @@
 package org.javersion.store.jdbc;
 
 import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
+import static org.javersion.store.jdbc.VersionStatus.REDUNDANT;
+import static org.javersion.store.jdbc.VersionStatus.SQUASHED;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.javersion.core.OptimizedGraphBuilder;
@@ -55,8 +59,8 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
 
     public void addVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
         insertVersion(docId, version);
-        insertParents(docId, version);
-        insertProperties(docId, version);
+        insertParents(version);
+        insertProperties(version);
     }
 
     public void execute() {
@@ -71,21 +75,85 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         }
     }
 
-    public void prune(Id docId, ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+    public void prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+        OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
+        if (optimizationBuilder != null) {
+            List<Revision> keptRevisions = optimizationBuilder.getKeptRevisions();
+            List<Revision> squashedRevisions = optimizationBuilder.getSquashedRevisions();
+            List<Revision> modifiedRevisions = concat(keptRevisions, squashedRevisions);
+
+            deleteParents(modifiedRevisions);
+            deleteProperties(modifiedRevisions);
+            deleteVersions(squashedRevisions);
+            insertOptimizedParentsAndProperties(ObjectVersionGraph.init(optimizationBuilder.getOptimizedVersions()), keptRevisions);
+        }
+    }
+
+    public void optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+        OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
+        if (optimizationBuilder != null) {
+            List<Revision> squashedRevisions = optimizationBuilder.getSquashedRevisions();
+
+            squashVersions(squashedRevisions);
+            deleteRedundantParents(squashedRevisions);
+            deleteRedundantProperties(squashedRevisions);
+
+            optimizeParentsAndProperties(graph, ObjectVersionGraph.init(optimizationBuilder.getOptimizedVersions()));
+        }
+    }
+
+    private void optimizeParentsAndProperties(ObjectVersionGraph<M> oldGraph, ObjectVersionGraph<M> newGraph) {
+        newGraph.versionNodes.valueStream().forEach(newVersionNode -> {
+            VersionNode<PropertyPath, Object, M> oldVersionNode = oldGraph.getVersionNode(newVersionNode.revision);
+            optimizeParents(newVersionNode.revision, oldVersionNode.getParentRevisions(), newVersionNode.getParentRevisions());
+            optimizeProperties(newVersionNode.revision, oldVersionNode.getChangeset(), newVersionNode.getChangeset());
+        });
+    }
+
+    private void optimizeProperties(Revision revision, Map<PropertyPath, Object> oldChangeset, Map<PropertyPath, Object> newChangeset) {
+        newChangeset.forEach((path, value) -> {
+            if (!oldChangeset.containsKey(path)) {
+                insertProperty(revision, path, value, REDUNDANT);
+            }
+        });
+        oldChangeset.forEach((path, value) -> {
+            if (!newChangeset.containsKey(path)) {
+                squashProperty(revision, path);
+            }
+        });
+    }
+
+    private void optimizeParents(Revision revision, Set<Revision> oldParentRevisions, Set<Revision> newParentRevisions) {
+        newParentRevisions.forEach(newParentRevision -> {
+            if (!oldParentRevisions.contains(newParentRevision)) {
+                insertParent(revision, newParentRevision, REDUNDANT);
+            }
+        });
+        oldParentRevisions.forEach(oldParentRevision -> {
+            if (!newParentRevisions.contains(oldParentRevision)) {
+                squashParent(revision, oldParentRevision);
+            }
+        });
+    }
+
+    private <T> List<T> concat(List<T> a, List<T> b) {
+        List<T> combined = new ArrayList<>(a.size() + b.size());
+        combined.addAll(a);
+        combined.addAll(b);
+        return combined;
+    }
+
+    private OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
         OptimizedGraphBuilder<PropertyPath, Object, M> optimizedGraphBuilder = new OptimizedGraphBuilder<>(graph, keep);
 
-        List<Revision> keptRevisions = optimizedGraphBuilder.getKeptRevisions();
-        List<Revision> squashedRevisions = optimizedGraphBuilder.getSquashedRevisions();
-
-        if (squashedRevisions.isEmpty()) {
-            return;
+        if (optimizedGraphBuilder.getSquashedRevisions().isEmpty()) {
+            return null;
         }
-        if (keptRevisions.isEmpty()) {
+        if (optimizedGraphBuilder.getKeptRevisions().isEmpty()) {
             throw new IllegalArgumentException("keep-predicate didn't match any version");
         }
-        deleteOldParentsAndProperties(squashedRevisions, keptRevisions);
-        deleteSquashedVersions(squashedRevisions);
-        insertOptimizedParentsAndProperties(docId, ObjectVersionGraph.init(optimizedGraphBuilder.getOptimizedVersions()), keptRevisions);
+
+        return optimizedGraphBuilder;
     }
 
     protected void insertVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
@@ -98,47 +166,43 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
 
         if (!options.versionTableProperties.isEmpty()) {
             Map<PropertyPath, Object> properties = version.getProperties();
-            for (Map.Entry<PropertyPath, Path<?>> entry : options.versionTableProperties.entrySet()) {
-                PropertyPath path = entry.getKey();
-                @SuppressWarnings("unchecked")
-                Path<Object> column = (Path<Object>) entry.getValue();
-                versionBatch.set(column, properties.get(path));
-            }
+            options.versionTableProperties.forEach((path, column) -> {
+               @SuppressWarnings("unchecked")
+                Path<Object> columnPath = (Path<Object>) column;
+                versionBatch.set(columnPath, properties.get(path));
+            });
         }
         versionBatch.addBatch();
     }
 
-    @SuppressWarnings("unused")
-    protected void insertParents(Id docId, VersionNode<PropertyPath, Object, M> version) {
-        for (Revision parentRevision : version.parentRevisions) {
-            parentBatch
-                    .set(options.parent.revision, version.revision)
-                    .set(options.parent.parentRevision, parentRevision)
-                    .set(options.parent.status, ACTIVE)
-                    .addBatch();
+    protected void insertParents(VersionNode<PropertyPath, Object, M> version) {
+        version.parentRevisions.forEach(parentRevision -> insertParent(version.revision, parentRevision, ACTIVE));
+    }
+
+    protected void insertParent(Revision revision, Revision parentRevision, VersionStatus status) {
+        parentBatch
+                .set(options.parent.revision, revision)
+                .set(options.parent.parentRevision, parentRevision)
+                .set(options.parent.status, status)
+                .addBatch();
+    }
+
+    protected void insertProperties(VersionNode<PropertyPath, Object, M> version) {
+        version.getChangeset().forEach((path, value) -> insertProperty(version.revision, path, value, ACTIVE));
+    }
+
+    protected void insertProperty(Revision revision, PropertyPath path, Object value, VersionStatus status) {
+        if (!options.versionTableProperties.containsKey(path)) {
+            propertyBatch
+                    .set(options.property.revision, revision)
+                    .set(options.property.path, path.toString())
+                    .set(options.property.status, status);
+            setValue(path, value);
+            propertyBatch.addBatch();
         }
     }
 
-    protected void insertProperties(Id docId, VersionNode<PropertyPath, Object, M> version) {
-        insertProperties(docId, version.revision, version.getChangeset());
-    }
-
-    @SuppressWarnings("unused")
-    protected void insertProperties(Id docId, Revision revision, Map<PropertyPath, Object> changeset) {
-        changeset.forEach((key, value) -> {
-            if (!options.versionTableProperties.containsKey(key)) {
-                propertyBatch
-                        .set(options.property.revision, revision)
-                        .set(options.property.path, key.toString())
-                        .set(options.property.status, ACTIVE);
-                setValue(key, value);
-                propertyBatch.addBatch();
-            }
-        });
-    }
-
-    @SuppressWarnings("unused")
-    protected void setValue(PropertyPath path, Object value) {
+    protected void setValue(@SuppressWarnings("unused") PropertyPath path, Object value) {
         // type:
         // n=null, O=object, A=array, s=string,
         // b=boolean, l=long, d=double, D=bigdecimal
@@ -188,27 +252,78 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
                 .set(options.property.nbr, nbr);
     }
 
-    private void insertOptimizedParentsAndProperties(Id docId, ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {
+    private void insertOptimizedParentsAndProperties(ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {
         for (Revision revision : keptRevisions) {
             VersionNode<PropertyPath, Object, M> version = optimizedGraph.getVersionNode(revision);
-            insertParents(docId, version);
-            insertProperties(docId, version);
+            insertParents(version);
+            insertProperties(version);
         }
     }
 
-    private void deleteOldParentsAndProperties(List<Revision> squashedRevisions, List<Revision> keptRevisions) {
-        options.queryFactory.delete(options.parent)
-                .where(options.parent.revision.in(keptRevisions).or(options.parent.revision.in(squashedRevisions)))
-                .execute();
-        options.queryFactory.delete(options.property)
-                .where(options.property.revision.in(keptRevisions).or(options.property.revision.in(squashedRevisions)))
+    private void deleteParents(List<Revision> revisions) {
+        options.queryFactory
+                .delete(options.parent)
+                .where(options.parent.revision.in(revisions))
                 .execute();
     }
 
-    private void deleteSquashedVersions(List<Revision> squashedRevisions) {
-        // Delete squashed versions
-        options.queryFactory.delete(options.version)
-                .where(options.version.revision.in(squashedRevisions))
+    private void deleteProperties(List<Revision> revisions) {
+        options.queryFactory
+                .delete(options.property)
+                .where(options.property.revision.in(revisions))
                 .execute();
     }
+
+    private void deleteVersions(List<Revision> revisions) {
+        // Delete squashed versions
+        long count = options.queryFactory
+                .delete(options.version)
+                .where(options.version.revision.in(revisions))
+                .execute();
+        if (count != revisions.size()) {
+            throw new IllegalStateException("Expected to delete " + revisions.size() + " revisions. Got " + count);
+        }
+    }
+
+    private void deleteRedundantParents(List<Revision> revisions) {
+        options.queryFactory
+                .delete(options.parent)
+                .where(options.parent.revision.in(revisions), options.parent.status.eq(REDUNDANT))
+                .execute();
+    }
+
+    private void deleteRedundantProperties(List<Revision> revisions) {
+        options.queryFactory
+                .delete(options.property)
+                .where(options.property.revision.in(revisions), options.property.status.eq(REDUNDANT))
+                .execute();
+    }
+
+    private void squashVersions(List<Revision> revisions) {
+        long count = options.queryFactory
+                .update(options.version)
+                .set(options.version.status, SQUASHED)
+                .where(options.version.revision.in(revisions), options.version.status.ne(SQUASHED))
+                .execute();
+        if (count != revisions.size()) {
+            throw new IllegalStateException("Expected to squash " + revisions.size() + " revisions. Got " + count);
+        }
+    }
+
+    private void squashParent(Revision revision, Revision parentRevision) {
+        options.queryFactory
+                .update(options.parent)
+                .set(options.parent.status, SQUASHED)
+                .where(options.parent.revision.eq(revision), options.parent.parentRevision.eq(parentRevision))
+                .execute();
+    }
+
+    private void squashProperty(Revision revision, PropertyPath path) {
+        options.queryFactory
+                .update(options.property)
+                .set(options.property.status, SQUASHED)
+                .where(options.property.revision.eq(revision), options.property.path.eq(path.toString()))
+                .execute();
+    }
+
 }

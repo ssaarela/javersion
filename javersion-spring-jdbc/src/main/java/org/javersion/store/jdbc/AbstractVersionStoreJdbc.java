@@ -33,6 +33,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 
@@ -162,9 +164,18 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     }
 
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void prune(Id docId, java.util.function.Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+    public void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
         AbstractUpdateBatch<Id, M, V, Options> batch = updateBatch(singletonList(docId));
-        batch.prune(docId, load(docId), keep);
+        ObjectVersionGraph<M> graph = load(docId);
+        batch.prune(graph, keep.apply(graph));
+        batch.execute();
+    }
+
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+        AbstractUpdateBatch<Id, M, V, Options> batch = updateBatch(singletonList(docId));
+        ObjectVersionGraph<M> graph = load(docId);
+        batch.optimize(graph, keep.apply(graph));
         batch.execute();
     }
 

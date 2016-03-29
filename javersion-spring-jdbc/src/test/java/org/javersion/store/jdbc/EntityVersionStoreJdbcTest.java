@@ -215,7 +215,7 @@ public class EntityVersionStoreJdbcTest {
     }
 
     private void prune_doc1() {
-        entityVersionStore.prune(docId1, v -> v.revision.equals(rev4));
+        entityVersionStore.prune(docId1, graph -> v -> v.revision.equals(rev4));
         ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
         assertThat(graph.versionNodes.size()).isEqualTo(1);
     }
