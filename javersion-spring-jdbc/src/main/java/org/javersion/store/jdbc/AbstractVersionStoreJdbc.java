@@ -18,11 +18,15 @@ package org.javersion.store.jdbc;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.querydsl.core.group.GroupBy.groupBy;
+import static com.querydsl.core.types.Ops.IN;
 import static com.querydsl.core.types.Projections.tuple;
+import static com.querydsl.core.types.dsl.Expressions.constant;
+import static com.querydsl.core.types.dsl.Expressions.predicate;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
+import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
@@ -46,6 +50,7 @@ import org.javersion.core.VersionType;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
+import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.*;
@@ -108,7 +113,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     public AbstractVersionStoreJdbc(Options options) {
         this.options = options;
 
-        // Querydsl 3.5 doesn't remove duplicates from select
         versionAndParentColumns = without(concat(options.version.all(), GroupBy.set(options.parent.parentRevision)), options.version.revision);
         versionAndParents = groupBy(options.version.revision).list(versionAndParentColumns);
 
@@ -121,8 +125,22 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     public abstract ObjectVersionGraph<M> load(Id docId);
 
+    public abstract ObjectVersionGraph<M> loadOptimized(Id docId);
+
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public abstract FetchResults<Id, M> load(Collection<Id> docIds);
+    public FetchResults<Id, M> load(Collection<Id> docIds) {
+        Check.notNull(docIds, "docIds");
+        final boolean optimized = true;
+
+        BooleanExpression predicate =
+                predicate(IN, options.version.docId, constant(docIds))
+                        .and(options.version.ordinal.isNotNull());
+
+        List<Group> versionsAndParents = fetchVersionsAndParents(predicate, optimized,
+                options.version.ordinal.asc());
+
+        return fetch(versionsAndParents, optimized, predicate);
+    }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public abstract List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since);
@@ -174,7 +192,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
         AbstractUpdateBatch<Id, M, V, Options> batch = updateBatch(singletonList(docId));
-        ObjectVersionGraph<M> graph = load(docId);
+        ObjectVersionGraph<M> graph = loadOptimized(docId);
         batch.optimize(graph, keep.apply(graph));
         batch.execute();
     }
@@ -215,12 +233,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return options.queryFactory.select(options.version.ordinal.max()).from(options.version);
     }
 
-    protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, BooleanExpression predicate) {
+    protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, boolean optimized, BooleanExpression predicate) {
         if (versionsAndParents.isEmpty()) {
             return noResults;
         }
 
-        Map<Revision, List<Tuple>> properties = fetchProperties(predicate);
+        Map<Revision, List<Tuple>> properties = fetchProperties(optimized, predicate);
         ListMultimap<Id, ObjectVersion<M>> results = ArrayListMultimap.create();
         Revision latestRevision = null;
 
@@ -234,21 +252,35 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return new FetchResults<>(results, latestRevision);
     }
 
-    protected Map<Revision, List<Tuple>> fetchProperties(BooleanExpression predicate) {
-        return options.queryFactory
+    protected Map<Revision, List<Tuple>> fetchProperties(boolean optimized, BooleanExpression predicate) {
+        SQLQuery<?> qry = options.queryFactory
                 .from(options.property)
                 .innerJoin(options.version).on(options.version.revision.eq(options.property.revision))
-                .where(predicate)
-                .transform(properties);
+                .where(predicate);
+
+        if (optimized) {
+            qry.where(options.property.status.goe(ACTIVE));
+        } else {
+            qry.where(options.property.status.loe(ACTIVE));
+        }
+        return qry.transform(properties);
     }
 
-    protected List<Group> fetchVersionsAndParents(BooleanExpression predicate, OrderSpecifier<?> orderBy) {
-        return options.queryFactory
+    protected List<Group> fetchVersionsAndParents(BooleanExpression predicate, boolean optimized, OrderSpecifier<?> orderBy) {
+        SQLQuery<?> qry = options.queryFactory
                 .from(options.version)
-                .leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision))
                 .where(predicate)
-                .orderBy(orderBy)
-                .transform(versionAndParents);
+                .orderBy(orderBy);
+
+        if (optimized) {
+            qry.leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision), options.parent.status.goe(ACTIVE));
+            qry.where(options.version.status.goe(ACTIVE));
+        } else {
+            qry.leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision), options.parent.status.loe(ACTIVE));
+            qry.where(options.version.status.loe(ACTIVE));
+        }
+
+        return qry.transform(versionAndParents);
     }
 
     protected List<Group> verifyVersionsAndParentsSince(List<Group> versionsAndParents, Revision since) {

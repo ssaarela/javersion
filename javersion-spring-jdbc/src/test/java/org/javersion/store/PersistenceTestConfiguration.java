@@ -50,13 +50,13 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> documentStore(SQLQueryFactory queryFactory) {
+    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> documentStore(SQLQueryFactory queryFactory) {
 
         return new DocumentVersionStoreJdbc<>(documentOptionsBuilder().build(queryFactory));
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> mappedDocumentStore(SQLQueryFactory queryFactory) {
+    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> mappedDocumentStore(SQLQueryFactory queryFactory) {
         return new DocumentVersionStoreJdbc<>(
                 documentOptionsBuilder()
                         .versionTableProperties(ImmutableMap.of(
@@ -67,7 +67,7 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public CustomEntityVersionStore entityVersionStore(SQLQueryFactory queryFactory) {
+    public CustomEntityVersionStore entityStore(SQLQueryFactory queryFactory) {
         MyQDocumentVersion version = new MyQDocumentVersion("ENTITY_VERSION", "ENTITY_VERSION");
         MyQDocumentVersion since = new MyQDocumentVersion("SINCE", "ENTITY_VERSION");
 

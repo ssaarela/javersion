@@ -18,7 +18,6 @@ package org.javersion.store.jdbc;
 import static com.querydsl.core.group.GroupBy.groupBy;
 import static com.querydsl.core.types.Ops.EQ;
 import static com.querydsl.core.types.Ops.GT;
-import static com.querydsl.core.types.Ops.IN;
 import static com.querydsl.core.types.Ops.IS_NULL;
 import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.core.types.dsl.Expressions.predicate;
@@ -65,30 +64,24 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
     @Override
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> load(Id docId) {
+        return load(docId, false);
+    }
+
+    @Override
+    public ObjectVersionGraph<M> loadOptimized(Id docId) {
+        return load(docId, true);
+    }
+
+    protected ObjectVersionGraph<M> load(Id docId, boolean optimized) {
         Check.notNull(docId, "docId");
 
         BooleanExpression predicate = versionsOf(docId);
 
-        List<Group> versionsAndParents = fetchVersionsAndParents(predicate,
+        List<Group> versionsAndParents = fetchVersionsAndParents(predicate, optimized,
                 options.version.ordinal.asc());
 
-        FetchResults<Id, M> results = fetch(versionsAndParents, predicate);
+        FetchResults<Id, M> results = fetch(versionsAndParents, optimized, predicate);
         return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
-    }
-
-    @Override
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public FetchResults<Id, M> load(Collection<Id> docIds) {
-        Check.notNull(docIds, "docIds");
-
-        BooleanExpression predicate =
-                predicate(IN, options.version.docId, constant(docIds))
-                        .and(options.version.ordinal.isNotNull());
-
-        List<Group> versionsAndParents = fetchVersionsAndParents(predicate,
-                options.version.ordinal.asc());
-
-        return fetch(versionsAndParents, predicate);
     }
 
     @Override
@@ -104,7 +97,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
         BooleanExpression predicate = versionsOf(docId)
                 .and(predicate(GT, options.version.ordinal, constant(sinceOrdinal)));
 
-        FetchResults<Id, M> results = fetch(versionsAndParents, predicate);
+        FetchResults<Id, M> results = fetch(versionsAndParents, false, predicate);
         return results.containsKey(docId) ? results.getVersions(docId) : ImmutableList.of();
     }
 

@@ -3,14 +3,18 @@ package org.javersion.store.jdbc;
 import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.javersion.store.jdbc.DocumentVersionStoreJdbcTest.mapOf;
+import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
+import static org.javersion.store.jdbc.VersionStatus.REDUNDANT;
+import static org.javersion.store.jdbc.VersionStatus.SQUASHED;
 import static org.javersion.store.sql.QEntity.entity;
+import static org.javersion.store.sql.QEntityVersion.entityVersion;
+import static org.javersion.store.sql.QEntityVersionParent.entityVersionParent;
+import static org.javersion.store.sql.QEntityVersionProperty.entityVersionProperty;
 
 import java.util.List;
 
 import javax.annotation.Resource;
 
-import org.javersion.core.Revision;
 import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
@@ -25,35 +29,27 @@ import com.querydsl.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
-public class EntityVersionStoreJdbcTest {
+public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
     private final String
             docId1 = randomId(),
             docId2 = randomId();
-    private final Revision
-            rev1 = new Revision(),
-            rev2 = new Revision(),
-            rev3 = new Revision(),
-            rev4 = new Revision();
 
     @Resource
-    CustomEntityVersionStore entityVersionStore;
-
-    @Resource
-    TransactionTemplate transactionTemplate;
+    CustomEntityVersionStore entityStore;
 
     @Resource
     SQLQueryFactory queryFactory;
 
     @Test
     public void should_return_empty_graph_if_not_found() {
-        assertThat(entityVersionStore.load(randomId()).isEmpty()).isTrue();
+        assertThat(entityStore.load(randomId()).isEmpty()).isTrue();
     }
 
     @Test(expected = IllegalStateException.class)
     public void must_lock_entity_before_update() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityVersionStore.updateBatch(randomId());
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(randomId());
             update.addVersion(randomId(), ObjectVersionGraph.init(ObjectVersion.<String>builder().build()).getTip());
             update.execute();
             return null;
@@ -62,7 +58,7 @@ public class EntityVersionStoreJdbcTest {
 
     @Test(expected = VersionNotFoundException.class)
     public void throws_exception_if_since_revision_is_not_found() {
-        entityVersionStore.fetchUpdates(docId2, rev1);
+        entityStore.fetchUpdates(docId2, rev1);
     }
 
     @Test
@@ -88,7 +84,7 @@ public class EntityVersionStoreJdbcTest {
         final String comment = "Comment metadata";
         final String docId = randomId();
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityVersionStore.updateBatch(docId);
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(docId);
             ObjectVersion<String> version = ObjectVersion.<String>builder()
                     .meta(comment)
                     .build();
@@ -97,13 +93,51 @@ public class EntityVersionStoreJdbcTest {
 
             return null;
         });
-        ObjectVersionGraph<String> graph = entityVersionStore.load(docId);
+        ObjectVersionGraph<String> graph = entityStore.load(docId);
         assertThat(graph.getTip().getMeta()).isEqualTo(comment);
+    }
+
+    @Override
+    protected void verifyRedundantRelations() {
+        // Redundant parents of inactive versions are removed
+        assertThat(queryFactory
+                .from(entityVersion)
+                .innerJoin(entityVersion._entityVersionParentParentRevisionFk, entityVersionParent)
+                .where(entityVersion.status.eq(SQUASHED), entityVersionParent.status.eq(REDUNDANT))
+                .fetchCount())
+                .isEqualTo(0);
+        // Verify that inverse is true: there exists redundant parents on ACTIVE versions
+        assertThat(queryFactory
+                .from(entityVersion)
+                .innerJoin(entityVersion._entityVersionParentParentRevisionFk, entityVersionParent)
+                .where(entityVersion.status.eq(ACTIVE), entityVersionParent.status.eq(REDUNDANT))
+                .fetchCount())
+                .isGreaterThan(0);
+
+        // Redundant properties of inactive versions are removed
+        assertThat(queryFactory
+                .from(entityVersion)
+                .innerJoin(entityVersion._entityVersionPropertyRevisionFk, entityVersionProperty)
+                .where(entityVersion.status.eq(SQUASHED), entityVersionProperty.status.eq(REDUNDANT))
+                .fetchCount())
+                .isEqualTo(0);
+        // Verify that inverse is true: there exists redundant properties on ACTIVE versions
+        assertThat(queryFactory
+                .from(entityVersion)
+                .innerJoin(entityVersion._entityVersionPropertyRevisionFk, entityVersionProperty)
+                .where(entityVersion.status.eq(ACTIVE), entityVersionProperty.status.eq(REDUNDANT))
+                .fetchCount())
+                .isGreaterThan(0);
+    }
+
+    @Override
+    protected AbstractVersionStoreJdbc<String, String, ?, ?> getStore() {
+        return entityStore;
     }
 
     private void create_first_two_versions_of_doc1() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityVersionStore.updateBatch(docId1);
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(docId1);
             assertThat(update.contains(docId1)).isTrue();
             assertThat(update.contains(randomId())).isFalse();
             assertThat(update.isCreate(docId1)).isTrue();
@@ -131,7 +165,7 @@ public class EntityVersionStoreJdbcTest {
             return null;
         });
 
-        ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
+        ObjectVersionGraph<String> graph = entityStore.load(docId1);
         assertThat(graph.getTip().getProperties()).isEqualTo(mapOf(
                 "id", docId1,
                 "name", "Fixed name"
@@ -146,15 +180,15 @@ public class EntityVersionStoreJdbcTest {
     }
 
     private void cannot_bulk_load_before_publish() {
-        FetchResults<String, String> graphs = entityVersionStore.load(asList(docId1, docId2));
+        FetchResults<String, String> graphs = entityStore.load(asList(docId1, docId2));
         assertThat(graphs.isEmpty()).isTrue();
         assertThat(graphs.size()).isEqualTo(0);
     }
 
     private void create_doc2_and_update_doc1() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityVersionStore.updateBatch(asList(docId1, docId2));
-            ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(asList(docId1, docId2));
+            ObjectVersionGraph<String> graph = entityStore.load(docId1);
             assertThat(graph.isEmpty()).isFalse();
 
             // Create doc2
@@ -172,21 +206,21 @@ public class EntityVersionStoreJdbcTest {
     }
 
     private void fetch_updates_of_doc1() {
-        List<ObjectVersion<String>> updates = entityVersionStore.fetchUpdates(docId1, rev1);
+        List<ObjectVersion<String>> updates = entityStore.fetchUpdates(docId1, rev1);
         assertThat(updates).hasSize(2);
         assertThat(updates.get(0).revision).isEqualTo(rev2);
         assertThat(updates.get(1).revision).isEqualTo(rev4);
     }
 
     private void fetch_updates_of_doc2() {
-        List<ObjectVersion<String>> updates = entityVersionStore.fetchUpdates(docId2, rev3);
+        List<ObjectVersion<String>> updates = entityStore.fetchUpdates(docId2, rev3);
         assertThat(updates).isEmpty();
     }
 
     private void bulk_load_after_publish() {
-        entityVersionStore.publish();
+        entityStore.publish();
 
-        FetchResults<String, String> graphs = entityVersionStore.load(asList(docId1, docId2));
+        FetchResults<String, String> graphs = entityStore.load(asList(docId1, docId2));
         assertThat(graphs.containsKey(docId1)).isTrue();
         assertThat(graphs.containsKey(docId2)).isTrue();
 
@@ -215,8 +249,8 @@ public class EntityVersionStoreJdbcTest {
     }
 
     private void prune_doc1() {
-        entityVersionStore.prune(docId1, graph -> v -> v.revision.equals(rev4));
-        ObjectVersionGraph<String> graph = entityVersionStore.load(docId1);
+        entityStore.prune(docId1, graph -> v -> v.revision.equals(rev4));
+        ObjectVersionGraph<String> graph = entityStore.load(docId1);
         assertThat(graph.versionNodes.size()).isEqualTo(1);
     }
 
