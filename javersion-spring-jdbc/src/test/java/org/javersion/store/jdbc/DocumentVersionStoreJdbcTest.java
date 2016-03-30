@@ -379,6 +379,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
                 "Long", 123L,
                 "Double", 123.456,
                 "BigDecimal", BigDecimal.TEN,
+                "Null", Persistent.NULL,
                 "Void", null);
 
         ObjectVersion<String>
@@ -389,6 +390,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
         documentStore.append(docId, graph.getVersionNode(v1.revision));
         documentStore.append(docId, graph.getVersionNode(v2.revision));
         documentStore.publish();
+
         assertThat(documentStore.load(docId).getVersionNode(v2.revision).getVersion()).isEqualTo(v2);
     }
 
