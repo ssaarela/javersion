@@ -4,11 +4,7 @@ import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
 import static org.javersion.path.PropertyPath.ROOT;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import javax.annotation.Resource;
 
@@ -42,8 +38,11 @@ public class LoadTest {
     private int nextValue = 0;
 
     private final int docCount = 100;
-    private final int docVersionCount = 30;
-    private final int propCount = 100;
+    private final int docVersionCount = 500;
+    private final int propCount = 20;
+
+    private final int optimizeEvery = 50;
+    private final int optimizeKeepNewest = 15;
 
     @Resource
     DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> documentStore;
@@ -153,7 +152,7 @@ public class LoadTest {
                 ts = currentTimeMillis();
 
                 final ObjectVersionGraph<String> versionGraph =
-                        transactionTemplate.execute(status -> entityStore.load(docId));
+                        transactionTemplate.execute(status -> entityStore.loadOptimized(docId));
 
                 print(round, "load", ts);
 
@@ -176,9 +175,17 @@ public class LoadTest {
                 });
                 print(round, "append", ts);
             }
-//            ts = currentTimeMillis();
-//            entityStore.publish();
-//            print(round, "publish", ts);
+            ts = currentTimeMillis();
+            entityStore.publish();
+            print(round, "publish", ts);
+
+            if (round % optimizeEvery == 0) {
+                for (String docId : docIds) {
+                    ts = currentTimeMillis();
+                    entityStore.optimize(docId, graph -> new CacheOptions.KeepHeadsAndNewest<String>(graph, optimizeKeepNewest));
+                    print(round, "optimize", ts);
+                }
+            }
         }
     }
 
@@ -197,6 +204,11 @@ public class LoadTest {
     }
 
     private List<String> generateDocIds(int count) {
+        // select id from entity;
+        // replace regex in selection: ([0-9\-a-z]+) "$1",
+        // return Arrays.asList(
+        // ).subList(0, count);
+
         List<String> ids = new ArrayList<>(count);
         for (int i=0; i < count; i++) {
             ids.add(UUID.randomUUID().toString());

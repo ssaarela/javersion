@@ -255,12 +255,15 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     protected Map<Revision, List<Tuple>> fetchProperties(boolean optimized, BooleanExpression predicate) {
         SQLQuery<?> qry = options.queryFactory
                 .from(options.property)
-                .innerJoin(options.version).on(options.version.revision.eq(options.property.revision))
                 .where(predicate);
 
         if (optimized) {
+            qry.innerJoin(options.version).on(
+                    options.version.revision.eq(options.property.revision),
+                    options.version.status.goe(ACTIVE));
             qry.where(options.property.status.goe(ACTIVE));
         } else {
+            qry.innerJoin(options.version).on(options.version.revision.eq(options.property.revision));
             qry.where(options.property.status.loe(ACTIVE));
         }
         return qry.transform(properties);
