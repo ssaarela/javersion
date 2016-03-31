@@ -117,7 +117,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
 
         BooleanExpression predicate = versionsOf(docId);
 
-        List<Group> versionsAndParents = fetchVersionsAndParents(predicate, optimized,
+        List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
                 options.version.localOrdinal.asc());
 
         FetchResults<Id, M> results = fetch(versionsAndParents, optimized, predicate);

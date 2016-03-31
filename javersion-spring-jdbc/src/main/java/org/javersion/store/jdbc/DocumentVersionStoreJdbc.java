@@ -78,7 +78,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
 
         BooleanExpression predicate = versionsOf(docId);
 
-        List<Group> versionsAndParents = fetchVersionsAndParents(predicate, optimized,
+        List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
                 options.version.ordinal.asc());
 
         FetchResults<Id, M> results = fetch(versionsAndParents, optimized, predicate);

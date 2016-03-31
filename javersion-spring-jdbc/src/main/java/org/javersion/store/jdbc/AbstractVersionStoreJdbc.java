@@ -136,7 +136,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
                 predicate(IN, options.version.docId, constant(docIds))
                         .and(options.version.ordinal.isNotNull());
 
-        List<Group> versionsAndParents = fetchVersionsAndParents(predicate, optimized,
+        List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
                 options.version.ordinal.asc());
 
         return fetch(versionsAndParents, optimized, predicate);
@@ -269,7 +269,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return qry.transform(properties);
     }
 
-    protected List<Group> fetchVersionsAndParents(BooleanExpression predicate, boolean optimized, OrderSpecifier<?> orderBy) {
+    protected List<Group> fetchVersionsAndParents(boolean optimized, BooleanExpression predicate, OrderSpecifier<?> orderBy) {
         SQLQuery<?> qry = options.queryFactory
                 .from(options.version)
                 .where(predicate)
