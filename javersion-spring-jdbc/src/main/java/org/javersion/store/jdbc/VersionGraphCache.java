@@ -104,7 +104,7 @@ public class VersionGraphCache<Id, M> {
 
             @Override
             public ObjectVersionGraph<M> load(Id docId) throws Exception {
-                return compactIfRequired(versionStore.load(docId));
+                return compactIfRequired(versionStore.loadOptimized(docId));
             }
 
             @Override

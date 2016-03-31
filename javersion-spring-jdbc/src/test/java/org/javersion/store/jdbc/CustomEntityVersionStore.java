@@ -27,12 +27,6 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
 
     @Override
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    public EntityUpdateBatch<String, String, JEntityVersion<String>> updateBatch(String docId) {
-        return new UpdateBatch(options, docId);
-    }
-
-    @Override
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
     public EntityUpdateBatch<String, String, JEntityVersion<String>> updateBatch(Collection<String> docIds) {
         return new UpdateBatch(options, docIds);
     }

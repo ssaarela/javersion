@@ -189,7 +189,7 @@ public class VersionGraphCacheTest {
     }
 
     /**
-     *  Keep heads + 1 newest
+     *  Cache compaction: Keep heads + 1 newest
      *
      *   v1
      *   |
@@ -209,7 +209,7 @@ public class VersionGraphCacheTest {
         VersionGraphCache<String, Void> cache = newRefreshingCache(1, keepHeadsAndNewest(1, 2));
 
         String docId = randomUUID().toString();
-        Revision v1 = new Revision(NODE, 1),
+        final Revision v1 = new Revision(NODE, 1),
                 v2 = new Revision(NODE, 2),
                 v3 = new Revision(NODE, 3),
                 v4 = new Revision(NODE, 4),
@@ -233,6 +233,7 @@ public class VersionGraphCacheTest {
         documentStore.append(docId, graph.getTip());
         graph = graph.commit(ObjectVersion.<Void>builder(v5).parents(v3).build());
         documentStore.append(docId, graph.getTip());
+
         assertCacheContains(cache, docId, v2, v3, v4, v5);
 
         // v3 is dropped
@@ -243,7 +244,15 @@ public class VersionGraphCacheTest {
         // all other than tip (v7) and second newest are dropped
         graph = graph.commit(ObjectVersion.<Void>builder(v7).parents(v6, v4).build());
         documentStore.append(docId, graph.getTip());
+
+        // Optimizing storage doesn't effect cache...
+        documentStore.publish();
+        documentStore.optimize(docId, g -> v -> v.revision.equals(v7));
         assertCacheContains(cache, docId, v6, v7);
+
+        // ...until reload
+        cache.evict(docId);
+        assertCacheContains(cache, docId, v7);
     }
 
     @Test(expected = IllegalArgumentException.class)

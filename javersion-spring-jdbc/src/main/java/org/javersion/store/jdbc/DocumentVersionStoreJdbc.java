@@ -68,6 +68,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
     }
 
     @Override
+    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public ObjectVersionGraph<M> loadOptimized(Id docId) {
         return load(docId, true);
     }
