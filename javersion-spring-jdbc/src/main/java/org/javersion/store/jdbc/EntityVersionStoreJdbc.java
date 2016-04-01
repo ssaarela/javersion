@@ -64,18 +64,6 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
 
     @Override
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public ObjectVersionGraph<M> load(Id docId) {
-        return load(docId, false);
-    }
-
-    @Override
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public ObjectVersionGraph<M> loadOptimized(Id docId) {
-        return load(docId, true);
-    }
-
-    @Override
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
         List<Group> versionsAndParents = versionsAndParentsSince(docId, since);
         if (versionsAndParents.isEmpty()) {
@@ -111,7 +99,8 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         return predicate(EQ, options.version.docId, constant(docId));
     }
 
-    protected ObjectVersionGraph<M> load(Id docId, boolean optimized) {
+    @Override
+    protected FetchResults<Id, M> load(Id docId, boolean optimized) {
         Check.notNull(docId, "docId");
 
         BooleanExpression predicate = versionsOf(docId);
@@ -119,9 +108,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
                 options.version.localOrdinal.asc());
 
-        FetchResults<Id, M> results = fetch(versionsAndParents, optimized, predicate);
-
-        return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
+        return fetch(versionsAndParents, optimized, predicate);
     }
 
     protected List<Group> versionsAndParentsSince(Id docId, Revision since) {

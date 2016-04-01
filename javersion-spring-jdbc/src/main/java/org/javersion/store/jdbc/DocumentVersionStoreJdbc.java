@@ -61,18 +61,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
     }
 
     @Override
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public ObjectVersionGraph<M> load(Id docId) {
-        return load(docId, false);
-    }
-
-    @Override
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public ObjectVersionGraph<M> loadOptimized(Id docId) {
-        return load(docId, true);
-    }
-
-    protected ObjectVersionGraph<M> load(Id docId, boolean optimized) {
+    protected FetchResults<Id, M> load(Id docId, boolean optimized) {
         Check.notNull(docId, "docId");
 
         BooleanExpression predicate = versionsOf(docId);
@@ -80,8 +69,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
         List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
                 options.version.ordinal.asc());
 
-        FetchResults<Id, M> results = fetch(versionsAndParents, optimized, predicate);
-        return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
+        return fetch(versionsAndParents, optimized, predicate);
     }
 
     @Override

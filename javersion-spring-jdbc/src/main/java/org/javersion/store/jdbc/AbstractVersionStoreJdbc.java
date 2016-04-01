@@ -123,12 +123,21 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         properties = groupBy(options.property.revision).as(GroupBy.list(tuple(propertyColumns)));
     }
 
-    public abstract ObjectVersionGraph<M> load(Id docId);
-
-    public abstract ObjectVersionGraph<M> loadOptimized(Id docId);
+    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public final ObjectVersionGraph<M> load(Id docId) {
+        FetchResults<Id, M> results = load(docId, false);
+        return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
+    }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public FetchResults<Id, M> load(Collection<Id> docIds) {
+    public final ObjectVersionGraph<M> loadOptimized(Id docId) {
+        return versionGraph(docId, load(docId, true));
+    }
+
+    protected abstract FetchResults<Id, M> load(Id docId, boolean optimized);
+
+    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
+    public GraphResults<Id, M> load(Collection<Id> docIds) {
         Check.notNull(docIds, "docIds");
         final boolean optimized = true;
 
@@ -139,7 +148,24 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
                 options.version.ordinal.asc());
 
-        return fetch(versionsAndParents, optimized, predicate);
+        return graphResults(fetch(versionsAndParents, optimized, predicate));
+    }
+
+    protected GraphResults<Id, M> graphResults(FetchResults<Id, M> fetchResults) {
+        ImmutableMap.Builder<Id, ObjectVersionGraph<M>> graphs = ImmutableMap.builder();
+        for (Id docId : fetchResults.getDocIds()) {
+            graphs.put(docId, versionGraph(docId, fetchResults));
+        }
+        return new GraphResults<>(graphs.build(), fetchResults.latestRevision);
+    }
+
+    protected ObjectVersionGraph<M> versionGraph(Id docId, FetchResults<Id, M> fetchResults) {
+        if (fetchResults.containsKey(docId)) {
+            // TODO: fallback to load(docId) on VersionNotFoundException
+            return ObjectVersionGraph.init(fetchResults.getVersions(docId));
+        } else {
+            return ObjectVersionGraph.init();
+        }
     }
 
     @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
