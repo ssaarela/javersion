@@ -36,7 +36,7 @@ import com.querydsl.core.dml.StoreClause;
 import com.querydsl.core.types.Path;
 import com.querydsl.sql.dml.SQLInsertClause;
 
-public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, V>> {
+public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, M, V>> {
 
     protected static boolean isNotEmpty(StoreClause<?> store) {
         return store != null && !store.isEmpty();

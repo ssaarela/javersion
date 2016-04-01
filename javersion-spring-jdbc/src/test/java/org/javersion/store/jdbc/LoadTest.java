@@ -118,7 +118,7 @@ public class LoadTest {
         for (int round=2; round <= docVersionCount; round++) {
 
             ts = currentTimeMillis();
-            FetchResults<String, Void> results = documentStore.load(docIds);
+            GraphResults<String, Void> results = documentStore.load(docIds);
             print(round, loadLabel, ts);
 
             versions = ArrayListMultimap.create(docCount, propCount);
@@ -182,7 +182,7 @@ public class LoadTest {
             if (round % optimizeEvery == 0) {
                 for (String docId : docIds) {
                     ts = currentTimeMillis();
-                    entityStore.optimize(docId, graph -> new CacheOptions.KeepHeadsAndNewest<String>(graph, optimizeKeepNewest));
+                    entityStore.optimize(docId, graph -> new GraphOptions.KeepHeadsAndNewest<String>(graph, optimizeKeepNewest));
                     print(round, "optimize", ts);
                 }
             }

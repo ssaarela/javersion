@@ -18,9 +18,9 @@ package org.javersion.store.jdbc;
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 
-public class DocumentUpdateBatch<Id, M, V extends JDocumentVersion<Id>> extends AbstractUpdateBatch<Id, M, V, DocumentStoreOptions<Id, V>> {
+public class DocumentUpdateBatch<Id, M, V extends JDocumentVersion<Id>> extends AbstractUpdateBatch<Id, M, V, DocumentStoreOptions<Id, M, V>> {
 
-    public DocumentUpdateBatch(DocumentStoreOptions<Id, V> options) {
+    public DocumentUpdateBatch(DocumentStoreOptions<Id, M, V> options) {
         super(options);
     }
 

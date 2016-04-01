@@ -34,7 +34,7 @@ import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 
-public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersion<Id>> extends AbstractUpdateBatch<Id, M, V, EntityStoreOptions<Id, V>> {
+public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersion<Id>> extends AbstractUpdateBatch<Id, M, V, EntityStoreOptions<Id, M, V>> {
 
     protected final SQLInsertClause entityCreateBatch;
 
@@ -42,7 +42,7 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
 
     private final Map<Id, Long> entityOrdinals;
 
-    public EntityUpdateBatch(EntityStoreOptions<Id, V> options, Collection<Id> docIds) {
+    public EntityUpdateBatch(EntityStoreOptions<Id, M, V> options, Collection<Id> docIds) {
         super(options);
         entityCreateBatch = options.queryFactory.insert(options.entity);
 
@@ -96,7 +96,7 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
         super.insertVersion(docId, version);
     }
 
-    protected Map<Id, Long> lockEntitiesForUpdate(EntityStoreOptions<Id, V> options, Collection<Id> docIds) {
+    protected Map<Id, Long> lockEntitiesForUpdate(EntityStoreOptions<Id, M, V> options, Collection<Id> docIds) {
         return options.queryFactory
                 .from(options.entity)
                 .where(predicate(IN, options.entity.id, constant(docIds)))
@@ -105,7 +105,7 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
                 .transform(groupBy(options.entity.id).as(maxLocalOrdinalByEntity(options)));
     }
 
-    protected SQLQuery<Long> maxLocalOrdinalByEntity(EntityStoreOptions<Id, V> options) {
+    protected SQLQuery<Long> maxLocalOrdinalByEntity(EntityStoreOptions<Id, M, V> options) {
         return options.queryFactory
                 .select(options.version.localOrdinal.max())
                 .from(options.version)

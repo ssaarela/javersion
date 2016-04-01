@@ -179,7 +179,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     }
 
     private void cannot_bulk_load_before_publish() {
-        FetchResults<String, String> graphs = entityStore.load(asList(docId1, docId2));
+        GraphResults<String, String> graphs = entityStore.load(asList(docId1, docId2));
         assertThat(graphs.isEmpty()).isTrue();
         assertThat(graphs.size()).isEqualTo(0);
     }
@@ -219,7 +219,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     private void bulk_load_after_publish() {
         entityStore.publish();
 
-        FetchResults<String, String> graphs = entityStore.load(asList(docId1, docId2));
+        GraphResults<String, String> graphs = entityStore.load(asList(docId1, docId2));
         assertThat(graphs.containsKey(docId1)).isTrue();
         assertThat(graphs.containsKey(docId2)).isTrue();
 

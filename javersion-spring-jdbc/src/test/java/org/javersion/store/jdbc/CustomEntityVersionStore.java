@@ -21,7 +21,7 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
 
     public CustomEntityVersionStore() {}
 
-    public CustomEntityVersionStore(EntityStoreOptions<String, JEntityVersion<String>> options) {
+    public CustomEntityVersionStore(EntityStoreOptions<String, String, JEntityVersion<String>> options) {
         super(options);
     }
 
@@ -35,11 +35,11 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
 
         protected final SQLUpdateClause entityUpdateBatch;
 
-        public UpdateBatch(EntityStoreOptions<String, JEntityVersion<String>> options, String docId) {
+        public UpdateBatch(EntityStoreOptions<String, String, JEntityVersion<String>> options, String docId) {
             this(options, asList(docId));
         }
 
-        public UpdateBatch(EntityStoreOptions<String, JEntityVersion<String>> options, Collection<String> docIds) {
+        public UpdateBatch(EntityStoreOptions<String, String, JEntityVersion<String>> options, Collection<String> docIds) {
             super(options, docIds);
             entityUpdateBatch = options.queryFactory.update(options.entity);
         }

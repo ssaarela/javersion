@@ -64,15 +64,19 @@ public abstract class AbstractVersionStoreTest {
             AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(docId));
             update.addVersion(docId, graph.getVersionNode(rev1));
             update.addVersion(docId, graph.getVersionNode(rev2));
+            update.execute();
             return null;
         });
+        store.publish();
         store.optimize(docId, g -> v -> v.revision.equals(rev2));
 
         transactionTemplate.execute(status -> {
             AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(docId));
             update.addVersion(docId, graph.getVersionNode(rev3));
+            update.execute();
             return null;
         });
+        store.publish();
         ObjectVersionGraph<String> loadedGraph = store.loadOptimized(docId);
         assertThat(loadedGraph.getVersionNode(rev3).getVersion()).isEqualTo(graph.getVersionNode(rev3).getVersion());
     }
@@ -86,9 +90,9 @@ public abstract class AbstractVersionStoreTest {
             AbstractUpdateBatch<String, String, ?, ?> batch = store.updateBatch(ImmutableList.of(docId));
             ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse().forEach(v -> batch.addVersion(docId, v));
             batch.execute();
-            store.publish();
             return null;
         });
+        store.publish();
 
         store.optimize(docId, graph -> v -> !v.revision.equals(rev1));
 

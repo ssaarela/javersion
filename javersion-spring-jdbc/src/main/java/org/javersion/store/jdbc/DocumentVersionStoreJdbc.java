@@ -32,7 +32,6 @@ import java.util.Map;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
-import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,7 +45,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLUpdateClause;
 
-public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> extends AbstractVersionStoreJdbc<Id, M, V, DocumentStoreOptions<Id, V>> {
+public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> extends AbstractVersionStoreJdbc<Id, M, V, DocumentStoreOptions<Id, M, V>> {
 
     protected final Expression<?>[] versionAndParentsSince;
 
@@ -56,7 +55,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
         versionAndParentsSince = null;
     }
 
-    public DocumentVersionStoreJdbc(DocumentStoreOptions<Id, V> options) {
+    public DocumentVersionStoreJdbc(DocumentStoreOptions<Id, M, V> options) {
         super(options);
         versionAndParentsSince = concat(versionAndParentColumns, options.sinceVersion.ordinal);
     }

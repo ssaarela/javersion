@@ -16,6 +16,7 @@
 package org.javersion.store.jdbc;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
@@ -24,7 +25,8 @@ import com.google.common.collect.ImmutableMap;
 import com.querydsl.core.types.Path;
 import com.querydsl.sql.SQLQueryFactory;
 
-public class StoreOptions<Id, V extends JVersion<Id>> {
+@Immutable
+public class StoreOptions<Id, M, V extends JVersion<Id>> {
 
     public final String repositoryId;
 
@@ -40,9 +42,11 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
 
     public final ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
 
+    public final GraphOptions<Id, M> graphOptions;
+
     public final SQLQueryFactory queryFactory;
 
-    protected StoreOptions(AbstractBuilder<Id, V, ?, ?> builder) {
+    protected StoreOptions(AbstractBuilder<Id, M, V, ?, ?> builder) {
         this.repositoryId = Check.notNull(builder.repositoryId, "repositoryId");
         this.repository = Check.notNull(builder.repositoryTable, "repositoryTable");
         this.version = Check.notNull(builder.version, "versionTable");
@@ -52,12 +56,13 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
         this.versionTableProperties = builder.versionTableProperties != null
                 ? ImmutableMap.copyOf(builder.versionTableProperties)
                 : ImmutableMap.of();
+        this.graphOptions = Check.notNull(builder.graphOptions, "graphOptions");
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
     }
 
-    public abstract static class AbstractBuilder<Id, V extends JVersion<Id>,
-            Options extends StoreOptions<Id, V>,
-            This extends AbstractBuilder<Id, V, Options,This>> {
+    public abstract static class AbstractBuilder<Id, M, V extends JVersion<Id>,
+            Options extends StoreOptions<Id, M, V>,
+            This extends AbstractBuilder<Id, M, V, Options,This>> {
 
         protected String repositoryId = "repository";
 
@@ -70,6 +75,8 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
         protected JVersionParent parentTable;
 
         protected JVersionProperty propertyTable;
+
+        protected GraphOptions<Id, M> graphOptions = new GraphOptions<>();
 
         @Nullable
         protected ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
@@ -103,6 +110,11 @@ public class StoreOptions<Id, V extends JVersion<Id>> {
 
         public This propertyTable(JVersionProperty jProperty) {
             this.propertyTable = jProperty;
+            return self();
+        }
+
+        public This graphOptions(GraphOptions<Id, M> graphOptions) {
+            this.graphOptions = graphOptions;
             return self();
         }
 

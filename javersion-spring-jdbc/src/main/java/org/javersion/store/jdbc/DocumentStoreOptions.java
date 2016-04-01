@@ -19,26 +19,26 @@ import org.javersion.util.Check;
 
 import com.querydsl.core.types.Expression;
 
-public class DocumentStoreOptions<Id, V extends JDocumentVersion<Id>> extends StoreOptions<Id, V> {
+public class DocumentStoreOptions<Id, M, V extends JDocumentVersion<Id>> extends StoreOptions<Id, M, V> {
 
     public final Expression<Long> nextOrdinal;
 
-    protected DocumentStoreOptions(Builder<Id, V> builder) {
+    protected DocumentStoreOptions(Builder<Id, M, V> builder) {
         super(builder);
         this.nextOrdinal = Check.notNull(builder.nextOrdinal, "nextOrdinal");
     }
 
-    public static class Builder<Id, V extends JDocumentVersion<Id>> extends AbstractBuilder<Id, V, DocumentStoreOptions<Id, V>, Builder<Id, V>> {
+    public static class Builder<Id, M, V extends JDocumentVersion<Id>> extends AbstractBuilder<Id, M, V, DocumentStoreOptions<Id, M, V>, Builder<Id, M, V>> {
 
         protected Expression<Long> nextOrdinal;
 
-        public Builder<Id, V> nextOrdinal(Expression<Long> nextOrdinal) {
+        public Builder<Id, M, V> nextOrdinal(Expression<Long> nextOrdinal) {
             this.nextOrdinal = nextOrdinal;
             return this;
         }
 
         @Override
-        public DocumentStoreOptions<Id, V> build() {
+        public DocumentStoreOptions<Id, M, V> build() {
             return new DocumentStoreOptions<>(this);
         }
 

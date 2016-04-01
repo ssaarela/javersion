@@ -33,7 +33,6 @@ import javax.annotation.Nonnull;
 
 import org.javersion.core.Revision;
 import org.javersion.object.ObjectVersion;
-import org.javersion.object.ObjectVersionGraph;
 import org.javersion.util.Check;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,8 +45,8 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLUpdateClause;
 
-public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityVersion<Id>> extends AbstractVersionStoreJdbc<Id, M, V,
-        EntityStoreOptions<Id, V>> {
+public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityVersion<Id>>
+        extends AbstractVersionStoreJdbc<Id, M, V, EntityStoreOptions<Id, M, V>> {
 
     protected final ResultTransformer<List<Group>> versionAndParentsSince;
 
@@ -57,7 +56,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         versionAndParentsSince = null;
     }
 
-    public EntityVersionStoreJdbc(EntityStoreOptions<Id, V> options) {
+    public EntityVersionStoreJdbc(EntityStoreOptions<Id, M, V> options) {
         super(options);
         Expression<?>[] values = concat(versionAndParentColumns, options.sinceVersion.localOrdinal);
         versionAndParentsSince = groupBy(options.version.revision).list(values);

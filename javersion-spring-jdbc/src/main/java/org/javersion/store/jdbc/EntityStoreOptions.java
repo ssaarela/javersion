@@ -17,30 +17,31 @@ package org.javersion.store.jdbc;
 
 import org.javersion.util.Check;
 
-public class EntityStoreOptions<Id extends Comparable, V extends JEntityVersion<Id>> extends StoreOptions<Id, V> {
+public class EntityStoreOptions<Id extends Comparable, M, V extends JEntityVersion<Id>> extends StoreOptions<Id, M, V> {
 
-    public static <Id extends Comparable, V extends JEntityVersion<Id>> Builder<Id, V> builder() {
+    public static <Id extends Comparable, M, V extends JEntityVersion<Id>> Builder<Id, M, V> builder() {
         return new Builder<>();
     }
 
     public final JEntity<Id> entity;
 
-    protected EntityStoreOptions(Builder<Id, V> builder) {
+    protected EntityStoreOptions(Builder<Id, M, V> builder) {
         super(builder);
         this.entity = Check.notNull(builder.entity, "entity");
     }
 
-    public static class Builder<Id extends Comparable, V extends JEntityVersion<Id>> extends AbstractBuilder<Id, V, EntityStoreOptions<Id, V>, Builder<Id, V>> {
+    public static class Builder<Id extends Comparable, M, V extends JEntityVersion<Id>>
+            extends AbstractBuilder<Id, M, V, EntityStoreOptions<Id, M, V>, Builder<Id, M, V>> {
 
         private JEntity<Id> entity;
 
-        public Builder<Id, V> entityTable(JEntity<Id> entity) {
+        public Builder<Id, M, V> entityTable(JEntity<Id> entity) {
             this.entity = entity;
             return this;
         }
 
         @Override
-        public EntityStoreOptions<Id, V> build() {
+        public EntityStoreOptions<Id, M, V> build() {
             return new EntityStoreOptions<>(this);
         }
 

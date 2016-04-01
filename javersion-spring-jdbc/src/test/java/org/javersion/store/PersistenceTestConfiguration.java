@@ -72,7 +72,7 @@ public class PersistenceTestConfiguration {
         MyQDocumentVersion since = new MyQDocumentVersion("SINCE", "ENTITY_VERSION");
 
         return new CustomEntityVersionStore(
-                new EntityStoreOptions.Builder<String, JEntityVersion<String>>()
+                new EntityStoreOptions.Builder<String, String, JEntityVersion<String>>()
                         .defaultsFor("ENTITY")
                         .entityTable(new JEntity<>(entity, entity.id))
                         .versionTable(new JEntityVersion<>(version, version.docId))
@@ -87,9 +87,9 @@ public class PersistenceTestConfiguration {
     }
 
 
-    private Builder<String, JDocumentVersion<String>> documentOptionsBuilder() {
+    private Builder<String, String, JDocumentVersion<String>> documentOptionsBuilder() {
         QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
-        return new Builder<String, JDocumentVersion<String>>()
+        return new Builder<String, String, JDocumentVersion<String>>()
                 .defaultsFor("DOCUMENT")
                 .repositoryTable(new JRepository(repository))
                 .versionTable(new JDocumentVersion<>(documentVersion, documentVersion.docId))

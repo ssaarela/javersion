@@ -4,7 +4,7 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.core.Revision.NODE;
 import static org.javersion.path.PropertyPath.ROOT;
-import static org.javersion.store.jdbc.CacheOptions.keepHeadsAndNewest;
+import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 
 import java.util.concurrent.TimeUnit;
@@ -166,7 +166,7 @@ public class VersionGraphCacheTest {
             @Override
             public Multimap<String, Revision> publish() { return documentStore.publish(); }
             @Override
-            public ObjectVersionGraph<Void> load(String docId) {
+            protected FetchResults<String, Void> load(String docId, boolean optimized) {
                 cacheRefreshed.setTrue();
                 throw new RuntimeException("Should not refresh!");
             }
@@ -257,12 +257,12 @@ public class VersionGraphCacheTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void keep_predicate_function_is_required() {
-        new CacheOptions<String, String>(g -> true, null);
+        new GraphOptions<String, String>(g -> true, null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void when_predicate_is_required() {
-        new CacheOptions<String, String>(null, (g) -> v -> true);
+        new GraphOptions<String, String>(null, (g) -> v -> true);
     }
 
     private void assertCacheContains(VersionGraphCache<String, Void> cache, String docId, Revision... revisions) {
@@ -275,15 +275,15 @@ public class VersionGraphCacheTest {
     }
 
     private VersionGraphCache<String, Void> newRefreshingCache() {
-        return newRefreshingCache(1, new CacheOptions<>());
+        return newRefreshingCache(1, new GraphOptions<>());
     }
 
-    private VersionGraphCache<String, Void> newRefreshingCache(long refreshAfterNanos, CacheOptions<String, Void> cacheOptions) {
+    private VersionGraphCache<String, Void> newRefreshingCache(long refreshAfterNanos, GraphOptions<String, Void> graphOptions) {
         return new VersionGraphCache<>(documentStore,
                 CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
                         .maximumSize(8)
                         .refreshAfterWrite(refreshAfterNanos, TimeUnit.NANOSECONDS),
-                cacheOptions
+                graphOptions
         );
     }
 

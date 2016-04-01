@@ -34,7 +34,7 @@ import org.javersion.util.Check;
 import com.google.common.base.Function;
 
 @Immutable
-public class CacheOptions<Id, M> {
+public class GraphOptions<Id, M> {
 
     public static class KeepHeadsAndNewest<M> implements Predicate<VersionNode<PropertyPath, Object, M>> {
 
@@ -56,39 +56,39 @@ public class CacheOptions<Id, M> {
         }
     }
 
-    public static <Id, M> CacheOptions<Id, M> keepHeadsAndNewest(final int count, final int compactThreshold) {
+    public static <Id, M> GraphOptions<Id, M> keepHeadsAndNewest(final int count, final int compactThreshold) {
         Check.that(count >= 0, "count should be >= 0");
         Check.that(compactThreshold > count, "compactThreshold should be > count");
-        return new CacheOptions<>(
+        return new GraphOptions<>(
                 g -> g.versionNodes.size() - g.getHeads().size() >=  compactThreshold,
                 (g) -> new KeepHeadsAndNewest<>(g, count)
         );
     }
 
     @Nonnull
-    public final Predicate<ObjectVersionGraph<M>> compactWhen;
+    public final Predicate<ObjectVersionGraph<M>> optimizeWhen;
 
     @Nonnull
-    public final Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> compactKeep;
+    public final Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> optimizeKeep;
 
-    public CacheOptions() {
+    public GraphOptions() {
         this(null, null);
     }
 
-    public CacheOptions(@Nullable Predicate<ObjectVersionGraph<M>> compactWhen,
-                        @Nullable Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> compactKeep) {
-        if (compactWhen != null) {
-            if (compactKeep == null) {
+    public GraphOptions(@Nullable Predicate<ObjectVersionGraph<M>> optimizeWhen,
+                        @Nullable Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> optimizeKeep) {
+        if (optimizeWhen != null) {
+            if (optimizeKeep == null) {
                 throw new IllegalArgumentException("compactWhen requires compactKeep");
             }
-            this.compactWhen = compactWhen;
-            this.compactKeep = compactKeep;
+            this.optimizeWhen = optimizeWhen;
+            this.optimizeKeep = optimizeKeep;
         } else {
-            if (compactKeep != null) {
+            if (optimizeKeep != null) {
                 throw new IllegalArgumentException("compactKeep requires compactWhen");
             }
-            this.compactWhen = g -> false;
-            this.compactKeep = (g) -> v -> true;
+            this.optimizeWhen = g -> false;
+            this.optimizeKeep = (g) -> v -> true;
         }
     }
 

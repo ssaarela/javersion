@@ -409,11 +409,11 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
         documentStore.append(docId2, ObjectVersionGraph.init(v2).getTip());
         documentStore.publish();
 
-        FetchResults<String, String> results = documentStore.load(asList(docId1, docId2));
+        GraphResults<String, String> results = documentStore.load(asList(docId1, docId2));
         assertThat(results.getDocIds()).isEqualTo(ImmutableSet.of(docId1, docId2));
         assertThat(results.latestRevision).isEqualTo(v2.revision);
-        assertThat(results.getVersions(docId1).get(0)).isEqualTo(v1);
-        assertThat(results.getVersions(docId2).get(0)).isEqualTo(v2);
+        assertThat(results.getVersionGraph(docId1).getTip().getVersion()).isEqualTo(v1);
+        assertThat(results.getVersionGraph(docId2).getTip().getVersion()).isEqualTo(v2);
     }
 
     @Test

@@ -36,13 +36,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class VersionGraphCache<Id, M> {
 
     @SuppressWarnings("unchecked")
-    private static final CacheOptions DEFAULT_CACHE_OPTIONS = new CacheOptions();
+    private static final GraphOptions DEFAULT_CACHE_OPTIONS = new GraphOptions();
 
     protected final LoadingCache<Id, ObjectVersionGraph<M>> cache;
 
     private final AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore;
 
-    private final CacheOptions<Id, M> cacheOptions;
+    private final GraphOptions<Id, M> graphOptions;
 
     protected final Set<Id> cachedDocIds;
 
@@ -55,12 +55,12 @@ public class VersionGraphCache<Id, M> {
     @SuppressWarnings("unchecked")
     public VersionGraphCache(AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore,
                              CacheBuilder<Object, Object> cacheBuilder,
-                             CacheOptions<Id, M> cacheOptions) {
+                             GraphOptions<Id, M> graphOptions) {
         this.versionStore = versionStore;
 
         this.cache = cacheBuilder.build(newCacheLoader(versionStore));
         this.cachedDocIds = cache.asMap().keySet();
-        this.cacheOptions = firstNonNull(cacheOptions, DEFAULT_CACHE_OPTIONS);
+        this.graphOptions = firstNonNull(graphOptions, DEFAULT_CACHE_OPTIONS);
     }
 
     public ObjectVersionGraph<M> load(Id docId) {
@@ -126,8 +126,8 @@ public class VersionGraphCache<Id, M> {
             }
 
             private ObjectVersionGraph<M> compactIfRequired(ObjectVersionGraph<M> graph) {
-                if (cacheOptions.compactWhen.test(graph)) {
-                    return graph.optimize(cacheOptions.compactKeep.apply(graph));
+                if (graphOptions.optimizeWhen.test(graph)) {
+                    return graph.optimize(graphOptions.optimizeKeep.apply(graph));
                 } else {
                     return graph;
                 }
