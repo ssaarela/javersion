@@ -1,5 +1,6 @@
 package org.javersion.store.jdbc;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,9 +52,35 @@ public abstract class AbstractVersionStoreTest {
     }
 
     @Test
-    public void optimize_progressively() {
-        final String docId = randomUUID().toString();
+    public void allow_squashed_parent() {
         AbstractVersionStoreJdbc<String, String, ?, ?> store = getStore();
+        final String docId = randomUUID().toString();
+        ObjectVersionGraph<String> graph = ObjectVersionGraph.init(
+                ObjectVersion.<String>builder(rev1).changeset(mapOf("property", "value1")).build(),
+                ObjectVersion.<String>builder(rev2).changeset(mapOf("property", "value2")).parents(rev1).build(),
+                ObjectVersion.<String>builder(rev3).changeset(mapOf("property", "value3")).parents(rev1).build());
+
+        transactionTemplate.execute(status -> {
+            AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(docId));
+            update.addVersion(docId, graph.getVersionNode(rev1));
+            update.addVersion(docId, graph.getVersionNode(rev2));
+            return null;
+        });
+        store.optimize(docId, g -> v -> v.revision.equals(rev2));
+
+        transactionTemplate.execute(status -> {
+            AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(docId));
+            update.addVersion(docId, graph.getVersionNode(rev3));
+            return null;
+        });
+        ObjectVersionGraph<String> loadedGraph = store.loadOptimized(docId);
+        assertThat(loadedGraph.getVersionNode(rev3).getVersion()).isEqualTo(graph.getVersionNode(rev3).getVersion());
+    }
+
+    @Test
+    public void optimize_progressively() {
+        AbstractVersionStoreJdbc<String, String, ?, ?> store = getStore();
+        final String docId = randomUUID().toString();
         transactionTemplate.execute(status -> {
             ObjectVersionGraph<String> versionGraph = graphForOptimization();
             AbstractUpdateBatch<String, String, ?, ?> batch = store.updateBatch(ImmutableList.of(docId));
