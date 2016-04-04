@@ -161,8 +161,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected ObjectVersionGraph<M> versionGraph(Id docId, FetchResults<Id, M> fetchResults) {
         if (fetchResults.containsKey(docId)) {
-            // TODO: fallback to load(docId) on VersionNotFoundException
-            return ObjectVersionGraph.init(fetchResults.getVersions(docId));
+            try {
+                return ObjectVersionGraph.init(fetchResults.getVersions(docId));
+            } catch (VersionNotFoundException e) {
+                return load(docId);
+            }
         } else {
             return ObjectVersionGraph.init();
         }

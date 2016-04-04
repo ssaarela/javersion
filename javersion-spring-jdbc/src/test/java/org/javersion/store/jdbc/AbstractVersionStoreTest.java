@@ -55,10 +55,14 @@ public abstract class AbstractVersionStoreTest {
     public void allow_squashed_parent() {
         AbstractVersionStoreJdbc<String, String, ?, ?> store = getStore();
         final String docId = randomUUID().toString();
-        ObjectVersionGraph<String> graph = ObjectVersionGraph.init(
-                ObjectVersion.<String>builder(rev1).changeset(mapOf("property", "value1")).build(),
-                ObjectVersion.<String>builder(rev2).changeset(mapOf("property", "value2")).parents(rev1).build(),
-                ObjectVersion.<String>builder(rev3).changeset(mapOf("property", "value3")).parents(rev1).build());
+        final String doc2Id = randomUUID().toString();
+
+        ObjectVersion<String> v1 = ObjectVersion.<String>builder(rev1).changeset(mapOf("property", "value1")).build(),
+                v2 = ObjectVersion.<String>builder(rev2).changeset(mapOf("property", "value2")).parents(rev1).build(),
+                v3 = ObjectVersion.<String>builder(rev3).changeset(mapOf("property", "value3")).parents(rev1).build(),
+                v4 = ObjectVersion.<String>builder(rev4).build();
+
+        ObjectVersionGraph<String> graph = ObjectVersionGraph.init(v1, v2, v3);
 
         transactionTemplate.execute(status -> {
             AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(docId));
@@ -70,6 +74,7 @@ public abstract class AbstractVersionStoreTest {
         store.publish();
         store.optimize(docId, g -> v -> v.revision.equals(rev2));
 
+        // Load one (loadOptimized)
         transactionTemplate.execute(status -> {
             AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(docId));
             update.addVersion(docId, graph.getVersionNode(rev3));
@@ -79,6 +84,22 @@ public abstract class AbstractVersionStoreTest {
         store.publish();
         ObjectVersionGraph<String> loadedGraph = store.loadOptimized(docId);
         assertThat(loadedGraph.getVersionNode(rev3).getVersion()).isEqualTo(graph.getVersionNode(rev3).getVersion());
+
+        // Batch load
+        transactionTemplate.execute(status -> {
+            AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(doc2Id));
+            update.addVersion(doc2Id, ObjectVersionGraph.init(v4).getTip());
+            update.execute();
+            return null;
+        });
+        store.publish();
+
+        GraphResults<String, String> results = store.load(asList(docId, doc2Id));
+        assertThat(results.getVersionGraph(docId).getVersionNode(rev1).getVersion()).isEqualTo(v1);
+        assertThat(results.getVersionGraph(docId).getVersionNode(rev2).getVersion()).isEqualTo(v2);
+        assertThat(results.getVersionGraph(docId).getVersionNode(rev3).getVersion()).isEqualTo(v3);
+
+        assertThat(results.getVersionGraph(doc2Id).getVersionNode(rev4).getVersion()).isEqualTo(v4);
     }
 
     @Test
