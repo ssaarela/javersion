@@ -50,6 +50,29 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
         versionAndParentsSince = concat(versionAndParentColumns, options.sinceVersion.ordinal);
     }
 
+    public final void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
+        options.transactions.writeRequired(() -> {
+            doAppend(ImmutableMultimap.of(docId, version));
+            return null;
+        });
+    }
+
+    public final void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
+        options.transactions.writeRequired(() -> {
+            ImmutableMultimap.Builder<Id, VersionNode<PropertyPath, Object, M>> builder = ImmutableMultimap.builder();
+            doAppend(builder.putAll(docId, versions).build());
+            return null;
+        });
+    }
+
+    public final void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
+        options.transactions.writeRequired(() -> {
+            doAppend(versionsByDocId);
+            return null;
+        });
+    }
+
+
     @Override
     protected FetchResults<Id, M> doLoad(Id docId, boolean optimized) {
         Check.notNull(docId, "docId");
@@ -81,28 +104,6 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
     @Override
     protected DocumentUpdateBatch<Id, M, V> doUpdateBatch(Collection<Id> ids) {
         return new DocumentUpdateBatch<>(options);
-    }
-
-    public final void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
-        options.transactions.writeRequired(() -> {
-            doAppend(ImmutableMultimap.of(docId, version));
-            return null;
-        });
-    }
-
-    public final void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
-        options.transactions.writeRequired(() -> {
-            ImmutableMultimap.Builder<Id, VersionNode<PropertyPath, Object, M>> builder = ImmutableMultimap.builder();
-            doAppend(builder.putAll(docId, versions).build());
-            return null;
-        });
-    }
-
-    public final void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
-        options.transactions.writeRequired(() -> {
-            doAppend(versionsByDocId);
-            return null;
-        });
     }
 
     protected void doAppend(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {

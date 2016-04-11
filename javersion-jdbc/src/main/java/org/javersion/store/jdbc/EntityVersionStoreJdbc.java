@@ -52,6 +52,22 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         versionAndParentsSince = groupBy(options.version.revision).list(values);
     }
 
+    public EntityUpdateBatch<Id, M, V> updateBatch(Id docId) {
+        return options.transactions.writeMandatory(() -> doUpdateBatch(ImmutableSet.of(docId)));
+    }
+
+    @Override
+    protected FetchResults<Id, M> doLoad(Id docId, boolean optimized) {
+        Check.notNull(docId, "docId");
+
+        BooleanExpression predicate = versionsOf(docId);
+
+        List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
+                options.version.localOrdinal.asc());
+
+        return fetch(versionsAndParents, optimized, predicate);
+    }
+
     @Override
     protected List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since) {
         List<Group> versionsAndParents = versionsAndParentsSince(docId, since);
@@ -68,10 +84,6 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         return results.containsKey(docId) ? results.getVersions(docId) : ImmutableList.of();
     }
 
-    public EntityUpdateBatch<Id, M, V> updateBatch(Id docId) {
-    return options.transactions.writeMandatory(() -> doUpdateBatch(ImmutableSet.of(docId)));
-    }
-
     protected EntityUpdateBatch<Id, M, V> doUpdateBatch(Collection<Id> docIds) {
         return new EntityUpdateBatch<>(options, docIds);
     }
@@ -79,23 +91,6 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
     @Override
     protected SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal) {
         return versionUpdateBatch.set(options.version.ordinal, ordinal);
-    }
-
-    @Nonnull
-    private BooleanExpression versionsOf(Id docId) {
-        return predicate(EQ, options.version.docId, constant(docId));
-    }
-
-    @Override
-    protected FetchResults<Id, M> doLoad(Id docId, boolean optimized) {
-        Check.notNull(docId, "docId");
-
-        BooleanExpression predicate = versionsOf(docId);
-
-        List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
-                options.version.localOrdinal.asc());
-
-        return fetch(versionsAndParents, optimized, predicate);
     }
 
     protected List<Group> versionsAndParentsSince(Id docId, Revision since) {
@@ -124,6 +119,11 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
                 .where(options.version.ordinal.isNull())
                 .orderBy(options.version.localOrdinal.asc())
                 .transform(groupBy(options.version.revision).as(options.version.docId));
+    }
+
+    @Nonnull
+    private BooleanExpression versionsOf(Id docId) {
+        return predicate(EQ, options.version.docId, constant(docId));
     }
 
 }

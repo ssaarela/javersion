@@ -114,23 +114,66 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return options.transactions.readOnly(() -> doLoad(docId));
     }
 
+    public final ObjectVersionGraph<M> loadOptimized(Id docId) {
+        return options.transactions.readOnly(() -> doLoadOptimized(docId));
+    }
+
+    public final GraphResults<Id, M> load(Collection<Id> docIds) {
+        return options.transactions.readOnly(() -> doLoad(docIds));
+    }
+
+    public final List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
+        return options.transactions.readOnly(() -> doFetchUpdates(docId, since));
+    }
+
+    /**
+     * NOTE: publish() needs to be called in a separate transaction from append()!
+     * E.g. (a)synchronously from TransactionSynchronization.afterCommit.
+     *
+     * Calling publish() in the same transaction with append() severely limits concurrency
+     * and might end up in deadlock.
+     */
+    public final Multimap<Id, Revision> publish() {
+        return options.transactions.writeRequired(this::doPublish);
+    }
+
+    public final void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+        options.transactions.writeRequired(() -> {
+            doPrune(docId, keep);
+            return null;
+        });
+    }
+
+    public final void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+        options.transactions.writeRequired(() -> {
+            doOptimize(docId, keep);
+            return null;
+        });
+    }
+
+    public final UpdateBatch<Id, M> updateBatch(Collection<Id> ids) {
+        return options.transactions.writeMandatory(() -> doUpdateBatch(ids));
+    }
+
+
+    protected abstract FetchResults<Id, M> doLoad(Id docId, boolean optimized);
+
+    protected abstract List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since);
+
+    protected abstract UpdateBatch<Id, M> doUpdateBatch(Collection<Id> ids);
+
+    protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
+
+    protected abstract Map<Revision, Id> findUnpublishedRevisions();
+
+
     protected final ObjectVersionGraph<M> doLoad(Id docId) {
         FetchResults<Id, M> results = doLoad(docId, false);
         return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
     }
 
-    public final ObjectVersionGraph<M> loadOptimized(Id docId) {
-        return options.transactions.readOnly(() -> doLoadOptimized(docId));
-    }
-
     protected final ObjectVersionGraph<M> doLoadOptimized(Id docId) {
         return versionGraph(docId, doLoad(docId, true));
-    }
-
-    protected abstract FetchResults<Id, M> doLoad(Id docId, boolean optimized);
-
-    public final GraphResults<Id, M> load(Collection<Id> docIds) {
-        return options.transactions.readOnly(() -> doLoad(docIds));
     }
 
     protected GraphResults<Id, M> doLoad(Collection<Id> docIds) {
@@ -167,23 +210,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         }
     }
 
-    public final List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
-        return options.transactions.readOnly(() -> doFetchUpdates(docId, since));
-    }
-
-    protected abstract List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since);
-
-    /**
-     * NOTE: publish() needs to be called in a separate transaction from append()!
-     * E.g. (a)synchronously from TransactionSynchronization.afterCommit.
-     *
-     * Calling publish() in the same transaction with append() severely limits concurrency
-     * and might end up in deadlock.
-     */
-    public final Multimap<Id, Revision> publish() {
-        return options.transactions.writeRequired(this::doPublish);
-    }
-
     protected Multimap<Id, Revision> doPublish() {
         // Lock repository with select for update
         long lastOrdinal = lockRepositoryAndGetMaxOrdinal();
@@ -212,25 +238,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return publishedDocs;
     }
 
-    public final void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
-        options.transactions.writeRequired(() -> {
-            doPrune(docId, keep);
-            return null;
-        });
-    }
-
     protected void doPrune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
         UpdateBatch<Id, M> batch = updateBatch(singletonList(docId));
         ObjectVersionGraph<M> graph = doLoad(docId);
         batch.prune(graph, keep.apply(graph));
         batch.execute();
-    }
-
-    public final void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
-        options.transactions.writeRequired(() -> {
-            doOptimize(docId, keep);
-            return null;
-        });
     }
 
     protected void doOptimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
@@ -239,16 +251,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         batch.optimize(graph, keep.apply(graph));
         batch.execute();
     }
-
-    public final UpdateBatch<Id, M> updateBatch(Collection<Id> ids) {
-        return options.transactions.writeMandatory(() -> doUpdateBatch(ids));
-    }
-
-    protected abstract UpdateBatch<Id, M> doUpdateBatch(Collection<Id> ids);
-
-    protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
-
-    protected abstract Map<Revision, Id> findUnpublishedRevisions();
 
     protected M getMeta(Group versionAndParents) {
         return null;
@@ -273,10 +275,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         }
         Long maxOrdinal = results.get(0);
         return maxOrdinal != null ? maxOrdinal : 0;
-    }
-
-    private SQLQuery<Long> maxOrdinalSubQuery(Options options) {
-        return options.queryFactory.select(options.version.ordinal.max()).from(options.version);
     }
 
     protected FetchResults<Id, M> fetch(List<Group> versionsAndParents, boolean optimized, BooleanExpression predicate) {
@@ -409,6 +407,10 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         List<Expression<?>> list = new ArrayList<>(asList(expressions));
         list.remove(expr);
         return list.toArray(new Expression<?>[list.size()]);
+    }
+
+    private SQLQuery<Long> maxOrdinalSubQuery(Options options) {
+        return options.queryFactory.select(options.version.ordinal.max()).from(options.version);
     }
 
 }
