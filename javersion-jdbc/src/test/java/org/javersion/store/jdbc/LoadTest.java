@@ -168,7 +168,7 @@ public class LoadTest {
                 ts = currentTimeMillis();
 
                 transactionTemplate.execute(status -> {
-                    EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(docId);
+                    UpdateBatch<String, String, ?> update = entityStore.updateBatch(docId);
                     update.addVersion(docId, versionGraph.commit(version).getTip());
                     update.execute();
                     return null;
@@ -182,7 +182,12 @@ public class LoadTest {
             if (round % optimizeEvery == 0) {
                 for (String docId : docIds) {
                     ts = currentTimeMillis();
-                    entityStore.optimize(docId, graph -> new GraphOptions.KeepHeadsAndNewest<String>(graph, optimizeKeepNewest));
+                    transactionTemplate.execute(status -> {
+                        UpdateBatch<String, String, ?> batch = entityStore.updateBatch(docId);
+                        ObjectVersionGraph<String> graph = entityStore.loadOptimized(docId);
+                        batch.optimize(graph, new GraphOptions.KeepHeadsAndNewest<String>(graph, optimizeKeepNewest));
+                        return null;
+                    });
                     print(round, "optimize", ts);
                 }
             }

@@ -130,13 +130,13 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     }
 
     @Override
-    protected AbstractVersionStoreJdbc<String, String, ?, ?> getStore() {
+    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> getStore() {
         return entityStore;
     }
 
     private void create_first_two_versions_of_doc1() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(docId1);
+            EntityUpdateBatch<String, String, ?> update = entityStore.updateBatch(docId1);
             assertThat(update.contains(docId1)).isTrue();
             assertThat(update.contains(randomId())).isFalse();
             assertThat(update.isCreate(docId1)).isTrue();
@@ -186,7 +186,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
     private void create_doc2_and_update_doc1() {
         transactionTemplate.execute(status -> {
-            UpdateBatch<String, String> update = entityStore.updateBatch(asList(docId1, docId2));
+            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(asList(docId1, docId2));
             ObjectVersionGraph<String> graph = entityStore.load(docId1);
             assertThat(graph.isEmpty()).isFalse();
 

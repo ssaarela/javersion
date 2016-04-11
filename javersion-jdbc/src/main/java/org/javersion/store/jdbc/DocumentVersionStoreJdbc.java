@@ -41,7 +41,8 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLUpdateClause;
 
-public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> extends AbstractVersionStoreJdbc<Id, M, V, DocumentStoreOptions<Id, M, V>> {
+public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>>
+        extends AbstractVersionStoreJdbc<Id, M, V, DocumentUpdateBatch<Id, M, V>, DocumentStoreOptions<Id, M, V>> {
 
     protected final Expression<?>[] versionAndParentsSince;
 

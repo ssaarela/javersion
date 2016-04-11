@@ -15,6 +15,9 @@
  */
 package org.javersion.store.jdbc;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
@@ -46,6 +49,8 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
 
     public final Transactions transactions;
 
+    public final Executor executor;
+
     public final SQLQueryFactory queryFactory;
 
     protected StoreOptions(AbstractBuilder<Id, M, V, ?, ?> builder) {
@@ -60,6 +65,7 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
                 : ImmutableMap.of();
         this.graphOptions = Check.notNull(builder.graphOptions, "graphOptions");
         this.transactions = Check.notNull(builder.transactions, "transactions");
+        this.executor = builder.executor != null ? builder.executor : Executors.newCachedThreadPool();
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
     }
 
@@ -82,6 +88,8 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
         protected GraphOptions<Id, M> graphOptions = new GraphOptions<>();
 
         protected Transactions transactions;
+
+        protected Executor executor;
 
         @Nullable
         protected ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
@@ -125,6 +133,11 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
 
         public This transactions(Transactions transactions) {
             this.transactions = transactions;
+            return self();
+        }
+
+        public This executor(Executor executor) {
+            this.executor = executor;
             return self();
         }
 

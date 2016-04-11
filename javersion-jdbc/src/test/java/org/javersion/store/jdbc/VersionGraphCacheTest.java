@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -35,6 +36,9 @@ public class VersionGraphCacheTest {
 
     @Resource
     SQLQueryFactory queryFactory;
+
+    @Resource
+    TransactionTemplate transactionTemplate;
 
     @Test
     public void load_and_refresh() {
@@ -199,7 +203,7 @@ public class VersionGraphCacheTest {
         ObjectVersionGraph<Void> graph = ObjectVersionGraph.init();
         VersionGraphCache<String, Void> cache = newRefreshingCache(1, keepHeadsAndNewest(1, 2));
 
-        String docId = randomUUID().toString();
+        final String docId = randomUUID().toString();
         final Revision v1 = new Revision(NODE, 1),
                 v2 = new Revision(NODE, 2),
                 v3 = new Revision(NODE, 3),
@@ -238,7 +242,13 @@ public class VersionGraphCacheTest {
 
         // Optimizing storage doesn't effect cache...
         documentStore.publish();
-        documentStore.optimize(docId, g -> v -> v.revision.equals(v7));
+
+        transactionTemplate.execute(status -> {
+            documentStore.updateBatch(docId)
+                    .optimize(documentStore.loadOptimized(docId), v -> v.revision.equals(v7))
+                    .execute();
+            return null;
+        });
         assertCacheContains(cache, docId, v6, v7);
 
         // ...until reload

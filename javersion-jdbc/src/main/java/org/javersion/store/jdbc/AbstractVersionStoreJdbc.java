@@ -24,6 +24,7 @@ import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.core.types.dsl.Expressions.predicate;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
@@ -65,7 +66,7 @@ import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.types.EnumByNameType;
 import com.querydsl.sql.types.EnumByOrdinalType;
 
-public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, M, V>> {
+public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Batch extends UpdateBatch<Id, M, Batch>, Options extends StoreOptions<Id, M, V>> {
 
     public static EnumByOrdinalType<VersionStatus> VERSION_STATUS_TYPE = new EnumByOrdinalType<>(VersionStatus.class);
 
@@ -144,14 +145,18 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         });
     }
 
-    public final void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+    public final void optimize(Id docId) {
         options.transactions.writeRequired(() -> {
-            doOptimize(docId, keep);
+            doOptimize(docId);
             return null;
         });
     }
 
-    public final UpdateBatch<Id, M> updateBatch(Collection<Id> ids) {
+    public Batch updateBatch(Id id) {
+        return options.transactions.writeMandatory(() -> doUpdateBatch(singleton(id)));
+    }
+
+    public Batch updateBatch(Collection<Id> ids) {
         return options.transactions.writeMandatory(() -> doUpdateBatch(ids));
     }
 
@@ -160,7 +165,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected abstract List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since);
 
-    protected abstract UpdateBatch<Id, M> doUpdateBatch(Collection<Id> ids);
+    protected abstract Batch doUpdateBatch(Collection<Id> ids);
 
     protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
 
@@ -173,7 +178,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     }
 
     protected final ObjectVersionGraph<M> doLoadOptimized(Id docId) {
-        return versionGraph(docId, doLoad(docId, true));
+        return toVersionGraph(docId, doLoad(docId, true));
     }
 
     protected GraphResults<Id, M> doLoad(Collection<Id> docIds) {
@@ -187,24 +192,30 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         List<Group> versionsAndParents = fetchVersionsAndParents(optimized, predicate,
                 options.version.ordinal.asc());
 
-        return graphResults(fetch(versionsAndParents, optimized, predicate));
+        return toGraphResults(fetch(versionsAndParents, optimized, predicate));
     }
 
-    protected GraphResults<Id, M> graphResults(FetchResults<Id, M> fetchResults) {
+    protected GraphResults<Id, M> toGraphResults(FetchResults<Id, M> fetchResults) {
         ImmutableMap.Builder<Id, ObjectVersionGraph<M>> graphs = ImmutableMap.builder();
         for (Id docId : fetchResults.getDocIds()) {
-            graphs.put(docId, versionGraph(docId, fetchResults));
+            graphs.put(docId, toVersionGraph(docId, fetchResults));
         }
         return new GraphResults<>(graphs.build(), fetchResults.latestRevision);
     }
 
-    protected ObjectVersionGraph<M> versionGraph(Id docId, FetchResults<Id, M> fetchResults) {
+    protected ObjectVersionGraph<M> toVersionGraph(Id docId, FetchResults<Id, M> fetchResults) {
         if (fetchResults.containsKey(docId)) {
+            ObjectVersionGraph<M> graph;
             try {
-                return ObjectVersionGraph.init(fetchResults.getVersions(docId));
+                graph = ObjectVersionGraph.init(fetchResults.getVersions(docId));
+                if (options.graphOptions.optimizeWhen.test(graph)) {
+                    runOptimization(docId, graph);
+                }
             } catch (VersionNotFoundException e) {
-                return doLoad(docId);
+                graph = doLoad(docId);
+                runOptimization(docId, graph);
             }
+            return graph;
         } else {
             return ObjectVersionGraph.init();
         }
@@ -239,17 +250,30 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
     }
 
     protected void doPrune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
-        UpdateBatch<Id, M> batch = updateBatch(singletonList(docId));
+        Batch batch = doUpdateBatch(singletonList(docId));
         ObjectVersionGraph<M> graph = doLoad(docId);
         batch.prune(graph, keep.apply(graph));
         batch.execute();
     }
 
-    protected void doOptimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
-        UpdateBatch<Id, M> batch = updateBatch(singletonList(docId));
+    protected void doOptimize(Id docId) {
+        Batch batch = doUpdateBatch(asList(docId));
         ObjectVersionGraph<M> graph = doLoadOptimized(docId);
-        batch.optimize(graph, keep.apply(graph));
+        batch.optimize(graph, options.graphOptions.optimizeKeep.apply(graph));
         batch.execute();
+    }
+
+    protected void runOptimization(Id docId, ObjectVersionGraph<M> baseGraph) {
+        options.executor.execute(() -> {
+            options.transactions.writeRequired(() -> {
+                Batch batch = doUpdateBatch(singleton(docId));
+                List<ObjectVersion<M>> versions = doFetchUpdates(docId, baseGraph.getTip().revision);
+                ObjectVersionGraph<M> graph = versions.isEmpty() ? baseGraph : baseGraph.commit(versions);
+                batch.optimize(graph, options.graphOptions.optimizeKeep.apply(graph));
+                batch.execute();
+                return null;
+            });
+        });
     }
 
     protected M getMeta(Group versionAndParents) {

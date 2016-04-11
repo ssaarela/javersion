@@ -286,7 +286,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
     }
 
     @Override
-    protected AbstractVersionStoreJdbc<String, String, ?, ?> getStore() {
+    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> getStore() {
         return documentStore;
     }
 

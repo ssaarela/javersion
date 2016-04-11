@@ -33,7 +33,6 @@ import org.javersion.object.ObjectVersion;
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.querydsl.core.ResultTransformer;
 import com.querydsl.core.group.Group;
 import com.querydsl.core.types.Expression;
@@ -42,7 +41,7 @@ import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLUpdateClause;
 
 public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityVersion<Id>>
-        extends AbstractVersionStoreJdbc<Id, M, V, EntityStoreOptions<Id, M, V>> {
+        extends AbstractVersionStoreJdbc<Id, M, V, EntityUpdateBatch<Id, M, V>, EntityStoreOptions<Id, M, V>> {
 
     protected final ResultTransformer<List<Group>> versionAndParentsSince;
 
@@ -50,10 +49,6 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         super(options);
         Expression<?>[] values = concat(versionAndParentColumns, options.sinceVersion.localOrdinal);
         versionAndParentsSince = groupBy(options.version.revision).list(values);
-    }
-
-    public EntityUpdateBatch<Id, M, V> updateBatch(Id docId) {
-        return options.transactions.writeMandatory(() -> doUpdateBatch(ImmutableSet.of(docId)));
     }
 
     @Override

@@ -40,20 +40,20 @@ public class VersionGraphCache<Id, M> {
 
     protected final LoadingCache<Id, ObjectVersionGraph<M>> cache;
 
-    private final AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore;
+    private final AbstractVersionStoreJdbc<Id, M, ?, ?, ?> versionStore;
 
     private final GraphOptions<Id, M> graphOptions;
 
     protected final Set<Id> cachedDocIds;
 
-    public VersionGraphCache(AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore,
+    public VersionGraphCache(AbstractVersionStoreJdbc<Id, M, ?, ?, ?> versionStore,
                              CacheBuilder<Object, Object> cacheBuilder) {
         this(versionStore, cacheBuilder, null);
     }
 
     // About CacheBuilder generics: https://code.google.com/p/guava-libraries/issues/detail?id=738
     @SuppressWarnings("unchecked")
-    public VersionGraphCache(AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore,
+    public VersionGraphCache(AbstractVersionStoreJdbc<Id, M, ?, ?, ?> versionStore,
                              CacheBuilder<Object, Object> cacheBuilder,
                              GraphOptions<Id, M> graphOptions) {
         this.versionStore = versionStore;
@@ -99,7 +99,7 @@ public class VersionGraphCache<Id, M> {
         cache.invalidateAll();
     }
 
-    protected CacheLoader<Id, ObjectVersionGraph<M>> newCacheLoader(final AbstractVersionStoreJdbc<Id, M, ?, ?> versionStore) {
+    protected CacheLoader<Id, ObjectVersionGraph<M>> newCacheLoader(final AbstractVersionStoreJdbc<Id, M, ?, ?, ?> versionStore) {
         return new CacheLoader<Id, ObjectVersionGraph<M>>() {
 
             @Override

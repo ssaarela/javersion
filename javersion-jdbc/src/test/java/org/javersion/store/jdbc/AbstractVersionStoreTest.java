@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.parse;
 
 import java.util.Map;
+import java.util.function.Predicate;
 
 import javax.annotation.Resource;
 
@@ -53,7 +54,7 @@ public abstract class AbstractVersionStoreTest {
 
     @Test
     public void allow_squashed_parent() {
-        AbstractVersionStoreJdbc<String, String, ?, ?> store = getStore();
+        AbstractVersionStoreJdbc<String, String, ?, ?, ?> store = getStore();
         final String docId = randomUUID().toString();
         final String doc2Id = randomUUID().toString();
 
@@ -65,20 +66,20 @@ public abstract class AbstractVersionStoreTest {
         ObjectVersionGraph<String> graph = ObjectVersionGraph.init(v1, v2, v3);
 
         transactionTemplate.execute(status -> {
-            UpdateBatch<String, String> update = store.updateBatch(asList(docId));
-            update.addVersion(docId, graph.getVersionNode(rev1));
-            update.addVersion(docId, graph.getVersionNode(rev2));
-            update.execute();
+            store.updateBatch(docId)
+                    .addVersion(docId, graph.getVersionNode(rev1))
+                    .addVersion(docId, graph.getVersionNode(rev2))
+                    .execute();
             return null;
         });
         store.publish();
-        store.optimize(docId, g -> v -> v.revision.equals(rev2));
+        optimize(docId, v -> v.revision.equals(rev2), store);
 
         // Load one (loadOptimized)
         transactionTemplate.execute(status -> {
-            UpdateBatch<String, String> update = store.updateBatch(asList(docId));
-            update.addVersion(docId, graph.getVersionNode(rev3));
-            update.execute();
+            store.updateBatch(docId)
+                    .addVersion(docId, graph.getVersionNode(rev3))
+                    .execute();
             return null;
         });
         store.publish();
@@ -87,9 +88,9 @@ public abstract class AbstractVersionStoreTest {
 
         // Batch load
         transactionTemplate.execute(status -> {
-            UpdateBatch<String, String> update = store.updateBatch(asList(doc2Id));
-            update.addVersion(doc2Id, ObjectVersionGraph.init(v4).getTip());
-            update.execute();
+            store.updateBatch(doc2Id)
+                    .addVersion(doc2Id, ObjectVersionGraph.init(v4).getTip())
+                    .execute();
             return null;
         });
         store.publish();
@@ -102,20 +103,29 @@ public abstract class AbstractVersionStoreTest {
         assertThat(results.getVersionGraph(doc2Id).getVersionNode(rev4).getVersion()).isEqualTo(v4);
     }
 
+    private void optimize(String docId, Predicate<VersionNode<PropertyPath, Object, String>> keep, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store) {
+        transactionTemplate.execute(status -> {
+            store.updateBatch(docId)
+                    .optimize(store.loadOptimized(docId), keep)
+                    .execute();
+            return null;
+        });
+    }
+
     @Test
     public void optimize_progressively() {
-        AbstractVersionStoreJdbc<String, String, ?, ?> store = getStore();
+        AbstractVersionStoreJdbc<String, String, ?, ?, ?> store = getStore();
         final String docId = randomUUID().toString();
         transactionTemplate.execute(status -> {
             ObjectVersionGraph<String> versionGraph = graphForOptimization();
-            UpdateBatch<String, String> batch = store.updateBatch(ImmutableList.of(docId));
+            UpdateBatch<String, String, ?> batch = store.updateBatch(docId);
             ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse().forEach(v -> batch.addVersion(docId, v));
             batch.execute();
             return null;
         });
         store.publish();
 
-        store.optimize(docId, graph -> v -> !v.revision.equals(rev1));
+        optimize(docId, v -> !v.revision.equals(rev1), store);
 
         // Non-optimized load returns still full graph
         assertThat(store.load(docId).versionNodes.size()).isEqualTo(6);
@@ -131,7 +141,7 @@ public abstract class AbstractVersionStoreTest {
         ));
 
         // Keep rev5, rev6 and their LCA rev3
-        store.optimize(docId, graph -> v -> v.revision.equals(rev5) || v.revision.equals(rev6));
+        optimize(docId, v -> v.revision.equals(rev5) || v.revision.equals(rev6), store);
 
         // Non-optimized load returns still full graph
         assertThat(store.load(docId).versionNodes.size()).isEqualTo(6);
@@ -149,7 +159,7 @@ public abstract class AbstractVersionStoreTest {
 
     protected abstract void verifyRedundantRelations();
 
-    protected abstract AbstractVersionStoreJdbc<String, String, ?, ?> getStore();
+    protected abstract AbstractVersionStoreJdbc<String, String, ?, ?, ?> getStore();
 
     /**
      *   v1

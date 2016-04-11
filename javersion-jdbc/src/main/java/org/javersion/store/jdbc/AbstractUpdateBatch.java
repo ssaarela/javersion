@@ -36,7 +36,11 @@ import com.querydsl.core.dml.StoreClause;
 import com.querydsl.core.types.Path;
 import com.querydsl.sql.dml.SQLInsertClause;
 
-public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, M, V>> implements UpdateBatch<Id, M> {
+public abstract class AbstractUpdateBatch<Id, M,
+                V extends JVersion<Id>,
+                Options extends StoreOptions<Id, M, V>,
+                This extends AbstractUpdateBatch<Id, M, V, Options, This>>
+        implements UpdateBatch<Id, M, This> {
 
     protected static boolean isNotEmpty(StoreClause<?> store) {
         return store != null && !store.isEmpty();
@@ -58,10 +62,11 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
     }
 
     @Override
-    public void addVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
+    public This addVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
         insertVersion(docId, version);
         insertParents(version);
         insertProperties(version);
+        return self();
     }
 
     @Override
@@ -78,7 +83,7 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
     }
 
     @Override
-    public void prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+    public This prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
         OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
         if (optimizationBuilder != null) {
             List<Revision> keptRevisions = optimizationBuilder.getKeptRevisions();
@@ -90,10 +95,11 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
             deleteVersions(squashedRevisions);
             insertOptimizedParentsAndProperties(ObjectVersionGraph.init(optimizationBuilder.getOptimizedVersions()), keptRevisions);
         }
+        return self();
     }
 
     @Override
-    public void optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+    public This optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
         OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
         if (optimizationBuilder != null) {
             List<Revision> squashedRevisions = optimizationBuilder.getSquashedRevisions();
@@ -104,6 +110,13 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
 
             optimizeParentsAndProperties(graph, ObjectVersionGraph.init(optimizationBuilder.getOptimizedVersions()));
         }
+        return self();
+    }
+
+
+    @SuppressWarnings("unchecked")
+    protected This self() {
+        return (This) this;
     }
 
     private void optimizeParentsAndProperties(ObjectVersionGraph<M> oldGraph, ObjectVersionGraph<M> newGraph) {

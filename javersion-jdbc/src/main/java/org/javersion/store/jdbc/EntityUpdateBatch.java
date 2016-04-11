@@ -34,7 +34,8 @@ import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 
-public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersion<Id>> extends AbstractUpdateBatch<Id, M, V, EntityStoreOptions<Id, M, V>> {
+public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersion<Id>>
+        extends AbstractUpdateBatch<Id, M, V, EntityStoreOptions<Id, M, V>, EntityUpdateBatch<Id, M, V>> {
 
     protected final SQLInsertClause entityCreateBatch;
 
@@ -62,7 +63,7 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
         return contains(docId) && entityOrdinals.containsKey(docId);
     }
 
-    public void addVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
+    public EntityUpdateBatch<Id, M, V> addVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
         verifyDocId(docId);
 
         if (isCreate(docId)) {
@@ -71,7 +72,7 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
             updateEntity(docId, version);
         }
 
-        super.addVersion(docId, version);
+        return super.addVersion(docId, version);
     }
 
     @Override
