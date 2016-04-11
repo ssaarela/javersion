@@ -36,7 +36,7 @@ import com.querydsl.core.dml.StoreClause;
 import com.querydsl.core.types.Path;
 import com.querydsl.sql.dml.SQLInsertClause;
 
-public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, M, V>> {
+public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options extends StoreOptions<Id, M, V>> implements UpdateBatch<Id, M> {
 
     protected static boolean isNotEmpty(StoreClause<?> store) {
         return store != null && !store.isEmpty();
@@ -57,12 +57,14 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         propertyBatch = options.queryFactory.insert(options.property);
     }
 
+    @Override
     public void addVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {
         insertVersion(docId, version);
         insertParents(version);
         insertProperties(version);
     }
 
+    @Override
     public void execute() {
         if (isNotEmpty(versionBatch)) {
             versionBatch.execute();
@@ -75,6 +77,7 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         }
     }
 
+    @Override
     public void prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
         OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
         if (optimizationBuilder != null) {
@@ -89,6 +92,7 @@ public abstract class AbstractUpdateBatch<Id, M, V extends JVersion<Id>, Options
         }
     }
 
+    @Override
     public void optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
         OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
         if (optimizationBuilder != null) {

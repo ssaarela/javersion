@@ -21,9 +21,6 @@ import static com.querydsl.core.types.Ops.GT;
 import static com.querydsl.core.types.Ops.IS_NULL;
 import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.core.types.dsl.Expressions.predicate;
-import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
-import static org.springframework.transaction.annotation.Propagation.MANDATORY;
-import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +31,6 @@ import javax.annotation.Nonnull;
 import org.javersion.core.Revision;
 import org.javersion.object.ObjectVersion;
 import org.javersion.util.Check;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -50,12 +46,6 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
 
     protected final ResultTransformer<List<Group>> versionAndParentsSince;
 
-    @SuppressWarnings("unused")
-    protected EntityVersionStoreJdbc() {
-        super();
-        versionAndParentsSince = null;
-    }
-
     public EntityVersionStoreJdbc(EntityStoreOptions<Id, M, V> options) {
         super(options);
         Expression<?>[] values = concat(versionAndParentColumns, options.sinceVersion.localOrdinal);
@@ -63,8 +53,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
     }
 
     @Override
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
+    protected List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since) {
         List<Group> versionsAndParents = versionsAndParentsSince(docId, since);
         if (versionsAndParents.isEmpty()) {
             return ImmutableList.of();
@@ -79,13 +68,11 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         return results.containsKey(docId) ? results.getVersions(docId) : ImmutableList.of();
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
     public EntityUpdateBatch<Id, M, V> updateBatch(Id docId) {
-        return updateBatch(ImmutableSet.of(docId));
+    return options.transactions.writeMandatory(() -> doUpdateBatch(ImmutableSet.of(docId)));
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    public EntityUpdateBatch<Id, M, V> updateBatch(Collection<Id> docIds) {
+    protected EntityUpdateBatch<Id, M, V> doUpdateBatch(Collection<Id> docIds) {
         return new EntityUpdateBatch<>(options, docIds);
     }
 
@@ -100,7 +87,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
     }
 
     @Override
-    protected FetchResults<Id, M> load(Id docId, boolean optimized) {
+    protected FetchResults<Id, M> doLoad(Id docId, boolean optimized) {
         Check.notNull(docId, "docId");
 
         BooleanExpression predicate = versionsOf(docId);

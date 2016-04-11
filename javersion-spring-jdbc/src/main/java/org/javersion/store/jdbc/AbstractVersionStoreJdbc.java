@@ -27,9 +27,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
-import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
-import static org.springframework.transaction.annotation.Propagation.MANDATORY;
-import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -51,7 +48,6 @@ import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.*;
 import com.querydsl.core.ResultTransformer;
@@ -101,15 +97,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
 
     protected final FetchResults<Id, M> noResults = new FetchResults<>();
 
-    protected  AbstractVersionStoreJdbc() {
-        options = null;
-        versionAndParentColumns = null;
-        versionAndParents = null;
-        revisionAndDocId = null;
-        maxOrdinalSubQuery = null;
-        properties = null;
-    }
-
     public AbstractVersionStoreJdbc(Options options) {
         this.options = options;
 
@@ -123,21 +110,30 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         properties = groupBy(options.property.revision).as(GroupBy.list(tuple(propertyColumns)));
     }
 
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public final ObjectVersionGraph<M> load(Id docId) {
-        FetchResults<Id, M> results = load(docId, false);
+        return options.transactions.readOnly(() -> doLoad(docId));
+    }
+
+    protected final ObjectVersionGraph<M> doLoad(Id docId) {
+        FetchResults<Id, M> results = doLoad(docId, false);
         return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
     }
 
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
     public final ObjectVersionGraph<M> loadOptimized(Id docId) {
-        return versionGraph(docId, load(docId, true));
+        return options.transactions.readOnly(() -> doLoadOptimized(docId));
     }
 
-    protected abstract FetchResults<Id, M> load(Id docId, boolean optimized);
+    protected final ObjectVersionGraph<M> doLoadOptimized(Id docId) {
+        return versionGraph(docId, doLoad(docId, true));
+    }
 
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public GraphResults<Id, M> load(Collection<Id> docIds) {
+    protected abstract FetchResults<Id, M> doLoad(Id docId, boolean optimized);
+
+    public final GraphResults<Id, M> load(Collection<Id> docIds) {
+        return options.transactions.readOnly(() -> doLoad(docIds));
+    }
+
+    protected GraphResults<Id, M> doLoad(Collection<Id> docIds) {
         Check.notNull(docIds, "docIds");
         final boolean optimized = true;
 
@@ -164,15 +160,18 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
             try {
                 return ObjectVersionGraph.init(fetchResults.getVersions(docId));
             } catch (VersionNotFoundException e) {
-                return load(docId);
+                return doLoad(docId);
             }
         } else {
             return ObjectVersionGraph.init();
         }
     }
 
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public abstract List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since);
+    public final List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
+        return options.transactions.readOnly(() -> doFetchUpdates(docId, since));
+    }
+
+    protected abstract List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since);
 
     /**
      * NOTE: publish() needs to be called in a separate transaction from append()!
@@ -181,8 +180,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
      * Calling publish() in the same transaction with append() severely limits concurrency
      * and might end up in deadlock.
      */
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public Multimap<Id, Revision> publish() {
+    public final Multimap<Id, Revision> publish() {
+        return options.transactions.writeRequired(this::doPublish);
+    }
+
+    protected Multimap<Id, Revision> doPublish() {
         // Lock repository with select for update
         long lastOrdinal = lockRepositoryAndGetMaxOrdinal();
 
@@ -210,24 +212,39 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Op
         return publishedDocs;
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
-        AbstractUpdateBatch<Id, M, V, Options> batch = updateBatch(singletonList(docId));
-        ObjectVersionGraph<M> graph = load(docId);
+    public final void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+        options.transactions.writeRequired(() -> {
+            doPrune(docId, keep);
+            return null;
+        });
+    }
+
+    protected void doPrune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+        UpdateBatch<Id, M> batch = updateBatch(singletonList(docId));
+        ObjectVersionGraph<M> graph = doLoad(docId);
         batch.prune(graph, keep.apply(graph));
         batch.execute();
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
-        AbstractUpdateBatch<Id, M, V, Options> batch = updateBatch(singletonList(docId));
-        ObjectVersionGraph<M> graph = loadOptimized(docId);
+    public final void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+        options.transactions.writeRequired(() -> {
+            doOptimize(docId, keep);
+            return null;
+        });
+    }
+
+    protected void doOptimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+        UpdateBatch<Id, M> batch = updateBatch(singletonList(docId));
+        ObjectVersionGraph<M> graph = doLoadOptimized(docId);
         batch.optimize(graph, keep.apply(graph));
         batch.execute();
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    public abstract AbstractUpdateBatch<Id, M, V, Options> updateBatch(Collection<Id> ids);
+    public final UpdateBatch<Id, M> updateBatch(Collection<Id> ids) {
+        return options.transactions.writeMandatory(() -> doUpdateBatch(ids));
+    }
+
+    protected abstract UpdateBatch<Id, M> doUpdateBatch(Collection<Id> ids);
 
     protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
 

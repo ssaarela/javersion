@@ -21,9 +21,6 @@ import static com.querydsl.core.types.Ops.GT;
 import static com.querydsl.core.types.Ops.IS_NULL;
 import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.core.types.dsl.Expressions.predicate;
-import static java.util.Collections.singleton;
-import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
-import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +31,6 @@ import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
@@ -49,19 +45,13 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
 
     protected final Expression<?>[] versionAndParentsSince;
 
-    @SuppressWarnings("unused")
-    protected DocumentVersionStoreJdbc() {
-        super();
-        versionAndParentsSince = null;
-    }
-
     public DocumentVersionStoreJdbc(DocumentStoreOptions<Id, M, V> options) {
         super(options);
         versionAndParentsSince = concat(versionAndParentColumns, options.sinceVersion.ordinal);
     }
 
     @Override
-    protected FetchResults<Id, M> load(Id docId, boolean optimized) {
+    protected FetchResults<Id, M> doLoad(Id docId, boolean optimized) {
         Check.notNull(docId, "docId");
 
         BooleanExpression predicate = versionsOf(docId);
@@ -73,8 +63,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
     }
 
     @Override
-    @Transactional(readOnly = true, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
+    protected List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since) {
         List<Group> versionsAndParents = versionsAndParentsSince(docId, since);
         if (versionsAndParents.isEmpty()) {
             return ImmutableList.of();
@@ -90,24 +79,34 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>> ext
     }
 
     @Override
-    public DocumentUpdateBatch<Id, M, V> updateBatch(Collection<Id> ids) {
+    protected DocumentUpdateBatch<Id, M, V> doUpdateBatch(Collection<Id> ids) {
         return new DocumentUpdateBatch<>(options);
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
-        append(docId, singleton(version));
+    public final void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
+        options.transactions.writeRequired(() -> {
+            doAppend(ImmutableMultimap.of(docId, version));
+            return null;
+        });
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
-        ImmutableMultimap.Builder<Id, VersionNode<PropertyPath, Object, M>> builder = ImmutableMultimap.builder();
-        append(builder.putAll(docId, versions).build());
+    public final void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
+        options.transactions.writeRequired(() -> {
+            ImmutableMultimap.Builder<Id, VersionNode<PropertyPath, Object, M>> builder = ImmutableMultimap.builder();
+            doAppend(builder.putAll(docId, versions).build());
+            return null;
+        });
     }
 
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
-    public void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
-        DocumentUpdateBatch<Id, M, V> batch = updateBatch(versionsByDocId.keys());
+    public final void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
+        options.transactions.writeRequired(() -> {
+            doAppend(versionsByDocId);
+            return null;
+        });
+    }
+
+    protected void doAppend(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
+        DocumentUpdateBatch<Id, M, V> batch = doUpdateBatch(versionsByDocId.keys());
 
         for (Id docId : versionsByDocId.keySet()) {
             for (VersionNode<PropertyPath, Object, M> version : versionsByDocId.get(docId)) {

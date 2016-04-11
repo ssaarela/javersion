@@ -44,6 +44,8 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
 
     public final GraphOptions<Id, M> graphOptions;
 
+    public final Transactions transactions;
+
     public final SQLQueryFactory queryFactory;
 
     protected StoreOptions(AbstractBuilder<Id, M, V, ?, ?> builder) {
@@ -57,6 +59,7 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
                 ? ImmutableMap.copyOf(builder.versionTableProperties)
                 : ImmutableMap.of();
         this.graphOptions = Check.notNull(builder.graphOptions, "graphOptions");
+        this.transactions = Check.notNull(builder.transactions, "transactions");
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
     }
 
@@ -77,6 +80,8 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
         protected JVersionProperty propertyTable;
 
         protected GraphOptions<Id, M> graphOptions = new GraphOptions<>();
+
+        protected Transactions transactions;
 
         @Nullable
         protected ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
@@ -115,6 +120,11 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
 
         public This graphOptions(GraphOptions<Id, M> graphOptions) {
             this.graphOptions = graphOptions;
+            return self();
+        }
+
+        public This transactions(Transactions transactions) {
+            this.transactions = transactions;
             return self();
         }
 

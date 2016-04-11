@@ -65,7 +65,7 @@ public abstract class AbstractVersionStoreTest {
         ObjectVersionGraph<String> graph = ObjectVersionGraph.init(v1, v2, v3);
 
         transactionTemplate.execute(status -> {
-            AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(docId));
+            UpdateBatch<String, String> update = store.updateBatch(asList(docId));
             update.addVersion(docId, graph.getVersionNode(rev1));
             update.addVersion(docId, graph.getVersionNode(rev2));
             update.execute();
@@ -76,7 +76,7 @@ public abstract class AbstractVersionStoreTest {
 
         // Load one (loadOptimized)
         transactionTemplate.execute(status -> {
-            AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(docId));
+            UpdateBatch<String, String> update = store.updateBatch(asList(docId));
             update.addVersion(docId, graph.getVersionNode(rev3));
             update.execute();
             return null;
@@ -87,7 +87,7 @@ public abstract class AbstractVersionStoreTest {
 
         // Batch load
         transactionTemplate.execute(status -> {
-            AbstractUpdateBatch<String, String, ?, ?> update = store.updateBatch(asList(doc2Id));
+            UpdateBatch<String, String> update = store.updateBatch(asList(doc2Id));
             update.addVersion(doc2Id, ObjectVersionGraph.init(v4).getTip());
             update.execute();
             return null;
@@ -108,7 +108,7 @@ public abstract class AbstractVersionStoreTest {
         final String docId = randomUUID().toString();
         transactionTemplate.execute(status -> {
             ObjectVersionGraph<String> versionGraph = graphForOptimization();
-            AbstractUpdateBatch<String, String, ?, ?> batch = store.updateBatch(ImmutableList.of(docId));
+            UpdateBatch<String, String> batch = store.updateBatch(ImmutableList.of(docId));
             ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse().forEach(v -> batch.addVersion(docId, v));
             batch.execute();
             return null;

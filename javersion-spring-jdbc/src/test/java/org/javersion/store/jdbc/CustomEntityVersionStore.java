@@ -3,14 +3,11 @@ package org.javersion.store.jdbc;
 import static java.util.Arrays.asList;
 import static org.javersion.store.sql.QEntity.entity;
 import static org.javersion.store.sql.QEntityVersion.entityVersion;
-import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
-import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 
 import java.util.Collection;
 
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.querydsl.core.group.Group;
 import com.querydsl.sql.dml.SQLUpdateClause;
@@ -19,15 +16,12 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
 
     private static PropertyPath NAME = PropertyPath.ROOT.property("name");
 
-    public CustomEntityVersionStore() {}
-
     public CustomEntityVersionStore(EntityStoreOptions<String, String, JEntityVersion<String>> options) {
         super(options);
     }
 
     @Override
-    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = MANDATORY)
-    public EntityUpdateBatch<String, String, JEntityVersion<String>> updateBatch(Collection<String> docIds) {
+    public EntityUpdateBatch<String, String, JEntityVersion<String>> doUpdateBatch(Collection<String> docIds) {
         return new UpdateBatch(options, docIds);
     }
 

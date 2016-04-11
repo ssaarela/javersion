@@ -50,24 +50,30 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> documentStore(SQLQueryFactory queryFactory) {
-
-        return new DocumentVersionStoreJdbc<>(documentOptionsBuilder().build(queryFactory));
+    public Transactions transactions() {
+        return new SpringTransactions();
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> mappedDocumentStore(SQLQueryFactory queryFactory) {
+    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> documentStore(Transactions transactions, SQLQueryFactory queryFactory) {
+
+        return new DocumentVersionStoreJdbc<>(documentOptionsBuilder().transactions(transactions).build(queryFactory));
+    }
+
+    @Bean
+    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> mappedDocumentStore(Transactions transactions, SQLQueryFactory queryFactory) {
         return new DocumentVersionStoreJdbc<>(
                 documentOptionsBuilder()
                         .versionTableProperties(ImmutableMap.of(
                                 ROOT.property("name"), documentVersion.name,
                                 ROOT.property("id"), documentVersion.id))
+                        .transactions(transactions)
                         .queryFactory(queryFactory)
                         .build());
     }
 
     @Bean
-    public CustomEntityVersionStore entityStore(SQLQueryFactory queryFactory) {
+    public CustomEntityVersionStore entityStore(Transactions transactions, SQLQueryFactory queryFactory) {
         MyQDocumentVersion version = new MyQDocumentVersion("ENTITY_VERSION", "ENTITY_VERSION");
         MyQDocumentVersion since = new MyQDocumentVersion("SINCE", "ENTITY_VERSION");
 
@@ -77,6 +83,7 @@ public class PersistenceTestConfiguration {
                         .entityTable(new JEntity<>(entity, entity.id))
                         .versionTable(new JEntityVersion<>(version, version.docId))
                         .versionTableSince(new JEntityVersion<>(since, since.docId))
+                        .transactions(transactions)
                         .queryFactory(queryFactory)
                         .build());
     }

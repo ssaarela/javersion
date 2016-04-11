@@ -186,7 +186,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
     private void create_doc2_and_update_doc1() {
         transactionTemplate.execute(status -> {
-            EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(asList(docId1, docId2));
+            UpdateBatch<String, String> update = entityStore.updateBatch(asList(docId1, docId2));
             ObjectVersionGraph<String> graph = entityStore.load(docId1);
             assertThat(graph.isEmpty()).isFalse();
 

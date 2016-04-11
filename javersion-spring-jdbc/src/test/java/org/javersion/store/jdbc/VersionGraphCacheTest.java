@@ -13,10 +13,8 @@ import javax.annotation.Resource;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.javersion.core.Revision;
-import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
-import org.javersion.path.PropertyPath;
 import org.javersion.store.PersistenceTestConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,7 +24,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
 import com.querydsl.sql.SQLQueryFactory;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -158,15 +155,9 @@ public class VersionGraphCacheTest {
     @Test
     public void auto_refresh_only_cached_graphs() {
         final MutableBoolean cacheRefreshed = new MutableBoolean(false);
-        DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> proxyStore = new DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>>() {
+        DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> proxyStore = new DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>>(documentStore.options) {
             @Override
-            public void append(String docId, VersionNode<PropertyPath, Object, Void> version) {
-                documentStore.append(docId, version);
-            }
-            @Override
-            public Multimap<String, Revision> publish() { return documentStore.publish(); }
-            @Override
-            protected FetchResults<String, Void> load(String docId, boolean optimized) {
+            protected FetchResults<String, Void> doLoad(String docId, boolean optimized) {
                 cacheRefreshed.setTrue();
                 throw new RuntimeException("Should not refresh!");
             }
