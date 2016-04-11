@@ -48,21 +48,26 @@ Instead of getting conflicting lines of text, in Javersion, you get conflicting 
   - [PropertyPath](#propertypath)
   - [Schema](#schema)
 - [Object Mapping](#object-mapping)
+  - [Properties](#properties)
+  - [Constructors](#constructors)
   - [Nulls](#nulls)
   - [Lists](#lists)
   - [Maps](#maps)
   - [Sets](#sets)
   - [Objects and Polymorphism](#objects-and-polymorphism)
   - [References](#references)
-  - [Custom ValueTypes](#custom-valuetypes)
+  - [Custom Type Mapping and Value Types](#custom-type-mapping-and-value-types)
+    - [Basic Components with String Constructor](#basic-components-with-string-constructor)
+    - [Delegate Mapping](#delegate-mapping)
+    - [Configurable Annotations Search Path](#configurable-annotations-search-path)
 - [Modules](#modules)
-  - [Core](#core)
-  - [Object](#object)
-  - [Spring JDBC](#spring-jdbc)
-  - [Util](#util)
-  - [Reflect](#reflect)
-  - [Path](#path)
-  - [JSON](#json)
+  - [javersion-core](#javersion-core)
+  - [javersion-object](#javersion-object)
+  - [javersion-jdbc](#javersion-jdbc)
+  - [javersion-util](#javersion-util)
+  - [javersion-reflect](#javersion-reflect)
+  - [javersion-path](#javersion-path)
+  - [javersion-json](#javersion-json)
 - [Release Versioning](#release-versioning)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -243,7 +248,7 @@ Nested structures are split into nested property paths with values from the list
 
 Simplest relational model for this consists of three tables: `version`, `version_parent` and `version_property`. 
 
-Javersion contains two SQL-based persistence strategies: `DocumentVersionStoreJdbc` and `EntityVersionStoreJdbc`.
+Javersion contains two SQL-based (Querydsl) persistence strategies: `DocumentVersionStoreJdbc` and `EntityVersionStoreJdbc`.
 Both are optimized for use with cache and for synchronizing to external systems. 
 
 ## Searching
@@ -623,12 +628,13 @@ essentially a wrapper for either long "index" or String key that can be part of 
 For an object to be usable as a key in a Map, it needs to implement `ScalarType` that can 
 also convert NodeIds back to object. 
 
-### Basic Components with String-constructor
+### Basic Components with String Constructor
 
-Simple components that have a String-constructor and matching toString, may be registered
-using 
+Simple components that have a String-constructor and matching toString, may be registered using 
 
-```TypeMappings.Builder.withMapping(new ToStringMapping(MyStringComponent.class))```
+```java
+TypeMappings.Builder.withMapping(new ToStringMapping(MyStringComponent.class))
+```
 
 `ToStringMapping` also allows matching sub classes of the given class with `boolean matchSubClasses`-parameter, 
 but beware that it does not support polymorphism! If your property is of type `MySuperStringComponent` then 
@@ -646,34 +652,34 @@ Javersion's TypeMappings checks if Jackson is in found in classpath and in that 
 as secondary mapping annotations. Javersion's own annotations can always be used to override Jackson's annotations. 
 As a fallback Javersion uses basic reflection, e.g. javac -parameters for parameters and Class.getSimpleName() 
 for alias. However, this search path can be configured using `TypeMappings.withMappingResolvers`
-and one may implement a custom `MappingResolver`. 
+and one may also implement a custom `MappingResolver`. 
 
 # Modules
 
-## Core 
+## javersion-core 
 * Generic versioning of Map<K, V> 
 * Immutable in-memory data structures
 * Requires immutable (scalar) K and V
 
-## Object
+## javersion-object
 * Conversion from POJOs to Map<PropertyPath, Object> and back
 * Helper classes for object versioning
 
-## Spring JDBC
-* Spring + Querydsl SQL based persistence for versions
+## javersion-jdbc
+* Querydsl SQL based persistence for versions
 
-## Util
+## javersion-util
 * Persistent data structures.
 
-## Reflect
+## javersion-reflect
 * Simplified reflection: TypeDescriptor, FieldDescriptor, MethodDescriptor, ConstructorDescriptor, ParameterDescriptor and BeanProperty.
 * Uses Guava's TypeToken to resolve all resolvable generic bindings.
 
-## Path
+## javersion-path
 * Model of Java/JavaScript compliant paths
 * Schema for validating - or guiding the reading of - paths 
 
-## JSON
+## javersion-json
 * JSON to Map<PropertyPath, Object> to JSON mapping (PoC-level)
 
 
