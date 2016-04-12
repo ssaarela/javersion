@@ -18,6 +18,7 @@ package org.javersion.store.jdbc;
 import static org.springframework.transaction.annotation.Isolation.READ_COMMITTED;
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 import java.util.function.Supplier;
 
@@ -34,6 +35,12 @@ public class SpringTransactions implements Transactions {
     @Override
     @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRED)
     public <T> T writeRequired(Supplier<T> callback) {
+        return callback.get();
+    }
+
+    @Override
+    @Transactional(readOnly = false, isolation = READ_COMMITTED, propagation = REQUIRES_NEW)
+    public <T> T writeNewRequired(Supplier<T> callback) {
         return callback.get();
     }
 

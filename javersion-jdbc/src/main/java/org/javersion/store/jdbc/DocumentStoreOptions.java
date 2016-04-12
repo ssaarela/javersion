@@ -28,9 +28,21 @@ public class DocumentStoreOptions<Id, M, V extends JDocumentVersion<Id>> extends
         this.nextOrdinal = Check.notNull(builder.nextOrdinal, "nextOrdinal");
     }
 
+    @Override
+    public Builder<Id, M, V> toBuilder() {
+        return new Builder<>(this);
+    }
+
     public static class Builder<Id, M, V extends JDocumentVersion<Id>> extends AbstractBuilder<Id, M, V, DocumentStoreOptions<Id, M, V>, Builder<Id, M, V>> {
 
         protected Expression<Long> nextOrdinal;
+
+        public Builder() {}
+
+        public Builder(DocumentStoreOptions<Id, M, V> options) {
+            super(options);
+            this.nextOrdinal = options.nextOrdinal;
+        }
 
         public Builder<Id, M, V> nextOrdinal(Expression<Long> nextOrdinal) {
             this.nextOrdinal = nextOrdinal;

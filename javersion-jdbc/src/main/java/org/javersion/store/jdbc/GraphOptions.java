@@ -88,7 +88,7 @@ public class GraphOptions<Id, M> {
                 throw new IllegalArgumentException("compactKeep requires compactWhen");
             }
             this.optimizeWhen = g -> false;
-            this.optimizeKeep = (g) -> v -> true;
+            this.optimizeKeep = g -> v -> true;
         }
     }
 

@@ -18,6 +18,7 @@ package org.javersion.store.jdbc;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.querydsl.core.group.GroupBy.groupBy;
+import static com.querydsl.core.types.Ops.EQ;
 import static com.querydsl.core.types.Ops.IN;
 import static com.querydsl.core.types.Projections.tuple;
 import static com.querydsl.core.types.dsl.Expressions.constant;
@@ -60,6 +61,7 @@ import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Path;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.BooleanOperation;
 import com.querydsl.sql.Configuration;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLUpdateClause;
@@ -145,13 +147,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         });
     }
 
-    public final void optimize(Id docId) {
-        options.transactions.writeRequired(() -> {
-            doOptimize(docId);
-            return null;
-        });
-    }
-
     public Batch updateBatch(Id id) {
         return options.transactions.writeMandatory(() -> doUpdateBatch(singleton(id)));
     }
@@ -209,11 +204,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
             try {
                 graph = ObjectVersionGraph.init(fetchResults.getVersions(docId));
                 if (options.graphOptions.optimizeWhen.test(graph)) {
-                    runOptimization(docId, graph);
+                    optimizeAsync(docId, graph);
                 }
             } catch (VersionNotFoundException e) {
                 graph = doLoad(docId);
-                runOptimization(docId, graph);
+                optimizeAsync(docId, graph);
             }
             return graph;
         } else {
@@ -256,21 +251,21 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         batch.execute();
     }
 
-    protected void doOptimize(Id docId) {
-        Batch batch = doUpdateBatch(asList(docId));
-        ObjectVersionGraph<M> graph = doLoadOptimized(docId);
-        batch.optimize(graph, options.graphOptions.optimizeKeep.apply(graph));
-        batch.execute();
+    protected void optimizeAsync(Id docId, ObjectVersionGraph<M> baseGraph) {
+        options.executor.execute(() -> {
+            options.transactions.writeNewRequired(() -> {
+                optimize(docId, baseGraph);
+                return null;
+            });
+        });
     }
 
-    protected void runOptimization(Id docId, ObjectVersionGraph<M> baseGraph) {
-        options.executor.execute(() -> {
-            options.transactions.writeRequired(() -> {
-                Batch batch = doUpdateBatch(singleton(docId));
-                List<ObjectVersion<M>> versions = doFetchUpdates(docId, baseGraph.getTip().revision);
-                ObjectVersionGraph<M> graph = versions.isEmpty() ? baseGraph : baseGraph.commit(versions);
-                batch.optimize(graph, options.graphOptions.optimizeKeep.apply(graph));
-                batch.execute();
+    protected void optimize(Id docId, ObjectVersionGraph<M> baseGraph) {
+        Batch batch = doUpdateBatch(singleton(docId));
+        List<ObjectVersion<M>> versions = doFetchUpdates(docId, baseGraph.getTip().revision);
+        ObjectVersionGraph<M> graph = versions.isEmpty() ? baseGraph : baseGraph.commit(versions);
+        batch.optimize(graph, options.graphOptions.optimizeKeep.apply(graph));
+        batch.execute();
                 return null;
             });
         });

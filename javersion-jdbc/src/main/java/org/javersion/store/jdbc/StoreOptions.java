@@ -29,7 +29,7 @@ import com.querydsl.core.types.Path;
 import com.querydsl.sql.SQLQueryFactory;
 
 @Immutable
-public class StoreOptions<Id, M, V extends JVersion<Id>> {
+public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
 
     public final String repositoryId;
 
@@ -69,6 +69,8 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
     }
 
+    public abstract AbstractBuilder<Id, M, V, ?, ?> toBuilder();
+
     public abstract static class AbstractBuilder<Id, M, V extends JVersion<Id>,
             Options extends StoreOptions<Id, M, V>,
             This extends AbstractBuilder<Id, M, V, Options,This>> {
@@ -95,6 +97,22 @@ public class StoreOptions<Id, M, V extends JVersion<Id>> {
         protected ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
 
         protected SQLQueryFactory queryFactory;
+
+        public AbstractBuilder() {}
+
+        public AbstractBuilder(StoreOptions<Id, M, V> options) {
+            this.repositoryId = options.repositoryId;
+            this.repositoryTable = options.repository;
+            this.version = options.version;
+            this.versionTableSince = options.sinceVersion;
+            this.parentTable = options.parent;
+            this.propertyTable = options.property;
+            this.graphOptions = options.graphOptions;
+            this.transactions = options.transactions;
+            this.executor = options.executor;
+            this.versionTableProperties = options.versionTableProperties;
+            this.queryFactory = options.queryFactory;
+        }
 
         public This repositoryId(String repositoryId) {
             this.repositoryId = repositoryId;

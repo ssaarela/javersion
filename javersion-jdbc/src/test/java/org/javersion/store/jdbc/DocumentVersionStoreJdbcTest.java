@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 
 import javax.annotation.Resource;
 
@@ -285,11 +286,6 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
                 "property2", "value1"));
     }
 
-    @Override
-    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> getStore() {
-        return documentStore;
-    }
-
     protected void verifyRedundantRelations() {
         // Redundant parents of inactive versions are removed
         assertThat(queryFactory
@@ -454,5 +450,15 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
         assertThat(mappedDocumentStore.load(docId).getTip().getVersion()).isEqualTo(v2);
     }
 
+    @Override
+    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(Executor executor, GraphOptions<String, String> graphOptions) {
+        return new DocumentVersionStoreJdbc<>(documentStore.options.toBuilder()
+                .executor(executor)
+                .graphOptions(graphOptions).build());
+    }
 
+    @Override
+    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> getStore() {
+        return documentStore;
+    }
 }

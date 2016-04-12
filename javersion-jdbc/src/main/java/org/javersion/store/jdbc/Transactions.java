@@ -30,6 +30,11 @@ public interface Transactions {
     <T> T writeRequired(Supplier<T> callback);
 
     /**
+     * Execute callback in a new read-committed, read/write transaction.
+     */
+    <T> T writeNewRequired(Supplier<T> callback);
+
+    /**
      * Execute callback in a read-committed, read/write transaction supporting current transaction and throwing an exception if none exists.
      */
     <T> T writeMandatory(Supplier<T> callback);

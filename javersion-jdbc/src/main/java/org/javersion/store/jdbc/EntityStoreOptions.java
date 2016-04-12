@@ -30,10 +30,22 @@ public class EntityStoreOptions<Id extends Comparable, M, V extends JEntityVersi
         this.entity = Check.notNull(builder.entity, "entity");
     }
 
+    @Override
+    public Builder<Id, M, V> toBuilder() {
+        return new Builder<>(this);
+    }
+
     public static class Builder<Id extends Comparable, M, V extends JEntityVersion<Id>>
             extends AbstractBuilder<Id, M, V, EntityStoreOptions<Id, M, V>, Builder<Id, M, V>> {
 
         private JEntity<Id> entity;
+
+        public Builder() {}
+
+        public Builder(EntityStoreOptions<Id, M, V> options) {
+            super(options);
+            this.entity = options.entity;
+        }
 
         public Builder<Id, M, V> entityTable(JEntity<Id> entity) {
             this.entity = entity;

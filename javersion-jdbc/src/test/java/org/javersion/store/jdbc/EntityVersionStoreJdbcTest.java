@@ -12,6 +12,7 @@ import static org.javersion.store.sql.QEntityVersionParent.entityVersionParent;
 import static org.javersion.store.sql.QEntityVersionProperty.entityVersionProperty;
 
 import java.util.List;
+import java.util.concurrent.Executor;
 
 import javax.annotation.Resource;
 
@@ -127,11 +128,6 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
                 .where(entityVersion.status.eq(ACTIVE), entityVersionProperty.status.eq(REDUNDANT))
                 .fetchCount())
                 .isGreaterThan(0);
-    }
-
-    @Override
-    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> getStore() {
-        return entityStore;
     }
 
     private void create_first_two_versions_of_doc1() {
@@ -256,4 +252,17 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     private String randomId() {
         return randomUUID().toString();
     }
+
+    @Override
+    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> getStore() {
+        return entityStore;
+    }
+
+    @Override
+    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(Executor executor, GraphOptions<String, String> graphOptions) {
+        return new CustomEntityVersionStore(entityStore.options.toBuilder()
+                .executor(executor)
+                .graphOptions(graphOptions).build());
+    }
+
 }
