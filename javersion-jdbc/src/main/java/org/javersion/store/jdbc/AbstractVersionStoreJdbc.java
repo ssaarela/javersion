@@ -277,7 +277,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         if (reset) {
             long revived = doReset(docId);
             if (revived == 0) {
-                throw new ConcurrentModificationException("Expected to revive versions");
+                throw new ConcurrentMaintenanceException("Expected to revive some versions");
             }
         }
         updateBatch(ImmutableSet.of())
