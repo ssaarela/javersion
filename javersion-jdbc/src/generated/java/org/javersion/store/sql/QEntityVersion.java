@@ -47,8 +47,6 @@ public class QEntityVersion extends com.querydsl.sql.RelationalPathBase<QEntityV
 
     public final com.querydsl.sql.ForeignKey<QEntity> entityVersionDocIdFk = createForeignKey(docId, "ID");
 
-    public final com.querydsl.sql.ForeignKey<QVersionType> entityVersionTypeFk = createForeignKey(type, "NAME");
-
     public final com.querydsl.sql.ForeignKey<QEntityVersionParent> _entityVersionParentParentRevisionFk = createInvForeignKey(revision, "PARENT_REVISION");
 
     public final com.querydsl.sql.ForeignKey<QEntityVersionParent> _entityVersionParentRevisionFk = createInvForeignKey(revision, "REVISION");
