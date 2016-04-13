@@ -103,12 +103,12 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>>
     }
 
     @Override
-    protected DocumentUpdateBatch<Id, M, V> doUpdateBatch(Collection<Id> ids) {
+    public DocumentUpdateBatch<Id, M, V> updateBatch(Collection<Id> ids) {
         return new DocumentUpdateBatch<>(options);
     }
 
     protected void doAppend(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
-        DocumentUpdateBatch<Id, M, V> batch = doUpdateBatch(versionsByDocId.keys());
+        DocumentUpdateBatch<Id, M, V> batch = updateBatch(versionsByDocId.keys());
 
         for (Id docId : versionsByDocId.keySet()) {
             for (VersionNode<PropertyPath, Object, M> version : versionsByDocId.get(docId)) {

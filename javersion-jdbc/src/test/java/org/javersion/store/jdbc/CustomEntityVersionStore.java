@@ -21,7 +21,7 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
     }
 
     @Override
-    public EntityUpdateBatch<String, String, JEntityVersion<String>> doUpdateBatch(Collection<String> docIds) {
+    public EntityUpdateBatch<String, String, JEntityVersion<String>> updateBatch(Collection<String> docIds) {
         return new UpdateBatch(options, docIds);
     }
 

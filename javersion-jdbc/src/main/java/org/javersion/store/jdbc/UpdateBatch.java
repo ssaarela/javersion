@@ -21,12 +21,12 @@ import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 
-public interface UpdateBatch<Id, M, This extends UpdateBatch<Id, M, This>> {
-    This addVersion(Id docId, VersionNode<PropertyPath, Object, M> version);
+public interface UpdateBatch<Id, M> {
+    UpdateBatch<Id, M> addVersion(Id docId, VersionNode<PropertyPath, Object, M> version);
 
-    This prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep);
+    UpdateBatch<Id, M> prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep);
 
-    This optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep);
+    UpdateBatch<Id, M> optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep);
 
     void execute();
 }

@@ -65,7 +65,7 @@ import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.types.EnumByNameType;
 import com.querydsl.sql.types.EnumByOrdinalType;
 
-public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Batch extends UpdateBatch<Id, M, Batch>, Options extends StoreOptions<Id, M, V>> {
+public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Batch extends UpdateBatch<Id, M>, Options extends StoreOptions<Id, M, V>> implements VersionStore<Id, M> {
 
     public static EnumByOrdinalType<VersionStatus> VERSION_STATUS_TYPE = new EnumByOrdinalType<>(VersionStatus.class);
 
@@ -107,18 +107,22 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         properties = groupBy(options.property.revision).as(GroupBy.list(tuple(propertyColumns)));
     }
 
+    @Override
     public final ObjectVersionGraph<M> load(Id docId) {
         return options.transactions.readOnly(() -> doLoad(docId));
     }
 
+    @Override
     public final ObjectVersionGraph<M> loadOptimized(Id docId) {
         return options.transactions.readOnly(() -> doLoadOptimized(docId));
     }
 
+    @Override
     public final GraphResults<Id, M> load(Collection<Id> docIds) {
         return options.transactions.readOnly(() -> doLoad(docIds));
     }
 
+    @Override
     public final List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
         return options.transactions.readOnly(() -> doFetchUpdates(docId, since));
     }
@@ -130,10 +134,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
      * Calling publish() in the same transaction with append() severely limits concurrency
      * and might end up in deadlock.
      */
+    @Override
     public final Multimap<Id, Revision> publish() {
         return options.transactions.writeRequired(this::doPublish);
     }
 
+    @Override
     public final void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
         options.transactions.writeRequired(() -> {
             doPrune(docId, keep);
@@ -141,20 +147,22 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         });
     }
 
-    public Batch updateBatch(Id id) {
-        return options.transactions.writeMandatory(() -> doUpdateBatch(singleton(id)));
+    @Override
+    public final void reset(Id docId) {
+        options.transactions.writeRequired(() -> {
+            lockAndReset(docId);
+            return null;
+        });
     }
 
-    public Batch updateBatch(Collection<Id> ids) {
-        return options.transactions.writeMandatory(() -> doUpdateBatch(ids));
+    @Override
+    public UpdateBatch<Id, M> updateBatch(Id id) {
+        return updateBatch(singleton(id));
     }
-
 
     protected abstract FetchResults<Id, M> doLoad(Id docId, boolean optimized);
 
     protected abstract List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since);
-
-    protected abstract Batch doUpdateBatch(Collection<Id> ids);
 
     protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
 
@@ -241,7 +249,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         lockForMaintenance(docId);
         doReset(docId);
         ObjectVersionGraph<M> graph = doLoad(docId);
-        doUpdateBatch(ImmutableSet.of())
+        updateBatch(ImmutableSet.of())
                 .prune(graph, keep.apply(graph))
                 .execute();
     }
@@ -263,12 +271,17 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
                 throw new ConcurrentModificationException("Expected to revive versions");
             }
         }
-        doUpdateBatch(ImmutableSet.of())
+        updateBatch(ImmutableSet.of())
                 .optimize(graph, options.graphOptions.optimizeKeep.apply(graph))
                 .execute();
     }
 
     protected abstract void lockForMaintenance(Id docId);
+
+    protected void lockAndReset(Id docId) {
+        lockForMaintenance(docId);
+        doReset(docId);
+    }
 
     protected long doReset(Id docId) {
         final BooleanOperation docIdEquals = predicate(EQ, options.version.docId, constant(docId));

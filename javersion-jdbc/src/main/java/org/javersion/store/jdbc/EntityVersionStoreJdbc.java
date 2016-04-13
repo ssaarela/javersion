@@ -21,6 +21,7 @@ import static com.querydsl.core.types.Ops.GT;
 import static com.querydsl.core.types.Ops.IS_NULL;
 import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.core.types.dsl.Expressions.predicate;
+import static java.util.Collections.singleton;
 
 import java.util.Collection;
 import java.util.List;
@@ -79,8 +80,14 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
         return results.containsKey(docId) ? results.getVersions(docId) : ImmutableList.of();
     }
 
-    protected EntityUpdateBatch<Id, M, V> doUpdateBatch(Collection<Id> docIds) {
-        return new EntityUpdateBatch<>(options, docIds);
+    @Override
+    public final EntityUpdateBatch<Id, M, V> updateBatch(Id id) {
+        return updateBatch(singleton(id));
+    }
+
+    @Override
+    public EntityUpdateBatch<Id, M, V> updateBatch(Collection<Id> docIds) {
+        return options.transactions.writeMandatory(() -> new EntityUpdateBatch<>(options, docIds));
     }
 
     @Override

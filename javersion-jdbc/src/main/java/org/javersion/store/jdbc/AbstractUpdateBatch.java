@@ -41,7 +41,7 @@ public abstract class AbstractUpdateBatch<Id, M,
                 V extends JVersion<Id>,
                 Options extends StoreOptions<Id, M, V>,
                 This extends AbstractUpdateBatch<Id, M, V, Options, This>>
-        implements UpdateBatch<Id, M, This> {
+        implements UpdateBatch<Id, M> {
 
     protected static boolean isNotEmpty(StoreClause<?> store) {
         return store != null && !store.isEmpty();

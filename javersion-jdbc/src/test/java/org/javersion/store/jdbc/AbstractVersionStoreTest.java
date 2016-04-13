@@ -187,7 +187,7 @@ public abstract class AbstractVersionStoreTest {
 
     private void addVersions(String docId, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store, List<VersionNode<PropertyPath, Object, String>> versions) {
         transactionTemplate.execute(status -> {
-            UpdateBatch<String, String, ?> batch = store.updateBatch(docId);
+            UpdateBatch<String, String> batch = store.updateBatch(docId);
             versions.forEach(v -> batch.addVersion(docId, v));
             batch.execute();
             return null;
