@@ -66,7 +66,10 @@ import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.types.EnumByNameType;
 import com.querydsl.sql.types.EnumByOrdinalType;
 
-public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Batch extends UpdateBatch<Id, M>, Options extends StoreOptions<Id, M, V>> implements VersionStore<Id, M> {
+public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
+        Batch extends AbstractUpdateBatch<Id, M, V, Options, Batch>,
+        Options extends StoreOptions<Id, M, V>>
+        implements VersionStore<Id, M> {
 
     public static EnumByOrdinalType<VersionStatus> VERSION_STATUS_TYPE = new EnumByOrdinalType<>(VersionStatus.class);
 
@@ -159,9 +162,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
     }
 
     @Override
-    public UpdateBatch<Id, M> updateBatch(Id id) {
+    public Batch updateBatch(Id id) {
         return updateBatch(singleton(id));
     }
+
+    @Override
+    public abstract Batch updateBatch(Collection<Id> ids);
 
     protected abstract FetchResults<Id, M> doLoad(Id docId, boolean optimized);
 
@@ -170,7 +176,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
     protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
 
     protected abstract Map<Revision, Id> getUnpublishedRevisionsForUpdate();
-
 
     protected final ObjectVersionGraph<M> doLoad(Id docId) {
         FetchResults<Id, M> results = doLoad(docId, false);

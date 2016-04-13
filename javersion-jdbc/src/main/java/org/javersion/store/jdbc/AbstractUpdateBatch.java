@@ -82,8 +82,7 @@ public abstract class AbstractUpdateBatch<Id, M,
         }
     }
 
-    @Override
-    public This prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+    protected This prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
         OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
         if (optimizationBuilder != null) {
             List<Revision> keptRevisions = optimizationBuilder.getKeptRevisions();
@@ -98,8 +97,7 @@ public abstract class AbstractUpdateBatch<Id, M,
         return self();
     }
 
-    @Override
-    public This optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+    protected This optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
         OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
         if (optimizationBuilder != null) {
             List<Revision> squashedRevisions = optimizationBuilder.getSquashedRevisions();

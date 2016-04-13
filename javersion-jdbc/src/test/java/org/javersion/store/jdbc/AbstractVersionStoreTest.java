@@ -136,7 +136,7 @@ public abstract class AbstractVersionStoreTest {
     public void reset() {
         final String docId = randomUUID().toString();
         final ObjectVersionGraph<String> originalGraph = graphForOptimization();
-        VersionStore<String, String> store = getStore();
+        AbstractVersionStoreJdbc<String, String, ?, ?, ?> store = getStore();
 
         addVersions(docId, store,
                 originalGraph.getVersionNode(rev1),
@@ -203,7 +203,7 @@ public abstract class AbstractVersionStoreTest {
         assertThat(optimizationRuns.get()).isEqualTo(3);
     }
 
-    protected void optimize(String docId, Predicate<VersionNode<PropertyPath, Object, String>> keep, VersionStore<String, String> store) {
+    protected void optimize(String docId, Predicate<VersionNode<PropertyPath, Object, String>> keep, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store) {
         transactionTemplate.execute(status -> {
             store.updateBatch(docId)
                     .optimize(store.loadOptimized(docId), keep)

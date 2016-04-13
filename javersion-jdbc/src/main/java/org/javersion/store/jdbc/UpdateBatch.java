@@ -15,18 +15,12 @@
  */
 package org.javersion.store.jdbc;
 
-import java.util.function.Predicate;
-
 import org.javersion.core.VersionNode;
-import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 
 public interface UpdateBatch<Id, M> {
+
     UpdateBatch<Id, M> addVersion(Id docId, VersionNode<PropertyPath, Object, M> version);
-
-    UpdateBatch<Id, M> prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep);
-
-    UpdateBatch<Id, M> optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep);
 
     void execute();
 }
