@@ -3,7 +3,6 @@ package org.javersion.store;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 import static org.javersion.store.sql.QEntity.entity;
-import static org.javersion.store.sql.QRepository.repository;
 
 import java.sql.Types;
 import java.util.concurrent.Executor;
@@ -74,9 +73,15 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> documentStore(Transactions transactions, Executor executor, SQLQueryFactory
-                                                                                            queryFactory) {
-        return new DocumentVersionStoreJdbc<>(documentOptionsBuilder(transactions, executor).build(queryFactory));
+    public DocumentStoreOptions<String, String, JDocumentVersion<String>> documentStoreOptions(
+            Transactions transactions, Executor executor, SQLQueryFactory queryFactory
+    ) {
+        return documentOptionsBuilder(transactions, executor).build(queryFactory);
+    }
+
+    @Bean
+    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> documentStore(DocumentStoreOptions<String, String, JDocumentVersion<String>> documentStoreOptions) {
+        return new DocumentVersionStoreJdbc<>(documentStoreOptions);
     }
 
     @Bean
@@ -92,20 +97,26 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public CustomEntityVersionStore entityStore(Transactions transactions, Executor executor, SQLQueryFactory queryFactory) {
+    public CustomEntityVersionStore entityStore(EntityStoreOptions<String, String, JEntityVersion<String>> entityStoreOptions) {
+        return new CustomEntityVersionStore(entityStoreOptions);
+    }
+
+    @Bean
+    public EntityStoreOptions<String, String, JEntityVersion<String>> entityStoreOptions(
+            Transactions transactions, Executor executor, SQLQueryFactory queryFactory
+    ) {
         MyQDocumentVersion version = new MyQDocumentVersion("ENTITY_VERSION", "ENTITY_VERSION");
         MyQDocumentVersion since = new MyQDocumentVersion("SINCE", "ENTITY_VERSION");
 
-        return new CustomEntityVersionStore(
-                new EntityStoreOptions.Builder<String, String, JEntityVersion<String>>()
-                        .defaultsFor("ENTITY")
-                        .entityTable(new JEntity<>(entity, entity.id))
-                        .versionTable(new JEntityVersion<>(version, version.docId))
-                        .versionTableSince(new JEntityVersion<>(since, since.docId))
-                        .transactions(transactions)
-                        .executor(executor)
-                        .queryFactory(queryFactory)
-                        .build());
+        return new EntityStoreOptions.Builder<String, String, JEntityVersion<String>>()
+                .defaultsFor("ENTITY")
+                .entityTable(new JEntity<>(entity, entity.id))
+                .versionTable(new JEntityVersion<>(version, version.docId))
+                .versionTableSince(new JEntityVersion<>(since, since.docId))
+                .transactions(transactions)
+                .executor(executor)
+                .queryFactory(queryFactory)
+                .build();
     }
 
     @Bean

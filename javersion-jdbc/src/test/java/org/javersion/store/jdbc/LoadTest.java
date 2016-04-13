@@ -1,18 +1,27 @@
 package org.javersion.store.jdbc;
 
-import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
+import static java.util.concurrent.Executors.newCachedThreadPool;
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
 
-import java.util.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
-import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.store.PersistenceTestConfiguration;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,8 +29,7 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.cache.CacheBuilder;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -38,123 +46,105 @@ public class LoadTest {
     private int nextValue = 0;
 
     private final int docCount = 100;
-    private final int docVersionCount = 500;
+    private final int docVersionCount = 250;
     private final int propCount = 20;
+    private final int keepNewest = 10;
+    private final int compactThreshold = 50;
+    private final GraphOptions<String, String> graphOptions = keepHeadsAndNewest(keepNewest, compactThreshold);
 
-    private final int optimizeEvery = 50;
-    private final int optimizeKeepNewest = 15;
+    private Writer out;
 
     @Resource
-    DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> documentStore;
+    DocumentStoreOptions<String, String, JDocumentVersion<String>> documentStoreOptions;
 
     @Resource
-    CustomEntityVersionStore entityStore;
+    EntityStoreOptions<String, String, JEntityVersion<String>> entityStoreOptions;
+
+    private final Executor executor = newCachedThreadPool();
 
     @Resource
     TransactionTemplate transactionTemplate;
 
-    @Test
-    @Ignore
-    public void document_store_performance() {
-        long ts;
+    @Before
+    public void initWriter() throws FileNotFoundException, UnsupportedEncodingException {
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("results.csv", false), "utf-8"));
+    }
 
-//        VersionGraphCache<String, Void> cache = new VersionGraphCache<>(documentStore,
-//                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
-//                        .maximumSize(docCount)
-//                        .refreshAfterWrite(1, TimeUnit.NANOSECONDS));
-
-        List<String> docIds = generateDocIds(docCount);
-        for (int round=1; round <= docVersionCount; round++) {
-            for (String docId : docIds) {
-                ts = currentTimeMillis();
-
-                ObjectVersionGraph<Void> versionGraph = documentStore.load(docId);
-//                ObjectVersionGraph<Void> versionGraph = cache.load(docId);
-
-                print(round, "load", ts);
-
-                ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
-                        .changeset(generateProperties(propCount));
-
-                if (!versionGraph.isEmpty()) {
-                    builder.parents(versionGraph.getTip().getRevision());
-                }
-
-                ObjectVersion<Void> version = builder.build();
-
-                ts = currentTimeMillis();
-                documentStore.append(docId, versionGraph.commit(version).getTip());
-                print(round, "append", ts);
-            }
-            ts = currentTimeMillis();
-            documentStore.publish();
-            print(round, "publish", ts);
-        }
+    @After
+    public void closeWriter() throws IOException {
+        out.flush();
+        out.close();
     }
 
     @Test
     @Ignore
-    public void document_store_batch_performance() {
-        String appendLabel = "append" + docCount;
-        String loadLabel = "load" + docCount;
-        long ts;
-
+    public void document_store_performance() throws IOException {
         List<String> docIds = generateDocIds(docCount);
-        Multimap<String, VersionNode<PropertyPath, Object, Void>> versions = ArrayListMultimap.create(docCount, propCount);
-        for (String docId : docIds) {
-            ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
-                    .changeset(generateProperties(propCount));
-
-            ObjectVersionGraph<Void> versionGraph = ObjectVersionGraph.<Void>init(builder.build());
-
-            versions.put(docId, versionGraph.getTip());
-        }
-        ts = currentTimeMillis();
-        documentStore.append(versions);
-        print(1, appendLabel, ts);
-
-        documentStore.publish();
-
-        for (int round=2; round <= docVersionCount; round++) {
-
-            ts = currentTimeMillis();
-            GraphResults<String, Void> results = documentStore.load(docIds);
-            print(round, loadLabel, ts);
-
-            versions = ArrayListMultimap.create(docCount, propCount);
-            for (String docId : docIds) {
-                ObjectVersion.Builder<Void> builder = ObjectVersion.<Void>builder()
-                        .changeset(generateProperties(propCount));
-
-                ObjectVersionGraph<Void> versionGraph = results.getVersionGraph(docId);
-                builder.parents(versionGraph.getTip().getRevision());
-
-                versionGraph = versionGraph.commit(builder.build());
-                versions.put(docId, versionGraph.getTip());
-            }
-
-            ts = currentTimeMillis();
-            documentStore.append(versions);
-            print(round, appendLabel, ts);
-
-            documentStore.publish();
-        }
+        DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> store = new DocumentVersionStoreJdbc<>(documentStoreOptions.toBuilder()
+                .graphOptions(graphOptions)
+                .executor(executor)
+                .build());
+        run(store, docIds);
     }
 
     @Test
     @Ignore
-    public void entity_store_performance() {
+    public void entity_store_performance() throws IOException {
+        List<String> docIds = generateDocIds(docCount);
+        EntityVersionStoreJdbc<String, String, JEntityVersion<String>> store = new EntityVersionStoreJdbc<>(entityStoreOptions.toBuilder()
+                .graphOptions(graphOptions)
+                .executor(executor)
+                .build());
+        run(store, docIds);
+    }
+
+    private void run(VersionStore<String, String> store, List<String> docIds) throws IOException {
+        final String storeName = store.getClass().getSimpleName();
+
         long ts;
 
-        List<String> docIds = generateDocIds(docCount);
+        VersionGraphCache<String, String> cache = new VersionGraphCache<>(store,
+                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
+                        .maximumSize(docIds.size())
+                        .refreshAfterWrite(1, TimeUnit.NANOSECONDS),
+                graphOptions);
+
+        print(
+                "Store",
+
+                "Load Size",
+                "Optimized Size",
+                "Cached Size",
+
+                "Load Time",
+                "Optimized(" + keepNewest + "/" + compactThreshold + ") Time",
+                "Cached Time",
+                "Append Time"
+        );
         for (int round=1; round <= docVersionCount; round++) {
             for (String docId : docIds) {
+                ObjectVersionGraph<String> versionGraph;
+
+                // Load full
                 ts = currentTimeMillis();
+                versionGraph = store.load(docId);
+                final long loadSize = versionGraph.versionNodes.size();
+                final long loadTime = currentTimeMillis() - ts;
 
-                final ObjectVersionGraph<String> versionGraph =
-                        transactionTemplate.execute(status -> entityStore.loadOptimized(docId));
+                final ObjectVersionGraph<String> fullGraph = versionGraph;
 
-                print(round, "load", ts);
+                // Load optimized
+                ts = currentTimeMillis();
+                versionGraph = store.loadOptimized(docId);
+                final long optimizedSize = versionGraph.versionNodes.size();
+                final long optimizedTime = currentTimeMillis() - ts;
+
+                // Load cached
+                ts = currentTimeMillis();
+                versionGraph = cache.load(docId);
+                final long cachedSize = versionGraph.versionNodes.size();
+                final long cachedTime = currentTimeMillis() - ts;
+
 
                 ObjectVersion.Builder<String> builder = ObjectVersion.<String>builder()
                         .changeset(generateProperties(propCount));
@@ -163,40 +153,46 @@ public class LoadTest {
                     builder.parents(versionGraph.getTip().getRevision());
                 }
 
-                final ObjectVersion<String> version = builder.build();
+                ObjectVersion<String> version = builder.build();
 
+                // Add version
                 ts = currentTimeMillis();
-
                 transactionTemplate.execute(status -> {
-                    UpdateBatch<String, String, ?> update = entityStore.updateBatch(docId);
-                    update.addVersion(docId, versionGraph.commit(version).getTip());
-                    update.execute();
+                    store.updateBatch(docId)
+                            .addVersion(docId, fullGraph.commit(version).getTip())
+                            .execute();
                     return null;
                 });
-                print(round, "append", ts);
-            }
-            ts = currentTimeMillis();
-            entityStore.publish();
-            print(round, "publish", ts);
+                final long appendTime = currentTimeMillis() - ts;
 
-            if (round % optimizeEvery == 0) {
-                for (String docId : docIds) {
-                    ts = currentTimeMillis();
-                    transactionTemplate.execute(status -> {
-                        UpdateBatch<String, String, ?> batch = entityStore.updateBatch(docId);
-                        ObjectVersionGraph<String> graph = entityStore.loadOptimized(docId);
-                        batch.optimize(graph, new GraphOptions.KeepHeadsAndNewest<String>(graph, optimizeKeepNewest));
-                        return null;
-                    });
-                    print(round, "optimize", ts);
-                }
+                print(
+                        storeName,
+
+                        loadSize,
+                        optimizedSize,
+                        cachedSize,
+
+                        loadTime,
+                        optimizedTime,
+                        cachedTime,
+                        appendTime
+                );
             }
+            store.publish();
+            out.flush();
         }
     }
 
-    private void print(int round, String type, long ts) {
-        long expired = currentTimeMillis() - ts;
-        System.out.println(format("%s,%s,%s", round, type, expired));
+    private void print(Object... values) throws IOException {
+        StringBuilder sb = new StringBuilder(64);
+        for (Object value : values) {
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append(value);
+        }
+        sb.append('\n');
+        out.append(sb);
     }
 
     private Map<PropertyPath, Object> generateProperties(int count) {
