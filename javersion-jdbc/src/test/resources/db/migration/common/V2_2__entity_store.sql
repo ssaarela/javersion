@@ -2,8 +2,6 @@
 -- For custom repositories, replace ENTITY_ --
 ----------------------------------------------
 
-insert into REPOSITORY (ID) values ('ENTITY');
-
 create table ENTITY (
   ID varchar(255) not null,
 
@@ -27,15 +25,15 @@ create table ENTITY_VERSION (
     foreign key (DOC_ID)
     references ENTITY (ID),
 
-  constraint ENTITY_VERSION_TYPE_FK
-    foreign key (TYPE)
-    references VERSION_TYPE (NAME),
-
   constraint ENTITY_VERSION_ORDINAL_U
     unique (ORDINAL),
 
   constraint ENTITY_VERSION_STATE_CHK
-    check (STATUS in (0, 1))
+    check (STATUS in (0, 1)),
+
+  constraint ENTITY_VERSION_TYPE_CHK
+    check (TYPE in ('NORMAL', 'NORMAL'))
+
 );
 
 -- Load entity and fetch updates since

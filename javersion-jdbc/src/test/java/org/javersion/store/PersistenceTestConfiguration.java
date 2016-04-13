@@ -113,12 +113,10 @@ public class PersistenceTestConfiguration {
         return new TransactionTemplate(transactionManager);
     }
 
-
     private Builder<String, String, JDocumentVersion<String>> documentOptionsBuilder(Transactions transactions, Executor executor) {
         QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
         return new Builder<String, String, JDocumentVersion<String>>()
                 .defaultsFor("DOCUMENT")
-                .repositoryTable(new JRepository(repository))
                 .versionTable(new JDocumentVersion<>(documentVersion, documentVersion.docId))
                 .versionTableSince(new JDocumentVersion<>(sinceVersion, sinceVersion.docId))
                 .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))

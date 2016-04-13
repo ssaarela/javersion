@@ -272,10 +272,6 @@ Versions are stored in three tables:
 * `version_parent`: `revision`, `parent_revision`.
 * `version_property`: `revision`, `path`, value consisting of `type` and `str` or `nbr`. 
 
-In addition a few shared configuration tables are needed: 
-* `repository` containing a row per repository that can be locked for publish. 
-* `version_type` - allowed values for `version.type` column. 
-
 Both strategies guarantee that visible versions are strictly ordered. You can always get
 changes and only changes that have occurred after a given revision. In an external system that needs to 
 synchronize it's data to Javersion, it's enough to keep track of the last revision
@@ -292,7 +288,6 @@ Both strategies have in common:
 * Single-valued properties can be configured to be persisted in `version`-table columns instead of the generic `version_properties` table.
 * Versioning tables may have any names but they must follow strategy specific schema - 
   a set of versioning tables is called a repository and applications may have multiple repositories (like collections in MongoDB).
-* There must be a row in `repository` table for each repository.
 
 Guaranteeing the order of updates requires locking. The two persistence strategies differ 
 mainly on how this ordering is achieved, what is locked and when, and when versions become 

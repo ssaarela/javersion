@@ -2,12 +2,9 @@
 -- For custom repositories, replace DOCUMENT_ --
 ------------------------------------------------
 
-insert into REPOSITORY (ID) values ('DOCUMENT');
-
 create table DOCUMENT_VERSION (
   DOC_ID varchar(255) not null,
   REVISION varchar(32) not null,
-  -- 0 = squashed, 1 = normal/active
   STATUS numeric(1) not null,
   TX_ORDINAL bigint,
   ORDINAL bigint,
@@ -17,15 +14,14 @@ create table DOCUMENT_VERSION (
 
   primary key (REVISION),
 
-  constraint DOCUMENT_VERSION_TYPE_FK
-    foreign key (TYPE)
-    references VERSION_TYPE (NAME),
-
   constraint DOCUMENT_VERSION_ORDINAL_U
     unique (ORDINAL),
 
   constraint DOCUMENT_VERSION_STATE_CHK
-    check (STATUS in (0, 1))
+    check (STATUS in (0, 1)),
+
+  constraint DOCUMENT_VERSION_TYPE_CHK
+    check (TYPE in ('NORMAL', 'NORMAL'))
 );
 
 create sequence DOCUMENT_VERSION_ORDINAL_SEQ start with 1 increment by 1 no cycle;

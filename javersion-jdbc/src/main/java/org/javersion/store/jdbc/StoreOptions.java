@@ -31,10 +31,6 @@ import com.querydsl.sql.SQLQueryFactory;
 @Immutable
 public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
 
-    public final String repositoryId;
-
-    public final JRepository repository;
-
     public final V version;
 
     public final V sinceVersion;
@@ -54,8 +50,6 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
     public final SQLQueryFactory queryFactory;
 
     protected StoreOptions(AbstractBuilder<Id, M, V, ?, ?> builder) {
-        this.repositoryId = Check.notNull(builder.repositoryId, "repositoryId");
-        this.repository = Check.notNull(builder.repositoryTable, "repositoryTable");
         this.version = Check.notNull(builder.version, "versionTable");
         this.sinceVersion = Check.notNull(builder.versionTableSince, "versionTableSince");
         this.parent = Check.notNull(builder.parentTable, "parentTable");
@@ -74,10 +68,6 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
     public abstract static class AbstractBuilder<Id, M, V extends JVersion<Id>,
             Options extends StoreOptions<Id, M, V>,
             This extends AbstractBuilder<Id, M, V, Options,This>> {
-
-        protected String repositoryId = "repository";
-
-        protected JRepository repositoryTable;
 
         protected V version;
 
@@ -101,8 +91,6 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
         public AbstractBuilder() {}
 
         public AbstractBuilder(StoreOptions<Id, M, V> options) {
-            this.repositoryId = options.repositoryId;
-            this.repositoryTable = options.repository;
             this.version = options.version;
             this.versionTableSince = options.sinceVersion;
             this.parentTable = options.parent;
@@ -112,16 +100,6 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
             this.executor = options.executor;
             this.versionTableProperties = options.versionTableProperties;
             this.queryFactory = options.queryFactory;
-        }
-
-        public This repositoryId(String repositoryId) {
-            this.repositoryId = repositoryId;
-            return self();
-        }
-
-        public This repositoryTable(JRepository jRepository) {
-            this.repositoryTable = jRepository;
-            return self();
         }
 
         public This versionTableSince(V sinceVersion) {
@@ -165,9 +143,7 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
         }
 
         public This defaultsFor(String repositoryName) {
-            return repositoryId(repositoryName)
-                    .repositoryTable(new JRepository())
-                    .parentTable(new JVersionParent(repositoryName))
+            return parentTable(new JVersionParent(repositoryName))
                     .propertyTable(new JVersionProperty(repositoryName));
         }
 
