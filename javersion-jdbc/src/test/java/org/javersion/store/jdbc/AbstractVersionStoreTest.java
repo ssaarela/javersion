@@ -133,9 +133,40 @@ public abstract class AbstractVersionStoreTest {
     }
 
     @Test
+    public void reset() {
+        final String docId = randomUUID().toString();
+        final ObjectVersionGraph<String> originalGraph = graphForOptimization();
+        VersionStore<String, String> store = getStore();
+
+        addVersions(docId, store,
+                originalGraph.getVersionNode(rev1),
+                originalGraph.getVersionNode(rev2),
+                originalGraph.getVersionNode(rev3),
+                originalGraph.getVersionNode(rev4),
+                originalGraph.getVersionNode(rev5),
+                originalGraph.getVersionNode(rev6));
+
+        optimize(docId, v -> v.revision.equals(rev6), store);
+
+        ObjectVersionGraph<String> graph = store.loadOptimized(docId);
+        assertThat(graph.versionNodes.containsKey(rev6)).isTrue();
+        assertThat(graph.versionNodes.size()).isEqualTo(1);
+
+        store.reset(docId);
+
+        graph = store.loadOptimized(docId);
+        assertThat(graph.getVersionNode(rev1).getVersion()).isEqualTo(originalGraph.getVersionNode(rev1).getVersion());
+        assertThat(graph.getVersionNode(rev2).getVersion()).isEqualTo(originalGraph.getVersionNode(rev2).getVersion());
+        assertThat(graph.getVersionNode(rev3).getVersion()).isEqualTo(originalGraph.getVersionNode(rev3).getVersion());
+        assertThat(graph.getVersionNode(rev4).getVersion()).isEqualTo(originalGraph.getVersionNode(rev4).getVersion());
+        assertThat(graph.getVersionNode(rev5).getVersion()).isEqualTo(originalGraph.getVersionNode(rev5).getVersion());
+        assertThat(graph.getVersionNode(rev6).getVersion()).isEqualTo(originalGraph.getVersionNode(rev6).getVersion());
+    }
+
+    @Test
     public void automatic_optimization() {
         AtomicInteger optimizationRuns = new AtomicInteger(0);
-        AbstractVersionStoreJdbc<String, String, ?, ?, ?> store = newStore(
+        VersionStore<String, String> store = newStore(
                 runnable -> {
                     optimizationRuns.incrementAndGet();
                     runnable.run();
@@ -172,7 +203,7 @@ public abstract class AbstractVersionStoreTest {
         assertThat(optimizationRuns.get()).isEqualTo(3);
     }
 
-    protected void optimize(String docId, Predicate<VersionNode<PropertyPath, Object, String>> keep, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store) {
+    protected void optimize(String docId, Predicate<VersionNode<PropertyPath, Object, String>> keep, VersionStore<String, String> store) {
         transactionTemplate.execute(status -> {
             store.updateBatch(docId)
                     .optimize(store.loadOptimized(docId), keep)
@@ -181,11 +212,11 @@ public abstract class AbstractVersionStoreTest {
         });
     }
 
-    protected void addVersions(String docId, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store, VersionNode<PropertyPath, Object, String>... versions) {
+    protected void addVersions(String docId, VersionStore<String, String> store, VersionNode<PropertyPath, Object, String>... versions) {
         addVersions(docId, store, asList(versions));
     }
 
-    private void addVersions(String docId, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store, List<VersionNode<PropertyPath, Object, String>> versions) {
+    private void addVersions(String docId, VersionStore<String, String> store, List<VersionNode<PropertyPath, Object, String>> versions) {
         transactionTemplate.execute(status -> {
             UpdateBatch<String, String> batch = store.updateBatch(docId);
             versions.forEach(v -> batch.addVersion(docId, v));
