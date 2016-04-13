@@ -62,7 +62,7 @@ public abstract class AbstractVersionStoreTest {
         final String doc2Id = randomUUID().toString();
 
         ObjectVersion<String> v1 = ObjectVersion.<String>builder(rev1).changeset(mapOf("property", "value1")).build(),
-                v2 = ObjectVersion.<String>builder(rev2).changeset(mapOf("property", "value2")).parents(rev1).build(),
+                v2 = ObjectVersion.<String>builder(rev2).changeset(mapOf("property", null)).parents(rev1).build(),
                 v3 = ObjectVersion.<String>builder(rev3).changeset(mapOf("property", "value3")).parents(rev1).build(),
                 v4 = ObjectVersion.<String>builder(rev4).build();
 
@@ -76,19 +76,13 @@ public abstract class AbstractVersionStoreTest {
         // Load one (loadOptimized)
         addVersions(docId, store, originalGraph.getVersionNode(rev3));
         ObjectVersionGraph<String> loadedGraph = store.loadOptimized(docId);
-        assertThat(loadedGraph.getVersionNode(rev3).getVersion()).isEqualTo(originalGraph.getVersionNode(rev3).getVersion());
         // Optimization is reset
-        assertThat(loadedGraph.getVersionNode(rev1).getVersion()).isEqualTo(originalGraph.getVersionNode(rev1).getVersion());
+        assertThat(loadedGraph.getVersionNode(rev1).getVersion()).isEqualTo(v1);
+        assertThat(loadedGraph.getVersionNode(rev2).getVersion()).isEqualTo(v2);
+        assertThat(loadedGraph.getVersionNode(rev3).getVersion()).isEqualTo(v3);
 
         // Batch load
-        transactionTemplate.execute(status -> {
-            store.updateBatch(doc2Id)
-                    .addVersion(doc2Id, ObjectVersionGraph.init(v4).getTip())
-                    .execute();
-            return null;
-        });
-        store.publish();
-
+        addVersions(doc2Id, store, ObjectVersionGraph.init(v4).getTip());
         GraphResults<String, String> results = store.load(asList(docId, doc2Id));
         assertThat(results.getVersionGraph(docId).getVersionNode(rev1).getVersion()).isEqualTo(v1);
         assertThat(results.getVersionGraph(docId).getVersionNode(rev2).getVersion()).isEqualTo(v2);

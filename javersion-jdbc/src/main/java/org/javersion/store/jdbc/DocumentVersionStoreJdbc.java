@@ -136,6 +136,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>>
         qry.leftJoin(options.parent).on(options.parent.revision.eq(options.version.revision));
 
         qry.where(options.sinceVersion.revision.eq(since),
+                // Return "since" row even if there is no newer versions
                 versionsOf(docId).or(predicate(IS_NULL, options.version.docId)));
 
         qry.orderBy(options.version.ordinal.asc());
@@ -151,12 +152,24 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>>
     }
 
     @Override
-    protected Map<Revision, Id> findUnpublishedRevisions() {
+    protected Map<Revision, Id> getUnpublishedRevisionsForUpdate() {
         return options.queryFactory
                 .from(options.version)
                 .where(options.version.txOrdinal.isNotNull())
-                .orderBy(options.version.txOrdinal.asc())
+                .orderBy(options.version.txOrdinal.asc(), options.version.revision.asc())
+                .forUpdate()
                 .transform(groupBy(options.version.revision).as(options.version.docId));
     }
 
+    @Override
+    protected void lockForMaintenance(Id docId) {
+        options.queryFactory
+                .select(options.version.revision)
+                .from(options.version)
+                .where(versionsOf(docId))
+                .orderBy(options.version.ordinal.asc())
+                .forUpdate()
+                .iterate()
+                .close();
+    }
 }

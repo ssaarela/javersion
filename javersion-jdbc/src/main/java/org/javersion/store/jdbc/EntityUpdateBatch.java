@@ -28,6 +28,7 @@ import java.util.Set;
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLInsertClause;
@@ -48,7 +49,7 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
         entityCreateBatch = options.queryFactory.insert(options.entity);
 
         lockedDocIds = ImmutableSet.copyOf(docIds);
-        entityOrdinals = lockEntitiesForUpdate(options, docIds);
+        entityOrdinals = docIds.isEmpty() ? ImmutableMap.of() : lockEntitiesForUpdate(options, docIds);
     }
 
     public boolean contains(Id docId) {

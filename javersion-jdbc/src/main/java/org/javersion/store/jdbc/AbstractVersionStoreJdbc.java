@@ -26,16 +26,13 @@ import static com.querydsl.core.types.dsl.Expressions.predicate;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
+import static org.javersion.store.jdbc.VersionStatus.REDUNDANT;
+import static org.javersion.store.jdbc.VersionStatus.SQUASHED;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -94,8 +91,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
 
     protected final QPair<Revision, Id> revisionAndDocId;
 
-    protected final SQLQuery<Long> maxOrdinalSubQuery;
-
     protected final ResultTransformer<Map<Revision, List<Tuple>>> properties;
 
     protected final FetchResults<Id, M> noResults = new FetchResults<>();
@@ -107,7 +102,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         versionAndParents = groupBy(options.version.revision).list(versionAndParentColumns);
 
         revisionAndDocId = new QPair<>(options.version.revision, options.version.docId);
-        maxOrdinalSubQuery = maxOrdinalSubQuery(options);
 
         Expression<?>[] propertyColumns = without(options.property.all(), options.property.revision);
         properties = groupBy(options.property.revision).as(GroupBy.list(tuple(propertyColumns)));
@@ -164,7 +158,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
 
     protected abstract SQLUpdateClause setOrdinal(SQLUpdateClause versionUpdateBatch, long ordinal);
 
-    protected abstract Map<Revision, Id> findUnpublishedRevisions();
+    protected abstract Map<Revision, Id> getUnpublishedRevisionsForUpdate();
 
 
     protected final ObjectVersionGraph<M> doLoad(Id docId) {
@@ -204,11 +198,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
             try {
                 graph = ObjectVersionGraph.init(fetchResults.getVersions(docId));
                 if (options.graphOptions.optimizeWhen.test(graph)) {
-                    optimizeAsync(docId, graph);
+                    optimizeAsync(docId, graph, false);
                 }
             } catch (VersionNotFoundException e) {
                 graph = doLoad(docId);
-                optimizeAsync(docId, graph);
+                optimizeAsync(docId, graph, true);
             }
             return graph;
         } else {
@@ -217,10 +211,9 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
     }
 
     protected Multimap<Id, Revision> doPublish() {
-        // Lock repository with select for update
-        long lastOrdinal = lockRepositoryAndGetMaxOrdinal();
+        Map<Revision, Id> uncommittedRevisions = getUnpublishedRevisionsForUpdate();
+        long lastOrdinal = getMaxOrdinal();
 
-        Map<Revision, Id> uncommittedRevisions = findUnpublishedRevisions();
         if (uncommittedRevisions.isEmpty()) {
             return ImmutableMultimap.of();
         }
@@ -245,30 +238,80 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
     }
 
     protected void doPrune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
-        Batch batch = doUpdateBatch(singletonList(docId));
+        lockForMaintenance(docId);
+        doReset(docId);
         ObjectVersionGraph<M> graph = doLoad(docId);
-        batch.prune(graph, keep.apply(graph));
-        batch.execute();
+        doUpdateBatch(ImmutableSet.of())
+                .prune(graph, keep.apply(graph))
+                .execute();
     }
 
-    protected void optimizeAsync(Id docId, ObjectVersionGraph<M> baseGraph) {
+    protected void optimizeAsync(Id docId, ObjectVersionGraph<M> baseGraph, boolean reset) {
         options.executor.execute(() -> {
             options.transactions.writeNewRequired(() -> {
-                optimize(docId, baseGraph);
+                optimize(docId, baseGraph, reset);
                 return null;
             });
         });
     }
 
-    protected void optimize(Id docId, ObjectVersionGraph<M> baseGraph) {
-        Batch batch = doUpdateBatch(singleton(docId));
-        List<ObjectVersion<M>> versions = doFetchUpdates(docId, baseGraph.getTip().revision);
-        ObjectVersionGraph<M> graph = versions.isEmpty() ? baseGraph : baseGraph.commit(versions);
-        batch.optimize(graph, options.graphOptions.optimizeKeep.apply(graph));
-        batch.execute();
-                return null;
-            });
-        });
+    protected void optimize(Id docId, ObjectVersionGraph<M> graph, boolean reset) {
+        lockForMaintenance(docId);
+        if (reset) {
+            long revived = doReset(docId);
+            if (revived == 0) {
+                throw new ConcurrentModificationException("Expected to revive versions");
+            }
+        }
+        doUpdateBatch(ImmutableSet.of())
+                .optimize(graph, options.graphOptions.optimizeKeep.apply(graph))
+                .execute();
+    }
+
+    protected abstract void lockForMaintenance(Id docId);
+
+    protected long doReset(Id docId) {
+        final BooleanOperation docIdEquals = predicate(EQ, options.version.docId, constant(docId));
+
+        final SQLQuery<Revision> docRevisions = options.queryFactory
+                .select(options.version.revision)
+                .from(options.version)
+                .where(docIdEquals);
+
+        // Revive squashed versions
+        long revived = options.queryFactory
+                .update(options.version)
+                .set(options.version.status, ACTIVE)
+                .where(docIdEquals, options.version.status.eq(SQUASHED))
+                .execute();
+
+        // Delete redundant parents
+        options.queryFactory
+                .delete(options.parent)
+                .where(options.parent.revision.in(docRevisions), options.parent.status.eq(REDUNDANT))
+                .execute();
+
+        // Revive squashed parents
+        options.queryFactory
+                .update(options.parent)
+                .set(options.parent.status, ACTIVE)
+                .where(options.parent.revision.in(docRevisions), options.parent.status.eq(SQUASHED))
+                .execute();
+
+        // Delete redundant properties
+        options.queryFactory
+                .delete(options.property)
+                .where(options.property.revision.in(docRevisions), options.property.status.eq(REDUNDANT))
+                .execute();
+
+        // Revive squashed properties
+        options.queryFactory
+                .update(options.property)
+                .set(options.property.status, ACTIVE)
+                .where(options.property.revision.in(docRevisions), options.property.status.eq(SQUASHED))
+                .execute();
+
+        return revived;
     }
 
     protected M getMeta(Group versionAndParents) {
@@ -280,19 +323,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         // After publish hook for sub classes to override
     }
 
-    protected long lockRepositoryAndGetMaxOrdinal() {
-        // Use List-result as a safe-guard against missing repository row
-        List<Long> results = options.queryFactory
-                .select(maxOrdinalSubQuery)
-                .from(options.repository)
-                .where(options.repository.id.eq(options.repositoryId))
-                .forUpdate()
-                .fetch();
-
-        if (results.isEmpty()) {
-            throw new IllegalStateException("Repository with id " + options.repositoryId + " not found from " + options.repository.getTableName());
-        }
-        Long maxOrdinal = results.get(0);
+    protected long getMaxOrdinal() {
+        Long maxOrdinal = options.queryFactory
+                .select(options.version.ordinal.max())
+                .from(options.version)
+                .fetchFirst();
         return maxOrdinal != null ? maxOrdinal : 0;
     }
 
@@ -426,10 +461,6 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
         List<Expression<?>> list = new ArrayList<>(asList(expressions));
         list.remove(expr);
         return list.toArray(new Expression<?>[list.size()]);
-    }
-
-    private SQLQuery<Long> maxOrdinalSubQuery(Options options) {
-        return options.queryFactory.select(options.version.ordinal.max()).from(options.version);
     }
 
 }

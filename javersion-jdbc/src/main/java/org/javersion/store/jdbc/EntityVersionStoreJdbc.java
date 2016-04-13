@@ -108,12 +108,25 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
     }
 
     @Override
-    protected Map<Revision, Id> findUnpublishedRevisions() {
+    protected Map<Revision, Id> getUnpublishedRevisionsForUpdate() {
         return options.queryFactory
                 .from(options.version)
                 .where(options.version.ordinal.isNull())
-                .orderBy(options.version.localOrdinal.asc())
+                .orderBy(options.version.localOrdinal.asc(), options.version.revision.asc())
+                .forUpdate()
                 .transform(groupBy(options.version.revision).as(options.version.docId));
+    }
+
+    @Override
+    protected void lockForMaintenance(Id docId) {
+        options.queryFactory
+                .select(options.version.revision)
+                .from(options.version)
+                .where(versionsOf(docId))
+                .orderBy(options.version.localOrdinal.asc(), options.version.revision.asc())
+                .forUpdate()
+                .iterate()
+                .close();
     }
 
     @Nonnull

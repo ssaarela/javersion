@@ -19,9 +19,9 @@ import org.javersion.core.Revision;
 import org.javersion.core.VersionType;
 
 import com.querydsl.core.types.Path;
+import com.querydsl.core.types.dsl.ComparablePath;
 import com.querydsl.core.types.dsl.EnumPath;
 import com.querydsl.core.types.dsl.NumberPath;
-import com.querydsl.core.types.dsl.SimplePath;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.sql.RelationalPathBase;
 
@@ -31,7 +31,7 @@ public abstract class JVersion<Id> extends RelationalPathBase<JVersion> {
 
     public final StringPath branch = createString("branch");
 
-    public final SimplePath<Revision> revision = createSimple("revision", org.javersion.core.Revision.class);
+    public final ComparablePath<Revision> revision = createComparable("revision", org.javersion.core.Revision.class);
 
     public final EnumPath<VersionType> type = createEnum("type", org.javersion.core.VersionType.class);
 

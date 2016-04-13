@@ -20,6 +20,7 @@ import static org.javersion.store.jdbc.VersionStatus.REDUNDANT;
 import static org.javersion.store.jdbc.VersionStatus.SQUASHED;
 
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -298,7 +299,7 @@ public abstract class AbstractUpdateBatch<Id, M,
                 .where(options.version.revision.in(revisions))
                 .execute();
         if (count != revisions.size()) {
-            throw new IllegalStateException("Expected to delete " + revisions.size() + " revisions. Got " + count);
+            throw new ConcurrentModificationException("Expected to delete " + revisions.size() + " revisions. Got " + count);
         }
     }
 
@@ -323,7 +324,7 @@ public abstract class AbstractUpdateBatch<Id, M,
                 .where(options.version.revision.in(revisions), options.version.status.ne(SQUASHED))
                 .execute();
         if (count != revisions.size()) {
-            throw new IllegalStateException("Expected to squash " + revisions.size() + " revisions. Got " + count);
+            throw new ConcurrentModificationException("Expected to squash " + revisions.size() + " revisions. Got " + count);
         }
     }
 
