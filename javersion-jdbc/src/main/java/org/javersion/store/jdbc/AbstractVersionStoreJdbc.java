@@ -26,6 +26,7 @@ import static com.querydsl.core.types.dsl.Expressions.predicate;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.synchronizedSet;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
 import static org.javersion.store.jdbc.VersionStatus.REDUNDANT;
@@ -94,6 +95,8 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
     protected final ResultTransformer<Map<Revision, List<Tuple>>> properties;
 
     protected final FetchResults<Id, M> noResults = new FetchResults<>();
+
+    protected final Set<Id> runningOptimizations = synchronizedSet(new HashSet<Id>());
 
     public AbstractVersionStoreJdbc(Options options) {
         this.options = options;
@@ -255,12 +258,18 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>, Ba
     }
 
     protected void optimizeAsync(Id docId, ObjectVersionGraph<M> baseGraph, boolean reset) {
-        options.executor.execute(() -> {
-            options.transactions.writeNewRequired(() -> {
-                optimize(docId, baseGraph, reset);
-                return null;
+        if (runningOptimizations.add(docId)) {
+            options.executor.execute(() -> {
+                try {
+                    options.transactions.writeNewRequired(() -> {
+                        optimize(docId, baseGraph, reset);
+                        return null;
+                    });
+                } finally {
+                    runningOptimizations.remove(docId);
+                }
             });
-        });
+        }
     }
 
     protected void optimize(Id docId, ObjectVersionGraph<M> graph, boolean reset) {
