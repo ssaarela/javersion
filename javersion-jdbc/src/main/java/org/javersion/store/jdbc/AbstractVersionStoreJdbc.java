@@ -52,6 +52,7 @@ import org.javersion.util.Check;
 import com.google.common.collect.*;
 import com.querydsl.core.ResultTransformer;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.dml.StoreClause;
 import com.querydsl.core.group.Group;
 import com.querydsl.core.group.GroupBy;
 import com.querydsl.core.group.QPair;
@@ -341,6 +342,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
         return revived;
     }
 
+    /**
+     * Override to read metadata from VERSION table.
+     *
+     * @see AbstractUpdateBatch#setMeta(Object, StoreClause)
+     */
     protected M getMeta(Group versionAndParents) {
         return null;
     }

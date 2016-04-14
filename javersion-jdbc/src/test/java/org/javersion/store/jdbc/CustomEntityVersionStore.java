@@ -9,6 +9,7 @@ import java.util.Collection;
 import org.javersion.core.VersionNode;
 import org.javersion.path.PropertyPath;
 
+import com.querydsl.core.dml.StoreClause;
 import com.querydsl.core.group.Group;
 import com.querydsl.sql.dml.SQLUpdateClause;
 
@@ -63,9 +64,8 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
         }
 
         @Override
-        protected void insertVersion(String docId, VersionNode<PropertyPath, Object, String> version) {
-            versionBatch.set(entityVersion.comment, version.meta);
-            super.insertVersion(docId, version);
+        protected void setMeta(String meta, StoreClause versionBatch) {
+            versionBatch.set(entityVersion.comment, meta);
         }
     }
 

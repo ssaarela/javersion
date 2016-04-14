@@ -33,6 +33,7 @@ import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 
 import com.querydsl.core.dml.StoreClause;
+import com.querydsl.core.group.Group;
 import com.querydsl.core.types.Path;
 import com.querydsl.sql.dml.SQLInsertClause;
 
@@ -187,8 +188,18 @@ public abstract class AbstractUpdateBatch<Id, M,
                 versionBatch.set(columnPath, properties.get(path));
             });
         }
+
+        setMeta(version.getMeta(), versionBatch);
+
         versionBatch.addBatch();
     }
+
+    /**
+     * Override to persist custom metadata into VERSION table.
+     * 
+     * @see AbstractVersionStoreJdbc#getMeta(Group)
+     */
+    protected void setMeta(M meta, StoreClause versionBatch) {}
 
     protected void insertParents(VersionNode<PropertyPath, Object, M> version) {
         version.parentRevisions.forEach(parentRevision -> insertParent(version.revision, parentRevision, ACTIVE));

@@ -27,7 +27,6 @@ import com.querydsl.sql.codegen.MetaDataExporter;
 @org.springframework.context.annotation.Configuration
 @EnableAutoConfiguration
 @Import(PersistenceTestConfiguration.class)
-//@Import(DataSourceAutoConfiguration.class)
 public class ExportQTypes {
 
     public static final String NAME_PREFIX = "Q";
