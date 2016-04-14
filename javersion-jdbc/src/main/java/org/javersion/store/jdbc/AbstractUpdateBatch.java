@@ -196,7 +196,7 @@ public abstract class AbstractUpdateBatch<Id, M,
 
     /**
      * Override to persist custom metadata into VERSION table.
-     * 
+     *
      * @see AbstractVersionStoreJdbc#getMeta(Group)
      */
     protected void setMeta(M meta, StoreClause versionBatch) {}

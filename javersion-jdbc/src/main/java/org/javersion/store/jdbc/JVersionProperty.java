@@ -54,9 +54,9 @@ public class JVersionProperty extends RelationalPathBase<JVersionProperty> {
         super(JVersionProperty.class, PathMetadataFactory.forVariable(table), schema, table);
         addMetadata(revision, ColumnMetadata.named("REVISION").withIndex(1).ofType(Types.VARCHAR).withSize(32).notNull());
         addMetadata(status, ColumnMetadata.named("STATUS").withIndex(2).ofType(Types.INTEGER).withSize(1).notNull());
-        addMetadata(path, ColumnMetadata.named("PATH").withIndex(3).ofType(Types.VARCHAR).withSize(512).notNull());
+        addMetadata(path, ColumnMetadata.named("PATH").withIndex(3).ofType(Types.VARCHAR).notNull());
         addMetadata(type, ColumnMetadata.named("TYPE").withIndex(4).ofType(Types.CHAR).withSize(1).notNull());
-        addMetadata(str, ColumnMetadata.named("STR").withIndex(5).ofType(Types.VARCHAR).withSize(1024));
+        addMetadata(str, ColumnMetadata.named("STR").withIndex(5).ofType(Types.VARCHAR));
         addMetadata(nbr, ColumnMetadata.named("NBR").withIndex(6).ofType(Types.BIGINT).withSize(19));
     }
 

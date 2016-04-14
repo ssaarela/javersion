@@ -60,11 +60,11 @@ create table DOCUMENT_VERSION_PROPERTY (
   -- 0 = squashed, 1 = normal/active, 2 = redundant
   STATUS numeric(1) not null,
 
-  PATH varchar(512) not null,
+  PATH varchar(1024) not null,
   -- n=null, O=object, A=array, s=string,
   -- b=boolean, l=long, d=double, D=bigdecimal
   TYPE char(1) not null,
-  STR varchar(1024),
+  STR text,
   NBR bigint,
 
   primary key (REVISION, PATH),
