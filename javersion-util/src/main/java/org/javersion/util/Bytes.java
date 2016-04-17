@@ -68,10 +68,6 @@ abstract class Bytes {
 
         private int i;
 
-        Integer() {
-            this(0);
-        }
-
         Integer(int i) {
             this.i = i;
         }

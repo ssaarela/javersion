@@ -325,6 +325,14 @@ public class OptimizedGraphTest {
         assertThat(node.getParentRevisions()).isEqualTo(ImmutableSet.of(v2.revision));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void keep_none() {
+        SimpleVersionGraph.init(
+                new SimpleVersion.Builder()
+                .changeset(mapOf("key", "value1"))
+                .build()).optimize(node -> false);
+    }
+
     @Test
     public void performance() {
         int COUNT = 10000;

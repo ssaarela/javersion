@@ -97,12 +97,6 @@ public final class UpdateContext<T> implements Merger<T> {
         return this.context != null && this.context == other.context;
     }
 
-    public void validate() {
-        if (isCommitted()) {
-            throw new IllegalStateException("This update is already committed");
-        }
-    }
-
     public boolean hasChanged() {
         return context.change != 0;
     }

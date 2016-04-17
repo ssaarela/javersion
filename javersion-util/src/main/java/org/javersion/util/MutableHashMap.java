@@ -225,7 +225,6 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
             if (updateContext.isCommitted()) {
                 updateContext = new UpdateContext<>(expectedUpdates, merger);
             } else {
-                updateContext.validate();
                 updateContext.merger(merger);
             }
             return updateContext;

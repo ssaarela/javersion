@@ -227,7 +227,6 @@ public class MutableTreeMap<K, V> extends AbstractMap<K, V> implements MutableSo
             if (updateContext.isCommitted()) {
                 updateContext = new UpdateContext<>(32, merger);
             } else {
-                updateContext.validate();
                 updateContext.merger(merger);
             }
             return updateContext;
