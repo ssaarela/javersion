@@ -35,7 +35,7 @@ public class ObjectVersionGraphTest {
     public void optimize() {
         ObjectVersionGraph<String> graph = init(v1, v2);
         graph = graph.optimize(v2.revision).getGraph();
-        assertThat(graph.versionNodes.size()).isEqualTo(1);
+        assertThat(graph.size()).isEqualTo(1);
         assertThat(graph.getTip().getRevision()).isEqualTo(v2.revision);
     }
 }

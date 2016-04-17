@@ -269,9 +269,9 @@ public class VersionGraphCacheTest {
     private void assertCacheContains(VersionGraphCache<String, Void> cache, String docId, Revision... revisions) {
         cache.publish();
         ObjectVersionGraph<Void> graph = cache.load(docId);
-        assertThat(graph.versionNodes.size()).isEqualTo(revisions.length);
+        assertThat(graph.size()).isEqualTo(revisions.length);
         for (Revision revision : revisions) {
-            assertThat(graph.versionNodes.containsKey(revision)).isTrue().overridingErrorMessage("%s not found", revision);
+            assertThat(graph.contains(revision)).isTrue().overridingErrorMessage("%s not found", revision);
         }
     }
 

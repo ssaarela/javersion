@@ -9,11 +9,7 @@ import java.util.Set;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
-import org.javersion.core.Merge;
-import org.javersion.core.Revision;
-import org.javersion.core.Version;
-import org.javersion.core.VersionGraph;
-import org.javersion.core.VersionNode;
+import org.javersion.core.*;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.Schema;
@@ -21,7 +17,7 @@ import org.javersion.path.Schema;
 @NotThreadSafe
 public class ObjectVersionManager<O, M> {
 
-    protected VersionGraph<PropertyPath, Object, M, ?, ?> versionGraph;
+    protected VersionGraph<PropertyPath, Object, M, ?> versionGraph;
 
     protected Set<Revision> heads;
 
@@ -47,7 +43,7 @@ public class ObjectVersionManager<O, M> {
         return init(ObjectVersionGraph.init(versions));
     }
 
-    public ObjectVersionManager<O, M> init(VersionGraph<PropertyPath, Object, M, ?, ?> versionGraph) {
+    public ObjectVersionManager<O, M> init(VersionGraph<PropertyPath, Object, M, ?> versionGraph) {
         this.versionGraph = versionGraph;
         heads = null;
         return this;
@@ -90,7 +86,7 @@ public class ObjectVersionManager<O, M> {
         return versionGraph.getTip();
     }
 
-    public VersionGraph<PropertyPath, Object, M, ?, ?> getVersionGraph() {
+    public VersionGraph<PropertyPath, Object, M, ?> getVersionGraph() {
         return versionGraph;
     }
 

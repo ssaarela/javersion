@@ -371,7 +371,7 @@ public class OptimizedGraphTest {
     }
 
     private void assertRevisions(SimpleVersionGraph versionGraph, Set<Revision> keepRevisions, List<Revision> keptRevisions, List<Revision> squashedRevisions) {
-        OptimizedGraph<String, String, String, SimpleVersionGraph, SimpleVersionGraph.Builder> optimizedGraph = versionGraph.optimize(keepRevisions);
+        OptimizedGraph<String, String, String, SimpleVersionGraph> optimizedGraph = versionGraph.optimize(keepRevisions);
         assertThat(optimizedGraph.getKeptRevisions()).as("keptRevisions").isEqualTo(keptRevisions);
         assertThat(optimizedGraph.getSquashedRevisions()).as("squashedRevisions").isEqualTo(squashedRevisions);
     }

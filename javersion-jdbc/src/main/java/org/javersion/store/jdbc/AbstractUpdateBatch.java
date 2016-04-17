@@ -84,7 +84,7 @@ public abstract class AbstractUpdateBatch<Id, M,
     }
 
     protected This prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ObjectVersionGraph.Builder<M>> optimizedGraph = optimizedGraph(graph, keep);
+        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>> optimizedGraph = optimizedGraph(graph, keep);
         if (optimizedGraph != null) {
             List<Revision> keptRevisions = optimizedGraph.getKeptRevisions();
             List<Revision> squashedRevisions = optimizedGraph.getSquashedRevisions();
@@ -99,7 +99,7 @@ public abstract class AbstractUpdateBatch<Id, M,
     }
 
     protected This optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ObjectVersionGraph.Builder<M>> optimizedGraph = optimizedGraph(graph, keep);
+        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>> optimizedGraph = optimizedGraph(graph, keep);
         if (optimizedGraph != null) {
             List<Revision> squashedRevisions = optimizedGraph.getSquashedRevisions();
 
@@ -119,7 +119,7 @@ public abstract class AbstractUpdateBatch<Id, M,
     }
 
     private void optimizeParentsAndProperties(ObjectVersionGraph<M> oldGraph, ObjectVersionGraph<M> newGraph) {
-        newGraph.versionNodes.valueStream().forEach(newVersionNode -> {
+        newGraph.getVersionNodes().forEach(newVersionNode -> {
             VersionNode<PropertyPath, Object, M> oldVersionNode = oldGraph.getVersionNode(newVersionNode.revision);
             optimizeParents(newVersionNode.revision, oldVersionNode.getParentRevisions(), newVersionNode.getParentRevisions());
             optimizeProperties(newVersionNode.revision, oldVersionNode.getChangeset(), newVersionNode.getChangeset());
@@ -159,8 +159,8 @@ public abstract class AbstractUpdateBatch<Id, M,
         return combined;
     }
 
-    private OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ObjectVersionGraph.Builder<M>> optimizedGraph(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ObjectVersionGraph.Builder<M>> optimizedGraph = graph.optimize(keep);
+    private OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>> optimizedGraph(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>> optimizedGraph = graph.optimize(keep);
 
         if (optimizedGraph.getSquashedRevisions().isEmpty()) {
             return null;

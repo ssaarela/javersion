@@ -36,7 +36,7 @@ public class GraphOptions<Id, M> {
         Check.that(count >= 0, "count should be >= 0");
         Check.that(compactThreshold > count, "compactThreshold should be > count");
         return new GraphOptions<>(
-                g -> g.versionNodes.size() - g.getHeads().size() >=  compactThreshold,
+                g -> g.size() - g.getHeads().size() >=  compactThreshold,
                 (g) -> new KeepHeadsAndNewest<>(g, count)
         );
     }

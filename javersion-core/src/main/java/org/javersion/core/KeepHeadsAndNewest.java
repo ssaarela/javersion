@@ -31,7 +31,7 @@ public class KeepHeadsAndNewest<K, V, M> implements Predicate<VersionNode<K, V, 
 
     private final Set<Revision> heads;
 
-    public KeepHeadsAndNewest(VersionGraph<K, V, M, ?, ?> graph, int count) {
+    public KeepHeadsAndNewest(VersionGraph<K, V, M, ?> graph, int count) {
         Check.that(count >= 0, "count should be >= 0");
         keepCount = count;
         heads = graph.getHeads().keyStream()

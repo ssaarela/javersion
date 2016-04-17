@@ -28,7 +28,7 @@ import org.javersion.util.*;
 
 @NotThreadSafe
 public abstract class VersionGraphBuilder<K, V, M,
-                               G extends VersionGraph<K, V, M, G, B>,
+                               G extends AbstractVersionGraph<K, V, M, G, B>,
                                B extends VersionGraphBuilder<K, V, M, G, B>> {
 
     PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> heads;

@@ -185,11 +185,11 @@ public class Version<K, V, M> {
             return self();
         }
 
-        public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?, ?> versionGraph) {
+        public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?> versionGraph) {
             return changeset(newProperties, versionGraph, p -> true);
         }
 
-        public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?, ?> versionGraph, Predicate<K> filter) {
+        public This changeset(Map<K, V> newProperties, VersionGraph<K, V, M, ?> versionGraph, Predicate<K> filter) {
             if (parentRevisions != null) {
                 Merge<K, V, M> merge = versionGraph.mergeRevisions(parentRevisions);
                 if (newProperties == null || newProperties.isEmpty()) {

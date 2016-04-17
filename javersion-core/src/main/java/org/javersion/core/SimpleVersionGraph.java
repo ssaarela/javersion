@@ -17,7 +17,7 @@ package org.javersion.core;
 
 import static java.util.Arrays.asList;
 
-public final class SimpleVersionGraph extends VersionGraph<String, String, String, SimpleVersionGraph, SimpleVersionGraph.Builder> {
+public final class SimpleVersionGraph extends AbstractVersionGraph<String, String, String, SimpleVersionGraph, SimpleVersionGraph.Builder> {
 
     public static SimpleVersionGraph init() {
         return new SimpleVersionGraph();

@@ -22,9 +22,7 @@ import javax.annotation.concurrent.NotThreadSafe;
 import com.google.common.collect.Lists;
 
 @NotThreadSafe
-public class OptimizedGraph<K, V, M,
-        G extends VersionGraph<K, V, M, G, B>,
-        B extends VersionGraphBuilder<K, V, M, G, B>> {
+public class OptimizedGraph<K, V, M, G extends VersionGraph<K, V, M, G>> {
 
     private final G graph;
 

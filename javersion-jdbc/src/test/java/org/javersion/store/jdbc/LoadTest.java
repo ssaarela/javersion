@@ -164,7 +164,7 @@ public class LoadTest {
         // Load full
         long ts = currentTimeMillis();
         versionGraph = store.load(docId);
-        final long loadSize = versionGraph.versionNodes.size();
+        final long loadSize = versionGraph.size();
         final long loadTime = currentTimeMillis() - ts;
 
         final ObjectVersionGraph<String> baseGraph = versionGraph;
@@ -172,13 +172,13 @@ public class LoadTest {
         // Load optimized
         ts = currentTimeMillis();
         versionGraph = store.loadOptimized(docId);
-        final long optimizedSize = versionGraph.versionNodes.size();
+        final long optimizedSize = versionGraph.size();
         final long optimizedTime = currentTimeMillis() - ts;
 
         // Load cached
         ts = currentTimeMillis();
         versionGraph = cache.load(docId);
-        final long cachedSize = versionGraph.versionNodes.size();
+        final long cachedSize = versionGraph.size();
         final long cachedTime = currentTimeMillis() - ts;
 
 

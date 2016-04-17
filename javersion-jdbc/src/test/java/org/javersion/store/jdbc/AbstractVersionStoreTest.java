@@ -71,7 +71,7 @@ public abstract class AbstractVersionStoreTest {
         addVersions(docId, store, originalGraph.getVersionNode(rev1), originalGraph.getVersionNode(rev2));
         // rev1 is optimized away
         optimize(docId, v -> v.revision.equals(rev2), store);
-        assertThat(store.loadOptimized(docId).versionNodes.get(rev1)).isNull();
+        assertThat(store.loadOptimized(docId).contains(rev1)).isFalse();
 
         // Load one (loadOptimized)
         addVersions(docId, store, originalGraph.getVersionNode(rev3));
@@ -103,10 +103,10 @@ public abstract class AbstractVersionStoreTest {
         optimize(docId, v -> !v.revision.equals(rev1), store);
 
         // Non-optimized load returns still full graph
-        assertThat(store.load(docId).versionNodes.size()).isEqualTo(6);
+        assertThat(store.load(docId).size()).isEqualTo(6);
 
         ObjectVersionGraph<String> versionGraph = store.loadOptimized(docId);
-        assertThat(versionGraph.versionNodes.size()).isEqualTo(5);
+        assertThat(versionGraph.size()).isEqualTo(5);
 
         VersionNode<PropertyPath, Object, String> versionNode = versionGraph.getVersionNode(rev2);
         assertThat(versionNode.getParentRevisions()).isEqualTo(ImmutableSet.of());
@@ -119,10 +119,10 @@ public abstract class AbstractVersionStoreTest {
         optimize(docId, v -> v.revision.equals(rev5) || v.revision.equals(rev6), store);
 
         // Non-optimized load returns still full graph
-        assertThat(store.load(docId).versionNodes.size()).isEqualTo(6);
+        assertThat(store.load(docId).size()).isEqualTo(6);
 
         versionGraph = store.loadOptimized(docId);
-        assertThat(versionGraph.versionNodes.size()).isEqualTo(3);
+        assertThat(versionGraph.size()).isEqualTo(3);
 
         versionNode = versionGraph.getVersionNode(rev3);
         assertThat(versionNode.getParentRevisions()).isEqualTo(ImmutableSet.of());
@@ -149,8 +149,8 @@ public abstract class AbstractVersionStoreTest {
         optimize(docId, v -> v.revision.equals(rev6), store);
 
         ObjectVersionGraph<String> graph = store.loadOptimized(docId);
-        assertThat(graph.versionNodes.containsKey(rev6)).isTrue();
-        assertThat(graph.versionNodes.size()).isEqualTo(1);
+        assertThat(graph.contains(rev6)).isTrue();
+        assertThat(graph.size()).isEqualTo(1);
 
         store.reset(docId);
 
@@ -178,28 +178,28 @@ public abstract class AbstractVersionStoreTest {
         addVersions(docId, store, originalGraph.getVersionNode(rev1), originalGraph.getVersionNode(rev2), originalGraph.getVersionNode(rev3));
 
         // First time loads full graph and runs optimization in background
-        assertThat(store.loadOptimized(docId).versionNodes.size()).isEqualTo(3);
+        assertThat(store.loadOptimized(docId).size()).isEqualTo(3);
         assertThat(optimizationRuns.get()).isEqualTo(1);
 
         // Second time returns newly optimized graph and doesn't rerun optimization
-        assertThat(store.loadOptimized(docId).versionNodes.size()).isEqualTo(1);
+        assertThat(store.loadOptimized(docId).size()).isEqualTo(1);
         assertThat(optimizationRuns.get()).isEqualTo(1);
 
         addVersions(docId, store, originalGraph.getVersionNode(rev4), originalGraph.getVersionNode(rev6));
 
         // Return updated previous optimization directly and trigger optimization
-        assertThat(store.loadOptimized(docId).versionNodes.size()).isEqualTo(3);
+        assertThat(store.loadOptimized(docId).size()).isEqualTo(3);
         assertThat(optimizationRuns.get()).isEqualTo(2);
 
         // Return newly optimized
-        assertThat(store.loadOptimized(docId).versionNodes.size()).isEqualTo(1);
+        assertThat(store.loadOptimized(docId).size()).isEqualTo(1);
         assertThat(optimizationRuns.get()).isEqualTo(2);
 
         // Adding a version referring to squashed parent, returns the full graph and reruns optimization in background
         addVersions(docId, store, originalGraph.getVersionNode(rev5));
-        assertThat(store.loadOptimized(docId).versionNodes.size()).isEqualTo(6);
+        assertThat(store.loadOptimized(docId).size()).isEqualTo(6);
         assertThat(optimizationRuns.get()).isEqualTo(3);
-        assertThat(store.loadOptimized(docId).versionNodes.size()).isEqualTo(3);
+        assertThat(store.loadOptimized(docId).size()).isEqualTo(3);
         assertThat(optimizationRuns.get()).isEqualTo(3);
     }
 

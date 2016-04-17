@@ -246,7 +246,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     private void prune_doc1() {
         entityStore.prune(docId1, graph -> v -> v.revision.equals(rev4));
         ObjectVersionGraph<String> graph = entityStore.load(docId1);
-        assertThat(graph.versionNodes.size()).isEqualTo(1);
+        assertThat(graph.size()).isEqualTo(1);
     }
 
     private String randomId() {
