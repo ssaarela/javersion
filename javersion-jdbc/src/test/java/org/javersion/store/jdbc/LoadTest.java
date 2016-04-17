@@ -1,7 +1,8 @@
 package org.javersion.store.jdbc;
 
 import static java.lang.System.currentTimeMillis;
-import static java.util.concurrent.Executors.newCachedThreadPool;
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
 
@@ -11,7 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
@@ -46,13 +50,26 @@ public class LoadTest {
     private int nextValue = 0;
 
     private final int docCount = 100;
-    private final int docVersionCount = 250;
+    private final int docVersionCount = 500;
     private final int propCount = 20;
-    private final int keepNewest = 10;
-    private final int compactThreshold = 50;
+    private final int keepNewest = 20;
+    private final int compactThreshold = 100;
+    private final Executor testExecutor = newFixedThreadPool(8);
+    private final Executor optimizationExecutor = newFixedThreadPool(8);
     private final GraphOptions<String, String> graphOptions = keepHeadsAndNewest(keepNewest, compactThreshold);
 
+    private final Executor publisher = new ThreadPoolExecutor(1, 1,
+            0L, MILLISECONDS,
+            new ArrayBlockingQueue<>(2),
+            new ThreadPoolExecutor.DiscardPolicy());
+
     private Writer out;
+
+    private String storeName;
+
+    private VersionStore<String, String> store;
+
+    private VersionGraphCache<String, String> cache;
 
     @Resource
     DocumentStoreOptions<String, String, JDocumentVersion<String>> documentStoreOptions;
@@ -60,7 +77,6 @@ public class LoadTest {
     @Resource
     EntityStoreOptions<String, String, JEntityVersion<String>> entityStoreOptions;
 
-    private final Executor executor = newCachedThreadPool();
 
     @Resource
     TransactionTemplate transactionTemplate;
@@ -78,39 +94,37 @@ public class LoadTest {
 
     @Test
     @Ignore
-    public void document_store_performance() throws IOException {
+    public void document_store_performance() throws Exception {
         List<String> docIds = generateDocIds(docCount);
-        DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> store = new DocumentVersionStoreJdbc<>(documentStoreOptions.toBuilder()
+        store = new DocumentVersionStoreJdbc<>(documentStoreOptions.toBuilder()
                 .graphOptions(graphOptions)
-                .executor(executor)
+                .executor(optimizationExecutor)
                 .build());
-        run(store, docIds);
+        run(docIds);
     }
 
     @Test
     @Ignore
-    public void entity_store_performance() throws IOException {
+    public void entity_store_performance() throws Exception {
         List<String> docIds = generateDocIds(docCount);
-        EntityVersionStoreJdbc<String, String, JEntityVersion<String>> store = new EntityVersionStoreJdbc<>(entityStoreOptions.toBuilder()
+        store = new EntityVersionStoreJdbc<>(entityStoreOptions.toBuilder()
                 .graphOptions(graphOptions)
-                .executor(executor)
+                .executor(optimizationExecutor)
                 .build());
-        run(store, docIds);
+        run(docIds);
     }
 
-    private void run(VersionStore<String, String> store, List<String> docIds) throws IOException {
-        final String storeName = store.getClass().getSimpleName();
+    private void run(List<String> docIds) throws IOException, InterruptedException {
+        storeName = store.getClass().getSimpleName();
 
-        long ts;
-
-        VersionGraphCache<String, String> cache = new VersionGraphCache<>(store,
+        cache = new VersionGraphCache<>(store,
                 CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
                         .maximumSize(docIds.size())
                         .refreshAfterWrite(1, TimeUnit.NANOSECONDS),
                 graphOptions);
 
         print(
-                "Store",
+                "#Store",
 
                 "Load Size",
                 "Optimized Size",
@@ -121,69 +135,88 @@ public class LoadTest {
                 "Cached Time",
                 "Append Time"
         );
-        for (int round=1; round <= docVersionCount; round++) {
-            for (String docId : docIds) {
-                ObjectVersionGraph<String> versionGraph;
 
-                // Load full
-                ts = currentTimeMillis();
-                versionGraph = store.load(docId);
-                final long loadSize = versionGraph.versionNodes.size();
-                final long loadTime = currentTimeMillis() - ts;
-
-                final ObjectVersionGraph<String> fullGraph = versionGraph;
-
-                // Load optimized
-                ts = currentTimeMillis();
-                versionGraph = store.loadOptimized(docId);
-                final long optimizedSize = versionGraph.versionNodes.size();
-                final long optimizedTime = currentTimeMillis() - ts;
-
-                // Load cached
-                ts = currentTimeMillis();
-                versionGraph = cache.load(docId);
-                final long cachedSize = versionGraph.versionNodes.size();
-                final long cachedTime = currentTimeMillis() - ts;
-
-
-                ObjectVersion.Builder<String> builder = ObjectVersion.<String>builder()
-                        .changeset(generateProperties(propCount));
-
-                if (!versionGraph.isEmpty()) {
-                    builder.parents(versionGraph.getTip().getRevision());
-                }
-
-                ObjectVersion<String> version = builder.build();
-
-                // Add version
-                ts = currentTimeMillis();
-                transactionTemplate.execute(status -> {
-                    store.updateBatch(docId)
-                            .addVersion(docId, fullGraph.commit(version).getTip())
-                            .execute();
-                    return null;
-                });
-                final long appendTime = currentTimeMillis() - ts;
-
-                print(
-                        storeName,
-
-                        loadSize,
-                        optimizedSize,
-                        cachedSize,
-
-                        loadTime,
-                        optimizedTime,
-                        cachedTime,
-                        appendTime
-                );
-            }
-            store.publish();
-            out.flush();
+        // Insert first versions
+        for (String docId : docIds) {
+            tick(docId, false);
         }
+
+//        CountDownLatch countDownLatch = new CountDownLatch(docIds.size());
+        CountDownLatch countDownLatch = new CountDownLatch(docIds.size() * docVersionCount);
+        for (int round = 0; round < docVersionCount; round++) {
+            for (String docId : docIds) {
+                testExecutor.execute(() -> {
+                    try {
+                        tick(docId, true);
+                    } finally {
+                        countDownLatch.countDown();
+                    }
+                });
+            }
+        }
+        countDownLatch.await();
+        System.out.println("DONE");
     }
 
-    private void print(Object... values) throws IOException {
+    private void tick(String docId, boolean printResult) {
+        ObjectVersionGraph<String> versionGraph;
+
+        // Load full
+        long ts = currentTimeMillis();
+        versionGraph = store.load(docId);
+        final long loadSize = versionGraph.versionNodes.size();
+        final long loadTime = currentTimeMillis() - ts;
+
+        final ObjectVersionGraph<String> baseGraph = versionGraph;
+
+        // Load optimized
+        ts = currentTimeMillis();
+        versionGraph = store.loadOptimized(docId);
+        final long optimizedSize = versionGraph.versionNodes.size();
+        final long optimizedTime = currentTimeMillis() - ts;
+
+        // Load cached
+        ts = currentTimeMillis();
+        versionGraph = cache.load(docId);
+        final long cachedSize = versionGraph.versionNodes.size();
+        final long cachedTime = currentTimeMillis() - ts;
+
+
+        ObjectVersion.Builder<String> builder = ObjectVersion.<String>builder()
+                .changeset(generateProperties(propCount));
+
+        if (!baseGraph.isEmpty()) {
+            builder.parents(baseGraph.getHeadRevisions());
+        }
+
+        // Add version
+        ts = currentTimeMillis();
+        transactionTemplate.execute(status -> {
+            store.updateBatch(docId)
+                    .addVersion(docId, baseGraph.commit(builder.build()).getTip())
+                    .execute();
+            return null;
+        });
+        final long appendTime = currentTimeMillis() - ts;
+
+        if (printResult) {
+            print(
+                    storeName,
+
+                    loadSize,
+                    optimizedSize,
+                    cachedSize,
+
+                    loadTime,
+                    optimizedTime,
+                    cachedTime,
+                    appendTime
+            );
+        }
+        publisher.execute(() -> store.publish() );
+    }
+
+    private synchronized void print(Object... values) {
         StringBuilder sb = new StringBuilder(64);
         for (Object value : values) {
             if (sb.length() > 0) {
@@ -192,7 +225,11 @@ public class LoadTest {
             sb.append(value);
         }
         sb.append('\n');
-        out.append(sb);
+        try {
+            out.append(sb);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Map<PropertyPath, Object> generateProperties(int count) {
@@ -205,10 +242,9 @@ public class LoadTest {
     }
 
     private List<String> generateDocIds(int count) {
-        // select id from entity;
-        // replace regex in selection: ([0-9\-a-z]+) "$1",
-        // return Arrays.asList(
-        // ).subList(0, count);
+        // select '"' || id || '",' from entity limit 100;
+//         return Arrays.asList(
+//         ).subList(0, count);
 
         List<String> ids = new ArrayList<>(count);
         for (int i=0; i < count; i++) {

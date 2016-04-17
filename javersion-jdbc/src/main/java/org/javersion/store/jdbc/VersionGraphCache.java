@@ -115,7 +115,7 @@ public class VersionGraphCache<Id, M> {
                     try {
                         List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
                         if (!updates.isEmpty()) {
-                            newValue = oldValue.commit(updates);
+                                newValue = oldValue.commit(updates);
                         }
                         return immediateFuture(compactIfRequired(newValue));
                     } catch (VersionNotFoundException e) {
@@ -127,7 +127,7 @@ public class VersionGraphCache<Id, M> {
 
             private ObjectVersionGraph<M> compactIfRequired(ObjectVersionGraph<M> graph) {
                 if (graphOptions.optimizeWhen.test(graph)) {
-                    return graph.optimize(graphOptions.optimizeKeep.apply(graph));
+                    return graph.optimize(graphOptions.optimizeKeep.apply(graph)).getGraph();
                 } else {
                     return graph;
                 }

@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import org.javersion.core.OptimizedGraphBuilder;
+import org.javersion.core.OptimizedGraph;
 import org.javersion.core.Persistent;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionNode;
@@ -84,30 +84,30 @@ public abstract class AbstractUpdateBatch<Id, M,
     }
 
     protected This prune(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
-        if (optimizationBuilder != null) {
-            List<Revision> keptRevisions = optimizationBuilder.getKeptRevisions();
-            List<Revision> squashedRevisions = optimizationBuilder.getSquashedRevisions();
+        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ObjectVersionGraph.Builder<M>> optimizedGraph = optimizedGraph(graph, keep);
+        if (optimizedGraph != null) {
+            List<Revision> keptRevisions = optimizedGraph.getKeptRevisions();
+            List<Revision> squashedRevisions = optimizedGraph.getSquashedRevisions();
             List<Revision> modifiedRevisions = concat(keptRevisions, squashedRevisions);
 
             deleteParents(modifiedRevisions);
             deleteProperties(modifiedRevisions);
             deleteVersions(squashedRevisions);
-            insertOptimizedParentsAndProperties(ObjectVersionGraph.init(optimizationBuilder.getOptimizedVersions()), keptRevisions);
+            insertOptimizedParentsAndProperties(ObjectVersionGraph.init(optimizedGraph.getOptimizedVersions()), keptRevisions);
         }
         return self();
     }
 
     protected This optimize(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder = optimizationBuilder(graph, keep);
-        if (optimizationBuilder != null) {
-            List<Revision> squashedRevisions = optimizationBuilder.getSquashedRevisions();
+        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ObjectVersionGraph.Builder<M>> optimizedGraph = optimizedGraph(graph, keep);
+        if (optimizedGraph != null) {
+            List<Revision> squashedRevisions = optimizedGraph.getSquashedRevisions();
 
             squashVersions(squashedRevisions);
             deleteRedundantParents(squashedRevisions);
             deleteRedundantProperties(squashedRevisions);
 
-            optimizeParentsAndProperties(graph, ObjectVersionGraph.init(optimizationBuilder.getOptimizedVersions()));
+            optimizeParentsAndProperties(graph, ObjectVersionGraph.init(optimizedGraph.getOptimizedVersions()));
         }
         return self();
     }
@@ -159,17 +159,17 @@ public abstract class AbstractUpdateBatch<Id, M,
         return combined;
     }
 
-    private OptimizedGraphBuilder<PropertyPath, Object, M> optimizationBuilder(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
-        OptimizedGraphBuilder<PropertyPath, Object, M> optimizedGraphBuilder = new OptimizedGraphBuilder<>(graph, keep);
+    private OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ObjectVersionGraph.Builder<M>> optimizedGraph(ObjectVersionGraph<M> graph, Predicate<VersionNode<PropertyPath, Object, M>> keep) {
+        OptimizedGraph<PropertyPath, Object, M, ObjectVersionGraph<M>, ObjectVersionGraph.Builder<M>> optimizedGraph = graph.optimize(keep);
 
-        if (optimizedGraphBuilder.getSquashedRevisions().isEmpty()) {
+        if (optimizedGraph.getSquashedRevisions().isEmpty()) {
             return null;
         }
-        if (optimizedGraphBuilder.getKeptRevisions().isEmpty()) {
+        if (optimizedGraph.getKeptRevisions().isEmpty()) {
             throw new IllegalArgumentException("keep-predicate didn't match any version");
         }
 
-        return optimizedGraphBuilder;
+        return optimizedGraph;
     }
 
     protected void insertVersion(Id docId, VersionNode<PropertyPath, Object, M> version) {

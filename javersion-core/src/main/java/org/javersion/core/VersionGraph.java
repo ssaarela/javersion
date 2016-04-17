@@ -18,15 +18,19 @@ package org.javersion.core;
 import static com.google.common.collect.Iterables.getFirst;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
 import static org.javersion.util.MapUtils.mapValueFunction;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -35,9 +39,11 @@ import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 
 @Immutable
 public abstract class VersionGraph<K, V, M,
@@ -129,7 +135,7 @@ public abstract class VersionGraph<K, V, M,
     }
 
     public final Iterable<Revision> getHeadRevisions() {
-        return getHeads().valueStream().map(VersionNode::getRevision).collect(Collectors.toList());
+        return getHeads().valueStream().map(VersionNode::getRevision).collect(toList());
     }
 
     public final Iterable<Revision> getHeadRevisions(String branch) {
@@ -170,20 +176,85 @@ public abstract class VersionGraph<K, V, M,
         return new VersionNodeIterable<>(getTip());
     }
 
-    public This optimize(Revision... revisions) {
+    public OptimizedGraph<K, V, M, This, B> optimize(Revision... revisions) {
         return optimize(ImmutableSet.copyOf(revisions));
     }
 
-    public This optimize(Set<Revision> revisions) {
+    public OptimizedGraph<K, V, M, This, B> optimize(Set<Revision> revisions) {
         return optimize(versionNode -> revisions.contains(versionNode.revision));
     }
 
-    public This optimize(Predicate<VersionNode<K, V, M>> keep) {
+    public OptimizedGraph<K, V, M, This, B> optimize(Predicate<VersionNode<K, V, M>> keep) {
+        final int size = versionNodes.size();
+        final Multimap<Revision, Revision> parentToChildren = HashMultimap.create(size, 2);
+        final Multimap<Revision, Revision> childToParents = HashMultimap.create(size, 2);
+        final Set<Revision> keptRevisions = new HashSet<>(size);
+        final List<VersionNode<K, V, M>> keptNodes = new ArrayList<>(size);
+        final List<Revision> squashedRevisions = new ArrayList<>(size);
+
+        for (VersionNode<K, V, M> node : getVersionNodes()) {
+            Collection<Revision> childRevisions = parentToChildren.get(node.revision).stream()
+                    .filter(childRevision ->
+                            // Has child that is kept
+                            keptRevisions.contains(childRevision) &&
+                                    // And is not already a known ancestor
+                                    childToParents.get(childRevision).stream()
+                                            .noneMatch(parent -> versionNodes.get(parent).contains(node.revision)))
+                    .collect(toList());
+
+            if (keep.test(node) || childRevisions.size() > 1) {
+                keptRevisions.add(node.revision);
+                keptNodes.add(node);
+                for (Revision childRevision : childRevisions) {
+                    childToParents.put(childRevision, node.revision);
+                }
+                node.getParentRevisions().forEach(parent -> parentToChildren.put(parent, node.revision));
+            } else {
+                squashedRevisions.add(node.revision);
+                for (Revision childRevision : childRevisions) {
+                    node.getParentRevisions().forEach(parent -> parentToChildren.put(parent, childRevision));
+                }
+            }
+        }
+        if (keptNodes.isEmpty()) {
+            throw new IllegalArgumentException("Keep predicate did't match any version");
+        }
+        if (squashedRevisions.isEmpty()) {
+            return new OptimizedGraph<K, V, M, This, B>(
+                    self(),
+                    Lists.reverse(keptNodes).stream().map(node -> node.revision).collect(toList()),
+                    squashedRevisions);
+        };
+        return optimizedGraph(keptNodes, childToParents, squashedRevisions);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected This self() {
+        return (This) this;
+    }
+
+    private OptimizedGraph<K, V, M, This, B> optimizedGraph(List<VersionNode<K, V, M>> keptNodes,
+                                                            Multimap<Revision, Revision> childToParents,
+                                                            List<Revision> squashedRevisions) {
         B builder = newEmptyBuilder();
-        for (Version<K, V, M> version : new OptimizedGraphBuilder<>(this, keep).getOptimizedVersions()) {
+        List<Revision> keptRevisions = new ArrayList<>(keptNodes.size());
+        for (int i = keptNodes.size() - 1; i >= 0; i--) {
+            VersionNode<K, V, M> node = keptNodes.get(i);
+            keptRevisions.add(node.revision);
+            Version<K, V, M> version = optimizedVersion(node, childToParents.get(node.revision));
             builder.add(version);
         }
-        return builder.build();
+        return new OptimizedGraph<>(builder.build(), unmodifiableList(keptRevisions), unmodifiableList(squashedRevisions));
+    }
+
+    private Version<K, V, M> optimizedVersion(VersionNode<K, V, M> node, Collection<Revision> parents) {
+        return new Version.Builder<K, V, M>(node.revision)
+                .parents(parents)
+                .changeset(node.getProperties())
+                .type(node.type)
+                .branch(node.branch)
+                .meta(node.meta)
+                .build();
     }
 
 }
