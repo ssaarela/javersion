@@ -23,7 +23,7 @@
   <dependencies>
     <dependency>
       <groupId>org.javersion</groupId>
-      <artifactId>javersion-spring-jdbc</artifactId>
+      <artifactId>javersion-jdbc</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

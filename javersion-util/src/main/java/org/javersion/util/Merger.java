@@ -20,7 +20,9 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public interface Merger<T> {
 
-    void insert(T newEntry);
+    default boolean insert(T newEntry) {
+        return true;
+    }
 
     /**
      * Return true if newEntry should replace oldEntry, otherwise false.
@@ -29,8 +31,12 @@ public interface Merger<T> {
      * @param newEntry
      * @return true if newEntry replaces oldEntry.
      */
-    boolean merge(T oldEntry, T newEntry);
+    default boolean merge(T oldEntry, T newEntry) {
+        return true;
+    }
 
-    void delete(T oldEntry);
+    default boolean delete(T oldEntry) {
+        return true;
+    }
 
 }

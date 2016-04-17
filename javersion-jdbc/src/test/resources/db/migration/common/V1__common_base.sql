@@ -1,0 +1,1 @@
+-- Shared VERSION_TYPE and REPOSITORY tables are no longer needed

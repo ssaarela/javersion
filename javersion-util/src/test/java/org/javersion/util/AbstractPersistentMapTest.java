@@ -145,6 +145,8 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
     @Test
     public void Merger_Gets_Called() {
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class);
+        doReturn(true).when(merger).insert(any(Entry.class));
+        doReturn(true).when(merger).delete(any(Entry.class));
         doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
         ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
         ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
@@ -176,6 +178,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         Map<Integer, Integer> expected = ImmutableMap.of(1, 2, 3, 3);
 
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class);
+        doReturn(true).when(merger).insert(any(Entry.class));
         doReturn(true).when(merger).merge(any(Entry.class), any(Entry.class));
 
         map = map.mergeAll(ints, merger);
@@ -203,6 +206,7 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
         ArgumentCaptor<Entry> entry1 = ArgumentCaptor.forClass(Entry.class);
         ArgumentCaptor<Entry> entry2 = ArgumentCaptor.forClass(Entry.class);
         Merger<Entry<Integer, Integer>> merger = mock(Merger.class);
+        doReturn(true).when(merger).insert(any(Entry.class));
         doReturn(false).when(merger).merge(any(Entry.class), any(Entry.class));
 
         map = map.mergeAll(ints, merger);
@@ -217,6 +221,40 @@ public abstract class AbstractPersistentMapTest<M extends PersistentMap<Integer,
 
         verify(merger).insert(entry1.capture());
         assertEntry(entry1, 3, 3);
+    }
+
+    @Test
+    public void veto_insert() {
+        final Merger<Entry<Integer, Integer>> merger = new Merger<Entry<Integer, Integer>>() {
+            @Override
+            public boolean insert(Entry<Integer, Integer> newEntry) {
+                return false;
+            }
+        };
+        PersistentMap<Integer, Integer> map = emptyMap();
+        PersistentMap<Integer, Integer> result = map.merge(1, 1, merger);
+
+        assertThat(result, sameInstance(map));
+        assertThat(result.isEmpty(), equalTo(true));
+
+        map = map.assoc(1, 1);
+        result = map.merge(2, 2, merger);
+        assertThat(result, sameInstance(map));
+        assertThat(result.size(), equalTo(1));
+    }
+
+    @Test
+    public void veto_delete() {
+        PersistentMap<Integer, Integer> map = emptyMap().assoc(1, 1);
+        PersistentMap<Integer, Integer> result = map.dissoc(1, new Merger<Entry<Integer, Integer>>() {
+            @Override
+            public boolean delete(Entry<Integer, Integer> newEntry) {
+                return false;
+            }
+        });
+
+        assertThat(result, sameInstance(map));
+        assertThat(result.isEmpty(), equalTo(false));
     }
 
     @Test

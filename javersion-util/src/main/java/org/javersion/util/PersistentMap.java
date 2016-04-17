@@ -63,11 +63,11 @@ public interface PersistentMap<K, V> extends Iterable<Entry<K, V>> {
     Map<K, V> asMap();
 
     default Iterable<K> keys() {
-        return Iterables.transform(this, (Entry<K, V> e) -> e.getKey());
+        return Iterables.transform(this, MapUtils.<K>mapKeyFunction());
     }
 
     default Iterable<V> values() {
-        return Iterables.transform(this, (Entry<K, V> e) -> e.getValue());
+        return Iterables.transform(this, MapUtils.<V>mapValueFunction());
     }
 
     default Stream<Entry<K, V>> stream() {

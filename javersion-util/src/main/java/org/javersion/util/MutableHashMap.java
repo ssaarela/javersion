@@ -35,8 +35,9 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
     private final Merger<Entry<K, V>> defaultMerger = new Merger<Map.Entry<K,V>>() {
 
         @Override
-        public void insert(java.util.Map.Entry<K, V> newEntry) {
+        public boolean insert(java.util.Map.Entry<K, V> newEntry) {
             previousValue = null;
+            return true;
         }
 
         @Override
@@ -46,8 +47,9 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
         }
 
         @Override
-        public void delete(java.util.Map.Entry<K, V> oldEntry) {
+        public boolean delete(java.util.Map.Entry<K, V> oldEntry) {
             previousValue = oldEntry.getValue();
+            return true;
         }
     };
 
@@ -221,9 +223,8 @@ public class MutableHashMap<K, V> extends AbstractMap<K, V> implements MutableMa
         protected UpdateContext<Map.Entry<K, V>> updateContext(int expectedUpdates, Merger<Map.Entry<K, V>> merger) {
             verifyThread();
             if (updateContext.isCommitted()) {
-                updateContext = new UpdateContext<Map.Entry<K, V>>(expectedUpdates, merger);
+                updateContext = new UpdateContext<>(expectedUpdates, merger);
             } else {
-                updateContext.validate();
                 updateContext.merger(merger);
             }
             return updateContext;

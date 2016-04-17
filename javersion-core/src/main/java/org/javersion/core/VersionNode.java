@@ -30,6 +30,7 @@ import com.google.common.collect.ImmutableSet;
 @Immutable
 public final class VersionNode<K, V, M> extends Merge<K, V, M> {
 
+    // TODO: As Revision?
     public final VersionNode<K, V, M> previousVersionNode;
 
     public final Revision revision;

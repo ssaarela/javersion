@@ -84,4 +84,8 @@ public abstract class Merge<K, V, M> {
     public Multimap<K, VersionProperty<V>> getConflicts() {
         return conflicts;
     }
+
+    public boolean contains(Revision revision) {
+        return mergedRevisions.contains(revision);
+    }
 }

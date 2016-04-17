@@ -80,11 +80,16 @@ public class MergeBuilder<K, V, M> {
         ensureNotLocked();
         ensureInitialized();
 
-        final Merger<Entry<K, VersionProperty<V>>> overwriteMerger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
+        final Merger<Entry<K, VersionProperty<V>>> overwriteMerger = new Merger<Entry<K, VersionProperty<V>>>() {
             @Override
             public boolean merge(Entry<K, VersionProperty<V>> prevEntry, Entry<K, VersionProperty<V>> nextEntry) {
                 // Keep prevValue if there's no change
                 return !Objects.equals(prevEntry.getValue().value, nextEntry.getValue().value);
+            }
+
+            @Override
+            public boolean insert(Entry<K, VersionProperty<V>> newEntry) {
+                return newEntry.getValue().value != null;
             }
         };
 
@@ -138,7 +143,7 @@ public class MergeBuilder<K, V, M> {
     }
 
     private void handleMerge(final Merge<K, V, M> node) {
-        final Merger<Entry<K, VersionProperty<V>>> merger = new MergerAdapter<Entry<K, VersionProperty<V>>>() {
+        final Merger<Entry<K, VersionProperty<V>>> merger = new Merger<Entry<K, VersionProperty<V>>>() {
             @Override
             public boolean merge(Entry<K, VersionProperty<V>> oldEntry, Entry<K, VersionProperty<V>> newEntry) {
                 VersionProperty<V> prevValue = oldEntry.getValue();

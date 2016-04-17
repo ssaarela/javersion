@@ -34,10 +34,13 @@ Instead of getting conflicting lines of text, in Javersion, you get conflicting 
 - [Getting Started With Java Objects](#getting-started-with-java-objects)
 - [Version Persistence](#version-persistence)
   - [Searching](#searching)
-  - [Documented-Oriented JDBC Persistence](#documented-oriented-jdbc-persistence)
-    - [Publishing Versions](#publishing-versions)
-    - [DocumentVersionStore](#documentversionstore)
-    - [EntityVersionStore](#entityversionstore)
+  - [Database Schema](#database-schema)
+  - [Publishing Versions](#publishing-versions)
+  - [Optimize Load Time](#optimize-load-time)
+  - [DocumentVersionStore](#documentversionstore)
+  - [EntityVersionStore](#entityversionstore)
+  - [Version Metadata Persistence](#version-metadata-persistence)
+  - [Setting Up a Repository](#setting-up-a-repository)
 - [Core Classes](#core-classes)
   - [Version](#version)
   - [VersionGraph](#versiongraph)
@@ -48,21 +51,26 @@ Instead of getting conflicting lines of text, in Javersion, you get conflicting 
   - [PropertyPath](#propertypath)
   - [Schema](#schema)
 - [Object Mapping](#object-mapping)
+  - [Properties](#properties)
+  - [Constructors](#constructors)
   - [Nulls](#nulls)
   - [Lists](#lists)
   - [Maps](#maps)
   - [Sets](#sets)
   - [Objects and Polymorphism](#objects-and-polymorphism)
   - [References](#references)
-  - [Custom ValueTypes](#custom-valuetypes)
+  - [Custom Type Mapping and Value Types](#custom-type-mapping-and-value-types)
+    - [Basic Components with String Constructor](#basic-components-with-string-constructor)
+    - [Delegate Mapping](#delegate-mapping)
+    - [Configurable Annotations Search Path](#configurable-annotations-search-path)
 - [Modules](#modules)
-  - [Core](#core)
-  - [Object](#object)
-  - [Spring JDBC](#spring-jdbc)
-  - [Util](#util)
-  - [Reflect](#reflect)
-  - [Path](#path)
-  - [JSON](#json)
+  - [javersion-core](#javersion-core)
+  - [javersion-object](#javersion-object)
+  - [javersion-jdbc](#javersion-jdbc)
+  - [javersion-util](#javersion-util)
+  - [javersion-reflect](#javersion-reflect)
+  - [javersion-path](#javersion-path)
+  - [javersion-json](#javersion-json)
 - [Release Versioning](#release-versioning)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -223,17 +231,18 @@ it can be initialized with an empty version graph.
 
 # Version Persistence
 
-Version is relatively simple data model that is easy to persist. Feel free to rollup your own 
-persistence to meet your requirements or choose one of Javersion's.
+Javersion offers currently two JDBC-based persistence strategies. Both implement `VersionStore` interface.
+Version is very simple data model, so writing your own persistence on top of the DB of your choice, is also valid option.
+Not including concurrency - which is much simplified by versions being immutable - 
+the trickiest part is how to to persist changeset values. 
 
 While versions have a generic key, value and metadata types, you'll get a long way with just a few 
-concrete alternatives.
-
-ObjectSerializer uses `PropertyPath` for keys and mostly JSON compatible set of objects for values
+concrete alternatives: ObjectSerializer uses `PropertyPath` for keys and mostly JSON compatible set of objects for values
 (see `org.javersion.core.Persistent.Type`):
 
-* null
-* Object - immutable wrapper for type alias (e.g. classes simple name, or Map for generic object)
+* null - a tombstone meaning that given key is removed
+* Null - null as a value
+* Object alias - an immutable wrapper for type alias (e.g. classes simple name, or Map for generic object)
 * Array - a constant for arrays
 * String
 * Boolean
@@ -241,10 +250,12 @@ ObjectSerializer uses `PropertyPath` for keys and mostly JSON compatible set of 
 
 Nested structures are split into nested property paths with values from the list above.
 
-Simplest relational model for this consists of three tables: `version`, `version_parent` and `version_property`. 
+A simple relational model for this consists of three tables: `version`, `version_parent` and `version_property`. 
 
-Javersion contains two SQL-based persistence strategies: `DocumentVersionStoreJdbc` and `EntityVersionStoreJdbc`.
-Both are optimized for use with cache and for synchronizing to external systems. 
+Javersion contains two SQL-based (Querydsl) persistence strategies: `DocumentVersionStoreJdbc` and `EntityVersionStoreJdbc`.
+Both are optimized for use with cache and for synchronizing to external systems.
+
+Both strategies are document-oriented. All versions belong to a "document" and all documents have their own version history.
 
 ## Searching
 
@@ -255,21 +266,49 @@ but what about other branches or older versions?
 Good (tried-out) options include:
 * Using search engine like Lucene or Elastic Search.
 * Creating a search-optimized relational model along version tables and updating it at the same time 
-  when inserting new versions. 
+  when inserting new versions 
+  (see [javersion-jdbc/src/test/java/org/javersion/store/jdbc/CustomEntityVersionStore.java](CustomEntityVersionStore)).
 
-## Documented-Oriented JDBC Persistence
-
-Both Javersion's persistence strategies, `DocumentVersionStore` and `EntityVersionStore` are document-oriented.
-All versions belong to a "document" and all documents have their own version history.
+## Database Schema
 
 Versions are stored in three tables:
-* `version`: `doc_id`, `revision`, `branch`, `type`.
-* `version_parent`: `revision`, `parent_revision`.
-* `version_property`: `revision`, `path`, value consisting of `type` and `str` or `nbr`. 
 
-In addition a few shared configuration tables are needed: 
-* `repository` containing a row per repository that can be locked for publish. 
-* `version_type` - allowed values for `version.type` column. 
+* `version` 
+  * `doc_id`
+  * `revision` 
+  * `branch`
+  * `type`
+  * `ordinal` - a unique ordinal number of version, used to fetch changes since given revision. Assigned in it's own transaction.
+  * `local_ordinal` or `tx_ordinal` - a version ordinal within document or transaction scope, depending on strategy
+  * `status` - optimization status
+    * 0 - squashed 
+    * 1 - active 
+* `version_parent`
+  * `revision`
+  * `parent_revision`
+  * `status` - optimization status:
+    * 0 - squashed
+    * 1 - active
+    * 2 - redundant
+* `version_property`
+  * `revision`
+  * `path`
+  * `type` - value type:
+    * n - tombstone
+    * N - meaningful null
+    * O - object with alias in str column
+    * A - array
+    * s - string with value in str column
+    * b - boolean with value in nbr column (1 or 0)
+    * l - long with value in nbr column 
+    * d - double with value in nbr column using Double.doubleToRawLongBits
+    * D - big decimal with value in str column 
+  * `str` - textual value
+  * `nbr` - numeric (long) value
+  * `status` - optimization status: 
+      * 0 - squashed
+      * 1 - active
+      * 2 - redundant.
 
 Both strategies guarantee that visible versions are strictly ordered. You can always get
 changes and only changes that have occurred after a given revision. In an external system that needs to 
@@ -287,15 +326,14 @@ Both strategies have in common:
 * Single-valued properties can be configured to be persisted in `version`-table columns instead of the generic `version_properties` table.
 * Versioning tables may have any names but they must follow strategy specific schema - 
   a set of versioning tables is called a repository and applications may have multiple repositories (like collections in MongoDB).
-* There must be a row in `repository` table for each repository.
 
 Guaranteeing the order of updates requires locking. The two persistence strategies differ 
 mainly on how this ordering is achieved, what is locked and when, and when versions become 
 visible.
 
-### Publishing Versions
+## Publishing Versions
 
-Calling publish assigns repository-wide ordinals to versions. 
+Calling `VersionStore.publish` assigns repository-wide ordinals to versions. 
 Publishing acquires a repository wide lock so that only one process
 is allowed to publish at a given time. Publishing can, however, be run
 asynchronously and each call to publish processes all versions that were inserted since last publish.
@@ -304,11 +342,22 @@ Also new versions may be inserted concurrently while publishing.
 *Publishing should be called in a separate transaction from actual inserts. Inserting new versions
 and publishing in the same transaction severely limits concurrency and may end up in deadlock.*
 
-### DocumentVersionStore
+## Optimize Load Time
+
+As Javersion's versioning algorithm is diff based, it basically needs to load all versions in order to reconstruct 
+the state of latest version. VersionGraph can, however, be optimized so the effective state of selected versions
+is maintained while irrelevant versions are discarded or skipped. `StoreOptions.graphOptions` can be used to
+define optimization strategy: when and what should be optimized. Optimization is applied automatically in the background 
+when needed. Optimization does not change the original history which is always accessible alongside the optimized graph. 
+
+When fetching optimized graph, rows with squashed status are skipped. To get the original graph parent and property rows
+with redundant status are skipped. 
+
+## DocumentVersionStore
 
 DocumentVersionStore allows fully concurrent inserting of versions, but requires 
 publishing in a separate transaction to assign version ordinals,
-before they become visible at all. 
+*before* they become visible at all. 
 
 Use e.g. a transaction commit hook and an asynchronous queue to publish changes.
 
@@ -318,7 +367,7 @@ Beware that there is always a (time) gap between when version is inserted and wh
 If you index your data in database in the same transaction in which it's inserted, your searches may 
 match data that is not yet visible. 
 
-### EntityVersionStore
+## EntityVersionStore
 
 EntityVersionStore requires that all versions refer to an "entity table". It's a table with 
 document id as a primary key. Different entities may be updated concurrently but
@@ -341,6 +390,26 @@ _This strategy is suitable when you need strong control over integrity of your d
 
 You may also safely update the entity table and use it for searches. 
 
+## Version Metadata Persistence
+
+As metadata is generic type, Javersion doesn't know how to persist it. In order to persist custom metadata
+
+1. Add your custom metadata columns into your `VERSION` table 
+2. Subclass the UpdateBatch of your chosen store type (e.g. `EntityUpdateBatch`)
+  * Override `AbstractUpdateBatch.setMeta` to persist metadata into VERSION table
+3. Subclass your chosen store class (e.g. `EntityVersionStoreJdbc`)
+  * Override `AbstractVersionStoreJdbc.getMeta` to read metadata from VERSION table
+  * Override `AbstractVersionStoreJdbc.updateBatch` to return your custom UpdateBatch
+
+## Setting Up a Repository
+
+1. Copy either document or entity schema from 
+[javersion/javersion-jdbc/src/test/resources/db/migration/common](javersion/javersion-jdbc/src/test/resources/db/migration).
+2. Customize schema by replacing ENTITY or DOCUMENT with your repository name (e.g. PRODUCT).
+3. Use `AbstractVersionStoreJdbc.registerTypes` to configure Querydsl.
+4. Generate Querydsl Q-types.
+5. Configure your repository with EntityStoreOptions or DocumentStoreOptions.
+
 
 # Core Classes
 
@@ -354,7 +423,7 @@ It's generic parameters are
 
 Versions consist of 
 
-* revision - a unique UUID-like id of the version, e.g. 02M7GKAK7J000-AEV5TWAWKQHRV
+* [revision](#revision) - a unique UUID-like id of the version, e.g. 02M7GKAK7J000-AEV5TWAWKQHRV
 * branch - name of the branch, just a string 
 * parentRevisions - a set of revisions on which this version is based on
 * changeset - changed property values, `Map<K, V>`
@@ -623,12 +692,13 @@ essentially a wrapper for either long "index" or String key that can be part of 
 For an object to be usable as a key in a Map, it needs to implement `ScalarType` that can 
 also convert NodeIds back to object. 
 
-### Basic Components with String-constructor
+### Basic Components with String Constructor
 
-Simple components that have a String-constructor and matching toString, may be registered
-using 
+Simple components that have a String-constructor and matching toString, may be registered using 
 
-```TypeMappings.Builder.withMapping(new ToStringMapping(MyStringComponent.class))```
+```java
+TypeMappings.Builder.withMapping(new ToStringMapping(MyStringComponent.class))
+```
 
 `ToStringMapping` also allows matching sub classes of the given class with `boolean matchSubClasses`-parameter, 
 but beware that it does not support polymorphism! If your property is of type `MySuperStringComponent` then 
@@ -646,34 +716,34 @@ Javersion's TypeMappings checks if Jackson is in found in classpath and in that 
 as secondary mapping annotations. Javersion's own annotations can always be used to override Jackson's annotations. 
 As a fallback Javersion uses basic reflection, e.g. javac -parameters for parameters and Class.getSimpleName() 
 for alias. However, this search path can be configured using `TypeMappings.withMappingResolvers`
-and one may implement a custom `MappingResolver`. 
+and one may also implement a custom `MappingResolver`. 
 
 # Modules
 
-## Core 
+## javersion-core 
 * Generic versioning of Map<K, V> 
 * Immutable in-memory data structures
 * Requires immutable (scalar) K and V
 
-## Object
+## javersion-object
 * Conversion from POJOs to Map<PropertyPath, Object> and back
 * Helper classes for object versioning
 
-## Spring JDBC
-* Spring + Querydsl SQL based persistence for versions
+## javersion-jdbc
+* Querydsl SQL based persistence for versions
 
-## Util
+## javersion-util
 * Persistent data structures.
 
-## Reflect
+## javersion-reflect
 * Simplified reflection: TypeDescriptor, FieldDescriptor, MethodDescriptor, ConstructorDescriptor, ParameterDescriptor and BeanProperty.
 * Uses Guava's TypeToken to resolve all resolvable generic bindings.
 
-## Path
+## javersion-path
 * Model of Java/JavaScript compliant paths
 * Schema for validating - or guiding the reading of - paths 
 
-## JSON
+## javersion-json
 * JSON to Map<PropertyPath, Object> to JSON mapping (PoC-level)
 
 

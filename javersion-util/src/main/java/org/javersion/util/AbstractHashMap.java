@@ -24,7 +24,6 @@ import java.util.Objects;
 import org.javersion.util.AbstractHashMap.EntryNode;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 
 public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, This>>
         extends AbstractHashTrie<K, EntryNode<K,V>, AbstractHashMap<K, V, This>>
@@ -104,15 +103,6 @@ public abstract class AbstractHashMap<K, V, This extends AbstractHashMap<K, V, T
     public Iterator<Map.Entry<K, V>> iterator() {
         return transform(doIterator(), Map.Entry.class::cast);
     }
-
-    public Iterable<K> keys() {
-        return Iterables.transform(this, MapUtils.<K>mapKeyFunction());
-    }
-
-    public Iterable<V> values() {
-        return Iterables.transform(this, MapUtils.<V>mapValueFunction());
-    }
-
 
     @SuppressWarnings("unchecked")
     protected static <K, V> EntryNode<K, V> toEntry(Map.Entry<? extends K, ? extends V> entry) {
