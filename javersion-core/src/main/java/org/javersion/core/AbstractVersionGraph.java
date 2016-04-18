@@ -225,9 +225,22 @@ public abstract class AbstractVersionGraph<K, V, M,
     private class Optimizer {
 
         private final int size = versionNodes.size();
+
+        /**
+         * Child candidates: a version is always kept if it has more than one child that is also kept (LCA).
+         */
         private final Multimap<Revision, Revision> parentToChildRevisions = HashMultimap.create(size, 2);
+        /**
+         * Optimized child-to-parent relations.
+         */
         private final Multimap<Revision, Revision> childToParentRevisions = HashMultimap.create(size, 2);
+        /**
+         * HashSet of kept revisions for quick check.
+         */
         private final Set<Revision> keptRevisions = new HashSet<>(size);
+        /**
+         * Newest first list of kept nodes.
+         */
         private final List<VersionNode<K, V, M>> keptNodes = new ArrayList<>(size);
         private final List<Revision> squashedRevisions = new ArrayList<>(size);
         private final Revision tipRevision = getTip().revision;
@@ -245,12 +258,12 @@ public abstract class AbstractVersionGraph<K, V, M,
                 }
             }
             if (squashedRevisions.isEmpty()) {
-                return optimizedGraph(
+                return unmodifiableOptimizedGraph(
                         self(),
                         Lists.transform(reverse(keptNodes), VersionNode::getRevision),
                         squashedRevisions);
             }
-            return optimizedGraph();
+            return toOptimizedGraph();
         }
 
         private boolean isRequiredChild(Revision revision, Revision childRevision) {
@@ -277,7 +290,7 @@ public abstract class AbstractVersionGraph<K, V, M,
             }
         }
 
-        private OptimizedGraph<K, V, M, This> optimizedGraph() {
+        private OptimizedGraph<K, V, M, This> toOptimizedGraph() {
             B builder = newEmptyBuilder();
             List<Revision> keptRevisions = new ArrayList<>(keptNodes.size());
             for (int i = keptNodes.size() - 1; i >= 0; i--) {
@@ -286,10 +299,10 @@ public abstract class AbstractVersionGraph<K, V, M,
                 Version<K, V, M> version = optimizedVersion(node, childToParentRevisions.get(node.revision));
                 builder.add(version);
             }
-            return optimizedGraph(builder.build(), keptRevisions, squashedRevisions);
+            return unmodifiableOptimizedGraph(builder.build(), keptRevisions, squashedRevisions);
         }
 
-        private OptimizedGraph<K, V, M, This> optimizedGraph(This graph, List<Revision> keptRevisions, List<Revision> squashedRevisions) {
+        private OptimizedGraph<K, V, M, This> unmodifiableOptimizedGraph(This graph, List<Revision> keptRevisions, List<Revision> squashedRevisions) {
             return new OptimizedGraph<>(graph, unmodifiableList(keptRevisions), unmodifiableList(squashedRevisions));
         }
 
