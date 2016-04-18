@@ -211,80 +211,98 @@ public abstract class AbstractVersionGraph<K, V, M,
     @Override
     public OptimizedGraph<K, V, M, This> optimize(Predicate<VersionNode<K, V, M>> keep) {
         if (isEmpty()) {
-            return optimizedGraph(self(), emptyList(), emptyList());
+            return new OptimizedGraph<>(self(), emptyList(), emptyList());
         }
-        final int size = versionNodes.size();
-        final Multimap<Revision, Revision> parentToChildren = HashMultimap.create(size, 2);
-        final Multimap<Revision, Revision> childToParents = HashMultimap.create(size, 2);
-        final Set<Revision> keptRevisions = new HashSet<>(size);
-        final List<VersionNode<K, V, M>> keptNodes = new ArrayList<>(size);
-        final List<Revision> squashedRevisions = new ArrayList<>(size);
-        final Revision tipRevision = getTip().revision;
-
-        for (VersionNode<K, V, M> node : getVersionNodes()) {
-            Collection<Revision> childRevisions = parentToChildren.get(node.revision).stream()
-                    .filter(childRevision ->
-                            // Has child that is kept
-                            keptRevisions.contains(childRevision) &&
-                                    // And is not already a known ancestor
-                                    childToParents.get(childRevision).stream()
-                                            .noneMatch(parent -> versionNodes.get(parent).contains(node.revision)))
-                    .collect(toList());
-
-            if (keep.test(node) || childRevisions.size() > 1 || tipRevision.equals(node.revision)) {
-                keptRevisions.add(node.revision);
-                keptNodes.add(node);
-                for (Revision childRevision : childRevisions) {
-                    childToParents.put(childRevision, node.revision);
-                }
-                node.getParentRevisions().forEach(parent -> parentToChildren.put(parent, node.revision));
-            } else {
-                squashedRevisions.add(node.revision);
-                for (Revision childRevision : childRevisions) {
-                    node.getParentRevisions().forEach(parent -> parentToChildren.put(parent, childRevision));
-                }
-            }
-        }
-        if (squashedRevisions.isEmpty()) {
-            return optimizedGraph(
-                    self(),
-                    Lists.transform(reverse(keptNodes), VersionNode::getRevision),
-                    squashedRevisions);
-        }
-        return optimizedGraph(keptNodes, childToParents, squashedRevisions);
-    }
-
-    private OptimizedGraph<K, V, M, This> optimizedGraph(List<VersionNode<K, V, M>> keptNodes,
-                                                            Multimap<Revision, Revision> childToParents,
-                                                            List<Revision> squashedRevisions) {
-        B builder = newEmptyBuilder();
-        List<Revision> keptRevisions = new ArrayList<>(keptNodes.size());
-        for (int i = keptNodes.size() - 1; i >= 0; i--) {
-            VersionNode<K, V, M> node = keptNodes.get(i);
-            keptRevisions.add(node.revision);
-            Version<K, V, M> version = optimizedVersion(node, childToParents.get(node.revision));
-            builder.add(version);
-        }
-        return optimizedGraph(builder.build(), keptRevisions, squashedRevisions);
-    }
-
-    private OptimizedGraph<K, V, M, This> optimizedGraph(This graph, List<Revision> keptRevisions, List<Revision> squashedRevisions) {
-        return new OptimizedGraph<>(graph, unmodifiableList(keptRevisions), unmodifiableList(squashedRevisions));
-    }
-
-    private Version<K, V, M> optimizedVersion(VersionNode<K, V, M> node, Collection<Revision> parents) {
-        return new Version.Builder<K, V, M>(node.revision)
-                .parents(parents)
-                .changeset(node.getProperties())
-                .type(node.type)
-                .branch(node.branch)
-                .meta(node.meta)
-                .build();
+        return new Optimizer().optimize(keep);
     }
 
     @SuppressWarnings("unchecked")
     protected This self() {
         return (This) this;
+    }
+
+
+    private class Optimizer {
+
+        private final int size = versionNodes.size();
+        private final Multimap<Revision, Revision> parentToChildRevisions = HashMultimap.create(size, 2);
+        private final Multimap<Revision, Revision> childToParentRevisions = HashMultimap.create(size, 2);
+        private final Set<Revision> keptRevisions = new HashSet<>(size);
+        private final List<VersionNode<K, V, M>> keptNodes = new ArrayList<>(size);
+        private final List<Revision> squashedRevisions = new ArrayList<>(size);
+        private final Revision tipRevision = getTip().revision;
+
+        public OptimizedGraph<K, V, M, This> optimize(Predicate<VersionNode<K, V, M>> keepPredicate) {
+            for (VersionNode<K, V, M> node : getVersionNodes()) {
+                List<Revision> keptChildRevisions = parentToChildRevisions.get(node.revision).stream()
+                        .filter(childRevision -> isRequiredChild(node.revision, childRevision))
+                        .collect(toList());
+
+                if (keepPredicate.test(node) || keptChildRevisions.size() > 1 || tipRevision.equals(node.revision)) {
+                    keep(node, keptChildRevisions);
+                } else {
+                    squash(node, keptChildRevisions);
+                }
+            }
+            if (squashedRevisions.isEmpty()) {
+                return optimizedGraph(
+                        self(),
+                        Lists.transform(reverse(keptNodes), VersionNode::getRevision),
+                        squashedRevisions);
+            }
+            return optimizedGraph();
+        }
+
+        private boolean isRequiredChild(Revision revision, Revision childRevision) {
+            // Has a child that is kept
+            return keptRevisions.contains(childRevision) &&
+                    // And is not ancestor
+                    childToParentRevisions.get(childRevision).stream()
+                            .noneMatch(parentRevision -> versionNodes.get(parentRevision).contains(revision));
+        }
+
+        private void keep(VersionNode<K, V, M> node, Collection<Revision> keptChildRevisions) {
+            keptRevisions.add(node.revision);
+            keptNodes.add(node);
+            for (Revision childRevision : keptChildRevisions) {
+                childToParentRevisions.put(childRevision, node.revision);
+            }
+            node.getParentRevisions().forEach(parent -> parentToChildRevisions.put(parent, node.revision));
+        }
+
+        private void squash(VersionNode<K, V, M> node, Collection<Revision> keptChildRevisions) {
+            squashedRevisions.add(node.revision);
+            for (Revision childRevision : keptChildRevisions) {
+                node.getParentRevisions().forEach(parent -> parentToChildRevisions.put(parent, childRevision));
+            }
+        }
+
+        private OptimizedGraph<K, V, M, This> optimizedGraph() {
+            B builder = newEmptyBuilder();
+            List<Revision> keptRevisions = new ArrayList<>(keptNodes.size());
+            for (int i = keptNodes.size() - 1; i >= 0; i--) {
+                VersionNode<K, V, M> node = keptNodes.get(i);
+                keptRevisions.add(node.revision);
+                Version<K, V, M> version = optimizedVersion(node, childToParentRevisions.get(node.revision));
+                builder.add(version);
+            }
+            return optimizedGraph(builder.build(), keptRevisions, squashedRevisions);
+        }
+
+        private OptimizedGraph<K, V, M, This> optimizedGraph(This graph, List<Revision> keptRevisions, List<Revision> squashedRevisions) {
+            return new OptimizedGraph<>(graph, unmodifiableList(keptRevisions), unmodifiableList(squashedRevisions));
+        }
+
+
+        private Version<K, V, M> optimizedVersion(VersionNode<K, V, M> node, Collection<Revision> parents) {
+            return new Version.Builder<K, V, M>(node.revision)
+                    .parents(parents)
+                    .changeset(node.getProperties())
+                    .type(node.type)
+                    .branch(node.branch)
+                    .meta(node.meta)
+                    .build();
+        }
     }
 
 }

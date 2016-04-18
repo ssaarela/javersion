@@ -318,21 +318,6 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
                 .isGreaterThan(0);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void prune_should_not_delete_all_versions() {
-        String docId = randomUUID().toString();
-
-        ObjectVersion<String> v1 = ObjectVersion.<String>builder()
-                .changeset(mapOf("property1", "value1"))
-                .build();
-
-        ObjectVersionGraph<String> versionGraph = ObjectVersionGraph.init(v1);
-        documentStore.append(docId, ImmutableList.copyOf(versionGraph.getVersionNodes()).reverse());
-        documentStore.publish();
-
-        documentStore.prune(docId, graph -> v -> false);
-    }
-
     @Test(expected = RuntimeException.class)
     public void unpublished_version_may_fail_pruning() {
         String docId = randomUUID().toString();
