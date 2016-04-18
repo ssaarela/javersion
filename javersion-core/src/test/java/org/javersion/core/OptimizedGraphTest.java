@@ -127,7 +127,6 @@ public class OptimizedGraphTest {
         assertRevisions(versionGraph, setOf(v4.revision), asList(v4.revision), asList(v3.revision, v2.revision, v1.revision));
         assertRevisions(versionGraph, setOf(v3.revision, v4.revision), asList(v3.revision, v4.revision), asList(v2.revision, v1.revision));
         assertRevisions(versionGraph, setOf(v1.revision, v4.revision), asList(v1.revision, v4.revision), asList(v3.revision, v2.revision));
-        assertRevisions(versionGraph, setOf(v2.revision, v3.revision), asList(v1.revision, v2.revision, v3.revision), asList(v4.revision));
 
         SimpleVersionGraph graph = versionGraph.optimize(v4.revision).getGraph();
 
@@ -206,8 +205,8 @@ public class OptimizedGraphTest {
         SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1, v2, v3, v4, v5);
 
         assertRevisions(versionGraph, setOf(v5.revision), asList(v5.revision), asList(v4.revision, v3.revision, v2.revision, v1.revision));
-        assertRevisions(versionGraph, setOf(v3.revision, v4.revision), asList(v2.revision, v3.revision, v4.revision),
-                asList(v5.revision, v1.revision));
+        assertRevisions(versionGraph, setOf(v3.revision, v4.revision, v5.revision), asList(v2.revision, v3.revision, v4.revision, v5.revision),
+                asList(v1.revision));
         assertRevisions(versionGraph, setOf(v5.revision, v2.revision), asList(v2.revision, v5.revision),
                 asList(v4.revision, v3.revision, v1.revision));
 
@@ -308,29 +307,29 @@ public class OptimizedGraphTest {
                 .changeset(mapOf("key2", "value1"))
                 .build();
 
-        SimpleVersionGraph versionGraph = SimpleVersionGraph.init(v1, v2, v3);
+        SimpleVersionGraph graph = SimpleVersionGraph.init(v1, v2, v3);
 
-        SimpleVersionGraph graph = versionGraph.optimize(v1.revision, v2.revision, v3.revision).getGraph();
-
-        VersionNode<String, String, String> node = graph.getVersionNode(v1.revision);
-        assertThat(node.getChangeset()).isEqualTo(mapOf("key", "value1"));
-        assertThat(node.getParentRevisions()).isEmpty();
-
-        node = graph.getVersionNode(v2.revision);
-        assertThat(node.getChangeset()).isEqualTo(mapOf("key1", "value1"));
-        assertThat(node.getParentRevisions()).isEqualTo(ImmutableSet.of(v1.revision));
-
-        node = graph.getVersionNode(v3.revision);
-        assertThat(node.getChangeset()).isEqualTo(mapOf("key2", "value1"));
-        assertThat(node.getParentRevisions()).isEqualTo(ImmutableSet.of(v2.revision));
+        OptimizedGraph<String, String, String, SimpleVersionGraph> optimizedGraph = graph.optimize(v1.revision, v2.revision, v3.revision);
+        assertThat(optimizedGraph.getGraph()).isSameAs(graph);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void keep_none() {
-        SimpleVersionGraph.init(
-                new SimpleVersion.Builder()
-                .changeset(mapOf("key", "value1"))
-                .build()).optimize(node -> false);
+    @Test
+    public void keep_tip_always() {
+        OptimizedGraph<String, String, String, SimpleVersionGraph> optimizedGraph =
+                SimpleVersionGraph.init(
+                        new SimpleVersion.Builder()
+                                .changeset(mapOf("key", "value1"))
+                                .build()).optimize(node -> false);
+        assertThat(optimizedGraph.getGraph().size()).isEqualTo(1);
+    }
+
+    @Test
+    public void optimize_empty_graph() {
+        SimpleVersionGraph graph = SimpleVersionGraph.init();
+        OptimizedGraph<String, String, String, SimpleVersionGraph> optimizedGraph = graph.optimize(node -> true);
+        assertThat(optimizedGraph.getGraph()).isSameAs(graph);
+        assertThat(optimizedGraph.getKeptRevisions()).isEmpty();
+        assertThat(optimizedGraph.getSquashedRevisions()).isEmpty();
     }
 
     @Test

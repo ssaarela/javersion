@@ -17,7 +17,9 @@ package org.javersion.core;
 
 import static com.google.common.collect.Iterables.getFirst;
 import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Lists.reverse;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -25,11 +27,7 @@ import static org.javersion.core.BranchAndRevision.max;
 import static org.javersion.core.BranchAndRevision.min;
 import static org.javersion.util.MapUtils.mapValueFunction;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import javax.annotation.concurrent.Immutable;
@@ -39,11 +37,7 @@ import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
 import com.google.common.base.Function;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 
 @Immutable
 public abstract class AbstractVersionGraph<K, V, M,
@@ -216,12 +210,16 @@ public abstract class AbstractVersionGraph<K, V, M,
 
     @Override
     public OptimizedGraph<K, V, M, This> optimize(Predicate<VersionNode<K, V, M>> keep) {
+        if (isEmpty()) {
+            return optimizedGraph(self(), emptyList(), emptyList());
+        }
         final int size = versionNodes.size();
         final Multimap<Revision, Revision> parentToChildren = HashMultimap.create(size, 2);
         final Multimap<Revision, Revision> childToParents = HashMultimap.create(size, 2);
         final Set<Revision> keptRevisions = new HashSet<>(size);
         final List<VersionNode<K, V, M>> keptNodes = new ArrayList<>(size);
         final List<Revision> squashedRevisions = new ArrayList<>(size);
+        final Revision tipRevision = getTip().revision;
 
         for (VersionNode<K, V, M> node : getVersionNodes()) {
             Collection<Revision> childRevisions = parentToChildren.get(node.revision).stream()
@@ -233,7 +231,7 @@ public abstract class AbstractVersionGraph<K, V, M,
                                             .noneMatch(parent -> versionNodes.get(parent).contains(node.revision)))
                     .collect(toList());
 
-            if (keep.test(node) || childRevisions.size() > 1) {
+            if (keep.test(node) || childRevisions.size() > 1 || tipRevision.equals(node.revision)) {
                 keptRevisions.add(node.revision);
                 keptNodes.add(node);
                 for (Revision childRevision : childRevisions) {
@@ -247,15 +245,12 @@ public abstract class AbstractVersionGraph<K, V, M,
                 }
             }
         }
-        if (keptNodes.isEmpty()) {
-            throw new IllegalArgumentException("Keep predicate did't match any version");
-        }
         if (squashedRevisions.isEmpty()) {
-            return new OptimizedGraph<>(
+            return optimizedGraph(
                     self(),
-                    Lists.reverse(keptNodes).stream().map(node -> node.revision).collect(toList()),
+                    Lists.transform(reverse(keptNodes), VersionNode::getRevision),
                     squashedRevisions);
-        };
+        }
         return optimizedGraph(keptNodes, childToParents, squashedRevisions);
     }
 
@@ -270,7 +265,11 @@ public abstract class AbstractVersionGraph<K, V, M,
             Version<K, V, M> version = optimizedVersion(node, childToParents.get(node.revision));
             builder.add(version);
         }
-        return new OptimizedGraph<>(builder.build(), unmodifiableList(keptRevisions), unmodifiableList(squashedRevisions));
+        return optimizedGraph(builder.build(), keptRevisions, squashedRevisions);
+    }
+
+    private OptimizedGraph<K, V, M, This> optimizedGraph(This graph, List<Revision> keptRevisions, List<Revision> squashedRevisions) {
+        return new OptimizedGraph<>(graph, unmodifiableList(keptRevisions), unmodifiableList(squashedRevisions));
     }
 
     private Version<K, V, M> optimizedVersion(VersionNode<K, V, M> node, Collection<Revision> parents) {
