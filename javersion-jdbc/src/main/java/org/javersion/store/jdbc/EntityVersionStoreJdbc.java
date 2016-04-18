@@ -46,6 +46,15 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
 
     protected final ResultTransformer<List<Group>> versionAndParentsSince;
 
+    /**
+     * No-args constructor for proxies
+     */
+    @SuppressWarnings("unused")
+    protected EntityVersionStoreJdbc() {
+        super();
+        versionAndParentsSince = null;
+    }
+
     public EntityVersionStoreJdbc(EntityStoreOptions<Id, M, V> options) {
         super(options);
         Expression<?>[] values = concat(versionAndParentColumns, options.sinceVersion.localOrdinal);
@@ -81,7 +90,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
     }
 
     @Override
-    public final EntityUpdateBatch<Id, M, V> updateBatch(Id id) {
+    public EntityUpdateBatch<Id, M, V> updateBatch(Id id) {
         return updateBatch(singleton(id));
     }
 

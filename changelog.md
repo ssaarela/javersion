@@ -4,10 +4,8 @@ WIP: 0.14 JDBC-Based Persistence Optimization
 Breaking Changes
 ----------------
 * Rename module `javersion-spring-jdbc` to `javersion-jdbc` 
-* Make Spring optional dependency
+* Make Spring dependency optional
   * Configurable `Transactions` interface with `SpringTransactions` implementation instead of `@Transactional` 
-* Cannot use CGLIB proxy for VersionStore
-  * AbstractVersionStoreJdbc uses final public methods to enforce correct transaction handling
 * Database schema changes
   * Options `repository` and `repositoryName` are dropped from StoreOptions
     * `REPOSITORY` table is no longer needed - version rows locked instead

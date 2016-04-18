@@ -6,10 +6,13 @@ import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.parse;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import javax.annotation.Resource;
@@ -23,6 +26,9 @@ import org.javersion.store.PersistenceTestConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -201,6 +207,52 @@ public abstract class AbstractVersionStoreTest {
         assertThat(optimizationRuns.get()).isEqualTo(3);
         assertThat(store.loadOptimized(docId).size()).isEqualTo(3);
         assertThat(optimizationRuns.get()).isEqualTo(3);
+    }
+
+    @Test
+    public void allow_cglib_proxy() {
+        final String docId = "docId";
+        final Revision revision = new Revision();
+        Function<ObjectVersionGraph<String>, Predicate<VersionNode<PropertyPath, Object, String>>> keep = g -> n -> false;
+
+        Map<String, List<Object>> interceptedCalls = new HashMap<>();
+        MethodInterceptor interceptor = (Object o, Method method, Object[] args, MethodProxy methodProxy) -> {
+            interceptedCalls.put(method.getName(), ImmutableList.copyOf(args));
+            return null;
+        };
+
+        Enhancer enhancer = new Enhancer();
+        enhancer.setSuperclass(getStore().getClass());
+        enhancer.setCallback(interceptor);
+        @SuppressWarnings("unchecked")
+        VersionStore<String, String> store = (VersionStore<String, String>) enhancer.create();
+
+        store.publish();
+        assertThat(interceptedCalls.get("publish")).isEqualTo(asList());
+
+        store.reset(docId);
+        assertThat(interceptedCalls.get("reset")).isEqualTo(asList(docId));
+
+        store.loadOptimized(docId);
+        assertThat(interceptedCalls.get("loadOptimized")).isEqualTo(asList(docId));
+
+        store.load(docId);
+        assertThat(interceptedCalls.get("load")).isEqualTo(asList(docId));
+
+        store.load(asList(docId));
+        assertThat(interceptedCalls.get("load")).isEqualTo(asList(asList(docId)));
+
+        store.fetchUpdates(docId, revision);
+        assertThat(interceptedCalls.get("fetchUpdates")).isEqualTo(asList(docId, revision));
+
+        store.prune(docId, keep);
+        assertThat(interceptedCalls.get("prune")).isEqualTo(asList(docId, keep));
+
+        store.updateBatch(docId);
+        assertThat(interceptedCalls.get("updateBatch")).isEqualTo(asList(docId));
+
+        store.updateBatch(asList(docId));
+        assertThat(interceptedCalls.get("updateBatch")).isEqualTo(asList(asList(docId)));
     }
 
     protected void optimize(String docId, Predicate<VersionNode<PropertyPath, Object, String>> keep, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store) {

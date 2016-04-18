@@ -55,7 +55,6 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.dml.StoreClause;
 import com.querydsl.core.group.Group;
 import com.querydsl.core.group.GroupBy;
-import com.querydsl.core.group.QPair;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Path;
@@ -94,13 +93,21 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
     protected final ResultTransformer<List<Group>> versionAndParents;
 
-    protected final QPair<Revision, Id> revisionAndDocId;
-
     protected final ResultTransformer<Map<Revision, List<Tuple>>> properties;
 
     protected final FetchResults<Id, M> noResults = new FetchResults<>();
 
     protected final Set<Id> runningOptimizations = synchronizedSet(new HashSet<Id>());
+
+    /**
+     * No-args constructor for proxies
+     */
+    protected AbstractVersionStoreJdbc() {
+        options = null;
+        versionAndParentColumns = null;
+        versionAndParents = null;
+        properties = null;
+    }
 
     public AbstractVersionStoreJdbc(Options options) {
         this.options = options;
@@ -108,29 +115,27 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
         versionAndParentColumns = without(concat(options.version.all(), GroupBy.set(options.parent.parentRevision)), options.version.revision);
         versionAndParents = groupBy(options.version.revision).list(versionAndParentColumns);
 
-        revisionAndDocId = new QPair<>(options.version.revision, options.version.docId);
-
         Expression<?>[] propertyColumns = without(options.property.all(), options.property.revision);
         properties = groupBy(options.property.revision).as(GroupBy.list(tuple(propertyColumns)));
     }
 
     @Override
-    public final ObjectVersionGraph<M> load(Id docId) {
+    public ObjectVersionGraph<M> load(Id docId) {
         return options.transactions.readOnly(() -> doLoad(docId));
     }
 
     @Override
-    public final ObjectVersionGraph<M> loadOptimized(Id docId) {
+    public ObjectVersionGraph<M> loadOptimized(Id docId) {
         return options.transactions.readOnly(() -> doLoadOptimized(docId));
     }
 
     @Override
-    public final GraphResults<Id, M> load(Collection<Id> docIds) {
+    public GraphResults<Id, M> load(Collection<Id> docIds) {
         return options.transactions.readOnly(() -> doLoad(docIds));
     }
 
     @Override
-    public final List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
+    public List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since) {
         return options.transactions.readOnly(() -> doFetchUpdates(docId, since));
     }
 
@@ -142,12 +147,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
      * and might end up in deadlock.
      */
     @Override
-    public final Multimap<Id, Revision> publish() {
+    public Multimap<Id, Revision> publish() {
         return options.transactions.writeRequired(this::doPublish);
     }
 
     @Override
-    public final void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+    public void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
         options.transactions.writeRequired(() -> {
             doPrune(docId, keep);
             return null;
@@ -155,7 +160,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
     }
 
     @Override
-    public final void reset(Id docId) {
+    public void reset(Id docId) {
         options.transactions.writeRequired(() -> {
             lockAndReset(docId);
             return null;
@@ -178,12 +183,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
     protected abstract Map<Revision, Id> getUnpublishedRevisionsForUpdate();
 
-    protected final ObjectVersionGraph<M> doLoad(Id docId) {
+    protected ObjectVersionGraph<M> doLoad(Id docId) {
         FetchResults<Id, M> results = doLoad(docId, false);
         return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
     }
 
-    protected final ObjectVersionGraph<M> doLoadOptimized(Id docId) {
+    protected ObjectVersionGraph<M> doLoadOptimized(Id docId) {
         return toVersionGraph(docId, doLoad(docId, true));
     }
 

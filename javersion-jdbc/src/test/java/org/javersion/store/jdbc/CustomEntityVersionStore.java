@@ -17,6 +17,9 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
 
     private static PropertyPath NAME = PropertyPath.ROOT.property("name");
 
+    @SuppressWarnings("unused")
+    protected CustomEntityVersionStore() {}
+
     public CustomEntityVersionStore(EntityStoreOptions<String, String, JEntityVersion<String>> options) {
         super(options);
     }

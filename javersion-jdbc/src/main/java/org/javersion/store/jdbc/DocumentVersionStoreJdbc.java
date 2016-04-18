@@ -46,19 +46,28 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>>
 
     protected final Expression<?>[] versionAndParentsSince;
 
+    /**
+     * No-args constructor for proxies
+     */
+    @SuppressWarnings("unused")
+    public DocumentVersionStoreJdbc() {
+        super();
+        versionAndParentsSince = null;
+    }
+
     public DocumentVersionStoreJdbc(DocumentStoreOptions<Id, M, V> options) {
         super(options);
         versionAndParentsSince = concat(versionAndParentColumns, options.sinceVersion.ordinal);
     }
 
-    public final void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
+    public void append(Id docId, VersionNode<PropertyPath, Object, M> version) {
         options.transactions.writeRequired(() -> {
             doAppend(ImmutableMultimap.of(docId, version));
             return null;
         });
     }
 
-    public final void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
+    public void append(Id docId, Iterable<VersionNode<PropertyPath, Object, M>> versions) {
         options.transactions.writeRequired(() -> {
             ImmutableMultimap.Builder<Id, VersionNode<PropertyPath, Object, M>> builder = ImmutableMultimap.builder();
             doAppend(builder.putAll(docId, versions).build());
@@ -66,7 +75,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>>
         });
     }
 
-    public final void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
+    public void append(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {
         options.transactions.writeRequired(() -> {
             doAppend(versionsByDocId);
             return null;
