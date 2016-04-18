@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.NotThreadSafe;
 
 import org.javersion.util.PersistentMap;
 import org.javersion.util.PersistentSortedMap;
@@ -222,6 +223,7 @@ public abstract class AbstractVersionGraph<K, V, M,
     }
 
 
+    @NotThreadSafe
     private class Optimizer {
 
         private final int size = versionNodes.size();
@@ -247,7 +249,7 @@ public abstract class AbstractVersionGraph<K, V, M,
 
         public OptimizedGraph<K, V, M, This> optimize(Predicate<VersionNode<K, V, M>> keepPredicate) {
             for (VersionNode<K, V, M> node : getVersionNodes()) {
-                List<Revision> keptChildRevisions = parentToChildRevisions.get(node.revision).stream()
+                List<Revision> keptChildRevisions = parentToChildRevisions.removeAll(node.revision).stream()
                         .filter(childRevision -> isRequiredChild(node.revision, childRevision))
                         .collect(toList());
 
@@ -267,11 +269,16 @@ public abstract class AbstractVersionGraph<K, V, M,
         }
 
         private boolean isRequiredChild(Revision revision, Revision childRevision) {
-            // Has a child that is kept
-            return keptRevisions.contains(childRevision) &&
-                    // And is not ancestor
-                    childToParentRevisions.get(childRevision).stream()
-                            .noneMatch(parentRevision -> versionNodes.get(parentRevision).contains(revision));
+            return keptRevisions.contains(childRevision) && !hasAncestor(childRevision, revision);
+        }
+
+        private boolean hasAncestor(Revision childRevision, Revision revision) {
+            return getParentRevisions(childRevision).stream()
+                    .anyMatch(parentRevision -> versionNodes.get(parentRevision).contains(revision));
+        }
+
+        private Collection<Revision> getParentRevisions(Revision childRevision) {
+            return childToParentRevisions.get(childRevision);
         }
 
         private void keep(VersionNode<K, V, M> node, Collection<Revision> keptChildRevisions) {
@@ -296,7 +303,7 @@ public abstract class AbstractVersionGraph<K, V, M,
             for (int i = keptNodes.size() - 1; i >= 0; i--) {
                 VersionNode<K, V, M> node = keptNodes.get(i);
                 keptRevisions.add(node.revision);
-                Version<K, V, M> version = optimizedVersion(node, childToParentRevisions.get(node.revision));
+                Version<K, V, M> version = optimizedVersion(node, getParentRevisions(node.revision));
                 builder.add(version);
             }
             return unmodifiableOptimizedGraph(builder.build(), keptRevisions, squashedRevisions);
