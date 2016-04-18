@@ -261,7 +261,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     @Override
     protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(Executor executor, GraphOptions<String, String> graphOptions) {
         return new CustomEntityVersionStore(entityStore.options.toBuilder()
-                .executor(executor)
+                .optimizationExecutor(executor)
                 .graphOptions(graphOptions).build());
     }
 

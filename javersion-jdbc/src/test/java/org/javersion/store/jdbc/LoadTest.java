@@ -98,7 +98,7 @@ public class LoadTest {
         List<String> docIds = generateDocIds(docCount);
         store = new DocumentVersionStoreJdbc<>(documentStoreOptions.toBuilder()
                 .graphOptions(graphOptions)
-                .executor(optimizationExecutor)
+                .optimizationExecutor(optimizationExecutor)
                 .build());
         run(docIds);
     }
@@ -109,7 +109,7 @@ public class LoadTest {
         List<String> docIds = generateDocIds(docCount);
         store = new EntityVersionStoreJdbc<>(entityStoreOptions.toBuilder()
                 .graphOptions(graphOptions)
-                .executor(optimizationExecutor)
+                .optimizationExecutor(optimizationExecutor)
                 .build());
         run(docIds);
     }

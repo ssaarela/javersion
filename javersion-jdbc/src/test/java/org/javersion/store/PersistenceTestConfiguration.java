@@ -114,7 +114,7 @@ public class PersistenceTestConfiguration {
                 .versionTable(new JEntityVersion<>(version, version.docId))
                 .versionTableSince(new JEntityVersion<>(since, since.docId))
                 .transactions(transactions)
-                .executor(executor)
+                .optimizationExecutor(executor)
                 .queryFactory(queryFactory)
                 .build();
     }
@@ -132,7 +132,7 @@ public class PersistenceTestConfiguration {
                 .versionTableSince(new JDocumentVersion<>(sinceVersion, sinceVersion.docId))
                 .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))
                 .transactions(transactions)
-                .executor(executor);
+                .optimizationExecutor(executor);
     }
 
     private class MyQDocumentVersion extends QEntityVersionBase<MyQDocumentVersion> {

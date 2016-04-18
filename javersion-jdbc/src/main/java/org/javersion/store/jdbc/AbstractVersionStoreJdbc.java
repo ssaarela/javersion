@@ -270,7 +270,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
     protected void optimizeAsync(Id docId, ObjectVersionGraph<M> baseGraph, boolean reset) {
         if (runningOptimizations.add(docId)) {
-            options.executor.execute(() -> {
+            options.optimizationExecutor.execute(() -> {
                 try {
                     options.transactions.writeNewRequired(() -> {
                         optimize(docId, baseGraph, reset);

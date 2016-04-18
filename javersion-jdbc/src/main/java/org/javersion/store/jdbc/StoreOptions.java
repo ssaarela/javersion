@@ -45,7 +45,7 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
 
     public final Transactions transactions;
 
-    public final Executor executor;
+    public final Executor optimizationExecutor;
 
     public final SQLQueryFactory queryFactory;
 
@@ -59,7 +59,7 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
                 : ImmutableMap.of();
         this.graphOptions = Check.notNull(builder.graphOptions, "graphOptions");
         this.transactions = Check.notNull(builder.transactions, "transactions");
-        this.executor = builder.executor != null ? builder.executor : Executors.newCachedThreadPool();
+        this.optimizationExecutor = builder.optimizationExecutor != null ? builder.optimizationExecutor : Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
     }
 
@@ -81,7 +81,7 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
 
         protected Transactions transactions;
 
-        protected Executor executor;
+        protected Executor optimizationExecutor;
 
         @Nullable
         protected ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
@@ -97,7 +97,7 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
             this.propertyTable = options.property;
             this.graphOptions = options.graphOptions;
             this.transactions = options.transactions;
-            this.executor = options.executor;
+            this.optimizationExecutor = options.optimizationExecutor;
             this.versionTableProperties = options.versionTableProperties;
             this.queryFactory = options.queryFactory;
         }
@@ -132,8 +132,8 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
             return self();
         }
 
-        public This executor(Executor executor) {
-            this.executor = executor;
+        public This optimizationExecutor(Executor executor) {
+            this.optimizationExecutor = executor;
             return self();
         }
 

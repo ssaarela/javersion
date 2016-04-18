@@ -438,7 +438,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
     @Override
     protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(Executor executor, GraphOptions<String, String> graphOptions) {
         return new DocumentVersionStoreJdbc<>(documentStore.options.toBuilder()
-                .executor(executor)
+                .optimizationExecutor(executor)
                 .graphOptions(graphOptions).build());
     }
 
