@@ -17,7 +17,7 @@ import org.javersion.path.Schema;
 @NotThreadSafe
 public class ObjectVersionManager<O, M> {
 
-    protected VersionGraph<PropertyPath, Object, M, ?> versionGraph;
+    protected VersionGraph<PropertyPath, Object, M> versionGraph;
 
     protected Set<Revision> heads;
 
@@ -43,7 +43,7 @@ public class ObjectVersionManager<O, M> {
         return init(ObjectVersionGraph.init(versions));
     }
 
-    public ObjectVersionManager<O, M> init(VersionGraph<PropertyPath, Object, M, ?> versionGraph) {
+    public ObjectVersionManager<O, M> init(VersionGraph<PropertyPath, Object, M> versionGraph) {
         this.versionGraph = versionGraph;
         heads = null;
         return this;
@@ -86,7 +86,7 @@ public class ObjectVersionManager<O, M> {
         return versionGraph.getTip();
     }
 
-    public VersionGraph<PropertyPath, Object, M, ?> getVersionGraph() {
+    public VersionGraph<PropertyPath, Object, M> getVersionGraph() {
         return versionGraph;
     }
 

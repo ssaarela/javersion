@@ -44,7 +44,7 @@ import com.google.common.collect.*;
 public abstract class AbstractVersionGraph<K, V, M,
                           This extends AbstractVersionGraph<K, V, M, This, B>,
                           B extends VersionGraphBuilder<K, V, M, This, B>>
-        implements Function<Revision, VersionNode<K, V, M>>, VersionGraph<K, V, M, This> {
+        implements Function<Revision, VersionNode<K, V, M>>, VersionGraph<K, V, M> {
 
     final PersistentMap<Revision, VersionNode<K, V, M>> versionNodes;
 

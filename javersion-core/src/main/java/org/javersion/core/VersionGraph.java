@@ -20,11 +20,11 @@ import java.util.function.Predicate;
 
 import org.javersion.util.PersistentSortedMap;
 
-public interface VersionGraph<K, V, M, This extends VersionGraph<K, V, M, This>> {
+public interface VersionGraph<K, V, M> {
 
-    This commit(Version<K, V, M> version);
+    VersionGraph<K, V, M> commit(Version<K, V, M> version);
 
-    This commit(Iterable<? extends Version<K, V, M>> versions);
+    VersionGraph<K, V, M> commit(Iterable<? extends Version<K, V, M>> versions);
 
     VersionNode<K, V, M> getVersionNode(Revision revision);
 
@@ -46,9 +46,9 @@ public interface VersionGraph<K, V, M, This extends VersionGraph<K, V, M, This>>
 
     Iterable<Revision> getHeadRevisions(String branch);
 
-    This at(Revision revision);
+    VersionGraph<K, V, M> at(Revision revision);
 
-    This atTip();
+    VersionGraph<K, V, M> atTip();
 
     boolean isEmpty();
 
@@ -64,8 +64,8 @@ public interface VersionGraph<K, V, M, This extends VersionGraph<K, V, M, This>>
 
     Iterable<VersionNode<K, V, M>> getVersionNodes();
 
-    OptimizedGraph<K, V, M, This> optimize(Set<Revision> revisions);
+    OptimizedGraph<K, V, M, ? extends VersionGraph<K, V, M>> optimize(Set<Revision> revisions);
 
-    OptimizedGraph<K, V, M, This> optimize(Predicate<VersionNode<K, V, M>> keep);
+    OptimizedGraph<K, V, M, ? extends VersionGraph<K, V, M>> optimize(Predicate<VersionNode<K, V, M>> keep);
 
 }
