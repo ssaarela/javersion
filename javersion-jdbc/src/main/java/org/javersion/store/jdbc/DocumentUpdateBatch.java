@@ -21,8 +21,8 @@ import org.javersion.path.PropertyPath;
 public class DocumentUpdateBatch<Id, M, V extends JDocumentVersion<Id>>
         extends AbstractUpdateBatch<Id, M, V, DocumentStoreOptions<Id, M, V>, DocumentUpdateBatch<Id, M, V>> {
 
-    public DocumentUpdateBatch(DocumentStoreOptions<Id, M, V> options) {
-        super(options);
+    public DocumentUpdateBatch(DocumentVersionStoreJdbc<Id, M, V> store) {
+        super(store);
     }
 
     @Override

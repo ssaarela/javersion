@@ -39,4 +39,6 @@ public interface Transactions {
      */
     <T> T writeMandatory(Supplier<T> callback);
 
+    void afterCommit(Runnable callback);
+
 }

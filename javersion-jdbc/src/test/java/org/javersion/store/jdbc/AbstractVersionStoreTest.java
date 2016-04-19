@@ -5,11 +5,15 @@ import static java.util.Collections.unmodifiableMap;
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.path.PropertyPath.parse;
+import static org.javersion.store.jdbc.ExecutorType.ASYNC;
+import static org.javersion.store.jdbc.ExecutorType.SYNC;
+import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -170,14 +174,73 @@ public abstract class AbstractVersionStoreTest {
     }
 
     @Test
+    public void synchronous_publishing() {
+        final String docId = randomUUID().toString();
+        VersionStore<String, String> store = newStore(getStore().options.toBuilder().publisherType(SYNC).build());
+        ObjectVersionGraph<String> graph = ObjectVersionGraph.init(ObjectVersion.<String>builder(rev1).build());
+        addVersions(docId, store, graph.getVersionNode(rev1));
+        // load(Collection) returns published documents
+        GraphResults<String, String> results = store.load(asList(docId));
+        graph = results.getVersionGraph(docId);
+        assertThat(graph.getVersionNode(rev1).getRevision()).isEqualTo(rev1);
+    }
+
+    @Test
+    public void asynchronous_publishing() throws InterruptedException {
+        final String docId = randomUUID().toString();
+        AbstractVersionStoreJdbc<String, String, ?, ?, ?> originalStore = getStore();
+        StoreOptions<String, String, ?> options = originalStore.options.toBuilder().publisherType(ASYNC).build();
+
+        /*
+         * Override doPublish to block publish until it is verified that inserted version is not returned
+         */
+        CountDownLatch beforePublish = new CountDownLatch(1);
+        CountDownLatch afterPublish = new CountDownLatch(1);
+        MethodInterceptor interceptor = (Object o, Method method, Object[] args, MethodProxy methodProxy) -> {
+            if (method.getName().equals("doPublish")) {
+                beforePublish.await();
+                try {
+                    return methodProxy.invokeSuper(o, args);
+                } finally {
+                    afterPublish.countDown();
+                }
+            }
+            return methodProxy.invokeSuper(o, args);
+        };
+
+        Enhancer enhancer = new Enhancer();
+        enhancer.setSuperclass(originalStore.getClass());
+        enhancer.setCallback(interceptor);
+        VersionStore<String, String> store = (VersionStore<String, String>) enhancer.create(new Class[] { options.getClass() }, new Object[] { options });
+
+        final ObjectVersionGraph<String> originalGraph = ObjectVersionGraph.init(ObjectVersion.<String>builder(rev1).build());
+        transactionTemplate.execute(status -> {
+            UpdateBatch<String, String> batch = store.updateBatch(docId);
+            batch.addVersion(docId, originalGraph.getVersionNode(rev1));
+            batch.execute();
+            return null;
+        });
+        // load(Collection) should not return version before it's published
+        GraphResults<String, String> results = store.load(asList(docId));
+        assertThat(results.isEmpty()).isTrue();
+
+        // Publish and verify that published version is found
+        beforePublish.countDown();
+        afterPublish.await();
+        results = store.load(asList(docId));
+        ObjectVersionGraph<String> graph = results.getVersionGraph(docId);
+        assertThat(graph.getVersionNode(rev1).getRevision()).isEqualTo(rev1);
+    }
+
+    @Test
     public void automatic_optimization() {
-        AtomicInteger optimizationRuns = new AtomicInteger(0);
-        VersionStore<String, String> store = newStore(
-                runnable -> {
-                    optimizationRuns.incrementAndGet();
-                    runnable.run();
-                },
-                GraphOptions.keepHeadsAndNewest(0, 2));
+        final AtomicInteger optimizationRuns = new AtomicInteger(0);
+        final Executor optimizer = runnable -> {
+            optimizationRuns.incrementAndGet();
+            runnable.run();
+        };
+        final GraphOptions<String, String> graphOptions = keepHeadsAndNewest(0, 2);
+        final VersionStore<String, String> store = newStore(getStore().options.toBuilder().optimizer(optimizer).graphOptions(graphOptions).build());
         final String docId = randomUUID().toString();
         final ObjectVersionGraph<String> originalGraph = graphForOptimization();
 
@@ -256,19 +319,14 @@ public abstract class AbstractVersionStoreTest {
     }
 
     protected void optimize(String docId, Predicate<VersionNode<PropertyPath, Object, String>> keep, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store) {
-        transactionTemplate.execute(status -> {
-            store.updateBatch(docId)
-                    .optimize(store.loadOptimized(docId), keep)
-                    .execute();
-            return null;
-        });
+        store.optimize(docId, g -> keep);
     }
 
     protected void addVersions(String docId, VersionStore<String, String> store, VersionNode<PropertyPath, Object, String>... versions) {
         addVersions(docId, store, asList(versions));
     }
 
-    private void addVersions(String docId, VersionStore<String, String> store, List<VersionNode<PropertyPath, Object, String>> versions) {
+    protected void addVersions(String docId, VersionStore<String, String> store, List<VersionNode<PropertyPath, Object, String>> versions) {
         transactionTemplate.execute(status -> {
             UpdateBatch<String, String> batch = store.updateBatch(docId);
             versions.forEach(v -> batch.addVersion(docId, v));
@@ -334,6 +392,5 @@ public abstract class AbstractVersionStoreTest {
 
     protected abstract AbstractVersionStoreJdbc<String, String, ?, ?, ?> getStore();
 
-    protected abstract AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(Executor executor, GraphOptions<String, String> graphOptions);
-
+    protected abstract AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(StoreOptions options);
 }

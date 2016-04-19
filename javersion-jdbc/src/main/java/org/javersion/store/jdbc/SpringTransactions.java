@@ -19,10 +19,12 @@ import static org.springframework.transaction.annotation.Isolation.READ_COMMITTE
 import static org.springframework.transaction.annotation.Propagation.MANDATORY;
 import static org.springframework.transaction.annotation.Propagation.REQUIRED;
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
+import static org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization;
 
 import java.util.function.Supplier;
 
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 
 public class SpringTransactions implements Transactions {
 
@@ -50,4 +52,13 @@ public class SpringTransactions implements Transactions {
         return callback.get();
     }
 
+    @Override
+    public void afterCommit(final Runnable callback) {
+        registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                callback.run();
+            }
+        });
+    }
 }

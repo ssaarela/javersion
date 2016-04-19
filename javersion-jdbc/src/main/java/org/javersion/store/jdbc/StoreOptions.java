@@ -15,8 +15,12 @@
  */
 package org.javersion.store.jdbc;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -45,7 +49,9 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
 
     public final Transactions transactions;
 
-    public final Executor optimizationExecutor;
+    public final Executor optimizer;
+
+    public final Executor publisher;
 
     public final SQLQueryFactory queryFactory;
 
@@ -59,7 +65,8 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
                 : ImmutableMap.of();
         this.graphOptions = Check.notNull(builder.graphOptions, "graphOptions");
         this.transactions = Check.notNull(builder.transactions, "transactions");
-        this.optimizationExecutor = builder.optimizationExecutor != null ? builder.optimizationExecutor : Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        this.optimizer = builder.optimizer;
+        this.publisher = builder.publisher;
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
     }
 
@@ -68,6 +75,8 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
     public abstract static class AbstractBuilder<Id, M, V extends JVersion<Id>,
             Options extends StoreOptions<Id, M, V>,
             This extends AbstractBuilder<Id, M, V, Options,This>> {
+
+        private static final Executor SYNCHRONOUS_EXECUTOR = Runnable::run;
 
         protected V version;
 
@@ -81,7 +90,9 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
 
         protected Transactions transactions;
 
-        protected Executor optimizationExecutor;
+        protected Executor optimizer;
+
+        protected Executor publisher;
 
         @Nullable
         protected ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
@@ -97,7 +108,8 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
             this.propertyTable = options.property;
             this.graphOptions = options.graphOptions;
             this.transactions = options.transactions;
-            this.optimizationExecutor = options.optimizationExecutor;
+            this.optimizer = options.optimizer;
+            this.publisher = options.publisher;
             this.versionTableProperties = options.versionTableProperties;
             this.queryFactory = options.queryFactory;
         }
@@ -127,13 +139,43 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
             return self();
         }
 
+        public This publisherType(ExecutorType type) {
+            switch (type) {
+                case ASYNC:
+                    return publisher(new ThreadPoolExecutor(1, 1,
+                            0L, MILLISECONDS,
+                            new ArrayBlockingQueue<>(2),
+                            new ThreadPoolExecutor.DiscardPolicy()));
+                case SYNC:
+                    return publisher(SYNCHRONOUS_EXECUTOR);
+                default:
+                    return publisher(null);
+            }
+        }
+
+        public This optimizerType(ExecutorType type) {
+            switch (type) {
+                case ASYNC:
+                    return optimizer(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+                case SYNC:
+                    return optimizer(SYNCHRONOUS_EXECUTOR);
+                default:
+                    return optimizer(null);
+            }
+        }
+
         public This transactions(Transactions transactions) {
             this.transactions = transactions;
             return self();
         }
 
-        public This optimizationExecutor(Executor executor) {
-            this.optimizationExecutor = executor;
+        public This optimizer(Executor optimizer) {
+            this.optimizer = optimizer;
+            return self();
+        }
+
+        public This publisher(Executor publisher) {
+            this.publisher = publisher;
             return self();
         }
 

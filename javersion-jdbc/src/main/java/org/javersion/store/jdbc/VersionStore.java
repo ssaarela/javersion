@@ -42,6 +42,8 @@ public interface VersionStore<Id, M> {
 
     void prune(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep);
 
+    void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep);
+
     void reset(Id docId);
 
     UpdateBatch<Id, M> updateBatch(Id id);

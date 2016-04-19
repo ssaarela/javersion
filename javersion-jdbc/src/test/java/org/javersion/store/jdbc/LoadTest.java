@@ -2,9 +2,9 @@ package org.javersion.store.jdbc;
 
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.Executors.newFixedThreadPool;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
+import static org.javersion.store.jdbc.ExecutorType.ASYNC;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -12,10 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
@@ -49,19 +47,13 @@ public class LoadTest {
 
     private int nextValue = 0;
 
-    private final int docCount = 100;
-    private final int docVersionCount = 500;
+    private final int docCount = 200;
+    private final int docVersionCount = 200;
     private final int propCount = 20;
     private final int keepNewest = 20;
     private final int compactThreshold = 100;
-    private final Executor testExecutor = newFixedThreadPool(8);
-    private final Executor optimizationExecutor = newFixedThreadPool(8);
+    private final Executor testExecutor = newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     private final GraphOptions<String, String> graphOptions = keepHeadsAndNewest(keepNewest, compactThreshold);
-
-    private final Executor publisher = new ThreadPoolExecutor(1, 1,
-            0L, MILLISECONDS,
-            new ArrayBlockingQueue<>(2),
-            new ThreadPoolExecutor.DiscardPolicy());
 
     private Writer out;
 
@@ -98,7 +90,8 @@ public class LoadTest {
         List<String> docIds = generateDocIds(docCount);
         store = new DocumentVersionStoreJdbc<>(documentStoreOptions.toBuilder()
                 .graphOptions(graphOptions)
-                .optimizationExecutor(optimizationExecutor)
+                .publisherType(ASYNC)
+                .optimizerType(ASYNC)
                 .build());
         run(docIds);
     }
@@ -109,7 +102,8 @@ public class LoadTest {
         List<String> docIds = generateDocIds(docCount);
         store = new EntityVersionStoreJdbc<>(entityStoreOptions.toBuilder()
                 .graphOptions(graphOptions)
-                .optimizationExecutor(optimizationExecutor)
+                .publisherType(ASYNC)
+                .optimizerType(ASYNC)
                 .build());
         run(docIds);
     }
@@ -141,7 +135,39 @@ public class LoadTest {
             tick(docId, false);
         }
 
-//        CountDownLatch countDownLatch = new CountDownLatch(docIds.size());
+//        runByDocId(docIds);
+        runByVersion(docIds);
+//        CountDownLatch countDownLatch = new CountDownLatch(docIds.size() * docVersionCount);
+//        for (int round = 0; round < docVersionCount; round++) {
+//            for (String docId : docIds) {
+//                testExecutor.execute(() -> {
+//                    try {
+//                        tick(docId, true);
+//                    } finally {
+//                        countDownLatch.countDown();
+//                    }
+//                });
+//            }
+//        }
+    }
+
+    private void runByDocId(List<String> docIds) throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(docIds.size());
+        for (String docId : docIds) {
+            testExecutor.execute(() -> {
+                for (int round = 0; round < docVersionCount; round++) {
+                    try {
+                        tick(docId, true);
+                    } finally {
+                        countDownLatch.countDown();
+                    }
+                }
+            });
+        }
+        countDownLatch.await();
+    }
+
+    private void runByVersion(List<String> docIds) throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(docIds.size() * docVersionCount);
         for (int round = 0; round < docVersionCount; round++) {
             for (String docId : docIds) {
@@ -155,7 +181,6 @@ public class LoadTest {
             }
         }
         countDownLatch.await();
-        System.out.println("DONE");
     }
 
     private void tick(String docId, boolean printResult) {
@@ -213,7 +238,6 @@ public class LoadTest {
                     appendTime
             );
         }
-        publisher.execute(() -> store.publish() );
     }
 
     private synchronized void print(Object... values) {

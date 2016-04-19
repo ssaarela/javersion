@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 
 import javax.annotation.Resource;
 
@@ -436,10 +435,9 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
     }
 
     @Override
-    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(Executor executor, GraphOptions<String, String> graphOptions) {
-        return new DocumentVersionStoreJdbc<>(documentStore.options.toBuilder()
-                .optimizationExecutor(executor)
-                .graphOptions(graphOptions).build());
+    @SuppressWarnings("unchecked")
+    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(StoreOptions options) {
+        return new DocumentVersionStoreJdbc<>((DocumentStoreOptions<String, String, JDocumentVersion<String>>) options);
     }
 
     @Override

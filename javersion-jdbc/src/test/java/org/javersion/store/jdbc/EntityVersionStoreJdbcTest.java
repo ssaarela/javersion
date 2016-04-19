@@ -12,7 +12,6 @@ import static org.javersion.store.sql.QEntityVersionParent.entityVersionParent;
 import static org.javersion.store.sql.QEntityVersionProperty.entityVersionProperty;
 
 import java.util.List;
-import java.util.concurrent.Executor;
 
 import javax.annotation.Resource;
 
@@ -259,10 +258,9 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     }
 
     @Override
-    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(Executor executor, GraphOptions<String, String> graphOptions) {
-        return new CustomEntityVersionStore(entityStore.options.toBuilder()
-                .optimizationExecutor(executor)
-                .graphOptions(graphOptions).build());
+    @SuppressWarnings("unchecked")
+    protected AbstractVersionStoreJdbc<String, String, ?, ?, ?> newStore(StoreOptions options) {
+        return new CustomEntityVersionStore((EntityStoreOptions<String, String, JEntityVersion<String>>) options);
     }
 
 }

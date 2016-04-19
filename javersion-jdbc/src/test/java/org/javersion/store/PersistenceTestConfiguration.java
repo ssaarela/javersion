@@ -1,11 +1,11 @@
 package org.javersion.store;
 
 import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.store.jdbc.ExecutorType.NONE;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 import static org.javersion.store.sql.QEntity.entity;
 
 import java.sql.Types;
-import java.util.concurrent.Executor;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -68,15 +68,10 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public Executor executor() {
-        return Runnable::run;
-    }
-
-    @Bean
     public DocumentStoreOptions<String, String, JDocumentVersion<String>> documentStoreOptions(
-            Transactions transactions, Executor executor, SQLQueryFactory queryFactory
+            Transactions transactions, SQLQueryFactory queryFactory
     ) {
-        return documentOptionsBuilder(transactions, executor).build(queryFactory);
+        return documentOptionsBuilder(transactions).build(queryFactory);
     }
 
     @Bean
@@ -85,9 +80,9 @@ public class PersistenceTestConfiguration {
     }
 
     @Bean
-    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> mappedDocumentStore(Transactions transactions, Executor executor, SQLQueryFactory queryFactory) {
+    public DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> mappedDocumentStore(Transactions transactions, SQLQueryFactory queryFactory) {
         return new DocumentVersionStoreJdbc<>(
-                documentOptionsBuilder(transactions, executor)
+                documentOptionsBuilder(transactions)
                         .versionTableProperties(ImmutableMap.of(
                                 ROOT.property("name"), documentVersion.name,
                                 ROOT.property("id"), documentVersion.id))
@@ -103,7 +98,7 @@ public class PersistenceTestConfiguration {
 
     @Bean
     public EntityStoreOptions<String, String, JEntityVersion<String>> entityStoreOptions(
-            Transactions transactions, Executor executor, SQLQueryFactory queryFactory
+            Transactions transactions, SQLQueryFactory queryFactory
     ) {
         MyQDocumentVersion version = new MyQDocumentVersion("ENTITY_VERSION", "ENTITY_VERSION");
         MyQDocumentVersion since = new MyQDocumentVersion("SINCE", "ENTITY_VERSION");
@@ -114,8 +109,9 @@ public class PersistenceTestConfiguration {
                 .versionTable(new JEntityVersion<>(version, version.docId))
                 .versionTableSince(new JEntityVersion<>(since, since.docId))
                 .transactions(transactions)
-                .optimizationExecutor(executor)
                 .queryFactory(queryFactory)
+                .optimizerType(NONE)
+                .publisherType(NONE)
                 .build();
     }
 
@@ -124,7 +120,7 @@ public class PersistenceTestConfiguration {
         return new TransactionTemplate(transactionManager);
     }
 
-    private Builder<String, String, JDocumentVersion<String>> documentOptionsBuilder(Transactions transactions, Executor executor) {
+    private Builder<String, String, JDocumentVersion<String>> documentOptionsBuilder(Transactions transactions) {
         QDocumentVersion sinceVersion = new QDocumentVersion("SINCE");
         return new Builder<String, String, JDocumentVersion<String>>()
                 .defaultsFor("DOCUMENT")
@@ -132,7 +128,8 @@ public class PersistenceTestConfiguration {
                 .versionTableSince(new JDocumentVersion<>(sinceVersion, sinceVersion.docId))
                 .nextOrdinal(SQLExpressions.nextval("DOCUMENT_VERSION_ORDINAL_SEQ"))
                 .transactions(transactions)
-                .optimizationExecutor(executor);
+                .optimizerType(NONE)
+                .publisherType(NONE);
     }
 
     private class MyQDocumentVersion extends QEntityVersionBase<MyQDocumentVersion> {

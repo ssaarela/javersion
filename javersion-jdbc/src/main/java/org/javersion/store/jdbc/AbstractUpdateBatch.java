@@ -49,14 +49,17 @@ public abstract class AbstractUpdateBatch<Id, M,
 
     protected final Options options;
 
+    protected final AbstractVersionStoreJdbc<Id, M, V, This, Options> store;
+
     protected final SQLInsertClause versionBatch;
 
     protected final SQLInsertClause parentBatch;
 
     protected final SQLInsertClause propertyBatch;
 
-    public AbstractUpdateBatch(Options options) {
-        this.options = options;
+    public AbstractUpdateBatch(AbstractVersionStoreJdbc<Id, M, V, This, Options> store) {
+        this.store = store;
+        this.options = store.options;
         versionBatch = options.queryFactory.insert(options.version);
         parentBatch = options.queryFactory.insert(options.parent);
         propertyBatch = options.queryFactory.insert(options.property);
@@ -74,6 +77,9 @@ public abstract class AbstractUpdateBatch<Id, M,
     public void execute() {
         if (isNotEmpty(versionBatch)) {
             versionBatch.execute();
+            if (options.publisher != null) {
+                options.transactions.afterCommit(this::publishAfterCommit);
+            }
         }
         if (isNotEmpty(parentBatch)) {
             parentBatch.execute();
@@ -90,10 +96,12 @@ public abstract class AbstractUpdateBatch<Id, M,
             List<Revision> squashedRevisions = optimizedGraph.getSquashedRevisions();
             List<Revision> modifiedRevisions = concat(keptRevisions, squashedRevisions);
 
-            deleteParents(modifiedRevisions);
-            deleteProperties(modifiedRevisions);
-            deleteVersions(squashedRevisions);
-            insertOptimizedParentsAndProperties(ObjectVersionGraph.init(optimizedGraph.getOptimizedVersions()), keptRevisions);
+            if (!squashedRevisions.isEmpty()) {
+                deleteParents(modifiedRevisions);
+                deleteProperties(modifiedRevisions);
+                deleteVersions(squashedRevisions);
+                insertOptimizedParentsAndProperties(optimizedGraph.getGraph());
+            }
         }
         return self();
     }
@@ -103,11 +111,12 @@ public abstract class AbstractUpdateBatch<Id, M,
         if (optimizedGraph != null) {
             List<Revision> squashedRevisions = optimizedGraph.getSquashedRevisions();
 
-            squashVersions(squashedRevisions);
-            deleteRedundantParents(squashedRevisions);
-            deleteRedundantProperties(squashedRevisions);
-
-            optimizeParentsAndProperties(graph, ObjectVersionGraph.init(optimizedGraph.getOptimizedVersions()));
+            if (!squashedRevisions.isEmpty()) {
+                squashVersions(squashedRevisions);
+                deleteRedundantParents(squashedRevisions);
+                deleteRedundantProperties(squashedRevisions);
+                optimizeParentsAndProperties(graph, optimizedGraph.getGraph());
+            }
         }
         return self();
     }
@@ -116,6 +125,10 @@ public abstract class AbstractUpdateBatch<Id, M,
     @SuppressWarnings("unchecked")
     protected This self() {
         return (This) this;
+    }
+
+    protected void publishAfterCommit() {
+        options.publisher.execute(store::publish);
     }
 
     private void optimizeParentsAndProperties(ObjectVersionGraph<M> oldGraph, ObjectVersionGraph<M> newGraph) {
@@ -278,12 +291,11 @@ public abstract class AbstractUpdateBatch<Id, M,
                 .set(options.property.nbr, nbr);
     }
 
-    private void insertOptimizedParentsAndProperties(ObjectVersionGraph<M> optimizedGraph, List<Revision> keptRevisions) {
-        for (Revision revision : keptRevisions) {
-            VersionNode<PropertyPath, Object, M> version = optimizedGraph.getVersionNode(revision);
-            insertParents(version);
-            insertProperties(version);
-        }
+    private void insertOptimizedParentsAndProperties(ObjectVersionGraph<M> optimizedGraph) {
+        optimizedGraph.getVersionNodes().forEach(node -> {
+            insertParents(node);
+            insertProperties(node);
+        });
     }
 
     private void deleteParents(List<Revision> revisions) {

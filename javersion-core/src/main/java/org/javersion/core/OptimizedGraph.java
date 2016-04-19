@@ -19,8 +19,6 @@ import java.util.List;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
-import com.google.common.collect.Lists;
-
 @NotThreadSafe
 public class OptimizedGraph<K, V, M, G extends VersionGraph<K, V, M>> {
 
@@ -38,10 +36,6 @@ public class OptimizedGraph<K, V, M, G extends VersionGraph<K, V, M>> {
 
     public G getGraph() {
         return graph;
-    }
-
-    public Iterable<Version<K, V, M>> getOptimizedVersions() {
-        return Lists.transform(keptRevisions, revision -> graph.getVersionNode(revision).getVersion());
     }
 
     public List<Revision> getSquashedRevisions() {
