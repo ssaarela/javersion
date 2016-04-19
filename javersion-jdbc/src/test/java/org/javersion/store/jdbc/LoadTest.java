@@ -137,18 +137,6 @@ public class LoadTest {
 
 //        runByDocId(docIds);
         runByVersion(docIds);
-//        CountDownLatch countDownLatch = new CountDownLatch(docIds.size() * docVersionCount);
-//        for (int round = 0; round < docVersionCount; round++) {
-//            for (String docId : docIds) {
-//                testExecutor.execute(() -> {
-//                    try {
-//                        tick(docId, true);
-//                    } finally {
-//                        countDownLatch.countDown();
-//                    }
-//                });
-//            }
-//        }
     }
 
     private void runByDocId(List<String> docIds) throws InterruptedException {
