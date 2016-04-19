@@ -197,7 +197,7 @@ public abstract class AbstractVersionStoreTest {
         CountDownLatch beforePublish = new CountDownLatch(1);
         CountDownLatch afterPublish = new CountDownLatch(1);
         MethodInterceptor interceptor = (Object o, Method method, Object[] args, MethodProxy methodProxy) -> {
-            if (method.getName().equals("doPublish")) {
+            if (method.getName().equals("publish")) {
                 beforePublish.await();
                 try {
                     return methodProxy.invokeSuper(o, args);
