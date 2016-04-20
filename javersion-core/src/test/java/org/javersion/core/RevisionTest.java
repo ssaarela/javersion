@@ -65,6 +65,11 @@ public class RevisionTest {
         assertThat(new Revision(rev)).isEqualTo(revision);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void too_short_string() {
+        Revision.toLong("000000000000");
+    }
+
     @Test
     public void decode() {
         assertDecode("0000000000000-000000000000O", 0, 0);

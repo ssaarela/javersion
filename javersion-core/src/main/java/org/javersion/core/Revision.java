@@ -5,6 +5,7 @@ import static java.lang.System.currentTimeMillis;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.Immutable;
 
 import com.eaio.uuid.UUIDGen;
@@ -37,7 +38,7 @@ public final class Revision implements Comparable<Revision> {
 
     public final long node;
 
-    public Revision(String rev) {
+    public Revision(@Nonnull String rev) {
         if (rev.length() != 27) {
             throw new IllegalArgumentException("Expected string of length 27");
         }
@@ -112,7 +113,7 @@ public final class Revision implements Comparable<Revision> {
         }
     }
 
-    public static long toLong(String str) {
+    public static long toLong(@Nonnull String str) {
         try {
             return toNumber(str.charAt(12))
                     | toNumber(str.charAt(11)) << 5
@@ -132,6 +133,7 @@ public final class Revision implements Comparable<Revision> {
         }
     }
 
+    @Nonnull
     public static String toString(long val) {
         return new String(new char[] {
                 CHARS[MASK & (int) (val >>> 60)],
