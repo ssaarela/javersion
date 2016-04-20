@@ -7,6 +7,7 @@ import static java.lang.System.nanoTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.javersion.util.BinaryEncoder.BASE32;
+import static org.javersion.util.BinaryEncoder.BASE32_CROCKFORD_NUMBER;
 import static org.javersion.util.BinaryEncoder.BASE64;
 import static org.javersion.util.BinaryEncoder.Builder;
 import static org.javersion.util.BinaryEncoder.NUMBER_BASE64_URL;
@@ -162,6 +163,23 @@ public class BinaryEncoderTest {
     public void two_ints_combined_to_long() {
         String res = BASE32.encode(new Bytes.Long(-1));
         assertThat(BASE32.encode(new Bytes.Long(-1, -1))).isEqualTo(res);
+    }
+
+    @Test
+    public void aliases() {
+        assertThat(BASE32_CROCKFORD_NUMBER.decodeInt("00000oO")).isEqualTo(0);
+        assertThat(BASE32_CROCKFORD_NUMBER.decodeInt("0000001")).isEqualTo(1);
+        assertThat(BASE32_CROCKFORD_NUMBER.decodeInt("000000l")).isEqualTo(1);
+        assertThat(BASE32_CROCKFORD_NUMBER.decodeInt("00000oL")).isEqualTo(1);
+        assertThat(BASE32_CROCKFORD_NUMBER.decodeInt("00000oi")).isEqualTo(1);
+        assertThat(BASE32_CROCKFORD_NUMBER.decodeInt("00000oI")).isEqualTo(1);
+        assertThat(BASE32_CROCKFORD_NUMBER.decodeInt("000000A")).isEqualTo(10);
+        assertThat(BASE32_CROCKFORD_NUMBER.decodeInt("000000a")).isEqualTo(10);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void alias_for_unknown_char() {
+        new  Builder("01").withAliasesFor('2', "b");
     }
 
     @Test
