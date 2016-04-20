@@ -313,9 +313,13 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
         public final PropertyPath parent;
 
+        // cached hash
+        private int hash;
+
         SubPath(PropertyPath parent, NodeId nodeId) {
             this.parent = checkNotNull(parent, "parent");
             this.nodeId = checkNotNull(nodeId, "nodeId");
+            this.hash = 31 * parent.hashCode() + nodeId.hashCode();
         }
 
         List<SubPath> getFullPath() {
@@ -340,7 +344,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
         @Override
         public final int hashCode() {
-            return 31 * parent.hashCode() + nodeId.hashCode();
+            return hash;
         }
 
         @Override
