@@ -25,8 +25,8 @@ import static com.querydsl.core.types.dsl.Expressions.constant;
 import static com.querydsl.core.types.dsl.Expressions.predicate;
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
+import static java.util.Collections.newSetFromMap;
 import static java.util.Collections.singleton;
-import static java.util.Collections.synchronizedSet;
 import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
 import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
 import static org.javersion.store.jdbc.VersionStatus.REDUNDANT;
@@ -34,6 +34,7 @@ import static org.javersion.store.jdbc.VersionStatus.SQUASHED;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -48,6 +49,8 @@ import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.*;
 import com.querydsl.core.ResultTransformer;
@@ -70,6 +73,8 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
         Batch extends AbstractUpdateBatch<Id, M, V, Options, Batch>,
         Options extends StoreOptions<Id, M, V>>
         implements VersionStore<Id, M> {
+
+    private final Logger log = LoggerFactory.getLogger(AbstractVersionStoreJdbc.class);
 
     public static EnumByOrdinalType<VersionStatus> VERSION_STATUS_TYPE = new EnumByOrdinalType<>(VersionStatus.class);
 
@@ -97,7 +102,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
     protected final FetchResults<Id, M> noResults = new FetchResults<>();
 
-    protected final Set<Id> runningOptimizations = synchronizedSet(new HashSet<Id>());
+    protected final Set<Id> runningOptimizations = newSetFromMap(new ConcurrentHashMap<>());
 
     /**
      * No-args constructor for proxies
@@ -160,6 +165,22 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
     }
 
     @Override
+    public void optimize(Id docId, Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep) {
+        options.transactions.writeRequired(() -> {
+            ObjectVersionGraph<M> graph;
+            try {
+                FetchResults<Id, M> fetchResults = doFetch(docId, true);
+                graph = ObjectVersionGraph.init(fetchResults.getVersions(docId));
+                doOptimize(docId, graph, keep, false);
+            } catch (VersionNotFoundException e) {
+                graph = doLoad(docId);
+                doOptimize(docId, graph, keep, true);
+            }
+            return null;
+        });
+    }
+
+    @Override
     public void reset(Id docId) {
         options.transactions.writeRequired(() -> {
             lockAndReset(docId);
@@ -175,7 +196,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
     @Override
     public abstract Batch updateBatch(Collection<Id> ids);
 
-    protected abstract FetchResults<Id, M> doLoad(Id docId, boolean optimized);
+    protected abstract FetchResults<Id, M> doFetch(Id docId, boolean optimized);
 
     protected abstract List<ObjectVersion<M>> doFetchUpdates(Id docId, Revision since);
 
@@ -184,12 +205,12 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
     protected abstract Map<Revision, Id> getUnpublishedRevisionsForUpdate();
 
     protected ObjectVersionGraph<M> doLoad(Id docId) {
-        FetchResults<Id, M> results = doLoad(docId, false);
+        FetchResults<Id, M> results = doFetch(docId, false);
         return results.containsKey(docId) ? results.getVersionGraph(docId) : ObjectVersionGraph.init();
     }
 
     protected ObjectVersionGraph<M> doLoadOptimized(Id docId) {
-        return toVersionGraph(docId, doLoad(docId, true));
+        return toVersionGraph(docId, doFetch(docId, true));
     }
 
     protected GraphResults<Id, M> doLoad(Collection<Id> docIds) {
@@ -236,6 +257,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
         Map<Revision, Id> uncommittedRevisions = getUnpublishedRevisionsForUpdate();
         long lastOrdinal = getMaxOrdinal();
 
+        log.debug("publish({})", uncommittedRevisions.size());
         if (uncommittedRevisions.isEmpty()) {
             return ImmutableMultimap.of();
         }
@@ -269,11 +291,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
     }
 
     protected void optimizeAsync(Id docId, ObjectVersionGraph<M> baseGraph, boolean reset) {
-        if (runningOptimizations.add(docId)) {
-            options.optimizationExecutor.execute(() -> {
+        if (options.optimizer != null && runningOptimizations.add(docId)) {
+            options.optimizer.execute(() -> {
                 try {
                     options.transactions.writeNewRequired(() -> {
-                        optimize(docId, baseGraph, reset);
+                        doOptimize(docId, baseGraph, options.graphOptions.optimizeKeep, reset);
                         return null;
                     });
                 } finally {
@@ -283,7 +305,15 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
         }
     }
 
-    protected void optimize(Id docId, ObjectVersionGraph<M> graph, boolean reset) {
+    protected void doOptimize(Id docId,
+                              ObjectVersionGraph<M> graph,
+                              Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keep,
+                              boolean reset) {
+        if (reset) {
+            log.info("reoptimize({})", docId);
+        } else {
+            log.debug("optimize({})", docId);
+        }
         lockForMaintenance(docId);
         if (reset) {
             long revived = doReset(docId);
@@ -292,7 +322,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
             }
         }
         updateBatch(ImmutableSet.of())
-                .optimize(graph, options.graphOptions.optimizeKeep.apply(graph))
+                .optimize(graph, keep.apply(graph))
                 .execute();
     }
 

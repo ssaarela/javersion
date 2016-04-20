@@ -161,7 +161,7 @@ public class VersionGraphCacheTest {
         final MutableBoolean cacheRefreshed = new MutableBoolean(false);
         DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> proxyStore = new DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>>(documentStore.options) {
             @Override
-            protected FetchResults<String, Void> doLoad(String docId, boolean optimized) {
+            protected FetchResults<String, Void> doFetch(String docId, boolean optimized) {
                 cacheRefreshed.setTrue();
                 throw new RuntimeException("Should not refresh!");
             }

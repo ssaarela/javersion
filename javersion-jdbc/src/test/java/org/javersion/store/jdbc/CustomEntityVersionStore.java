@@ -26,19 +26,19 @@ public class CustomEntityVersionStore extends EntityVersionStoreJdbc<String, Str
 
     @Override
     public EntityUpdateBatch<String, String, JEntityVersion<String>> updateBatch(Collection<String> docIds) {
-        return new UpdateBatch(options, docIds);
+        return new UpdateBatch(this, docIds);
     }
 
     public static class UpdateBatch extends EntityUpdateBatch<String, String, JEntityVersion<String>> {
 
         protected final SQLUpdateClause entityUpdateBatch;
 
-        public UpdateBatch(EntityStoreOptions<String, String, JEntityVersion<String>> options, String docId) {
-            this(options, asList(docId));
+        public UpdateBatch(CustomEntityVersionStore store, String docId) {
+            this(store, asList(docId));
         }
 
-        public UpdateBatch(EntityStoreOptions<String, String, JEntityVersion<String>> options, Collection<String> docIds) {
-            super(options, docIds);
+        public UpdateBatch(CustomEntityVersionStore store, Collection<String> docIds) {
+            super(store, docIds);
             entityUpdateBatch = options.queryFactory.update(options.entity);
         }
 

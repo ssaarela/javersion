@@ -23,9 +23,9 @@ import com.querydsl.sql.SQLOps;
  * This allows non-blocking insertion of new versions (parents) while
  * running maintenance updates (publish, optimize).
  */
-public class PostgresTemplates extends PostgreSQLTemplates {
+public class PostgreSQLTemplatesForNoKeyUpdate extends PostgreSQLTemplates {
 
-    public PostgresTemplates() {
+    public PostgreSQLTemplatesForNoKeyUpdate() {
         super();
         this.add(SQLOps.FOR_UPDATE, "\nfor no key update");
     }

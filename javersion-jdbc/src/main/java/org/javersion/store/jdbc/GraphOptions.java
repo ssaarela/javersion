@@ -15,6 +15,7 @@
  */
 package org.javersion.store.jdbc;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
@@ -26,8 +27,6 @@ import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
-
-import com.google.common.base.Function;
 
 @Immutable
 public class GraphOptions<Id, M> {

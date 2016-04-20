@@ -44,8 +44,8 @@ public class EntityUpdateBatch<Id extends Comparable, M, V extends JEntityVersio
 
     private final Map<Id, Long> entityOrdinals;
 
-    public EntityUpdateBatch(EntityStoreOptions<Id, M, V> options, Collection<Id> docIds) {
-        super(options);
+    public EntityUpdateBatch(EntityVersionStoreJdbc<Id, M, V> store, Collection<Id> docIds) {
+        super(store);
         entityCreateBatch = options.queryFactory.insert(options.entity);
 
         lockedDocIds = ImmutableSet.copyOf(docIds);

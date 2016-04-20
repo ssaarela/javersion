@@ -84,7 +84,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>>
 
 
     @Override
-    protected FetchResults<Id, M> doLoad(Id docId, boolean optimized) {
+    protected FetchResults<Id, M> doFetch(Id docId, boolean optimized) {
         Check.notNull(docId, "docId");
 
         BooleanExpression predicate = versionsOf(docId);
@@ -113,7 +113,7 @@ public class DocumentVersionStoreJdbc<Id, M, V extends JDocumentVersion<Id>>
 
     @Override
     public DocumentUpdateBatch<Id, M, V> updateBatch(Collection<Id> ids) {
-        return new DocumentUpdateBatch<>(options);
+        return new DocumentUpdateBatch<>(this);
     }
 
     protected void doAppend(Multimap<Id, VersionNode<PropertyPath, Object, M>> versionsByDocId) {

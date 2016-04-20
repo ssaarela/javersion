@@ -62,7 +62,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
     }
 
     @Override
-    protected FetchResults<Id, M> doLoad(Id docId, boolean optimized) {
+    protected FetchResults<Id, M> doFetch(Id docId, boolean optimized) {
         Check.notNull(docId, "docId");
 
         BooleanExpression predicate = versionsOf(docId);
@@ -96,7 +96,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
 
     @Override
     public EntityUpdateBatch<Id, M, V> updateBatch(Collection<Id> docIds) {
-        return options.transactions.writeMandatory(() -> new EntityUpdateBatch<>(options, docIds));
+        return options.transactions.writeMandatory(() -> new EntityUpdateBatch<>(this, docIds));
     }
 
     @Override
@@ -139,7 +139,7 @@ public class EntityVersionStoreJdbc<Id extends Comparable, M, V extends JEntityV
                 .select(options.version.revision)
                 .from(options.version)
                 .where(versionsOf(docId))
-                .orderBy(options.version.localOrdinal.asc(), options.version.revision.asc())
+                .orderBy(options.version.localOrdinal.asc())
                 .forUpdate()
                 .iterate()
                 .close();

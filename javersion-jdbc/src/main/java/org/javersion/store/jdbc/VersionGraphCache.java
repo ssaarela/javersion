@@ -27,6 +27,8 @@ import org.javersion.core.Revision;
 import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -34,6 +36,8 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class VersionGraphCache<Id, M> {
+
+    private final Logger log = LoggerFactory.getLogger(VersionGraphCache.class);
 
     @SuppressWarnings("unchecked")
     private static final GraphOptions DEFAULT_CACHE_OPTIONS = new GraphOptions();
@@ -104,6 +108,7 @@ public class VersionGraphCache<Id, M> {
 
             @Override
             public ObjectVersionGraph<M> load(Id docId) throws Exception {
+                log.debug("load({})", docId);
                 return compactIfRequired(versionStore.loadOptimized(docId));
             }
 
@@ -114,15 +119,16 @@ public class VersionGraphCache<Id, M> {
                     Revision since = oldValue.getTip().getRevision();
                     try {
                         List<ObjectVersion<M>> updates = versionStore.fetchUpdates(docId, since);
+                        log.debug("refresh({}): {})", docId, updates.size());
                         if (!updates.isEmpty()) {
-                                newValue = oldValue.commit(updates);
+                            newValue = oldValue.commit(updates);
                         }
                         return immediateFuture(compactIfRequired(newValue));
                     } catch (VersionNotFoundException e) {
                         // since revision is deleted - reload graph
                     }
                 }
-                return immediateFuture(compactIfRequired(versionStore.load(docId)));
+                return immediateFuture(load(docId));
             }
 
             private ObjectVersionGraph<M> compactIfRequired(ObjectVersionGraph<M> graph) {
