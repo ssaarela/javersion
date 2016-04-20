@@ -385,7 +385,7 @@ public class OptimizedGraphTest {
     }
 
     private Revision rev(long number) {
-        return new Revision(NODE, number);
+        return new Revision(number, NODE);
     }
 
 }

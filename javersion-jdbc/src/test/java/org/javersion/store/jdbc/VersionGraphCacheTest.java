@@ -204,13 +204,13 @@ public class VersionGraphCacheTest {
         VersionGraphCache<String, Void> cache = newRefreshingCache(1, keepHeadsAndNewest(1, 2));
 
         final String docId = randomUUID().toString();
-        final Revision v1 = new Revision(NODE, 1),
-                v2 = new Revision(NODE, 2),
-                v3 = new Revision(NODE, 3),
-                v4 = new Revision(NODE, 4),
-                v5 = new Revision(NODE, 5),
-                v6 = new Revision(NODE, 6),
-                v7 = new Revision(NODE, 7);
+        final Revision v1 = new Revision(1, NODE),
+                v2 = new Revision(2, NODE),
+                v3 = new Revision(3, NODE),
+                v4 = new Revision(4, NODE),
+                v5 = new Revision(5, NODE),
+                v6 = new Revision(6, NODE),
+                v7 = new Revision(7, NODE);
 
         graph = graph.commit(ObjectVersion.<Void>builder(v1).build());
         documentStore.append(docId, graph.getTip());

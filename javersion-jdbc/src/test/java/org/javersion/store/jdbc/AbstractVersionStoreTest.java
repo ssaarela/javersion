@@ -50,12 +50,12 @@ public abstract class AbstractVersionStoreTest {
     private final long timeSeq = Revision.newUniqueTime();
 
     protected final Revision
-            rev1 = new Revision(timeSeq, 1),
-            rev2 = new Revision(timeSeq, 2),
-            rev3 = new Revision(timeSeq, 3),
-            rev4 = new Revision(timeSeq, 4),
-            rev5 = new Revision(timeSeq, 5),
-            rev6 = new Revision(timeSeq, 6);
+            rev1 = new Revision(1, timeSeq),
+            rev2 = new Revision(2, timeSeq),
+            rev3 = new Revision(3, timeSeq),
+            rev4 = new Revision(4, timeSeq),
+            rev5 = new Revision(5, timeSeq),
+            rev6 = new Revision(6, timeSeq);
 
     public static Map<PropertyPath, Object> mapOf(Object... entries) {
         Map<PropertyPath, Object> map = Maps.newHashMap();

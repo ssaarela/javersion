@@ -124,9 +124,12 @@ public abstract class BinaryEncoder {
         public Builder withAliasesFor(char ch, char... aliases) {
             setMaxChar(aliases);
             ensureCharToNumberSize();
+            if (charToNumber[ch] < 0) {
+                throw new IllegalArgumentException("Base char is not registered: " + ch);
+            }
             for (char alias : aliases) {
                 verify(alias);
-                charToNumber[alias] = alias;
+                charToNumber[alias] = charToNumber[ch];
             }
             return this;
         }
