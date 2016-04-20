@@ -30,11 +30,11 @@ import com.google.common.collect.Multimap;
 
 public interface VersionStore<Id, M> {
 
-    ObjectVersionGraph<M> load(Id docId);
+    ObjectVersionGraph<M> getFullGraph(Id docId);
 
-    ObjectVersionGraph<M> loadOptimized(Id docId);
+    ObjectVersionGraph<M> getOptimizedGraph(Id docId);
 
-    GraphResults<Id, M> load(Collection<Id> docIds);
+    GraphResults<Id, M> getGraphs(Collection<Id> docIds);
 
     List<ObjectVersion<M>> fetchUpdates(Id docId, Revision since);
 

@@ -125,17 +125,17 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
     }
 
     @Override
-    public ObjectVersionGraph<M> load(Id docId) {
+    public ObjectVersionGraph<M> getFullGraph(Id docId) {
         return options.transactions.readOnly(() -> doLoad(docId));
     }
 
     @Override
-    public ObjectVersionGraph<M> loadOptimized(Id docId) {
+    public ObjectVersionGraph<M> getOptimizedGraph(Id docId) {
         return options.transactions.readOnly(() -> doLoadOptimized(docId));
     }
 
     @Override
-    public GraphResults<Id, M> load(Collection<Id> docIds) {
+    public GraphResults<Id, M> getGraphs(Collection<Id> docIds) {
         return options.transactions.readOnly(() -> doLoad(docIds));
     }
 

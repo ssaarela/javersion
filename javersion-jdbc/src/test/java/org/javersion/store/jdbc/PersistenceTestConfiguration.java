@@ -1,4 +1,4 @@
-package org.javersion.store;
+package org.javersion.store.jdbc;
 
 import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.store.jdbc.ExecutorType.NONE;

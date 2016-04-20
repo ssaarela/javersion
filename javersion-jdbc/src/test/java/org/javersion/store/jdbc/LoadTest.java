@@ -21,7 +21,6 @@ import javax.annotation.Resource;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
-import org.javersion.store.PersistenceTestConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -176,7 +175,7 @@ public class LoadTest {
 
         // Load full
         long ts = currentTimeMillis();
-        versionGraph = store.load(docId);
+        versionGraph = store.getFullGraph(docId);
         final long loadSize = versionGraph.size();
         final long loadTime = currentTimeMillis() - ts;
 
@@ -184,7 +183,7 @@ public class LoadTest {
 
         // Load optimized
         ts = currentTimeMillis();
-        versionGraph = store.loadOptimized(docId);
+        versionGraph = store.getOptimizedGraph(docId);
         final long optimizedSize = versionGraph.size();
         final long optimizedTime = currentTimeMillis() - ts;
 

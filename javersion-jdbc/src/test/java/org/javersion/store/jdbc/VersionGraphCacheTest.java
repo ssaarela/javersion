@@ -15,7 +15,6 @@ import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.javersion.core.Revision;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
-import org.javersion.store.PersistenceTestConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
@@ -245,7 +244,7 @@ public class VersionGraphCacheTest {
 
         transactionTemplate.execute(status -> {
             documentStore.updateBatch(docId)
-                    .optimize(documentStore.loadOptimized(docId), v -> v.revision.equals(v7))
+                    .optimize(documentStore.getOptimizedGraph(docId), v -> v.revision.equals(v7))
                     .execute();
             return null;
         });

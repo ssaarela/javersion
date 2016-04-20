@@ -1,4 +1,4 @@
-package org.javersion.store;
+package org.javersion.store.jdbc;
 
 import java.io.File;
 import java.io.IOException;
