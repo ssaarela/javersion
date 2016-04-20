@@ -17,6 +17,7 @@ Breaking Changes
     * Status column added to all tables
     * Changes to column types and indexes
   * Options `repository` and `repositoryName` are dropped from StoreOptions
+* Switch Revision(node, timeSeq) parameters: Revision(timeSeq, node) that is more in sync with serialization
 
 New Features
 ------------

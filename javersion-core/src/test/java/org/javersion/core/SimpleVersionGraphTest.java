@@ -58,7 +58,7 @@ public class SimpleVersionGraphTest {
 
     static {
         for (int i=0; i < REV.length; i++) {
-            REV[i] = new Revision(0, i);
+            REV[i] = new Revision(i, 0);
         }
     }
     /**

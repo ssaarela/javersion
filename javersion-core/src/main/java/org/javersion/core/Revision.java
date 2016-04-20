@@ -40,19 +40,19 @@ public final class Revision implements Comparable<Revision> {
         if (rev.length() != 27) {
             throw new IllegalArgumentException("Expected string of length 27");
         }
-        this.timeSeq = ENCODER.decodeLong(rev.substring(0, 13));
-        this.node = ENCODER.decodeLong(rev.substring(14, 27));
+        this.timeSeq = toLong(rev.substring(0, 13));
+        this.node = toLong(rev.substring(14, 27));
     }
 
     public Revision() {
-        this(NODE, newUniqueTime());
+        this(newUniqueTime(), NODE);
     }
 
     public Revision(long node) {
-        this(node, newUniqueTime());
+        this(newUniqueTime(), node);
     }
 
-    public Revision(long node, long timeSeq) {
+    public Revision(long timeSeq, long node) {
         this.timeSeq = timeSeq;
         this.node = node;
     }
