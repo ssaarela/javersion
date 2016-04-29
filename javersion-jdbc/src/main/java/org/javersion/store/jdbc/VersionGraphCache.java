@@ -15,14 +15,10 @@
  */
 package org.javersion.store.jdbc;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
-import static com.google.common.util.concurrent.Futures.immediateFuture;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
@@ -30,10 +26,14 @@ import org.javersion.object.ObjectVersionGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+
+import static com.google.common.base.MoreObjects.firstNonNull;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 
 public class VersionGraphCache<Id, M> {
 
@@ -60,9 +60,15 @@ public class VersionGraphCache<Id, M> {
     public VersionGraphCache(VersionStore<Id, M> versionStore,
                              CacheBuilder<Object, Object> cacheBuilder,
                              GraphOptions<Id, M> graphOptions) {
+        this(versionStore, cacheBuilder::build, graphOptions);
+    }
+
+    public VersionGraphCache(VersionStore<Id, M> versionStore,
+                             Function<CacheLoader<Id, ObjectVersionGraph<M>>, LoadingCache<Id, ObjectVersionGraph<M>>>  cacheBuilder,
+                             GraphOptions<Id, M> graphOptions) {
         this.versionStore = versionStore;
 
-        this.cache = cacheBuilder.build(newCacheLoader(versionStore));
+        this.cache = cacheBuilder.apply(newCacheLoader(versionStore));
         this.cachedDocIds = cache.asMap().keySet();
         this.graphOptions = firstNonNull(graphOptions, DEFAULT_CACHE_OPTIONS);
     }

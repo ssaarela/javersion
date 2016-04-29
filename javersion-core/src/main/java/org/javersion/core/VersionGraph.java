@@ -15,10 +15,12 @@
  */
 package org.javersion.core;
 
+import org.javersion.util.PersistentSortedMap;
+
 import java.util.Set;
 import java.util.function.Predicate;
 
-import org.javersion.util.PersistentSortedMap;
+import static java.util.stream.StreamSupport.stream;
 
 public interface VersionGraph<K, V, M> {
 
@@ -55,6 +57,10 @@ public interface VersionGraph<K, V, M> {
     int size();
 
     boolean contains(Revision revision);
+
+    default boolean containsAll(Iterable<Revision> revisions) {
+        return stream(revisions.spliterator(), false).allMatch(this::contains);
+    }
 
     VersionNode<K, V, M> getTip();
 

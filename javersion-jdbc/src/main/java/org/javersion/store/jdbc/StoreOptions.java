@@ -15,25 +15,27 @@
  */
 package org.javersion.store.jdbc;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import com.google.common.collect.ImmutableMap;
+import com.querydsl.core.types.Path;
+import com.querydsl.sql.SQLQueryFactory;
+import org.javersion.core.VersionNode;
+import org.javersion.object.ObjectVersionGraph;
+import org.javersion.path.PropertyPath;
+import org.javersion.util.Check;
 
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.Immutable;
-
-import org.javersion.path.PropertyPath;
-import org.javersion.util.Check;
-
-import com.google.common.collect.ImmutableMap;
-import com.querydsl.core.types.Path;
-import com.querydsl.sql.SQLQueryFactory;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @Immutable
-public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
+public abstract class StoreOptions<Id, M, V extends JVersion<Id>> extends GraphOptions<Id, M> {
 
     public final V version;
 
@@ -45,8 +47,6 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
 
     public final ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
 
-    public final GraphOptions<Id, M> graphOptions;
-
     public final Transactions transactions;
 
     public final Executor optimizer;
@@ -56,6 +56,7 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
     public final SQLQueryFactory queryFactory;
 
     protected StoreOptions(AbstractBuilder<Id, M, V, ?, ?> builder) {
+        super(builder.optimizeWhen, builder.optimizeKeep);
         this.version = Check.notNull(builder.version, "versionTable");
         this.sinceVersion = Check.notNull(builder.versionTableSince, "versionTableSince");
         this.parent = Check.notNull(builder.parentTable, "parentTable");
@@ -63,7 +64,6 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
         this.versionTableProperties = builder.versionTableProperties != null
                 ? ImmutableMap.copyOf(builder.versionTableProperties)
                 : ImmutableMap.of();
-        this.graphOptions = Check.notNull(builder.graphOptions, "graphOptions");
         this.transactions = Check.notNull(builder.transactions, "transactions");
         this.optimizer = builder.optimizer;
         this.publisher = builder.publisher;
@@ -86,7 +86,9 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
 
         protected JVersionProperty propertyTable;
 
-        protected GraphOptions<Id, M> graphOptions = new GraphOptions<>();
+        protected Predicate<ObjectVersionGraph<M>> optimizeWhen;
+
+        protected Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> optimizeKeep;
 
         protected Transactions transactions;
 
@@ -106,7 +108,8 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
             this.versionTableSince = options.sinceVersion;
             this.parentTable = options.parent;
             this.propertyTable = options.property;
-            this.graphOptions = options.graphOptions;
+            this.optimizeWhen = options.optimizeWhen;
+            this.optimizeKeep = options.optimizeKeep;
             this.transactions = options.transactions;
             this.optimizer = options.optimizer;
             this.publisher = options.publisher;
@@ -135,7 +138,16 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> {
         }
 
         public This graphOptions(GraphOptions<Id, M> graphOptions) {
-            this.graphOptions = graphOptions;
+            return optimizeWhen(graphOptions.optimizeWhen).optimizeKeep(graphOptions.optimizeKeep);
+        }
+
+        public This optimizeWhen(Predicate<ObjectVersionGraph<M>> optimizeWhen) {
+            this.optimizeWhen = optimizeWhen;
+            return self();
+        }
+
+        public This optimizeKeep(Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> optimizeKeep) {
+            this.optimizeKeep = optimizeKeep;
             return self();
         }
 
