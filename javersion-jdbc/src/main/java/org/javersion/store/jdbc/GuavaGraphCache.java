@@ -35,44 +35,44 @@ import java.util.function.Function;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.util.concurrent.Futures.immediateFuture;
 
-public class VersionGraphCache<Id, M> {
+public class GuavaGraphCache<Id, M> implements GraphCache<Id, M> {
 
-    private final Logger log = LoggerFactory.getLogger(VersionGraphCache.class);
+    public static <Id, M> Function<VersionStore<Id, M>, GraphCache<Id, M>> guavaCacheBuilder(CacheBuilder<Object, Object> cacheBuilder) {
+        return guavaCacheBuilder(cacheBuilder, null);
+    }
+
+    public static <Id, M> Function<VersionStore<Id, M>, GraphCache<Id, M>> guavaCacheBuilder(CacheBuilder<Object, Object> cacheBuilder,
+                                                                                             GraphOptions<Id, M> graphOptions) {
+        return versionStore -> new GuavaGraphCache<>(versionStore, cacheBuilder, graphOptions);
+    }
+
+    private final Logger log = LoggerFactory.getLogger(GuavaGraphCache.class);
 
     @SuppressWarnings("unchecked")
     private static final GraphOptions DEFAULT_CACHE_OPTIONS = new GraphOptions();
 
     protected final LoadingCache<Id, ObjectVersionGraph<M>> cache;
 
-    private final VersionStore<Id,M> versionStore;
-
     private final GraphOptions<Id, M> graphOptions;
 
     protected final Set<Id> cachedDocIds;
 
-    public VersionGraphCache(VersionStore<Id, M> versionStore,
-                             CacheBuilder<Object, Object> cacheBuilder) {
+    public GuavaGraphCache(VersionStore<Id, M> versionStore,
+                           CacheBuilder<Object, Object> cacheBuilder) {
         this(versionStore, cacheBuilder, null);
     }
 
     // About CacheBuilder generics: https://code.google.com/p/guava-libraries/issues/detail?id=738
     @SuppressWarnings("unchecked")
-    public VersionGraphCache(VersionStore<Id, M> versionStore,
-                             CacheBuilder<Object, Object> cacheBuilder,
-                             GraphOptions<Id, M> graphOptions) {
-        this(versionStore, cacheBuilder::build, graphOptions);
-    }
-
-    public VersionGraphCache(VersionStore<Id, M> versionStore,
-                             Function<CacheLoader<Id, ObjectVersionGraph<M>>, LoadingCache<Id, ObjectVersionGraph<M>>>  cacheBuilder,
-                             GraphOptions<Id, M> graphOptions) {
-        this.versionStore = versionStore;
-
-        this.cache = cacheBuilder.apply(newCacheLoader(versionStore));
+    public GuavaGraphCache(VersionStore<Id, M> versionStore,
+                           CacheBuilder<Object, Object> cacheBuilder,
+                           GraphOptions<Id, M> graphOptions) {
+        this.cache = cacheBuilder.build(newCacheLoader(versionStore));
         this.cachedDocIds = cache.asMap().keySet();
         this.graphOptions = firstNonNull(graphOptions, DEFAULT_CACHE_OPTIONS);
     }
 
+    @Override
     public ObjectVersionGraph<M> load(Id docId) {
         try {
             return cache.get(docId);
@@ -81,30 +81,24 @@ public class VersionGraphCache<Id, M> {
         }
     }
 
-    /**
-     * Calls wrapped versionStore.publish() and refreshes changed (published)
-     * AND cached graphs.
-     */
-    public Set<Id> publish() {
-        Set<Id> publishedDocIds = versionStore.publish().keySet();
-        publishedDocIds.forEach(this::refresh);
-        return publishedDocIds;
-    }
-
+    @Override
     public void refresh(Id docId) {
         if (cachedDocIds.contains(docId)) {
             cache.refresh(docId);
         }
     }
 
+    @Override
     public void evict(Id docId) {
         cache.invalidate(docId);
     }
 
+    @Override
     public void evict(Iterator<Id> docIds) {
         cache.invalidate(docIds);
     }
 
+    @Override
     public void evictAll() {
         cache.invalidateAll();
     }

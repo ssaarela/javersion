@@ -95,6 +95,10 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
     protected final Set<Id> runningOptimizations = newSetFromMap(new ConcurrentHashMap<>());
 
+    protected final GraphCache<Id, M> cache;
+
+    protected final Function<Id, ObjectVersionGraph<M>> cacheLoader;
+
     /**
      * No-args constructor for proxies
      */
@@ -103,6 +107,8 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
         versionAndParentColumns = null;
         versionAndParents = null;
         properties = null;
+        cache = null;
+        cacheLoader = null;
     }
 
     public AbstractVersionStoreJdbc(Options options) {
@@ -113,6 +119,9 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
         Expression<?>[] propertyColumns = without(options.property.all(), options.property.revision);
         properties = groupBy(options.property.revision).as(GroupBy.list(tuple(propertyColumns)));
+
+        this.cache = options.cacheBuilder.apply(this);
+        this.cacheLoader = this.cache != null ? this.cache::load : this::getOptimizedGraph;
     }
 
     @Override
@@ -127,13 +136,11 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
     @Override
     public ObjectVersionGraph<M> getGraph(Id docId, Iterable<Revision> revisions) {
-        return options.transactions.readOnly(() -> {
-            ObjectVersionGraph<M> graph = doLoadOptimized(docId);
-            if (!graph.containsAll(revisions)) {
-                return doLoad(docId);
-            }
-            return graph;
-        });
+        ObjectVersionGraph<M> graph = cacheLoader.apply(docId);
+        if (!graph.containsAll(revisions)) {
+            return getFullGraph(docId);
+        }
+        return graph;
     }
 
     @Override
@@ -152,15 +159,15 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
     }
 
     /**
-     * NOTE: publish() needs to be called in a separate transaction from append()!
-     * E.g. (a)synchronously from TransactionSynchronization.afterCommit.
-     *
-     * Calling publish() in the same transaction with append() severely limits concurrency
-     * and might end up in deadlock.
+     * NOTE: publish() is called in a new transaction to ensure it sees only committed versions.
      */
     @Override
     public Multimap<Id, Revision> publish() {
-        return options.transactions.writeRequired(this::doPublish);
+        Multimap<Id, Revision> result = options.transactions.writeNewRequired(this::doPublish);
+        if (this.cache != null) {
+            result.keySet().forEach(this.cache::refresh);
+        }
+        return result;
     }
 
     @Override

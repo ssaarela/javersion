@@ -1,26 +1,10 @@
 package org.javersion.store.jdbc;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.unmodifiableMap;
-import static java.util.UUID.randomUUID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.javersion.path.PropertyPath.parse;
-import static org.javersion.store.jdbc.ExecutorType.ASYNC;
-import static org.javersion.store.jdbc.ExecutorType.SYNC;
-import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
-
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
-import javax.annotation.Resource;
-
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersion;
@@ -35,9 +19,27 @@ import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
+import javax.annotation.Resource;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableMap;
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.path.PropertyPath.parse;
+import static org.javersion.store.jdbc.ExecutorType.ASYNC;
+import static org.javersion.store.jdbc.ExecutorType.SYNC;
+import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
+import static org.javersion.store.jdbc.GuavaGraphCache.guavaCacheBuilder;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -318,6 +320,59 @@ public abstract class AbstractVersionStoreTest {
 
         store.updateBatch(asList(docId));
         assertThat(interceptedCalls.get("updateBatch")).isEqualTo(asList(asList(docId)));
+    }
+
+    @Test
+    public void auto_refresh_published_values() {
+        String docId = randomUUID().toString();
+
+        // Non-refreshing cache
+        StoreOptions options = getStore().options.toBuilder()
+                .cacheBuilder(guavaCacheBuilder(CacheBuilder.<Object, Object>newBuilder().maximumSize(8))).build();
+        AbstractVersionStoreJdbc<String, String, ?, ?, ?> store = newStore(options);
+
+        final ObjectVersionGraph<String> orginalGraph = ObjectVersionGraph.init(
+                ObjectVersion.<String>builder(rev1)
+                        .changeset(ImmutableMap.of(ROOT.property("property"), "value1"))
+                        .build(),
+                ObjectVersion.<String>builder(rev2)
+                        .parents(rev1)
+                        .changeset(ImmutableMap.of(ROOT.property("property"), "value2"))
+                        .build(),
+                ObjectVersion.<String>builder(rev3)
+                        .parents(rev1)
+                        .changeset(ImmutableMap.of(ROOT.property("property"), "value3"))
+                        .build()
+        );
+
+        assertThat(store.getGraph(docId).isEmpty()).isTrue();
+        transactionTemplate.execute(status -> {
+            store.updateBatch(docId).addVersion(docId, orginalGraph.getVersionNode(rev1)).execute();
+            store.updateBatch(docId).addVersion(docId, orginalGraph.getVersionNode(rev2)).execute();
+            return null;
+        });
+        assertThat(store.getGraph(docId).isEmpty()).isTrue();
+
+        store.publish();
+        assertThat(store.getGraph(docId).size()).isEqualTo(2);
+
+        // Cached graph is returned after store optimization...
+        store.optimize(docId, graph -> node -> node.revision.equals(rev2));
+        assertThat(store.getGraph(docId).size()).isEqualTo(2);
+
+        // ...until document is evicted
+        store.cache.evict(docId);
+        assertThat(store.getGraph(docId).size()).isEqualTo(1);
+
+        // Fallback to full graph
+        assertThat(store.getGraph(docId, asList(rev1)).size()).isEqualTo(2);
+
+        // Reset and optimize
+        transactionTemplate.execute(status -> {
+            store.updateBatch(docId).addVersion(docId, orginalGraph.getVersionNode(rev3)).execute();
+            return null;
+        });
+        store.optimize(docId, graph -> node -> node.revision.equals(rev3));
     }
 
     protected void optimize(String docId, Predicate<VersionNode<PropertyPath, Object, String>> keep, AbstractVersionStoreJdbc<String, String, ?, ?, ?> store) {

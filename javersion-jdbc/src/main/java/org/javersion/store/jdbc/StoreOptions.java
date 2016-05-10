@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static com.google.common.base.MoreObjects.firstNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @Immutable
@@ -53,6 +54,8 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> extends GraphO
 
     public final Executor publisher;
 
+    public final Function<VersionStore<Id, M>, GraphCache<Id, M>> cacheBuilder;
+
     public final SQLQueryFactory queryFactory;
 
     protected StoreOptions(AbstractBuilder<Id, M, V, ?, ?> builder) {
@@ -67,6 +70,7 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> extends GraphO
         this.transactions = Check.notNull(builder.transactions, "transactions");
         this.optimizer = builder.optimizer;
         this.publisher = builder.publisher;
+        this.cacheBuilder = firstNonNull(builder.cacheBuilder, store -> null);
         this.queryFactory = Check.notNull(builder.queryFactory, "queryFactory");
     }
 
@@ -98,6 +102,8 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> extends GraphO
 
         @Nullable
         protected ImmutableMap<PropertyPath, Path<?>> versionTableProperties;
+
+        protected Function<VersionStore<Id, M>, GraphCache<Id, M>> cacheBuilder;
 
         protected SQLQueryFactory queryFactory;
 
@@ -193,6 +199,11 @@ public abstract class StoreOptions<Id, M, V extends JVersion<Id>> extends GraphO
 
         public This versionTableProperties(ImmutableMap<PropertyPath, Path<?>> versionTableProperties) {
             this.versionTableProperties = versionTableProperties;
+            return self();
+        }
+
+        public This cacheBuilder(Function<VersionStore<Id, M>, GraphCache<Id, M>> cacheBuilder) {
+            this.cacheBuilder = cacheBuilder;
             return self();
         }
 

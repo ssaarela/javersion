@@ -588,7 +588,7 @@ public class SimpleVersionGraphTest {
     @Test
     public void containsAll() {
         SimpleVersionGraph graph = init();
-        assertThat(graph.containsAll(new ArrayList<>())).isEqualTo(true);
+        assertThat(graph.containsAll(new ArrayList<>())).isTrue();
 
         Revision r1 = new Revision(), r2 = new Revision();
         graph = init(builder(r1).build(), builder(r2).build());
