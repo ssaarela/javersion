@@ -18,7 +18,6 @@ import javax.annotation.Resource;
 import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
-import org.javersion.store.PersistenceTestConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.SpringApplicationConfiguration;
@@ -42,7 +41,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
     @Test
     public void should_return_empty_graph_if_not_found() {
-        assertThat(entityStore.load(randomId()).isEmpty()).isTrue();
+        assertThat(entityStore.getFullGraph(randomId()).isEmpty()).isTrue();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -92,7 +91,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
             return null;
         });
-        ObjectVersionGraph<String> graph = entityStore.load(docId);
+        ObjectVersionGraph<String> graph = entityStore.getFullGraph(docId);
         assertThat(graph.getTip().getMeta()).isEqualTo(comment);
     }
 
@@ -159,7 +158,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
             return null;
         });
 
-        ObjectVersionGraph<String> graph = entityStore.load(docId1);
+        ObjectVersionGraph<String> graph = entityStore.getFullGraph(docId1);
         assertThat(graph.getTip().getProperties()).isEqualTo(mapOf(
                 "id", docId1,
                 "name", "Fixed name"
@@ -174,7 +173,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     }
 
     private void cannot_bulk_load_before_publish() {
-        GraphResults<String, String> graphs = entityStore.load(asList(docId1, docId2));
+        GraphResults<String, String> graphs = entityStore.getGraphs(asList(docId1, docId2));
         assertThat(graphs.isEmpty()).isTrue();
         assertThat(graphs.size()).isEqualTo(0);
     }
@@ -182,7 +181,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     private void create_doc2_and_update_doc1() {
         transactionTemplate.execute(status -> {
             EntityUpdateBatch<String, String, JEntityVersion<String>> update = entityStore.updateBatch(asList(docId1, docId2));
-            ObjectVersionGraph<String> graph = entityStore.load(docId1);
+            ObjectVersionGraph<String> graph = entityStore.getFullGraph(docId1);
             assertThat(graph.isEmpty()).isFalse();
 
             // Create doc2
@@ -214,7 +213,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
     private void bulk_load_after_publish() {
         entityStore.publish();
 
-        GraphResults<String, String> graphs = entityStore.load(asList(docId1, docId2));
+        GraphResults<String, String> graphs = entityStore.getGraphs(asList(docId1, docId2));
         assertThat(graphs.containsKey(docId1)).isTrue();
         assertThat(graphs.containsKey(docId2)).isTrue();
 
@@ -244,7 +243,7 @@ public class EntityVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
     private void prune_doc1() {
         entityStore.prune(docId1, graph -> v -> v.revision.equals(rev4));
-        ObjectVersionGraph<String> graph = entityStore.load(docId1);
+        ObjectVersionGraph<String> graph = entityStore.getFullGraph(docId1);
         assertThat(graph.size()).isEqualTo(1);
     }
 

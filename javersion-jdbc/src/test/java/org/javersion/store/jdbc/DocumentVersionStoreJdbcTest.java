@@ -79,7 +79,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
     public void insert_and_load() {
         String docId = randomUUID().toString();
 
-        assertThat(documentStore.load(docId).isEmpty()).isTrue();
+        assertThat(documentStore.getFullGraph(docId).isEmpty()).isTrue();
 
         Product product = new Product();
         product.id = 123l;
@@ -87,10 +87,10 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
         ObjectVersion<String> versionOne = versionManager.versionBuilder(product).build();
         documentStore.append(docId, versionManager.getVersionNode(versionOne.revision));
-        assertThat(documentStore.load(docId).isEmpty()).isTrue();
+        assertThat(documentStore.getFullGraph(docId).isEmpty()).isTrue();
 
         documentStore.publish();
-        ObjectVersionGraph<String> versionGraph = documentStore.load(docId);
+        ObjectVersionGraph<String> versionGraph = documentStore.getFullGraph(docId);
         assertThat(versionGraph.isEmpty()).isFalse();
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(versionOne);
 
@@ -104,10 +104,10 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
         ObjectVersion<String> lastVersion = versionManager.versionBuilder(product).build();
         documentStore.append(docId, versionManager.getVersionNode(lastVersion.revision));
-        assertThat(documentStore.load(docId).getTip().getVersion()).isEqualTo(versionOne);
+        assertThat(documentStore.getFullGraph(docId).getTip().getVersion()).isEqualTo(versionOne);
 
         documentStore.publish();
-        versionGraph = documentStore.load(docId);
+        versionGraph = documentStore.getFullGraph(docId);
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(lastVersion);
 
         versionManager.init(versionGraph);
@@ -127,7 +127,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
         ObjectVersionGraph<String> versionGraph = ObjectVersionGraph.init(emptyVersion);
         documentStore.append(docId, versionGraph.getTip());
         documentStore.publish();
-        versionGraph = documentStore.load(docId);
+        versionGraph = documentStore.getFullGraph(docId);
         List<Version<PropertyPath, Object, String>> versions = newArrayList(versionGraph.getVersions());
         assertThat(versions).hasSize(1);
         assertThat(versions.get(0)).isEqualTo(emptyVersion);
@@ -266,7 +266,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
         assertThat(queryFactory.from(documentVersion).where(documentVersion.docId.eq(docId)).fetchCount()).isEqualTo(3);
 
-        versionGraph = documentStore.load(docId);
+        versionGraph = documentStore.getFullGraph(docId);
 
         VersionNode<PropertyPath, Object, String> versionNode = versionGraph.getVersionNode(rev3);
         assertThat(versionNode.getParentRevisions()).isEmpty();
@@ -371,7 +371,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
         documentStore.append(docId, graph.getVersionNode(v2.revision));
         documentStore.publish();
 
-        assertThat(documentStore.load(docId).getVersionNode(v2.revision).getVersion()).isEqualTo(v2);
+        assertThat(documentStore.getFullGraph(docId).getVersionNode(v2.revision).getVersion()).isEqualTo(v2);
     }
 
     @Test
@@ -389,7 +389,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
         documentStore.append(docId2, ObjectVersionGraph.init(v2).getTip());
         documentStore.publish();
 
-        GraphResults<String, String> results = documentStore.load(asList(docId1, docId2));
+        GraphResults<String, String> results = documentStore.getGraphs(asList(docId1, docId2));
         assertThat(results.getDocIds()).isEqualTo(ImmutableSet.of(docId1, docId2));
         assertThat(results.latestRevision).isEqualTo(v2.revision);
         assertThat(results.getVersionGraph(docId1).getTip().getVersion()).isEqualTo(v1);
@@ -408,7 +408,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
 
         mappedDocumentStore.append(docId, ObjectVersionGraph.init(v1).getTip());
         mappedDocumentStore.publish();
-        assertThat(mappedDocumentStore.load(docId).getTip().getVersion()).isEqualTo(v1);
+        assertThat(mappedDocumentStore.getFullGraph(docId).getTip().getVersion()).isEqualTo(v1);
 
         long count = queryFactory.from(documentVersionProperty)
                 .innerJoin(documentVersionProperty.documentVersionPropertyRevisionFk, documentVersion)
@@ -431,7 +431,7 @@ public class DocumentVersionStoreJdbcTest extends AbstractVersionStoreTest {
                         documentVersion.id.eq(5l))
                 .fetchCount();
         assertThat(count).isEqualTo(1);
-        assertThat(mappedDocumentStore.load(docId).getTip().getVersion()).isEqualTo(v2);
+        assertThat(mappedDocumentStore.getFullGraph(docId).getTip().getVersion()).isEqualTo(v2);
     }
 
     @Override

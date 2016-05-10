@@ -15,13 +15,12 @@
  */
 package org.javersion.store.jdbc;
 
-import java.util.Map;
-import java.util.Set;
-
+import com.google.common.collect.ImmutableMap;
 import org.javersion.core.Revision;
 import org.javersion.object.ObjectVersionGraph;
 
-import com.google.common.collect.ImmutableMap;
+import java.util.Map;
+import java.util.Set;
 
 public class GraphResults<Id, M> {
 
@@ -29,10 +28,6 @@ public class GraphResults<Id, M> {
 
     public final Revision latestRevision;
 
-    public GraphResults() {
-        graphsByDocId = ImmutableMap.of();
-        latestRevision = null;
-    }
     public GraphResults(Map<Id, ObjectVersionGraph<M>> graphsByDocId, Revision latestRevision) {
         this.graphsByDocId = ImmutableMap.copyOf(graphsByDocId);
         this.latestRevision = latestRevision;

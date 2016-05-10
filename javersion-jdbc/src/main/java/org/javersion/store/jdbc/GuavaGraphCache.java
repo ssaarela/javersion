@@ -15,14 +15,10 @@
  */
 package org.javersion.store.jdbc;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
-import static com.google.common.util.concurrent.Futures.immediateFuture;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.javersion.core.Revision;
 import org.javersion.core.VersionNotFoundException;
 import org.javersion.object.ObjectVersion;
@@ -30,43 +26,53 @@ import org.javersion.object.ObjectVersionGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.ListenableFuture;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
-public class VersionGraphCache<Id, M> {
+import static com.google.common.base.MoreObjects.firstNonNull;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 
-    private final Logger log = LoggerFactory.getLogger(VersionGraphCache.class);
+public class GuavaGraphCache<Id, M> implements GraphCache<Id, M> {
+
+    public static <Id, M> Function<VersionStore<Id, M>, GraphCache<Id, M>> guavaCacheBuilder(CacheBuilder<Object, Object> cacheBuilder) {
+        return guavaCacheBuilder(cacheBuilder, null);
+    }
+
+    public static <Id, M> Function<VersionStore<Id, M>, GraphCache<Id, M>> guavaCacheBuilder(CacheBuilder<Object, Object> cacheBuilder,
+                                                                                             GraphOptions<Id, M> graphOptions) {
+        return versionStore -> new GuavaGraphCache<>(versionStore, cacheBuilder, graphOptions);
+    }
+
+    private final Logger log = LoggerFactory.getLogger(GuavaGraphCache.class);
 
     @SuppressWarnings("unchecked")
     private static final GraphOptions DEFAULT_CACHE_OPTIONS = new GraphOptions();
 
     protected final LoadingCache<Id, ObjectVersionGraph<M>> cache;
 
-    private final VersionStore<Id,M> versionStore;
-
     private final GraphOptions<Id, M> graphOptions;
 
     protected final Set<Id> cachedDocIds;
 
-    public VersionGraphCache(VersionStore<Id, M> versionStore,
-                             CacheBuilder<Object, Object> cacheBuilder) {
+    public GuavaGraphCache(VersionStore<Id, M> versionStore,
+                           CacheBuilder<Object, Object> cacheBuilder) {
         this(versionStore, cacheBuilder, null);
     }
 
     // About CacheBuilder generics: https://code.google.com/p/guava-libraries/issues/detail?id=738
     @SuppressWarnings("unchecked")
-    public VersionGraphCache(VersionStore<Id, M> versionStore,
-                             CacheBuilder<Object, Object> cacheBuilder,
-                             GraphOptions<Id, M> graphOptions) {
-        this.versionStore = versionStore;
-
+    public GuavaGraphCache(VersionStore<Id, M> versionStore,
+                           CacheBuilder<Object, Object> cacheBuilder,
+                           GraphOptions<Id, M> graphOptions) {
         this.cache = cacheBuilder.build(newCacheLoader(versionStore));
         this.cachedDocIds = cache.asMap().keySet();
         this.graphOptions = firstNonNull(graphOptions, DEFAULT_CACHE_OPTIONS);
     }
 
+    @Override
     public ObjectVersionGraph<M> load(Id docId) {
         try {
             return cache.get(docId);
@@ -75,30 +81,24 @@ public class VersionGraphCache<Id, M> {
         }
     }
 
-    /**
-     * Calls wrapped versionStore.publish() and refreshes changed (published)
-     * AND cached graphs.
-     */
-    public Set<Id> publish() {
-        Set<Id> publishedDocIds = versionStore.publish().keySet();
-        publishedDocIds.forEach(this::refresh);
-        return publishedDocIds;
-    }
-
+    @Override
     public void refresh(Id docId) {
         if (cachedDocIds.contains(docId)) {
             cache.refresh(docId);
         }
     }
 
+    @Override
     public void evict(Id docId) {
         cache.invalidate(docId);
     }
 
+    @Override
     public void evict(Iterator<Id> docIds) {
         cache.invalidate(docIds);
     }
 
+    @Override
     public void evictAll() {
         cache.invalidateAll();
     }
@@ -109,7 +109,7 @@ public class VersionGraphCache<Id, M> {
             @Override
             public ObjectVersionGraph<M> load(Id docId) throws Exception {
                 log.debug("load({})", docId);
-                return compactIfRequired(versionStore.loadOptimized(docId));
+                return compactIfRequired(versionStore.getOptimizedGraph(docId));
             }
 
             @Override

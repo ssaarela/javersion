@@ -15,6 +15,13 @@
  */
 package org.javersion.core;
 
+import com.google.common.base.Function;
+import com.google.common.collect.*;
+import org.javersion.core.SimpleVersion.Builder;
+import org.junit.Test;
+
+import java.util.*;
+
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.ImmutableSet.copyOf;
 import static com.google.common.collect.Iterables.filter;
@@ -22,29 +29,10 @@ import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.core.SimpleVersion.builder;
 import static org.javersion.core.SimpleVersionGraph.init;
 import static org.javersion.core.Version.DEFAULT_BRANCH;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.javersion.core.SimpleVersion.Builder;
-import org.junit.Test;
-
-import com.google.common.base.Function;
-import com.google.common.collect.*;
 
 public class SimpleVersionGraphTest {
 
@@ -432,8 +420,8 @@ public class SimpleVersionGraphTest {
     @Test
     public void Tip_of_an_Empty_Graph() {
         SimpleVersionGraph versionGraph = init();
-        assertNull(versionGraph.getTip());
-        assertTrue(newArrayList(versionGraph.getVersions()).isEmpty());
+        assertThat(versionGraph.getTip()).isNull();
+        assertThat(newArrayList(versionGraph.getVersions())).isEmpty();
     }
 
     @Test(expected = VersionNotFoundException.class)
@@ -449,7 +437,7 @@ public class SimpleVersionGraphTest {
 
         SimpleVersionGraph versionGraph = init(asList(v1));
         VersionNode versionNode = versionGraph.getVersionNode(v1.revision);
-        assertThat(versionNode.getChangeset(), equalTo(mapOf("key", "value")));
+        assertThat(versionNode.getChangeset()).isEqualTo(mapOf("key", "value"));
     }
 
 
@@ -475,23 +463,23 @@ public class SimpleVersionGraphTest {
         SimpleVersionGraph versionGraph = init(asList(v1, v2, v3));
 
         VersionNode versionNode = versionGraph.getVersionNode(v2.revision);
-        assertThat(versionNode.getChangeset(), equalTo(ImmutableMap.of("id", "id2")));
+        assertThat(versionNode.getChangeset()).isEqualTo(ImmutableMap.of("id", "id2"));
         Version<String, String, String> version = versionNode.getVersion();
-        assertNotSame(version, v2);
-        assertThat(version.revision, equalTo(v2.revision));
-        assertThat(version.type, equalTo(v2.type));
-        assertThat(version.branch, equalTo(v2.branch));
-        assertThat(version.parentRevisions, equalTo(v2.parentRevisions));
-        assertThat(version.meta, equalTo(v2.meta));
+        assertThat(version).isNotSameAs(v2);
+        assertThat(version.revision).isEqualTo(v2.revision);
+        assertThat(version.type).isEqualTo(v2.type);
+        assertThat(version.branch).isEqualTo(v2.branch);
+        assertThat(version.parentRevisions).isEqualTo(v2.parentRevisions);
+        assertThat(version.meta).isEqualTo(v2.meta);
         // VersionNode.getVersion() reflects actual changes
-        assertThat(version.changeset, equalTo(ImmutableMap.of("id", "id2")));
+        assertThat(version.changeset).isEqualTo(ImmutableMap.of("id", "id2"));
 
         versionNode = versionGraph.getVersionNode(v3.revision);
-        assertThat(versionNode.getChangeset(), equalTo(ImmutableMap.of("name", "name2")));
+        assertThat(versionNode.getChangeset()).isEqualTo(ImmutableMap.of("name", "name2"));
 
         Merge<String, String, String> merge = versionGraph.mergeBranches(DEFAULT_BRANCH);
-        assertTrue(merge.getConflicts().isEmpty());
-        assertThat(merge.getProperties(), equalTo(ImmutableMap.of("id", "id2", "name", "name2")));
+        assertThat(merge.getConflicts().isEmpty()).isTrue();
+        assertThat(merge.getProperties()).isEqualTo(ImmutableMap.of("id", "id2", "name", "name2"));
     }
 
     @Test
@@ -507,20 +495,20 @@ public class SimpleVersionGraphTest {
                 .build();
 
         SimpleVersionGraph versionGraph = init(asList(v1, v2));
-        assertThat(versionGraph.getBranches(), equalTo(ImmutableSet.of("branch1", "branch2")));
-        assertThat(versionGraph.getHead("branch1"), equalTo(versionGraph.getVersionNode(v1.revision)));
-        assertThat(versionGraph.getHead("branch2"), equalTo(versionGraph.getVersionNode(v2.revision)));
+        assertThat(versionGraph.getBranches()).isEqualTo(ImmutableSet.of("branch1", "branch2"));
+        assertThat(versionGraph.getHead("branch1")).isEqualTo(versionGraph.getVersionNode(v1.revision));
+        assertThat(versionGraph.getHead("branch2")).isEqualTo(versionGraph.getVersionNode(v2.revision));
 
         SimpleVersionGraph at = versionGraph.at(v1.revision);
-        assertThat(at, not(equalTo(versionGraph)));
-        assertThat(at.getBranches(), equalTo(ImmutableSet.of("branch1")));
-        assertThat(at.getHead("branch1"), equalTo(versionGraph.getVersionNode(v1.revision)));
-        assertThat(at.getHead("branch2"), nullValue());
+        assertThat(at).isNotEqualTo(versionGraph);
+        assertThat(at.getBranches()).isEqualTo(ImmutableSet.of("branch1"));
+        assertThat(at.getHead("branch1")).isEqualTo(versionGraph.getVersionNode(v1.revision));
+        assertThat(at.getHead("branch2")).isNull();
 
         versionGraph = at.atTip();
-        assertThat(versionGraph.getBranches(), equalTo(ImmutableSet.of("branch1", "branch2")));
-        assertThat(versionGraph.getHead("branch1"), equalTo(versionGraph.getVersionNode(v1.revision)));
-        assertThat(versionGraph.getHead("branch2"), equalTo(versionGraph.getVersionNode(v2.revision)));
+        assertThat(versionGraph.getBranches()).isEqualTo(ImmutableSet.of("branch1", "branch2"));
+        assertThat(versionGraph.getHead("branch1")).isEqualTo(versionGraph.getVersionNode(v1.revision));
+        assertThat(versionGraph.getHead("branch2")).isEqualTo(versionGraph.getVersionNode(v2.revision));
     }
 
     @Test
@@ -536,13 +524,12 @@ public class SimpleVersionGraphTest {
 
         SimpleVersionGraph versionGraph = init(asList(v1, v2));
         Merge<String, String, String> merge = versionGraph.mergeRevisions(v1.revision, v2.revision);
-        assertThat(merge.getProperties(), equalTo(ImmutableMap.of(
-                "key","value2", "foo","bar", "bar","foo")));
-        assertThat(merge.conflicts.entries(), hasSize(1));
+        assertThat(merge.getProperties()).isEqualTo(ImmutableMap.of("key","value2", "foo","bar", "bar","foo"));
+        assertThat(merge.conflicts.entries()).hasSize(1);
 
-        assertThat("Order doesn't matter",
-                merge.getProperties(),
-                equalTo(versionGraph.mergeRevisions(v2.revision, v1.revision).getProperties()));
+        assertThat(merge.getProperties())
+                .withFailMessage("Order doesn't matter")
+                .isEqualTo(versionGraph.mergeRevisions(v2.revision, v1.revision).getProperties());
     }
 
     @Test
@@ -554,14 +541,14 @@ public class SimpleVersionGraphTest {
                 .changeset(ImmutableMap.of("key", "value2"))
                 .build();
 
-        assertThat(v1.revision, lessThan(v2.revision));
+        assertThat(v1.revision).isLessThan(v2.revision);
 
         SimpleVersionGraph versionGraph = init(asList(v2, v1));
         Merge<String, String, String> merge = versionGraph.mergeBranches(DEFAULT_BRANCH);
         // Insertion order doesn't affect merge
-        assertThat(merge.getProperties().get("key"), equalTo("value2"));
+        assertThat(merge.getProperties().get("key")).isEqualTo("value2");
 
-        assertThat(versionGraph.getTip().revision, equalTo(v1.revision));
+        assertThat(versionGraph.getTip().revision).isEqualTo(v1.revision);
     }
 
     @Test
@@ -570,7 +557,7 @@ public class SimpleVersionGraphTest {
                 .changeset(mapOf("key1", null, "key2", null))
                 .build();
         SimpleVersionGraph graph = init(v1);
-        assertThat(graph.getTip().getChangeset().isEmpty(), equalTo(true));
+        assertThat(graph.getTip().getChangeset().isEmpty()).isEqualTo(true);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -584,8 +571,8 @@ public class SimpleVersionGraphTest {
 
     @Test
     public void is_empty() {
-        assertThat(init().isEmpty(), equalTo(true));
-        assertThat(init(new Builder().build()).isEmpty(), equalTo(false));
+        assertThat(init().isEmpty()).isEqualTo(true);
+        assertThat(init(new Builder().build()).isEmpty()).isEqualTo(false);
     }
 
     @Test
@@ -593,19 +580,20 @@ public class SimpleVersionGraphTest {
         Revision r1 = new Revision(),
                 r2 = new Revision();
         SimpleVersionGraph graph = init(builder(r1).branch("b1").build(), builder(r2).branch("b2").build());
-        assertThat(graph.getHeadRevisions(), equalTo(asList(r1, r2)));
-        assertThat(copyOf(graph.getHeadRevisions("b1")), equalTo(ImmutableSet.of(r1)));
-        assertThat(copyOf(graph.getHeadRevisions("b2")), equalTo(ImmutableSet.of(r2)));
+        assertThat(graph.getHeadRevisions()).isEqualTo(asList(r1, r2));
+        assertThat(copyOf(graph.getHeadRevisions("b1"))).isEqualTo(ImmutableSet.of(r1));
+        assertThat(copyOf(graph.getHeadRevisions("b2"))).isEqualTo(ImmutableSet.of(r2));
     }
 
-    private int findIndex(List<VersionExpectation> expectations, int versionNumber) {
-        for (int i=0; i < expectations.size(); i++) {
-            Revision revision = expectations.get(i).getRevision();
-            if (revision != null && revision.equals(REV[versionNumber])) {
-                return i;
-            }
-        }
-        throw new VersionNotFoundException(REV[versionNumber]);
+    @Test
+    public void containsAll() {
+        SimpleVersionGraph graph = init();
+        assertThat(graph.containsAll(new ArrayList<>())).isTrue();
+
+        Revision r1 = new Revision(), r2 = new Revision();
+        graph = init(builder(r1).build(), builder(r2).build());
+        assertThat(graph.containsAll(asList(r1, r2))).isTrue();
+        assertThat(graph.containsAll(asList(r1, new Revision()))).isFalse();
     }
 
     private void runExpectations(SimpleVersionGraph versionGraph, List<VersionExpectation> expectations) {
@@ -630,9 +618,9 @@ public class SimpleVersionGraphTest {
             for (BranchAndRevision leaf : versionGraph.getHeads().keys()) {
                 heads.add(leaf.revision);
             }
-            assertThat(title("heads", revision, expectation),
-                    heads,
-                    equalTo(expectation.expectedHeads));
+            assertThat(heads)
+                    .withFailMessage(title("heads", revision, expectation))
+                    .isEqualTo(expectation.expectedHeads);
         }
     }
 
@@ -644,17 +632,17 @@ public class SimpleVersionGraphTest {
             } else {
                 merge = versionGraph.mergeRevisions(expectation.mergeRevisions);
             }
-            assertThat(title("mergeHeads", revision, expectation),
-                    merge.getMergeHeads(),
-                    equalTo(expectation.expectedMergeHeads));
+            assertThat(merge.getMergeHeads())
+                    .withFailMessage(title("mergeHeads", revision, expectation))
+                    .isEqualTo(expectation.expectedMergeHeads);
 
-            assertThat(title("properties", revision, expectation),
-                    merge.getProperties(),
-                    equalTo(expectation.expectedProperties));
+            assertThat(merge.getProperties())
+                    .withFailMessage(title("properties", revision, expectation))
+                    .isEqualTo(expectation.expectedProperties);
 
-            assertThat(title("conflicts", revision, expectation),
-                    Multimaps.transformValues(merge.conflicts, merge.getVersionPropertyValue),
-                    equalTo(expectation.expectedConflicts));
+            assertThat(Multimaps.transformValues(merge.conflicts, merge.getVersionPropertyValue))
+                    .withFailMessage(title("conflicts", revision, expectation))
+                    .isEqualTo(expectation.expectedConflicts);
         } catch (RuntimeException e) {
             throw new AssertionError(title("merge", revision, expectation), e);
         }

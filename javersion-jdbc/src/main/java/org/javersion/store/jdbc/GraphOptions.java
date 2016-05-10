@@ -15,29 +15,42 @@
  */
 package org.javersion.store.jdbc;
 
-import java.util.function.Function;
-import java.util.function.Predicate;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.annotation.concurrent.Immutable;
-
 import org.javersion.core.KeepHeadsAndNewest;
 import org.javersion.core.VersionNode;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
 import org.javersion.util.Check;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.annotation.concurrent.Immutable;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 @Immutable
 public class GraphOptions<Id, M> {
 
     public static <Id, M> GraphOptions<Id, M> keepHeadsAndNewest(final int count, final int compactThreshold) {
-        Check.that(count >= 0, "count should be >= 0");
         Check.that(compactThreshold > count, "compactThreshold should be > count");
-        return new GraphOptions<>(
-                g -> g.size() - g.getHeads().size() >=  compactThreshold,
-                (g) -> new KeepHeadsAndNewest<>(g, count)
-        );
+        return new GraphOptions<>(sizeExcludingHeadsExceeds(compactThreshold), keepHeadsAndNewest(count));
+    }
+
+    public static <M> Predicate<ObjectVersionGraph<M>> sizeExcludingHeadsExceeds(int compactThreshold) {
+        Check.that(compactThreshold > 0, "compactThreshold should be > 0");
+        return g -> g.size() - g.getHeads().size() >=  compactThreshold;
+    }
+
+    public static <M> Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> keepHeadsAndNewest(int count) {
+        Check.that(count >= 0, "count should be >= 0");
+        return g -> new KeepHeadsAndNewest<>(g, count);
+    }
+
+    public static <M> Predicate<ObjectVersionGraph<M>> never() {
+        return  g -> false;
+    }
+
+    public static <M> Function<ObjectVersionGraph<M>, Predicate<VersionNode<PropertyPath, Object, M>>> all() {
+        return g -> v -> true;
     }
 
     @Nonnull
@@ -62,8 +75,8 @@ public class GraphOptions<Id, M> {
             if (optimizeKeep != null) {
                 throw new IllegalArgumentException("compactKeep requires compactWhen");
             }
-            this.optimizeWhen = g -> false;
-            this.optimizeKeep = g -> v -> true;
+            this.optimizeWhen = never();
+            this.optimizeKeep = all();
         }
     }
 

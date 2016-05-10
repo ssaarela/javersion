@@ -1,5 +1,21 @@
 package org.javersion.store.jdbc;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableMap;
+import com.querydsl.sql.SQLQueryFactory;
+import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.javersion.core.Revision;
+import org.javersion.object.ObjectVersion;
+import org.javersion.object.ObjectVersionGraph;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
+
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.core.Revision.NODE;
@@ -7,32 +23,12 @@ import static org.javersion.path.PropertyPath.ROOT;
 import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
 import static org.javersion.store.sql.QDocumentVersion.documentVersion;
 
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Resource;
-
-import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.javersion.core.Revision;
-import org.javersion.object.ObjectVersion;
-import org.javersion.object.ObjectVersionGraph;
-import org.javersion.store.PersistenceTestConfiguration;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import com.google.common.cache.CacheBuilder;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.querydsl.sql.SQLQueryFactory;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
-public class VersionGraphCacheTest {
+public class GuavaGraphCacheTest {
 
     @Resource
-    DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> documentStore;
+    DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> documentStore;
 
     @Resource
     SQLQueryFactory queryFactory;
@@ -42,14 +38,14 @@ public class VersionGraphCacheTest {
 
     @Test
     public void load_and_refresh() {
-        VersionGraphCache<String, Void> cache = newRefreshingCache();
+        GuavaGraphCache<String, String> cache = newRefreshingCache();
 
         String docId = randomUUID().toString();
 
-        ObjectVersionGraph<Void> versionGraph = cache.load(docId);
+        ObjectVersionGraph<String> versionGraph = cache.load(docId);
         assertThat(versionGraph.isEmpty()).isTrue();
 
-        ObjectVersion<Void> version = ObjectVersion.<Void>builder()
+        ObjectVersion<String> version = ObjectVersion.<String>builder()
                 .changeset(ImmutableMap.of(ROOT.property("property"), "value"))
                 .build();
         documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
@@ -59,7 +55,7 @@ public class VersionGraphCacheTest {
         assertThat(versionGraph.isEmpty()).isFalse();
         assertThat(versionGraph.getTip().getVersion()).isEqualTo(version);
 
-        version = ObjectVersion.<Void>builder()
+        version = ObjectVersion.<String>builder()
                 .changeset(ImmutableMap.of(ROOT.property("property"), "value2"))
                 .build();
         documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
@@ -78,13 +74,13 @@ public class VersionGraphCacheTest {
     @Test
     public void manual_refresh() {
         String docId = randomUUID().toString();
-        VersionGraphCache<String, Void> cache = newNonRefreshingCache();
+        GuavaGraphCache<String, String> cache = newNonRefreshingCache();
 
 
-        ObjectVersionGraph<Void> versionGraph = cache.load(docId);
+        ObjectVersionGraph<String> versionGraph = cache.load(docId);
         assertThat(versionGraph.isEmpty()).isTrue();
 
-        ObjectVersion<Void> version = ObjectVersion.<Void>builder()
+        ObjectVersion<String> version = ObjectVersion.<String>builder()
                 .changeset(ImmutableMap.of(ROOT.property("property"), "value"))
                 .build();
         documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
@@ -100,31 +96,13 @@ public class VersionGraphCacheTest {
     }
 
     @Test
-    public void auto_refresh_published_values() {
-        String docId = randomUUID().toString();
-        VersionGraphCache<String, Void> cache = newNonRefreshingCache();
-        ObjectVersionGraph<Void> versionGraph = cache.load(docId);
-        assertThat(versionGraph.isEmpty()).isTrue();
-
-        ObjectVersion<Void> version = ObjectVersion.<Void>builder()
-                .changeset(ImmutableMap.of(ROOT.property("property"), "value"))
-                .build();
-        documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
-        assertThat(cache.publish()).isEqualTo(ImmutableSet.of(docId));
-
-        versionGraph = cache.load(docId);
-        assertThat(versionGraph.isEmpty()).isFalse();
-        assertThat(versionGraph.getTip().getVersion()).isEqualTo(version);
-    }
-
-    @Test
     public void clear_cache() throws InterruptedException {
         String docId = randomUUID().toString();
-        VersionGraphCache<String, Void> cache = newNonRefreshingCache();
+        GuavaGraphCache<String, String> cache = newNonRefreshingCache();
 
-        ObjectVersion<Void> version = ObjectVersion.<Void>builder().build(); // empty version
+        ObjectVersion<String> version = ObjectVersion.<String>builder().build(); // empty version
         documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
-        cache.publish();
+        documentStore.publish();
 
         assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
 
@@ -141,11 +119,12 @@ public class VersionGraphCacheTest {
     @Test
     public void return_empty_if_fetch_fails() throws InterruptedException {
         String docId = randomUUID().toString();
-        VersionGraphCache<String, Void> cache = newRefreshingCache();
+        GuavaGraphCache<String, String> cache = newRefreshingCache();
 
-        ObjectVersion<Void> version = ObjectVersion.<Void>builder().build(); // empty version
+        ObjectVersion<String> version = ObjectVersion.<String>builder().build(); // empty version
         documentStore.append(docId, ObjectVersionGraph.init(version).getTip());
-        cache.publish();
+
+        publish(cache, docId);
 
         assertThat(cache.load(docId).isEmpty()).isEqualTo(false);
 
@@ -159,27 +138,27 @@ public class VersionGraphCacheTest {
     @Test
     public void auto_refresh_only_cached_graphs() {
         final MutableBoolean cacheRefreshed = new MutableBoolean(false);
-        DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>> proxyStore = new DocumentVersionStoreJdbc<String, Void, JDocumentVersion<String>>(documentStore.options) {
+        DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>> proxyStore = new DocumentVersionStoreJdbc<String, String, JDocumentVersion<String>>(documentStore.options) {
             @Override
-            protected FetchResults<String, Void> doFetch(String docId, boolean optimized) {
+            protected FetchResults<String, String> doFetch(String docId, boolean optimized) {
                 cacheRefreshed.setTrue();
                 throw new RuntimeException("Should not refresh!");
             }
         };
 
         String docId = randomUUID().toString();
-        VersionGraphCache<String, Void> cache = new VersionGraphCache<String, Void>(proxyStore,
+        GuavaGraphCache<String, String> cache = new GuavaGraphCache<String, String>(proxyStore,
                 // Non-refreshing cache
-                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
+                CacheBuilder.<String, ObjectVersionGraph<String>>newBuilder()
                         .maximumSize(8));
 
-        ObjectVersion<Void> version = ObjectVersion.<Void>builder()
+        ObjectVersion<String> version = ObjectVersion.<String>builder()
                 .changeset(ImmutableMap.of(ROOT.property("property"), "value"))
                 .build();
         proxyStore.append(docId, ObjectVersionGraph.init(version).getTip());
 
         // This should not refresh cache as docId is not cached!
-        cache.publish();
+        cache.refresh(docId);
         assertThat(cacheRefreshed.getValue()).isFalse();
     }
 
@@ -200,8 +179,8 @@ public class VersionGraphCacheTest {
      */
     @Test
     public void compact_keep_heads_and_one_newest() {
-        ObjectVersionGraph<Void> graph = ObjectVersionGraph.init();
-        VersionGraphCache<String, Void> cache = newRefreshingCache(1, keepHeadsAndNewest(1, 2));
+        ObjectVersionGraph<String> graph = ObjectVersionGraph.init();
+        GuavaGraphCache<String, String> cache = newRefreshingCache(1, keepHeadsAndNewest(1, 2));
 
         final String docId = randomUUID().toString();
         final Revision v1 = new Revision(1, NODE),
@@ -212,32 +191,32 @@ public class VersionGraphCacheTest {
                 v6 = new Revision(6, NODE),
                 v7 = new Revision(7, NODE);
 
-        graph = graph.commit(ObjectVersion.<Void>builder(v1).build());
+        graph = graph.commit(ObjectVersion.<String>builder(v1).build());
         documentStore.append(docId, graph.getTip());
-        graph = graph.commit(ObjectVersion.<Void>builder(v2).parents(v1).build());
+        graph = graph.commit(ObjectVersion.<String>builder(v2).parents(v1).build());
         documentStore.append(docId, graph.getTip());
         assertCacheContains(cache, docId, v1, v2);
 
         // v1 is dropped
-        graph = graph.commit(ObjectVersion.<Void>builder(v3).parents(v2).build());
+        graph = graph.commit(ObjectVersion.<String>builder(v3).parents(v2).build());
         documentStore.append(docId, graph.getTip());
         assertCacheContains(cache, docId, v2, v3);
 
         // heads v5 and v4 + one newer (v3) and LCA (v2) are kept
-        graph = graph.commit(ObjectVersion.<Void>builder(v4).parents(v2).build());
+        graph = graph.commit(ObjectVersion.<String>builder(v4).parents(v2).build());
         documentStore.append(docId, graph.getTip());
-        graph = graph.commit(ObjectVersion.<Void>builder(v5).parents(v3).build());
+        graph = graph.commit(ObjectVersion.<String>builder(v5).parents(v3).build());
         documentStore.append(docId, graph.getTip());
 
         assertCacheContains(cache, docId, v2, v3, v4, v5);
 
         // v3 is dropped
-        graph = graph.commit(ObjectVersion.<Void>builder(v6).parents(v5).build());
+        graph = graph.commit(ObjectVersion.<String>builder(v6).parents(v5).build());
         documentStore.append(docId, graph.getTip());
         assertCacheContains(cache, docId, v2, v4, v5, v6);
 
         // all other than tip (v7) and second newest are dropped
-        graph = graph.commit(ObjectVersion.<Void>builder(v7).parents(v6, v4).build());
+        graph = graph.commit(ObjectVersion.<String>builder(v7).parents(v6, v4).build());
         documentStore.append(docId, graph.getTip());
 
         // Optimizing storage doesn't effect cache...
@@ -245,7 +224,7 @@ public class VersionGraphCacheTest {
 
         transactionTemplate.execute(status -> {
             documentStore.updateBatch(docId)
-                    .optimize(documentStore.loadOptimized(docId), v -> v.revision.equals(v7))
+                    .optimize(documentStore.getOptimizedGraph(docId), v -> v.revision.equals(v7))
                     .execute();
             return null;
         });
@@ -266,32 +245,37 @@ public class VersionGraphCacheTest {
         new GraphOptions<String, String>(null, (g) -> v -> true);
     }
 
-    private void assertCacheContains(VersionGraphCache<String, Void> cache, String docId, Revision... revisions) {
-        cache.publish();
-        ObjectVersionGraph<Void> graph = cache.load(docId);
+    private void assertCacheContains(GuavaGraphCache<String, String> cache, String docId, Revision... revisions) {
+        publish(cache, docId);
+        ObjectVersionGraph<String> graph = cache.load(docId);
         assertThat(graph.size()).isEqualTo(revisions.length);
         for (Revision revision : revisions) {
             assertThat(graph.contains(revision)).isTrue().overridingErrorMessage("%s not found", revision);
         }
     }
 
-    private VersionGraphCache<String, Void> newRefreshingCache() {
+    private void publish(GuavaGraphCache<String, String> cache, String docId) {
+        documentStore.publish();
+        cache.refresh(docId);
+    }
+
+    private GuavaGraphCache<String, String> newRefreshingCache() {
         return newRefreshingCache(1, new GraphOptions<>());
     }
 
-    private VersionGraphCache<String, Void> newRefreshingCache(long refreshAfterNanos, GraphOptions<String, Void> graphOptions) {
-        return new VersionGraphCache<>(documentStore,
-                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
+    private GuavaGraphCache<String, String> newRefreshingCache(long refreshAfterNanos, GraphOptions<String, String> graphOptions) {
+        return new GuavaGraphCache<>(documentStore,
+                CacheBuilder.<String, ObjectVersionGraph<String>>newBuilder()
                         .maximumSize(8)
                         .refreshAfterWrite(refreshAfterNanos, TimeUnit.NANOSECONDS),
                 graphOptions
         );
     }
 
-    private VersionGraphCache<String, Void> newNonRefreshingCache() {
-        return new VersionGraphCache<>(documentStore,
+    private GuavaGraphCache<String, String> newNonRefreshingCache() {
+        return new GuavaGraphCache<>(documentStore,
                 // Non-refreshing cache
-                CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
+                CacheBuilder.<String, ObjectVersionGraph<String>>newBuilder()
                         .maximumSize(8));
     }
 }

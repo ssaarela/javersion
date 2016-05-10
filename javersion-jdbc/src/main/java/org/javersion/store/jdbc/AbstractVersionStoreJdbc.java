@@ -15,43 +15,6 @@
  */
 package org.javersion.store.jdbc;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static com.querydsl.core.group.GroupBy.groupBy;
-import static com.querydsl.core.types.Ops.EQ;
-import static com.querydsl.core.types.Ops.IN;
-import static com.querydsl.core.types.Projections.tuple;
-import static com.querydsl.core.types.dsl.Expressions.constant;
-import static com.querydsl.core.types.dsl.Expressions.predicate;
-import static java.lang.System.arraycopy;
-import static java.util.Arrays.asList;
-import static java.util.Collections.newSetFromMap;
-import static java.util.Collections.singleton;
-import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
-import static org.javersion.store.jdbc.VersionStatus.ACTIVE;
-import static org.javersion.store.jdbc.VersionStatus.REDUNDANT;
-import static org.javersion.store.jdbc.VersionStatus.SQUASHED;
-
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
-import javax.annotation.Nonnull;
-
-import org.javersion.core.Persistent;
-import org.javersion.core.Revision;
-import org.javersion.core.VersionNode;
-import org.javersion.core.VersionNotFoundException;
-import org.javersion.core.VersionType;
-import org.javersion.object.ObjectVersion;
-import org.javersion.object.ObjectVersionGraph;
-import org.javersion.path.PropertyPath;
-import org.javersion.util.Check;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.collect.*;
 import com.querydsl.core.ResultTransformer;
 import com.querydsl.core.Tuple;
@@ -68,6 +31,34 @@ import com.querydsl.sql.SQLQuery;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.types.EnumByNameType;
 import com.querydsl.sql.types.EnumByOrdinalType;
+import org.javersion.core.*;
+import org.javersion.object.ObjectVersion;
+import org.javersion.object.ObjectVersionGraph;
+import org.javersion.path.PropertyPath;
+import org.javersion.util.Check;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static com.google.common.base.MoreObjects.firstNonNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.querydsl.core.group.GroupBy.groupBy;
+import static com.querydsl.core.types.Ops.EQ;
+import static com.querydsl.core.types.Ops.IN;
+import static com.querydsl.core.types.Projections.tuple;
+import static com.querydsl.core.types.dsl.Expressions.constant;
+import static com.querydsl.core.types.dsl.Expressions.predicate;
+import static java.lang.System.arraycopy;
+import static java.util.Arrays.asList;
+import static java.util.Collections.*;
+import static org.javersion.store.jdbc.RevisionType.REVISION_TYPE;
+import static org.javersion.store.jdbc.VersionStatus.*;
 
 public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
         Batch extends AbstractUpdateBatch<Id, M, V, Options, Batch>,
@@ -104,6 +95,10 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
     protected final Set<Id> runningOptimizations = newSetFromMap(new ConcurrentHashMap<>());
 
+    protected final GraphCache<Id, M> cache;
+
+    protected final Function<Id, ObjectVersionGraph<M>> cacheLoader;
+
     /**
      * No-args constructor for proxies
      */
@@ -112,6 +107,8 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
         versionAndParentColumns = null;
         versionAndParents = null;
         properties = null;
+        cache = null;
+        cacheLoader = null;
     }
 
     public AbstractVersionStoreJdbc(Options options) {
@@ -122,20 +119,37 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
 
         Expression<?>[] propertyColumns = without(options.property.all(), options.property.revision);
         properties = groupBy(options.property.revision).as(GroupBy.list(tuple(propertyColumns)));
+
+        this.cache = options.cacheBuilder.apply(this);
+        this.cacheLoader = this.cache != null ? this.cache::load : this::getOptimizedGraph;
     }
 
     @Override
-    public ObjectVersionGraph<M> load(Id docId) {
+    public ObjectVersionGraph<M> getFullGraph(Id docId) {
         return options.transactions.readOnly(() -> doLoad(docId));
     }
 
     @Override
-    public ObjectVersionGraph<M> loadOptimized(Id docId) {
+    public ObjectVersionGraph<M> getGraph(Id docId) {
+        return getGraph(docId, emptyList());
+    }
+
+    @Override
+    public ObjectVersionGraph<M> getGraph(Id docId, Iterable<Revision> revisions) {
+        ObjectVersionGraph<M> graph = cacheLoader.apply(docId);
+        if (!graph.containsAll(revisions)) {
+            return getFullGraph(docId);
+        }
+        return graph;
+    }
+
+    @Override
+    public ObjectVersionGraph<M> getOptimizedGraph(Id docId) {
         return options.transactions.readOnly(() -> doLoadOptimized(docId));
     }
 
     @Override
-    public GraphResults<Id, M> load(Collection<Id> docIds) {
+    public GraphResults<Id, M> getGraphs(Collection<Id> docIds) {
         return options.transactions.readOnly(() -> doLoad(docIds));
     }
 
@@ -145,15 +159,15 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
     }
 
     /**
-     * NOTE: publish() needs to be called in a separate transaction from append()!
-     * E.g. (a)synchronously from TransactionSynchronization.afterCommit.
-     *
-     * Calling publish() in the same transaction with append() severely limits concurrency
-     * and might end up in deadlock.
+     * NOTE: publish() is called in a new transaction to ensure it sees only committed versions.
      */
     @Override
     public Multimap<Id, Revision> publish() {
-        return options.transactions.writeRequired(this::doPublish);
+        Multimap<Id, Revision> result = options.transactions.writeNewRequired(this::doPublish);
+        if (this.cache != null) {
+            result.keySet().forEach(this.cache::refresh);
+        }
+        return result;
     }
 
     @Override
@@ -240,7 +254,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
             ObjectVersionGraph<M> graph;
             try {
                 graph = ObjectVersionGraph.init(fetchResults.getVersions(docId));
-                if (options.graphOptions.optimizeWhen.test(graph)) {
+                if (options.optimizeWhen.test(graph)) {
                     optimizeAsync(docId, graph, false);
                 }
             } catch (VersionNotFoundException e) {
@@ -295,7 +309,7 @@ public abstract class AbstractVersionStoreJdbc<Id, M, V extends JVersion<Id>,
             options.optimizer.execute(() -> {
                 try {
                     options.transactions.writeNewRequired(() -> {
-                        doOptimize(docId, baseGraph, options.graphOptions.optimizeKeep, reset);
+                        doOptimize(docId, baseGraph, options.optimizeKeep, reset);
                         return null;
                     });
                 } finally {

@@ -1,27 +1,9 @@
 package org.javersion.store.jdbc;
 
-import static java.lang.System.currentTimeMillis;
-import static java.util.concurrent.Executors.newFixedThreadPool;
-import static org.javersion.path.PropertyPath.ROOT;
-import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
-import static org.javersion.store.jdbc.ExecutorType.ASYNC;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.Resource;
-
+import com.google.common.cache.CacheBuilder;
 import org.javersion.object.ObjectVersion;
 import org.javersion.object.ObjectVersionGraph;
 import org.javersion.path.PropertyPath;
-import org.javersion.store.PersistenceTestConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -31,7 +13,18 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.google.common.cache.CacheBuilder;
+import javax.annotation.Resource;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.System.currentTimeMillis;
+import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.store.jdbc.ExecutorType.ASYNC;
+import static org.javersion.store.jdbc.GraphOptions.keepHeadsAndNewest;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = PersistenceTestConfiguration.class)
@@ -61,7 +54,7 @@ public class LoadTest {
 
     private VersionStore<String, String> store;
 
-    private VersionGraphCache<String, String> cache;
+    private GuavaGraphCache<String, String> cache;
 
     @Resource
     DocumentStoreOptions<String, String, JDocumentVersion<String>> documentStoreOptions;
@@ -111,7 +104,7 @@ public class LoadTest {
     private void run(List<String> docIds) throws IOException, InterruptedException {
         storeName = store.getClass().getSimpleName();
 
-        cache = new VersionGraphCache<>(store,
+        cache = new GuavaGraphCache<>(store,
                 CacheBuilder.<String, ObjectVersionGraph<Void>>newBuilder()
                         .maximumSize(docIds.size())
                         .refreshAfterWrite(1, TimeUnit.NANOSECONDS),
@@ -176,7 +169,7 @@ public class LoadTest {
 
         // Load full
         long ts = currentTimeMillis();
-        versionGraph = store.load(docId);
+        versionGraph = store.getFullGraph(docId);
         final long loadSize = versionGraph.size();
         final long loadTime = currentTimeMillis() - ts;
 
@@ -184,7 +177,7 @@ public class LoadTest {
 
         // Load optimized
         ts = currentTimeMillis();
-        versionGraph = store.loadOptimized(docId);
+        versionGraph = store.getOptimizedGraph(docId);
         final long optimizedSize = versionGraph.size();
         final long optimizedTime = currentTimeMillis() - ts;
 
