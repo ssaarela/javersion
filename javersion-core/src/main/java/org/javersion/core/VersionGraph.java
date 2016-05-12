@@ -44,9 +44,9 @@ public interface VersionGraph<K, V, M> {
 
     PersistentSortedMap<BranchAndRevision, VersionNode<K, V, M>> getHeads();
 
-    Iterable<Revision> getHeadRevisions();
+    Set<Revision> getHeadRevisions();
 
-    Iterable<Revision> getHeadRevisions(String branch);
+    Set<Revision> getHeadRevisions(String branch);
 
     VersionGraph<K, V, M> at(Revision revision);
 

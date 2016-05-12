@@ -15,30 +15,28 @@
  */
 package org.javersion.core;
 
-import static com.google.common.collect.Iterables.getFirst;
-import static com.google.common.collect.Iterables.transform;
-import static com.google.common.collect.Lists.reverse;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.unmodifiableList;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
-import static org.javersion.core.BranchAndRevision.max;
-import static org.javersion.core.BranchAndRevision.min;
-import static org.javersion.util.MapUtils.mapValueFunction;
-
-import java.util.*;
-import java.util.function.Predicate;
-
-import javax.annotation.concurrent.Immutable;
-import javax.annotation.concurrent.NotThreadSafe;
-
+import com.google.common.base.Function;
+import com.google.common.collect.*;
 import org.javersion.util.PersistentMap;
 import org.javersion.util.PersistentSortedMap;
 import org.javersion.util.PersistentTreeMap;
 
-import com.google.common.base.Function;
-import com.google.common.collect.*;
+import javax.annotation.concurrent.Immutable;
+import javax.annotation.concurrent.NotThreadSafe;
+import java.util.*;
+import java.util.function.Predicate;
+
+import static com.google.common.collect.Iterables.getFirst;
+import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Lists.reverse;
+import static java.util.Arrays.asList;
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.StreamSupport.stream;
+import static org.javersion.core.BranchAndRevision.max;
+import static org.javersion.core.BranchAndRevision.min;
+import static org.javersion.util.MapUtils.mapValueFunction;
 
 @Immutable
 public abstract class AbstractVersionGraph<K, V, M,
@@ -140,13 +138,13 @@ public abstract class AbstractVersionGraph<K, V, M,
     }
 
     @Override
-    public final Iterable<Revision> getHeadRevisions() {
-        return getHeads().valueStream().map(VersionNode::getRevision).collect(toList());
+    public final Set<Revision> getHeadRevisions() {
+        return unmodifiableSet(getHeads().valueStream().map(VersionNode::getRevision).collect(toSet()));
     }
 
     @Override
-    public final Iterable<Revision> getHeadRevisions(String branch) {
-        return Iterables.transform(getHeads(branch), VersionNode::getRevision);
+    public final Set<Revision> getHeadRevisions(String branch) {
+        return unmodifiableSet(stream(getHeads(branch).spliterator(), false).map(VersionNode::getRevision).collect(toSet()));
     }
 
     @Override
@@ -156,6 +154,9 @@ public abstract class AbstractVersionGraph<K, V, M,
 
     @Override
     public final This atTip() {
+        if (at == tip) {
+            return self();
+        }
         return newBuilder().at(getTip()).build();
     }
 

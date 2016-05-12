@@ -512,6 +512,12 @@ public class SimpleVersionGraphTest {
     }
 
     @Test
+    public void tip_of_tip_is_same_instance() {
+        SimpleVersionGraph graph = init();
+        assertThat(graph.atTip()).isSameAs(graph);
+    }
+
+    @Test
     public void merge_revisions() {
         SimpleVersion v1 = new Builder()
                 .branch("branch1")
@@ -580,7 +586,7 @@ public class SimpleVersionGraphTest {
         Revision r1 = new Revision(),
                 r2 = new Revision();
         SimpleVersionGraph graph = init(builder(r1).branch("b1").build(), builder(r2).branch("b2").build());
-        assertThat(graph.getHeadRevisions()).isEqualTo(asList(r1, r2));
+        assertThat(graph.getHeadRevisions()).isEqualTo(ImmutableSet.of(r1, r2));
         assertThat(copyOf(graph.getHeadRevisions("b1"))).isEqualTo(ImmutableSet.of(r1));
         assertThat(copyOf(graph.getHeadRevisions("b2"))).isEqualTo(ImmutableSet.of(r2));
     }
