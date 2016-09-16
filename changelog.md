@@ -1,4 +1,4 @@
-WIP: 0.14 JDBC-Based Persistence Optimization
+0.14 JDBC-Based Persistence Optimization
 =============================================
 
 New Features
@@ -12,7 +12,7 @@ New Features
     * Configurable executor: ASYNC, SYNC, NONE or custom
   * Configurable cache
     * Guava Cache based implementation
-      * Configurable compaction strategy (when and what)
+    * Configurable compaction strategy (when and what)
   * PostgreSQL specific optimizations
     * [javersion-jdbc/src/test/resources/db/migration/postgresql](javersion-jdbc/src/test/resources/db/migration/postgresql)
     * Querydsl SQLTemplates: `org.javersion.store.jdbc.PostgreSQLTemplatesForNoKeyUpdate`
