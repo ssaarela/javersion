@@ -15,29 +15,26 @@
  */
 package org.javersion.path;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Long.parseLong;
-import static org.apache.commons.lang3.StringEscapeUtils.unescapeEcmaScript;
-import static org.javersion.path.NodeId.ROOT_ID;
-
-import java.util.Iterator;
-import java.util.List;
-
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.javersion.path.NodeId.IndexId;
 import org.javersion.path.NodeId.KeyId;
 import org.javersion.path.NodeId.PropertyId;
-import org.javersion.path.PropertyPath.SubPath;
 import org.javersion.path.parser.PropertyPathBaseVisitor;
 import org.javersion.path.parser.PropertyPathLexer;
 import org.javersion.path.parser.PropertyPathParser;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import java.util.List;
 
-public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable<SubPath>{
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Long.parseLong;
+import static org.apache.commons.lang3.StringEscapeUtils.unescapeEcmaScript;
+import static org.javersion.path.NodeId.ROOT_ID;
+
+public abstract class PropertyPath implements Comparable<PropertyPath> {
 
     private static final class SilentParseException extends RuntimeException {
         public SilentParseException() {
@@ -202,14 +199,10 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
     public final PropertyPath path(PropertyPath path) {
         PropertyPath result = this;
-        for (SubPath subPath : path) {
+        for (SubPath subPath : path.asList()) {
             result = subPath.withParent(result);
         }
         return result;
-    }
-
-    public Iterator<SubPath> iterator() {
-        return asList().iterator();
     }
 
     public List<SubPath> asList() {
@@ -235,7 +228,7 @@ public abstract class PropertyPath implements Comparable<PropertyPath>, Iterable
 
     public PropertyPath toSchemaPath() {
         PropertyPath schemaPath = ROOT;
-        for (SubPath path : this) {
+        for (SubPath path : asList()) {
             schemaPath = path.toSchemaPath(schemaPath);
         }
         return schemaPath;

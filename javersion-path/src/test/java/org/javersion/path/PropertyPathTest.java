@@ -15,25 +15,24 @@
  */
 package org.javersion.path;
 
-import static com.google.common.collect.Sets.newHashSet;
-import static java.lang.Long.MIN_VALUE;
-import static java.util.Arrays.asList;
-import static org.javersion.path.PropertyPath.ROOT;
-import static org.javersion.path.PropertyPath.parse;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
-import org.assertj.core.api.*;
 import org.javersion.path.PropertyPath.Key;
 import org.javersion.path.PropertyPath.Property;
 import org.javersion.path.PropertyPath.SubPath;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+
+import static com.google.common.collect.Sets.newHashSet;
+import static java.lang.Long.MIN_VALUE;
+import static java.util.Arrays.asList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.javersion.path.PropertyPath.ROOT;
+import static org.javersion.path.PropertyPath.parse;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class PropertyPathTest {
 
@@ -66,8 +65,8 @@ public class PropertyPathTest {
                 children_0_name()
         ));
 
-        Assertions.assertThat(paths.contains(parents_0_name)).isFalse();
-        Assertions.assertThat(paths.contains(children)).isFalse();
+        assertThat(paths.contains(parents_0_name)).isFalse();
+        assertThat(paths.contains(children)).isFalse();
     }
 
     @Test
@@ -441,26 +440,6 @@ public class PropertyPathTest {
 
     public static SubPath children_0_name() {
         return children_0().property("name");
-    }
-
-    public static <K, V> MapAssert<K, V> assertThat(Map<K, V> actual) {
-        return Assertions.assertThat(actual);
-    }
-
-    public static AbstractCharSequenceAssert<?, String> assertThat(String actual) {
-        return Assertions.assertThat(actual);
-    }
-
-    public static AbstractObjectAssert<?, Object> assertThat(Object path) {
-        return Assertions.<Object>assertThat((Object) path);
-    }
-
-    public static <T> AbstractListAssert<?, ? extends List<? extends T>, T> assertThat(List<? extends T> actual) {
-        return Assertions.<T>assertThat(actual);
-    }
-
-    public static AbstractBooleanAssert<?> assertThat(boolean actual) {
-        return Assertions.assertThat(actual);
     }
 
 }

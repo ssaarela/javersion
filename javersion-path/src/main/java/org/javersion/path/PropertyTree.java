@@ -15,16 +15,12 @@
  */
 package org.javersion.path;
 
+import com.google.common.collect.Maps;
+
+import java.util.*;
+
 import static java.util.Collections.unmodifiableCollection;
 import static java.util.Collections.unmodifiableSortedMap;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-
-import com.google.common.collect.Maps;
 
 public class PropertyTree {
 
@@ -36,7 +32,7 @@ public class PropertyTree {
         Map<PropertyPath, PropertyTree> nodes = Maps.newHashMapWithExpectedSize(paths.size());
         for (PropertyPath path : paths) {
             PropertyTree parentTree = getOrCreate(PropertyPath.ROOT, nodes);
-            for (PropertyPath subPath : path) {
+            for (PropertyPath subPath : path.asList()) {
                 PropertyTree childTree = getOrCreate(subPath, nodes);
                 parentTree.children.put(subPath.getNodeId(), childTree);
                 parentTree = childTree;
@@ -84,7 +80,7 @@ public class PropertyTree {
 
     public PropertyTree get(PropertyPath path) {
         PropertyTree match = this;
-        for (PropertyPath node : path) {
+        for (PropertyPath node : path.asList()) {
             match = match.get(node.getNodeId());
             if (match == null) {
                 throw new IllegalArgumentException("path not found: " + path);

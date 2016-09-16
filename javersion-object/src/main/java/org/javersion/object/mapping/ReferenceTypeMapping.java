@@ -33,7 +33,8 @@ public class ReferenceTypeMapping implements TypeMapping {
     private final ObjectTypeMapping<?> objectTypeMapping;
 
     public ReferenceTypeMapping(PropertyPath targetPath, ObjectTypeMapping<?> objectTypeMapping) {
-        this.targetPath = Check.notNullOrEmpty(targetPath, "targetPath");
+        Check.that(targetPath != null && !targetPath.isRoot(), "targetPath should not be null or root");
+        this.targetPath = targetPath;
         this.objectTypeMapping = Check.notNull(objectTypeMapping, "objectTypeMapping");
     }
 
