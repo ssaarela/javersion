@@ -15,11 +15,12 @@
  */
 package org.javersion.reflect;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 
-public abstract class JavaMemberDescriptor<T extends AnnotatedElement & Member> extends MemberDescriptor {
+public abstract class JavaMemberDescriptor<T extends AccessibleObject & AnnotatedElement & Member> extends MemberDescriptor {
 
     public JavaMemberDescriptor(TypeDescriptor declaringType) {
         super(declaringType);

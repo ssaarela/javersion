@@ -15,38 +15,33 @@
  */
 package org.javersion.reflect;
 
-import java.lang.reflect.Parameter;
+import com.thoughtworks.paranamer.Paranamer;
+import org.javersion.util.Check;
 
 import javax.annotation.Nonnull;
-
-import org.javersion.util.Check;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Parameter;
 
 public final class ParameterDescriptor extends MemberDescriptor {
 
     @Nonnull
+    private final AccessibleObject accessibleObject;
+
+    @Nonnull
     private final Parameter parameter;
 
-    public ParameterDescriptor(TypeDescriptor declaringType, Parameter parameter) {
-        super(declaringType);
+    private final int index;
+
+    public ParameterDescriptor(AbstractMethodDescriptor methodDescriptor, Parameter parameter, int index) {
+        super(methodDescriptor.getDeclaringType());
+        this.accessibleObject = methodDescriptor.getElement();
         this.parameter = Check.notNull(parameter, "parameter");
+        this.index = index;
     }
 
     @Override
     Parameter getElement() {
         return parameter;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        } else if (obj instanceof ParameterDescriptor) {
-            ParameterDescriptor other = (ParameterDescriptor) obj;
-            return this.parameter.equals(other.parameter) &&
-                    this.declaringType.equals(other.declaringType);
-        } else {
-            return false;
-        }
     }
 
     public TypeDescriptor getType() {
@@ -61,11 +56,30 @@ public final class ParameterDescriptor extends MemberDescriptor {
         if (parameter.isNamePresent()) {
             return parameter.getName();
         }
-        return null;
+        Paranamer paranamer = getTypeDescriptors().getParanamer();
+        String[] names = paranamer.lookupParameterNames(accessibleObject);
+        return names.length > index ? names[index] : null;
+    }
+
+    AccessibleObject getAccessibleObject() {
+        return accessibleObject;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ParameterDescriptor that = (ParameterDescriptor) o;
+
+        if (!accessibleObject.equals(that.accessibleObject)) return false;
+        return parameter.equals(that.parameter);
     }
 
     @Override
     public int hashCode() {
-        return 31 * getDeclaringType().hashCode() + parameter.hashCode();
+        int result = accessibleObject.hashCode();
+        result = 31 * result + parameter.hashCode();
+        return result;
     }
 }

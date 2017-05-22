@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.javersion.reflect.TypeDescriptors.DEFAULT;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.HashSet;
@@ -26,6 +27,7 @@ public class MethodDescriptorTest {
     }
 
     static class MyClass<T> extends MySuperClass<T> {
+        public MyClass() {}
         @Deprecated
         @Override
         Set<T> method(T first, @Param("rest") Set<T> second) {
@@ -103,6 +105,8 @@ public class MethodDescriptorTest {
         List<ParameterDescriptor> parameters = getMethodDescriptor().getParameters();
         EqualsVerifier.forClass(ParameterDescriptor.class)
                 .withPrefabValues(Parameter.class, parameters.get(0).getElement(), parameters.get(1).getElement())
+                .withPrefabValues(AccessibleObject.class, parameters.get(0).getAccessibleObject(),
+                        getTypeDescriptor().getDefaultConstructor().getElement())
                 .verify();
     }
 

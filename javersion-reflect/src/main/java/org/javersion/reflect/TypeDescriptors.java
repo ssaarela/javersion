@@ -16,13 +16,20 @@
 package org.javersion.reflect;
 
 import java.lang.reflect.*;
+import java.util.Collections;
 import java.util.Map;
+import java.util.WeakHashMap;
 
+import com.thoughtworks.paranamer.BytecodeReadingParanamer;
+import com.thoughtworks.paranamer.CachingParanamer;
+import com.thoughtworks.paranamer.Paranamer;
 import org.javersion.util.Check;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+
+import static java.util.Collections.synchronizedMap;
 
 public final class TypeDescriptors {
 
@@ -35,13 +42,15 @@ public final class TypeDescriptors {
         return DEFAULT.get(clazz);
     }
 
-    private final Map<TypeToken<?>, TypeDescriptor> cache = Maps.newHashMap();
+    private final Map<TypeToken<?>, TypeDescriptor> cache = synchronizedMap(new WeakHashMap<>());
 
     protected final Predicate<? super Field> fieldFilter;
 
     protected final Predicate<? super Method> methodFilter;
 
     protected final Predicate<? super Constructor> constructorFilter;
+
+    protected final Paranamer paranamer = new CachingParanamer(new BytecodeReadingParanamer());
 
 
     public TypeDescriptors() {
@@ -70,15 +79,16 @@ public final class TypeDescriptors {
     }
 
     public TypeDescriptor get(TypeToken<?> typeToken) {
-        synchronized (cache) {
-            TypeDescriptor descriptor = cache.get(typeToken);
-            if (descriptor == null) {
-                descriptor = new TypeDescriptor(this, typeToken);
-                cache.put(typeToken, descriptor);
-            }
-            return descriptor;
+        TypeDescriptor descriptor = cache.get(typeToken);
+        if (descriptor == null) {
+            descriptor = new TypeDescriptor(this, typeToken);
+            cache.put(typeToken, descriptor);
         }
+        return descriptor;
     }
 
+    Paranamer getParanamer() {
+        return paranamer;
+    }
 
 }
