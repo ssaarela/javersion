@@ -12,11 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableSet;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.matchers.JUnitMatchers;
 
 public class MethodDescriptorTest {
 
@@ -38,6 +40,11 @@ public class MethodDescriptorTest {
         @SuppressWarnings("unused")
         private void privateMethod() {}
 
+        @SuppressWarnings("unused")
+        protected void protectedMethod() {}
+
+        @SuppressWarnings("unused")
+        void packagePrivateMethod() {}
     }
 
     @SuppressWarnings("unused")
@@ -144,6 +151,26 @@ public class MethodDescriptorTest {
     }
 
     @Test
+    public void is_public() {
+        assertThat(getTypeDescriptor().getDefaultConstructor().isPublic()).isTrue();
+    }
+
+    @Test
+    public void is_private() {
+        assertThat(getTypeDescriptor().getMethods().get(new MethodSignature("privateMethod")).isPrivate()).isTrue();
+    }
+
+    @Test
+    public void is_package_private() {
+        assertThat(getTypeDescriptor().getMethods().get(new MethodSignature("packagePrivateMethod")).isPackagePrivate()).isTrue();
+    }
+
+    @Test
+    public void is_protected() {
+        assertThat(getTypeDescriptor().getMethods().get(new MethodSignature("protectedMethod")).isProtected()).isTrue();
+    }
+
+    @Test
     public void method_annotations() {
         MethodDescriptor method = getMethodDescriptor();
         method.hasAnnotation(Deprecated.class);
@@ -152,6 +179,15 @@ public class MethodDescriptorTest {
         assertThat(annotations).hasSize(1);
         assertThat(annotations.get(0)).isInstanceOf(Deprecated.class);
 
+    }
+
+    @Test
+    public void parameter_name_via_paranamer() {
+        String parameterName = TypeDescriptors.getTypeDescriptor(Assume.class).getMethods()
+                .get(new MethodSignature("assumeTrue", boolean.class))
+                .getParameters()
+                .get(0).getName();
+        assertThat(parameterName).isEqualTo("b");
     }
 
     @Test
