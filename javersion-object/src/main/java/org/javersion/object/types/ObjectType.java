@@ -17,12 +17,12 @@ package org.javersion.object.types;
 
 import java.util.Map;
 
-import org.javersion.reflect.Property;
+import org.javersion.reflect.AccessibleProperty;
 
 public interface ObjectType extends ValueType {
 
     ObjectIdentifier getIdentifier();
 
-    Map<String, Property> getProperties();
+    Map<String, AccessibleProperty> getProperties();
 
 }

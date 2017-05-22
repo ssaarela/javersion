@@ -15,7 +15,9 @@
  */
 package org.javersion.reflect;
 
-public interface Property {
+public interface AccessibleProperty {
+
+    String getName();
 
     void set(Object object, Object value);
 

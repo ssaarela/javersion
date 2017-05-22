@@ -78,7 +78,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
         private Result<StaticExecutable> creator;
         private ImmutableSet<String> creatorParameters;
         private ObjectIdentifier identifier;
-        private Map<String, Property> properties;
+        private Map<String, AccessibleProperty> properties;
 
         Describe(PropertyPath path, DescribeContext context) {
             this.path = path;
@@ -170,7 +170,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             }
         }
 
-        private void setIdentifier(String name, Property property, TypeContext typeContext) {
+        private void setIdentifier(String name, AccessibleProperty property, TypeContext typeContext) {
             if (identifier != null) {
                 throw new IllegalArgumentException(type.getSimpleName() + " should not have multiple @Id-properties");
             }
@@ -183,7 +183,7 @@ public class ObjectTypeMapping<O> implements TypeMapping {
             identifier = new ObjectIdentifier(property, idType, name);
         }
 
-        private void add(String name, Property property, TypeContext typeContext) {
+        private void add(String name, AccessibleProperty property, TypeContext typeContext) {
             if (!property.isWritable() && !creatorParameters.contains(name)) {
                 throw new IllegalArgumentException(type.getSimpleName() + "."
                         + name + " should have a matching setter or constructor parameter");

@@ -33,8 +33,8 @@ import org.javersion.object.types.SetType.Key;
 import org.javersion.object.types.ValueType;
 import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
+import org.javersion.reflect.AccessibleProperty;
 import org.javersion.reflect.ElementDescriptor;
-import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
@@ -77,11 +77,11 @@ public class SetTypeMapping implements TypeMapping {
 
     public static class PropertyKey implements Key {
 
-        private final Property property;
+        private final AccessibleProperty property;
 
         private final IdentifiableType identifiableType;
 
-        public PropertyKey(Property property, IdentifiableType identifiableType) {
+        public PropertyKey(AccessibleProperty property, IdentifiableType identifiableType) {
             this.property = Check.notNull(property, "property");
             this.identifiableType = Check.notNull(identifiableType, "identifiableType");
         }
@@ -199,7 +199,7 @@ public class SetTypeMapping implements TypeMapping {
             List<Key> keys = new ArrayList<>();
             for (String idProperty : setKey.value()) {
                 IdentifiableType idType = requireIdentifiable(context.getValueType(elementPath.property(idProperty)));
-                Property property = objectType.getProperties().get(idProperty);
+                AccessibleProperty property = objectType.getProperties().get(idProperty);
                 keys.add(new PropertyKey(property, idType));
             }
             return newSetType(keys);

@@ -17,7 +17,7 @@ package org.javersion.reflect;
 
 import org.javersion.util.Check;
 
-public class BeanProperty implements Property {
+public class BeanProperty implements AccessibleProperty {
 
     private final String name;
 

@@ -27,8 +27,8 @@ import org.javersion.object.WriteContext;
 import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
+import org.javersion.reflect.AccessibleProperty;
 import org.javersion.reflect.FieldDescriptor;
-import org.javersion.reflect.Property;
 import org.javersion.reflect.TypeDescriptor;
 import org.javersion.util.Check;
 
@@ -62,7 +62,7 @@ public class BasicObjectType implements ObjectType {
                                      String alias,
                                      ObjectCreator constructor,
                                      ObjectIdentifier identifier,
-                                     Map<String, ? extends Property> properties) {
+                                     Map<String, ? extends AccessibleProperty> properties) {
         if (identifier != null) {
             return new Identifiable(type, alias, constructor, identifier, properties);
         } else {
@@ -70,7 +70,7 @@ public class BasicObjectType implements ObjectType {
         }
     }
 
-    private final Map<String, Property> properties;
+    private final Map<String, AccessibleProperty> properties;
 
     private final ObjectCreator constructor;
 
@@ -84,7 +84,7 @@ public class BasicObjectType implements ObjectType {
                             String alias,
                             ObjectCreator constructor,
                             ObjectIdentifier identifier,
-                            Map<String, ? extends Property> properties) {
+                            Map<String, ? extends AccessibleProperty> properties) {
         this.type = Check.notNull(type, "type");
         this.alias = Check.notNullOrEmpty(alias, "alias");
         this.constructor = constructor;
@@ -123,7 +123,7 @@ public class BasicObjectType implements ObjectType {
         for (PropertyTree child : propertyTree.getChildren()) {
             NodeId nodeId = child.getNodeId();
             if (nodeId.isKey() && !constructor.hasParameter(nodeId.getKey())) {
-                Property property = properties.get(nodeId.getKey());
+                AccessibleProperty property = properties.get(nodeId.getKey());
                 if (property != null && property.isWritable()) {
                     Object value = context.getObject(child);
                     property.set(object, value);
@@ -136,14 +136,14 @@ public class BasicObjectType implements ObjectType {
         return identifier;
     }
 
-    public Map<String, Property> getProperties() {
+    public Map<String, AccessibleProperty> getProperties() {
         return properties;
     }
 
     @Override
     public void serialize(PropertyPath path, Object object, WriteContext context) {
         context.put(path, Persistent.object(alias));
-        BiConsumer<String, Property> propertySerializer = (name, property) -> {
+        BiConsumer<String, AccessibleProperty> propertySerializer = (name, property) -> {
             PropertyPath subPath = path.property(name);
             Object value = property.get(object);
             context.serialize(subPath, value);
@@ -181,7 +181,7 @@ public class BasicObjectType implements ObjectType {
                              String alias,
                              ObjectCreator constructor,
                              ObjectIdentifier identifier,
-                             Map<String, ? extends Property> properties) {
+                             Map<String, ? extends AccessibleProperty> properties) {
             super(type, alias, constructor, identifier, properties);
         }
     }

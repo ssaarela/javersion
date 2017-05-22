@@ -24,7 +24,7 @@ import org.javersion.object.WriteContext;
 import org.javersion.path.NodeId;
 import org.javersion.path.PropertyPath;
 import org.javersion.path.PropertyTree;
-import org.javersion.reflect.Property;
+import org.javersion.reflect.AccessibleProperty;
 import org.javersion.util.Check;
 
 import com.google.common.collect.ImmutableMap;
@@ -103,7 +103,7 @@ public class PolymorphicObjectType implements ObjectType {
     }
 
     @Override
-    public Map<String, Property> getProperties() {
+    public Map<String, AccessibleProperty> getProperties() {
         return root.getProperties();
     }
 
