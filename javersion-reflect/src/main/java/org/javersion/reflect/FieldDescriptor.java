@@ -22,7 +22,7 @@ import javax.annotation.Nonnull;
 
 import org.javersion.util.Check;
 
-public final class FieldDescriptor extends JavaMemberDescriptor<Field> implements Property {
+public final class FieldDescriptor extends JavaMemberDescriptor<Field> implements AccessibleProperty {
 
     @Nonnull
     private final Field field;
@@ -86,7 +86,7 @@ public final class FieldDescriptor extends JavaMemberDescriptor<Field> implement
     }
 
     @Override
-    Field getElement() {
+    public Field getElement() {
         return field;
     }
 

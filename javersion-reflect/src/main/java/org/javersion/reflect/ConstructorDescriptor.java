@@ -91,7 +91,7 @@ public final class ConstructorDescriptor extends JavaMemberDescriptor<Constructo
     }
 
     @Override
-    Constructor<?> getElement() {
+    public Constructor<?> getElement() {
         return constructor;
     }
 }

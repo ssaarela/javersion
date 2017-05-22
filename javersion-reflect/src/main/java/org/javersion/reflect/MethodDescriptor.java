@@ -110,7 +110,7 @@ public final class MethodDescriptor extends JavaMemberDescriptor<Method> impleme
     }
 
     @Override
-    Method getElement() {
+    public Method getElement() {
         return method;
     }
 }

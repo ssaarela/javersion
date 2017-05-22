@@ -26,7 +26,7 @@ public abstract class JavaMemberDescriptor<T extends AnnotatedElement & Member> 
     }
 
     @Override
-    abstract T getElement();
+    public abstract T getElement();
 
     public final boolean isAbstract() {
         return Modifier.isAbstract(getElement().getModifiers());
