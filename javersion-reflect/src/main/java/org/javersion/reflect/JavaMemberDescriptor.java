@@ -43,4 +43,20 @@ public abstract class JavaMemberDescriptor<T extends AnnotatedElement & Member> 
     public final boolean isSynthetic() {
         return getElement().isSynthetic();
     }
+
+    public final boolean isPublic() {
+        return Modifier.isPublic(getElement().getModifiers());
+    }
+
+    public final boolean isProtected() {
+        return Modifier.isProtected(getElement().getModifiers());
+    }
+
+    public final boolean isPrivate() {
+        return Modifier.isPrivate(getElement().getModifiers());
+    }
+
+    public final boolean isPackagePrivate() {
+        return !isPublic() && !isProtected() && !isPrivate();
+    }
 }
