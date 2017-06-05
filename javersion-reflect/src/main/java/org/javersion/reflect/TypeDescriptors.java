@@ -87,7 +87,7 @@ public final class TypeDescriptors {
         try {
             return cache.get(typeToken, () -> new TypeDescriptor(this, typeToken));
         } catch (ExecutionException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(typeToken.toString(), e);
         }
     }
 

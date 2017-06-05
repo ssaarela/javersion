@@ -76,7 +76,7 @@ public final class MethodDescriptor extends AbstractMethodDescriptor<Method> imp
         try {
             return method.invoke(object, args);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new ReflectionException(e);
+            throw new ReflectionException(toString(), e);
         }
     }
 

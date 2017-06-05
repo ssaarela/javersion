@@ -57,7 +57,7 @@ public final class ConstructorDescriptor extends AbstractMethodDescriptor<Constr
         try {
             return constructor.newInstance(args);
         } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
-            throw new ReflectionException(e);
+            throw new ReflectionException(toString(), e);
         }
     }
 

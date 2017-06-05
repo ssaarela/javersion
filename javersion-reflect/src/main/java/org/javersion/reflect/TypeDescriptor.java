@@ -140,8 +140,8 @@ public final class TypeDescriptor implements ElementDescriptor {
                 properties.put(property.getName(), property);
             }
             return properties.build();
-        } catch (IntrospectionException e) {
-            throw new ReflectionException(e);
+        } catch (Exception e) {
+            throw new ReflectionException(toString(), e);
         }
     }
 
@@ -209,7 +209,7 @@ public final class TypeDescriptor implements ElementDescriptor {
             constructor.setAccessible(true);
             return constructor.newInstance();
         } catch (Exception e) {
-            throw new ReflectionException("Failed to instantiate " + toString(), e);
+            throw new ReflectionException(toString(), e);
         }
     }
 

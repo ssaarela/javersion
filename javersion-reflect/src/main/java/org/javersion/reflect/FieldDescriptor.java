@@ -41,7 +41,7 @@ public final class FieldDescriptor extends JavaMemberDescriptor<Field> implement
         try {
             return field.get(obj);
         } catch (IllegalAccessException e) {
-            throw new ReflectionException(e);
+            throw new ReflectionException(toString(), e);
         }
     }
 
@@ -73,7 +73,7 @@ public final class FieldDescriptor extends JavaMemberDescriptor<Field> implement
         try {
             field.set(obj, value);
         } catch (IllegalArgumentException | IllegalAccessException e) {
-            throw new ReflectionException(e);
+            throw new ReflectionException(toString(), e);
         }
     }
 
