@@ -18,6 +18,7 @@ package org.javersion.reflect;
 import java.lang.reflect.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -77,10 +78,6 @@ public final class TypeDescriptors {
 
     public TypeDescriptor get(Class<?> clazz) {
         return get(TypeToken.of(clazz));
-    }
-
-    public TypeDescriptor get(Type type) {
-        return get(TypeToken.of(type));
     }
 
     public TypeDescriptor get(TypeToken<?> typeToken) {
