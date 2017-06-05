@@ -19,7 +19,10 @@ import java.lang.reflect.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.thoughtworks.paranamer.BytecodeReadingParanamer;
 import com.thoughtworks.paranamer.CachingParanamer;
 import com.thoughtworks.paranamer.Paranamer;
@@ -42,7 +45,9 @@ public final class TypeDescriptors {
         return DEFAULT.get(clazz);
     }
 
-    private final Map<TypeToken<?>, TypeDescriptor> cache = synchronizedMap(new WeakHashMap<>());
+    private final Cache<TypeToken<?>, TypeDescriptor> cache = CacheBuilder.newBuilder()
+            .softValues()
+            .build();
 
     protected final Predicate<? super Field> fieldFilter;
 
@@ -79,12 +84,11 @@ public final class TypeDescriptors {
     }
 
     public TypeDescriptor get(TypeToken<?> typeToken) {
-        TypeDescriptor descriptor = cache.get(typeToken);
-        if (descriptor == null) {
-            descriptor = new TypeDescriptor(this, typeToken);
-            cache.put(typeToken, descriptor);
+        try {
+            return cache.get(typeToken, () -> new TypeDescriptor(this, typeToken));
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
         }
-        return descriptor;
     }
 
     Paranamer getParanamer() {
