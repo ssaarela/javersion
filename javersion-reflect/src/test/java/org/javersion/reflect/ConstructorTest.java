@@ -90,7 +90,7 @@ public class ConstructorTest {
     @Test
     public void to_string() {
         String str = getConstructors().get(STRING_CONSTRUCTOR).toString();
-        assertThat(str).isEqualTo("ConstructorTest$Constructors(String)");
+        assertThat(str).isEqualTo("org.javersion.reflect.ConstructorTest$Constructors(String)");
     }
 
     @Test

@@ -15,16 +15,19 @@
  */
 package org.javersion.reflect;
 
-import static com.google.common.collect.Sets.newHashSet;
-import static org.assertj.core.api.Assertions.assertThat;
+import com.google.common.reflect.TypeToken;
+import org.junit.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-import org.junit.Test;
+import static com.google.common.collect.Sets.newHashSet;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TypeDescriptorTest {
+
+    static class NestedParametrizedType<T> {}
 
     static final TypeDescriptors TYPES = new TypeDescriptors(member -> {
         int mod = member.getModifiers();
@@ -53,6 +56,8 @@ public class TypeDescriptorTest {
         Map<String, Long> map;
         Map<String, Map<String, Long>> mapOfMaps;
     }
+
+    private NestedParametrizedType<String> nestedParametrizedType;
 
     @Test
     public void Get_Fields() {
@@ -241,4 +246,11 @@ public class TypeDescriptorTest {
         assertThat(annotations).hasSize(1);
         assertThat(annotations.get(0)).isInstanceOf(Deprecated.class);
     }
+
+    @Test
+    public void nested_parametrized_type_name() {
+        TypeDescriptor type = TYPES.get(new TypeToken<NestedParametrizedType<NestedParametrizedType<String>>>() {});
+        assertThat(type.toString()).isEqualTo("org.javersion.reflect.TypeDescriptorTest$NestedParametrizedType<org.javersion.reflect.TypeDescriptorTest$NestedParametrizedType<java.lang.String>>");
+    }
+
 }

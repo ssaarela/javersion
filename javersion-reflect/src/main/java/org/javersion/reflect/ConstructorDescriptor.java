@@ -84,11 +84,15 @@ public final class ConstructorDescriptor extends AbstractMethodDescriptor<Constr
     }
 
     public String toString() {
-        return getDeclaringType().getSimpleName() +
+        return toString(-1);
+    }
+
+    @Override
+    String toString(int hilightParameter) {
+        return getDeclaringType().toString() +
                 getParameters().stream()
-                    .map(ParameterDescriptor::getType)
-                    .map(TypeDescriptor::getSimpleName)
-                    .collect(Collectors.joining(",", "(", ")"));
+                        .map(parameterDescriptor -> parameterToString(parameterDescriptor, hilightParameter))
+                        .collect(Collectors.joining(",", "(", ")"));
     }
 
     @Override

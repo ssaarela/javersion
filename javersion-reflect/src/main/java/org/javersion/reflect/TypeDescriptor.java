@@ -15,6 +15,7 @@
  */
 package org.javersion.reflect;
 
+import static java.util.regex.Matcher.quoteReplacement;
 import static org.javersion.reflect.ConstructorSignature.DEFAULT_CONSTRUCTOR;
 
 import java.beans.BeanInfo;
@@ -22,13 +23,12 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.javersion.util.Check;
 
@@ -62,6 +62,8 @@ public final class TypeDescriptor implements ElementDescriptor {
 
     protected final TypeDescriptors typeDescriptors;
 
+    private static final Pattern DUPLICATE_OWNER_NAME = Pattern.compile("([^, <>$]+)\\.(\\1\\$)");
+
     public TypeDescriptor(TypeDescriptors typeDescriptors, TypeToken<?> typeToken) {
         this.typeDescriptors = Check.notNull(typeDescriptors, "typeDescriptors");
         this.typeToken = Check.notNull(typeToken, "typeToken");
@@ -91,6 +93,10 @@ public final class TypeDescriptor implements ElementDescriptor {
         Map<String, FieldDescriptor> result = new HashMap<>();
         collectFields(typeToken.getRawType(), result);
         return ImmutableSortedMap.copyOf(result);
+    }
+
+    public String getName() {
+        return getRawType().getName();
     }
 
     public String getSimpleName() {
@@ -231,7 +237,14 @@ public final class TypeDescriptor implements ElementDescriptor {
 
     @Override
     public String toString() {
-        return typeToken.toString();
+        String name = typeToken.toString();
+        Matcher matcher = DUPLICATE_OWNER_NAME.matcher(name);
+        StringBuffer sb = new StringBuffer(name.length());
+        while (matcher.find()) {
+            matcher.appendReplacement(sb, quoteReplacement(matcher.group(2)));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
     private void collectFields(Class<?> clazz, Map<String, FieldDescriptor> allFields) {

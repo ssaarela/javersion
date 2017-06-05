@@ -21,11 +21,12 @@ import org.javersion.util.Check;
 import javax.annotation.Nonnull;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Parameter;
+import java.util.stream.Collectors;
 
 public final class ParameterDescriptor extends MemberDescriptor {
 
     @Nonnull
-    private final AccessibleObject accessibleObject;
+    private final AbstractMethodDescriptor methodDescriptor;
 
     @Nonnull
     private final Parameter parameter;
@@ -34,7 +35,7 @@ public final class ParameterDescriptor extends MemberDescriptor {
 
     public ParameterDescriptor(AbstractMethodDescriptor methodDescriptor, Parameter parameter, int index) {
         super(methodDescriptor.getDeclaringType());
-        this.accessibleObject = methodDescriptor.getElement();
+        this.methodDescriptor = methodDescriptor;
         this.parameter = Check.notNull(parameter, "parameter");
         this.index = index;
     }
@@ -57,12 +58,20 @@ public final class ParameterDescriptor extends MemberDescriptor {
             return parameter.getName();
         }
         Paranamer paranamer = getTypeDescriptors().getParanamer();
-        String[] names = paranamer.lookupParameterNames(accessibleObject);
-        return names.length > index ? names[index] : null;
+        String[] names = paranamer.lookupParameterNames(getAccessibleObject());
+        return names.length > index ? names[index] : "arg" + index;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    AbstractMethodDescriptor getMethodDescriptor() {
+        return methodDescriptor;
     }
 
     AccessibleObject getAccessibleObject() {
-        return accessibleObject;
+        return methodDescriptor.getElement();
     }
 
     @Override
@@ -72,14 +81,20 @@ public final class ParameterDescriptor extends MemberDescriptor {
 
         ParameterDescriptor that = (ParameterDescriptor) o;
 
-        if (!accessibleObject.equals(that.accessibleObject)) return false;
+        if (!methodDescriptor.equals(that.methodDescriptor)) return false;
         return parameter.equals(that.parameter);
     }
 
     @Override
     public int hashCode() {
-        int result = accessibleObject.hashCode();
+        int result = methodDescriptor.hashCode();
         result = 31 * result + parameter.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return methodDescriptor.toString(index);
+    }
+
 }

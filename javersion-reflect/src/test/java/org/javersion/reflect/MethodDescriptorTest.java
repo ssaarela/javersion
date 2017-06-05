@@ -112,8 +112,8 @@ public class MethodDescriptorTest {
         List<ParameterDescriptor> parameters = getMethodDescriptor().getParameters();
         EqualsVerifier.forClass(ParameterDescriptor.class)
                 .withPrefabValues(Parameter.class, parameters.get(0).getElement(), parameters.get(1).getElement())
-                .withPrefabValues(AccessibleObject.class, parameters.get(0).getAccessibleObject(),
-                        getTypeDescriptor().getDefaultConstructor().getElement())
+                .withPrefabValues(AbstractMethodDescriptor.class, parameters.get(0).getMethodDescriptor(),
+                        getTypeDescriptor().getDefaultConstructor())
                 .verify();
     }
 
@@ -193,7 +193,7 @@ public class MethodDescriptorTest {
     @Test
     public void to_string() {
         String str = getMethodDescriptor().toString();
-        assertThat(str).isEqualTo("MethodDescriptorTest$MyClass.method(Integer,Set)");
+        assertThat(str).isEqualTo("org.javersion.reflect.MethodDescriptorTest$MyClass.method(Integer,Set)");
     }
 
     @Test

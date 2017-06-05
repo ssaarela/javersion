@@ -103,11 +103,15 @@ public final class MethodDescriptor extends AbstractMethodDescriptor<Method> imp
     }
 
     public String toString() {
-        return getDeclaringType().getSimpleName() + "." + getName() +
+        return toString(-1);
+    }
+
+    @Override
+    String toString(int hilightParameter) {
+        return getDeclaringType().getName() + "." + getName() +
                 getParameters().stream()
-                    .map(ParameterDescriptor::getType)
-                    .map(TypeDescriptor::getSimpleName)
-                    .collect(Collectors.joining(",", "(", ")"));
+                        .map(parameterDescriptor -> parameterToString(parameterDescriptor, hilightParameter))
+                        .collect(Collectors.joining(",", "(", ")"));
     }
 
     @Override
