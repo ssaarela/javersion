@@ -136,8 +136,10 @@ public final class TypeDescriptor implements ElementDescriptor {
             for (PropertyDescriptor propertyDescriptor : beanInfo.getPropertyDescriptors()) {
                 MethodDescriptor readMethod = getMethodDescriptor(propertyDescriptor.getReadMethod());
                 MethodDescriptor writeMethod = getMethodDescriptor(propertyDescriptor.getWriteMethod());
-                BeanProperty property = new BeanProperty(propertyDescriptor.getName(), readMethod, writeMethod);
-                properties.put(property.getName(), property);
+                if (readMethod != null || writeMethod != null) {
+                    BeanProperty property = new BeanProperty(propertyDescriptor.getName(), readMethod, writeMethod);
+                    properties.put(property.getName(), property);
+                }
             }
             return properties.build();
         } catch (Exception e) {

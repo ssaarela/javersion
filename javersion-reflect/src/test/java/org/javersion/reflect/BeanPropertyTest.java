@@ -37,6 +37,12 @@ public class BeanPropertyTest {
         public void setName(String name) {
             this.name = name;
         }
+
+        public String getIndexedProperty(int index) {
+            return null;
+        }
+
+        public void setIndexedProperty(int index, String value) {}
     }
 
     static class MyGenericBean<T> {
@@ -136,7 +142,7 @@ public class BeanPropertyTest {
     }
 
     @Test
-    public void getMethods() {
+    public void get_methods() {
         TypeDescriptor type = getTypeDescriptor();
         Map<MethodSignature, MethodDescriptor> methods = type.getMethods();
         MethodDescriptor readMethod = methods.get(new MethodSignature("getName"));
@@ -153,6 +159,12 @@ public class BeanPropertyTest {
         TypeDescriptor type = genericField.getType();
         BeanProperty property = type.getProperties().get("it");
         assertThat(property.getType().getRawType()).isEqualTo(Integer.class);
+    }
+
+    @Test
+    public void skip_indexed_properties() {
+        TypeDescriptor type = getTypeDescriptor();
+        assertThat(type.getProperties()).doesNotContainKeys("indexedProperty");
     }
 
     private Map<String, BeanProperty> getProperties() {
