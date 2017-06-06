@@ -15,29 +15,26 @@
  */
 package org.javersion.reflect;
 
-import static java.util.regex.Matcher.quoteReplacement;
-import static org.javersion.reflect.ConstructorSignature.DEFAULT_CONSTRUCTOR;
+import com.google.common.collect.*;
+import com.google.common.reflect.TypeToken;
+import org.javersion.util.Check;
 
 import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.javersion.util.Check;
-
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedMap;
-import com.google.common.reflect.TypeToken;
+import static java.util.regex.Matcher.quoteReplacement;
+import static org.javersion.reflect.ConstructorSignature.DEFAULT_CONSTRUCTOR;
 
 public final class TypeDescriptor implements ElementDescriptor {
 
@@ -278,5 +275,17 @@ public final class TypeDescriptor implements ElementDescriptor {
 
     public boolean isAbstract() {
         return Modifier.isAbstract(getRawType().getModifiers());
+    }
+
+    public boolean isArray() {
+        return getRawType().isArray();
+    }
+
+    public TypeDescriptor getComponentType() {
+        TypeToken<?> componentType= typeToken.getComponentType();
+        if (componentType == null) {
+            return null;
+        }
+        return typeDescriptors.get(componentType);
     }
 }

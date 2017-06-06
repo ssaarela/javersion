@@ -253,4 +253,15 @@ public class TypeDescriptorTest {
         assertThat(type.toString()).isEqualTo("org.javersion.reflect.TypeDescriptorTest$NestedParametrizedType<org.javersion.reflect.TypeDescriptorTest$NestedParametrizedType<java.lang.String>>");
     }
 
+    @Test
+    public void arrays() {
+        TypeDescriptor typeDescriptor = TYPES.get(String[].class);
+        assertThat(typeDescriptor.isArray()).isTrue();
+
+        TypeDescriptor componentType = typeDescriptor.getComponentType();
+        assertThat(componentType.isArray()).isFalse();
+        assertThat(componentType.getRawType()).isEqualTo(String.class);
+        assertThat(componentType.getComponentType()).isNull();
+    }
+
 }
