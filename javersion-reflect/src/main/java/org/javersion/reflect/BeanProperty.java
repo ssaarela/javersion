@@ -31,7 +31,7 @@ public class BeanProperty implements AccessibleProperty {
         this.writeMethod = writeMethod;
 
         if (readMethod == null && writeMethod == null) {
-            throw new IllegalArgumentException("Both readMethod and writeMethod cannot be null");
+            throw new IllegalArgumentException("Bean property " + name + ": both getter and setter cannot be null");
         }
     }
 
