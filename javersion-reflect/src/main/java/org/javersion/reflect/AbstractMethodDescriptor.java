@@ -32,9 +32,9 @@ public abstract class AbstractMethodDescriptor<T extends AccessibleObject & Anno
 
     static String parameterToString(ParameterDescriptor parameter, int hilight) {
         if (parameter.getIndex() == hilight) {
-            return "*" + parameter.getType().getSimpleName() + " " + parameter.getName() + "*";
+            return "*" + parameter.getType().toString() + " " + parameter.getName() + "*";
         } else {
-            return parameter.getType().getSimpleName();
+            return parameter.getType().toString();
         }
     }
 

@@ -20,8 +20,8 @@ public class ParameterDescriptorTest {
         TypeDescriptor type = DEFAULT.get(MyClass.class);
         ConstructorDescriptor constructor = type.getConstructors().get(new ConstructorSignature(String.class, Integer.class));
         List<ParameterDescriptor> parameters = constructor.getParameters();
-        assertThat(parameters.get(0).toString()).isEqualTo("org.javersion.reflect.ParameterDescriptorTest$MyClass(*String name*,Integer)");
-        assertThat(parameters.get(1).toString()).isEqualTo("org.javersion.reflect.ParameterDescriptorTest$MyClass(String,*Integer integer*)");
+        assertThat(parameters.get(0).toString()).isEqualTo("org.javersion.reflect.ParameterDescriptorTest$MyClass(*java.lang.String name*,java.lang.Integer)");
+        assertThat(parameters.get(1).toString()).isEqualTo("org.javersion.reflect.ParameterDescriptorTest$MyClass(java.lang.String,*java.lang.Integer integer*)");
     }
 
     @Test
@@ -29,7 +29,7 @@ public class ParameterDescriptorTest {
         TypeDescriptor type = DEFAULT.get(MyClass.class);
         MethodDescriptor method = type.getMethods().get(new MethodSignature("method", MyClass.class));
         List<ParameterDescriptor> parameters = method.getParameters();
-        assertThat(parameters.get(0).toString()).isEqualTo("org.javersion.reflect.ParameterDescriptorTest$MyClass.method(*ParameterDescriptorTest$MyClass myClass*)");
+        assertThat(parameters.get(0).toString()).isEqualTo("org.javersion.reflect.ParameterDescriptorTest$MyClass.method(*org.javersion.reflect.ParameterDescriptorTest$MyClass myClass*)");
     }
 
 }

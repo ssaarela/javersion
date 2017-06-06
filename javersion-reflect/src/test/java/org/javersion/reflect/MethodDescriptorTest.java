@@ -193,7 +193,7 @@ public class MethodDescriptorTest {
     @Test
     public void to_string() {
         String str = getMethodDescriptor().toString();
-        assertThat(str).isEqualTo("org.javersion.reflect.MethodDescriptorTest$MyClass.method(Integer,Set)");
+        assertThat(str).isEqualTo("org.javersion.reflect.MethodDescriptorTest$MyClass.method(java.lang.Integer,java.util.Set<java.lang.Integer>)");
     }
 
     @Test
