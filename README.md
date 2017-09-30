@@ -1,4 +1,4 @@
-# Javersion [![Build Status](https://travis-ci.org/ssaarela/javersion.svg?branch=master)](https://travis-ci.org/ssaarela/javersion) [![Coverage Status](https://coveralls.io/repos/ssaarela/javersion/badge.svg?branch=master)](https://coveralls.io/r/ssaarela/javersion?branch=master)
+# Javersion [![Build Status](https://travis-ci.org/ssaarela/javersion.svg?branch=master)](https://travis-ci.org/ssaarela/javersion) [![Coverage Status](https://coveralls.io/repos/ssaarela/javersion/badge.svg?branch=master)](https://coveralls.io/r/ssaarela/javersion?branch=master) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.javersion/javersion-core/badge.svg?style=flat)](https://maven-badges.herokuapp.com/maven-central/org.javersion/javersion-core)
 
 Javersion is a data versioning toolkit for Java. It's easy to use, highly modular and 
 extensible. Anything that can be mapped to `Map<K, V>` with simple immutable key and value
